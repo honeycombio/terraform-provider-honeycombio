@@ -1,6 +1,9 @@
 package honeycombiosdk
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"net/http"
 )
 
@@ -9,6 +12,7 @@ const (
 	userAgent = "terraform-provider-honeycombio"
 )
 
+// Client to interact with Honeycomb.
 type Client struct {
 	apiKey     string
 	dataset    string
@@ -17,18 +21,42 @@ type Client struct {
 	Markers Markers
 }
 
+// NewClient creates a new Honeycomb API client.
 func NewClient(apiKey, dataset string) *Client {
-	c := &Client{
+	client := &Client{
 		apiKey:     apiKey,
 		dataset:    dataset,
 		httpClient: &http.Client{},
 	}
-	c.Markers = &markers{c}
-	return c
+	client.Markers = &markers{client: client}
+
+	return client
 }
 
-func (c *Client) populateHeaders(req *http.Request) {
+func (c *Client) newRequest(method, path string, v interface{}) (*http.Request, error) {
+	var body io.Reader
+
+	if v != nil {
+		buf := new(bytes.Buffer)
+		err := json.NewEncoder(buf).Encode(v)
+		if err != nil {
+			return nil, err
+		}
+		body = buf
+	}
+
+	req, err := http.NewRequest(method, apiURL+path, body)
+	if err != nil {
+		return nil, err
+	}
+
 	req.Header.Add("X-Honeycomb-Team", c.apiKey)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("User-Agent", userAgent)
+
+	return req, nil
+}
+
+func is2xx(status int) bool {
+	return status >= 200 && status < 300
 }

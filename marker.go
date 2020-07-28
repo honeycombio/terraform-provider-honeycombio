@@ -1,10 +1,8 @@
 package honeycombiosdk
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 )
 
@@ -53,13 +51,10 @@ type Marker struct {
 }
 
 func (s *markers) List() (m []Marker, err error) {
-	url := buildMarkersURL(s.client.dataset)
-
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := s.client.newRequest("GET", markersPath(s.client.dataset), nil)
 	if err != nil {
 		return
 	}
-	s.client.populateHeaders(req)
 
 	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
@@ -100,19 +95,10 @@ type CreateData struct {
 }
 
 func (s *markers) Create(d CreateData) (m Marker, err error) {
-	url := buildMarkersURL(s.client.dataset)
-
-	buf := new(bytes.Buffer)
-	err = json.NewEncoder(buf).Encode(d)
+	req, err := s.client.newRequest("POST", markersPath(s.client.dataset), d)
 	if err != nil {
 		return
 	}
-
-	req, err := http.NewRequest("POST", url, buf)
-	if err != nil {
-		return
-	}
-	s.client.populateHeaders(req)
 
 	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
@@ -129,10 +115,6 @@ func (s *markers) Create(d CreateData) (m Marker, err error) {
 	return
 }
 
-func buildMarkersURL(dataset string) string {
-	return fmt.Sprintf("%s/1/markers/%s", apiURL, dataset)
-}
-
-func is2xx(status int) bool {
-	return status >= 200 && status < 300
+func markersPath(dataset string) string {
+	return "/1/markers/" + dataset
 }
