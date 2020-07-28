@@ -1,4 +1,4 @@
-package honeycombiosdk
+package honeycombio
 
 import (
 	"os"
