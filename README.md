@@ -1,5 +1,7 @@
 # Honeycomb.io Go client
 
+![CI](https://github.com/kvrhdn/go-honeycombio/workflows/CI/badge.svg)
+
 _This is not an official Honeycomb.io project!_
 
 This is an API client for the [Honeycomb.io management APIs][honeycombio-api].
