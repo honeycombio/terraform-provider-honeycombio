@@ -15,7 +15,7 @@ func TestMarkers(t *testing.T) {
 	c := newTestClient(t)
 
 	t.Run("Create", func(t *testing.T) {
-		data := CreateData{
+		data := MarkerCreateData{
 			Message: fmt.Sprintf("Test run at %v", time.Now()),
 			Type:    "deploys",
 			URL:     "http://example.com",

@@ -21,7 +21,7 @@ type Markers interface {
 	Get(id string) (*Marker, error)
 
 	// Create a new marker in this dataset.
-	Create(data CreateData) (Marker, error)
+	Create(data MarkerCreateData) (Marker, error)
 }
 
 // markers implements Markers.
@@ -85,8 +85,8 @@ func (s *markers) Get(ID string) (*Marker, error) {
 	return nil, fmt.Errorf("marker with ID = %s was not found", ID)
 }
 
-// CreateData holds the data to create a new marker.
-type CreateData struct {
+// MarkerCreateData holds the data to create a new marker.
+type MarkerCreateData struct {
 	StartTime int64  `json:"start_time,omitempty"`
 	EndTime   int64  `json:"end_time,omitempty"`
 	Message   string `json:"message,omitempty"`
@@ -94,7 +94,7 @@ type CreateData struct {
 	URL       string `json:"url,omitempty"`
 }
 
-func (s *markers) Create(d CreateData) (m Marker, err error) {
+func (s *markers) Create(d MarkerCreateData) (m Marker, err error) {
 	req, err := s.client.newRequest("POST", markersPath(s.client.dataset), d)
 	if err != nil {
 		return
