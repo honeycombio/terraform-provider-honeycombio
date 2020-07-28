@@ -1,0 +1,7 @@
+*.tfplan
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.log
+
+terraform-provider-honeycombio
