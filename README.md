@@ -9,3 +9,7 @@ This is an API client for the [Honeycomb.io management APIs][honeycombio-api].
 Supported APIs:
 
 - [Markers API](https://docs.honeycomb.io/api/markers/)
+
+## License
+
+This software is distributed under the terms of the MIT license, see [LICENSE](./LICENSE) for details.
