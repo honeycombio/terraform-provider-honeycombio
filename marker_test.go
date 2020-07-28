@@ -8,19 +8,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMarker(t *testing.T) {
+func TestMarkers(t *testing.T) {
 	var m Marker
 	var err error
 
 	c := newTestClient(t)
 
-	t.Run("CreateMarker", func(t *testing.T) {
-		data := CreateMarkerData{
+	t.Run("Create", func(t *testing.T) {
+		data := CreateData{
 			Message: fmt.Sprintf("Test run at %v", time.Now()),
 			Type:    "deploys",
 			URL:     "http://example.com",
 		}
-		m, err = c.CreateMarker(data)
+		m, err = c.Markers.Create(data)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -31,8 +31,8 @@ func TestMarker(t *testing.T) {
 		assert.Equal(t, data.URL, m.URL)
 	})
 
-	t.Run("ListMarkers", func(t *testing.T) {
-		markers, err := c.ListMarkers()
+	t.Run("List", func(t *testing.T) {
+		markers, err := c.Markers.List()
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -51,8 +51,8 @@ func TestMarker(t *testing.T) {
 		assert.Equal(t, m, *createdMarker)
 	})
 
-	t.Run("GetMarker", func(t *testing.T) {
-		marker, err := c.GetMarker(m.ID)
+	t.Run("Get", func(t *testing.T) {
+		marker, err := c.Markers.Get(m.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -60,8 +60,8 @@ func TestMarker(t *testing.T) {
 		assert.Equal(t, m, *marker)
 	})
 
-	t.Run("GetMarker_unexistingID", func(t *testing.T) {
-		_, err := c.GetMarker("0")
+	t.Run("Get_unexistingID", func(t *testing.T) {
+		_, err := c.Markers.Get("0")
 		if err == nil {
 			t.Fatal("expected err not be nil")
 		}

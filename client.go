@@ -13,14 +13,18 @@ type Client struct {
 	apiKey     string
 	dataset    string
 	httpClient *http.Client
+
+	Markers Markers
 }
 
 func NewClient(apiKey, dataset string) *Client {
-	return &Client{
+	c := &Client{
 		apiKey:     apiKey,
 		dataset:    dataset,
 		httpClient: &http.Client{},
 	}
+	c.Markers = &markers{c}
+	return c
 }
 
 func (c *Client) populateHeaders(req *http.Request) {

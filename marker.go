@@ -8,8 +8,30 @@ import (
 	"time"
 )
 
-// The marker type, as described by https://honeycomb.io/docs/reference/api/#markers
-// This struct is shamelessly copied from https://github.com/honeycombio/honeymarker/blob/master/marker.go
+// Compile-time proof of interface implementation.
+var _ Markers = (*markers)(nil)
+
+// Markers describes all the markers related methods that Honeycomb supports.
+type Markers interface {
+	// List all markers present in this dataset.
+	List() ([]Marker, error)
+
+	// Get a marker by its ID.
+	//
+	// This method calls List internally since there is no API available to
+	// directly get a single marker.
+	Get(id string) (*Marker, error)
+
+	// Create a new marker in this dataset.
+	Create(data CreateData) (Marker, error)
+}
+
+// markers implements Markers.
+type markers struct {
+	client *Client
+}
+
+// Marker represents a Honeycomb marker, as described by https://docs.honeycomb.io/api/markers/#fields-on-a-marker
 type Marker struct {
 	ID string `json:"id"`
 
@@ -30,16 +52,16 @@ type Marker struct {
 	Color string `json:"color,omitempty"`
 }
 
-func (c *Client) ListMarkers() (m []Marker, err error) {
-	url := buildMarkersURL(c.dataset)
+func (s *markers) List() (m []Marker, err error) {
+	url := buildMarkersURL(s.client.dataset)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return
 	}
-	c.populateHeaders(req)
+	s.client.populateHeaders(req)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return
 	}
@@ -54,8 +76,8 @@ func (c *Client) ListMarkers() (m []Marker, err error) {
 	return
 }
 
-func (c *Client) GetMarker(ID string) (*Marker, error) {
-	markers, err := c.ListMarkers()
+func (s *markers) Get(ID string) (*Marker, error) {
+	markers, err := s.List()
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +90,8 @@ func (c *Client) GetMarker(ID string) (*Marker, error) {
 	return nil, fmt.Errorf("marker with ID = %s was not found", ID)
 }
 
-type CreateMarkerData struct {
+// CreateData holds the data to create a new marker.
+type CreateData struct {
 	StartTime int64  `json:"start_time,omitempty"`
 	EndTime   int64  `json:"end_time,omitempty"`
 	Message   string `json:"message,omitempty"`
@@ -76,8 +99,8 @@ type CreateMarkerData struct {
 	URL       string `json:"url,omitempty"`
 }
 
-func (c *Client) CreateMarker(d CreateMarkerData) (m Marker, err error) {
-	url := buildMarkersURL(c.dataset)
+func (s *markers) Create(d CreateData) (m Marker, err error) {
+	url := buildMarkersURL(s.client.dataset)
 
 	buf := new(bytes.Buffer)
 	err = json.NewEncoder(buf).Encode(d)
@@ -89,9 +112,9 @@ func (c *Client) CreateMarker(d CreateMarkerData) (m Marker, err error) {
 	if err != nil {
 		return
 	}
-	c.populateHeaders(req)
+	s.client.populateHeaders(req)
 
-	resp, err := c.httpClient.Do(req)
+	resp, err := s.client.httpClient.Do(req)
 	if err != nil {
 		return
 	}
