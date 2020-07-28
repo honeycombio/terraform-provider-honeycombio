@@ -46,12 +46,26 @@ func (c *Client) ListMarkers() (m []Marker, err error) {
 	defer resp.Body.Close()
 
 	if !is2xx(resp.StatusCode) {
-		err = fmt.Errorf("Request failed with status code %d", resp.StatusCode)
+		err = fmt.Errorf("request failed with status code %d", resp.StatusCode)
 		return
 	}
 
 	err = json.NewDecoder(resp.Body).Decode(&m)
 	return
+}
+
+func (c *Client) GetMarker(ID string) (*Marker, error) {
+	markers, err := c.ListMarkers()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, m := range markers {
+		if m.ID == ID {
+			return &m, nil
+		}
+	}
+	return nil, fmt.Errorf("marker with ID = %s was not found", ID)
 }
 
 type CreateMarkerData struct {
@@ -84,7 +98,7 @@ func (c *Client) CreateMarker(d CreateMarkerData) (m Marker, err error) {
 	defer resp.Body.Close()
 
 	if !is2xx(resp.StatusCode) {
-		err = fmt.Errorf("Request failed with status code %d", resp.StatusCode)
+		err = fmt.Errorf("request failed with status code %d", resp.StatusCode)
 		return
 	}
 

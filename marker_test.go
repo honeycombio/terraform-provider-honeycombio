@@ -50,4 +50,22 @@ func TestMarker(t *testing.T) {
 
 		assert.Equal(t, m, *createdMarker)
 	})
+
+	t.Run("GetMarker", func(t *testing.T) {
+		marker, err := c.GetMarker(m.ID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, m, *marker)
+	})
+
+	t.Run("GetMarker_unexistingID", func(t *testing.T) {
+		_, err := c.GetMarker("0")
+		if err == nil {
+			t.Fatal("expected err not be nil")
+		}
+
+		assert.Contains(t, err.Error(), "not found")
+	})
 }
