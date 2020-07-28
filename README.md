@@ -1,7 +1,7 @@
 # Honeycomb.io Go client
 
 ![CI](https://github.com/kvrhdn/go-honeycombio/workflows/CI/badge.svg)
-[![PkgGoDev](https://pkg.go.dev/badge/kvrhdn/go-honeycombio)](https://pkg.go.dev/kvrhdn/go-honeycombio)
+[![PkgGoDev](https://pkg.go.dev/badge/github.com/kvrhdn/go-honeycombio)](https://pkg.go.dev/github.com/kvrhdn/go-honeycombio)
 
 _This is not an official Honeycomb.io project!_
 
