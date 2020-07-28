@@ -2,6 +2,7 @@ package honeycombiosdk
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 )
@@ -9,12 +10,16 @@ import (
 // Compile-time proof of interface implementation.
 var _ Markers = (*markers)(nil)
 
+// ErrNotFound means that the requested item could not be found.
+var ErrNotFound = errors.New("not found")
+
 // Markers describes all the markers related methods that Honeycomb supports.
 type Markers interface {
 	// List all markers present in this dataset.
 	List() ([]Marker, error)
 
-	// Get a marker by its ID.
+	// Get a marker by its ID. Returns nil, ErrNotFound if there is no marker
+	// with the given ID.
 	//
 	// This method calls List internally since there is no API available to
 	// directly get a single marker.
@@ -82,7 +87,7 @@ func (s *markers) Get(ID string) (*Marker, error) {
 			return &m, nil
 		}
 	}
-	return nil, fmt.Errorf("marker with ID = %s was not found", ID)
+	return nil, ErrNotFound
 }
 
 // MarkerCreateData holds the data to create a new marker.

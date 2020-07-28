@@ -62,10 +62,6 @@ func TestMarkers(t *testing.T) {
 
 	t.Run("Get_unexistingID", func(t *testing.T) {
 		_, err := c.Markers.Get("0")
-		if err == nil {
-			t.Fatal("expected err not be nil")
-		}
-
-		assert.Contains(t, err.Error(), "not found")
+		assert.Equal(t, ErrNotFound, err)
 	})
 }
