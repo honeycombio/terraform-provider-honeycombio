@@ -50,3 +50,7 @@ resource "honeycombio_marker" "marker" {
 ```
 
 This resource uses the markers API: https://docs.honeycomb.io/api/markers/
+
+## License
+
+This software is distributed under the terms of the MIT license, see [LICENSE](./LICENSE) for details.
