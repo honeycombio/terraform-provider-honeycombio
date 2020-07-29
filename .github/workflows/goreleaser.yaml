@@ -5,6 +5,9 @@ on:
     tags:
       - '*'
 
+env:
+  HONEYCOMBIO_DATASET: kvrhdn-terraform-provider-honeycombio
+
 jobs:
   goreleaser:
     name: Release (GoReleaser)
