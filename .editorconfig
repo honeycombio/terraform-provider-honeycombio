@@ -11,3 +11,7 @@ insert_final_newline = true
 
 [*.tf]
 indent_size = 2
+
+[Makefile]
+indent_style = tab
+indent_size = 8
