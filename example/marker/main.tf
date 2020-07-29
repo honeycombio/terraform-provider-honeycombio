@@ -1,13 +1,17 @@
 provider "honeycombio" {
-  # Set api_key or the environment variable HONEYCOMBIO_APIKEY
-  #api_key = "<your API key>"
+  # You can also set the environment variable HONEYCOMBIO_APIKEY
+  api_key = "<your API key>"
 
-  # Set dataset or the environment variable HONEYCOMBIO_DATASET
-  #dataset = "<your dataset>"
+  # You can also set the environment variable HONEYCOMBIO_DATASET
+  dataset = "<your dataset>"
+}
+
+variable "app_version" {
+    type = string
 }
 
 resource "honeycombio_marker" "marker" {
-  message = "Hello world!"
+  message = "deploy ${var.app_version}"
   type    = "deploys"
   url     = "https://www.honeycomb.io/"
 }
