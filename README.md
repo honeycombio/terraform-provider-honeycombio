@@ -6,7 +6,7 @@ _This is not an official Honeycomb.io provider!_
 
 ## Using the provider
 
-_I'm trying to add this provider to the Terraform Registry, but for now you have to download and install the provider manually._
+This provider is published on the [Terraform Registry](https://registry.terraform.io/providers/kvrhdn/honeycombio/latest)! You can try that out if you're using Terraform v0.13. If not, you'll have to install the provider manually.
 
 ### Building the provider
 
