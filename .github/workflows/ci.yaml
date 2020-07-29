@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+env:
+  HONEYCOMBIO_DATASET: kvrhdn-terraform-provider-honeycombio
+
 jobs:
   ci:
     name: CI
@@ -13,7 +16,7 @@ jobs:
       - uses: kvrhdn/gha-buildevents@main
         with:
           apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
+          dataset: ${{ env.HONEYCOMBIO_DATASET }}
           job-status: ${{ job.status }}
 
       - uses: actions/setup-go@v2
@@ -28,6 +31,5 @@ jobs:
       - name: Test
         env:
           HONEYCOMBIO_APIKEY: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          HONEYCOMBIO_DATASET: ${{ secrets.HONEYCOMBIO_DATASET }}
           TF_ACC: 1
         run: go test -v ./...
