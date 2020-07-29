@@ -22,7 +22,7 @@ resource "honeycombio_marker" "hello" {
 }
 ```
 
-~> **Note**: Hard-coding API keys into any Terraform configuration is not recommended. Consider using the `HONEYCOMBIO_APIKEY` environment variable.
+~> **Note** Hard-coding API keys into any Terraform configuration is not recommended. Consider using the `HONEYCOMBIO_APIKEY` environment variable.
 
 ## Argument Reference
 
