@@ -34,13 +34,8 @@ jobs:
           PASSPHRASE: ${{ secrets.PASSPHRASE }}
         id: import_gpg
 
-      - name: Get version from tag
-        run: echo ::set-output name=TAG_VERSION::${GITHUB_REF#refs/tags/}
-        id: version
-
       - uses: goreleaser/goreleaser-action@v2
         with:
-          version: ${{ steps.version.outputs.tag_version }}
           args: release --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
