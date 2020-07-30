@@ -9,7 +9,7 @@ import (
 )
 
 func TestMarkers(t *testing.T) {
-	var m Marker
+	var m *Marker
 	var err error
 
 	c := newTestClient(t)
@@ -48,7 +48,7 @@ func TestMarkers(t *testing.T) {
 			t.Fatalf("could not find newly created marker with ID = %s", m.ID)
 		}
 
-		assert.Equal(t, m, *createdMarker)
+		assert.Equal(t, *m, *createdMarker)
 	})
 
 	t.Run("Get", func(t *testing.T) {
@@ -57,7 +57,7 @@ func TestMarkers(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		assert.Equal(t, m, *marker)
+		assert.Equal(t, *m, *marker)
 	})
 
 	t.Run("Get_unexistingID", func(t *testing.T) {

@@ -1,17 +1,11 @@
 package honeycombio
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
 	"time"
 )
 
 // Compile-time proof of interface implementation.
 var _ Markers = (*markers)(nil)
-
-// ErrNotFound means that the requested item could not be found.
-var ErrNotFound = errors.New("not found")
 
 // Markers describes all the markers related methods that Honeycomb supports.
 type Markers interface {
@@ -26,7 +20,7 @@ type Markers interface {
 	Get(id string) (*Marker, error)
 
 	// Create a new marker in this dataset.
-	Create(data MarkerCreateData) (Marker, error)
+	Create(data MarkerCreateData) (*Marker, error)
 }
 
 // markers implements Markers.
@@ -55,25 +49,15 @@ type Marker struct {
 	Color string `json:"color,omitempty"`
 }
 
-func (s *markers) List() (m []Marker, err error) {
-	req, err := s.client.newRequest("GET", markersPath(s.client.dataset), nil)
+func (s *markers) List() ([]Marker, error) {
+	req, err := s.client.newRequest("GET", "/1/markers/"+s.client.dataset, nil)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	resp, err := s.client.httpClient.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if !is2xx(resp.StatusCode) {
-		err = fmt.Errorf("request failed with status code %d", resp.StatusCode)
-		return
-	}
-
-	err = json.NewDecoder(resp.Body).Decode(&m)
-	return
+	var m []Marker
+	err = s.client.do(req, &m)
+	return m, err
 }
 
 func (s *markers) Get(ID string) (*Marker, error) {
@@ -99,27 +83,13 @@ type MarkerCreateData struct {
 	URL       string `json:"url,omitempty"`
 }
 
-func (s *markers) Create(d MarkerCreateData) (m Marker, err error) {
-	req, err := s.client.newRequest("POST", markersPath(s.client.dataset), d)
+func (s *markers) Create(d MarkerCreateData) (*Marker, error) {
+	req, err := s.client.newRequest("POST", "/1/markers/"+s.client.dataset, d)
 	if err != nil {
-		return
+		return nil, err
 	}
 
-	resp, err := s.client.httpClient.Do(req)
-	if err != nil {
-		return
-	}
-	defer resp.Body.Close()
-
-	if !is2xx(resp.StatusCode) {
-		err = fmt.Errorf("request failed with status code %d", resp.StatusCode)
-		return
-	}
-
-	err = json.NewDecoder(resp.Body).Decode(&m)
-	return
-}
-
-func markersPath(dataset string) string {
-	return "/1/markers/" + dataset
+	var m Marker
+	err = s.client.do(req, &m)
+	return &m, err
 }

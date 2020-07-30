@@ -3,6 +3,8 @@ package honeycombio
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
 	"net/http"
 )
@@ -33,6 +35,11 @@ func NewClient(apiKey, dataset string) *Client {
 	return client
 }
 
+// ErrNotFound means that the requested item could not be found.
+var ErrNotFound = errors.New("request failed with status code 404")
+
+// newRequest prepares a request to the Honeycomb API with the default Honeycomb
+// headers and a JSON body, if v is set.
 func (c *Client) newRequest(method, path string, v interface{}) (*http.Request, error) {
 	var body io.Reader
 
@@ -55,6 +62,29 @@ func (c *Client) newRequest(method, path string, v interface{}) (*http.Request, 
 	req.Header.Add("User-Agent", userAgent)
 
 	return req, nil
+}
+
+// do a request and parse the response in v, if v is not nil. Returns an error
+// if the request failed or if the response contained a non-2xx status code.
+// ErrNotFound is returned on a 404 response.
+func (c *Client) do(req *http.Request, v interface{}) error {
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if !is2xx(resp.StatusCode) {
+		if resp.StatusCode == 404 {
+			return ErrNotFound
+		}
+		return fmt.Errorf("request failed with status code %d", resp.StatusCode)
+	}
+
+	if v != nil {
+		err = json.NewDecoder(resp.Body).Decode(v)
+	}
+	return err
 }
 
 func is2xx(status int) bool {
