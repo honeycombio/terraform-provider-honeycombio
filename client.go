@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -20,7 +21,8 @@ type Client struct {
 	dataset    string
 	httpClient *http.Client
 
-	Markers Markers
+	Markers  Markers
+	Triggers Triggers
 }
 
 // NewClient creates a new Honeycomb API client.
@@ -31,6 +33,7 @@ func NewClient(apiKey, dataset string) *Client {
 		httpClient: &http.Client{},
 	}
 	client.Markers = &markers{client: client}
+	client.Triggers = &triggers{client: client}
 
 	return client
 }
@@ -78,7 +81,12 @@ func (c *Client) do(req *http.Request, v interface{}) error {
 		if resp.StatusCode == 404 {
 			return ErrNotFound
 		}
-		return fmt.Errorf("request failed with status code %d", resp.StatusCode)
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("request failed with status code %d", resp.StatusCode)
+		}
+		return fmt.Errorf("request failed with status code %d: %s", resp.StatusCode, body)
 	}
 
 	if v != nil {

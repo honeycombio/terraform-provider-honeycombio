@@ -12,6 +12,7 @@ This is an API client for the [Honeycomb.io management APIs][honeycombio-api].
 Supported APIs:
 
 - [Markers API](https://docs.honeycomb.io/api/markers/)
+- [Triggers API](https://docs.honeycomb.io/api/triggers/)
 
 ## License
 
