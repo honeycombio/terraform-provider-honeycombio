@@ -7,7 +7,7 @@ provider "honeycombio" {
 }
 
 variable "app_version" {
-    type = string
+  type = string
 }
 
 resource "honeycombio_marker" "marker" {

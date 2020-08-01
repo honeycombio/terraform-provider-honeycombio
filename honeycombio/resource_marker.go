@@ -68,7 +68,7 @@ func resourceMarkerRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceMarkerDelete(d *schema.ResourceData, c interface{}) error {
+func resourceMarkerDelete(d *schema.ResourceData, meta interface{}) error {
 	// do nothing on destroy
 	return nil
 }
