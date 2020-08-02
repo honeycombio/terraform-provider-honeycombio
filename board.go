@@ -28,16 +28,16 @@ type boards struct {
 
 // Board represents a Honeycomb board, as described by https://docs.honeycomb.io/api/boards-api/#fields-on-a-board
 type Board struct {
-    // The generated ID of the board.  This should not be specified by the user in the creation request.
-	ID          string       `json:"id,omitempty"`
+	// The generated ID of the board.  This should not be specified by the user in the creation request.
+	ID string `json:"id,omitempty"`
 	// The (required) board's name displayed in the UI
-	Name        string       `json:"name"`
+	Name string `json:"name"`
 	// The description of the board
-	Description string       `json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 	// How the board should be displayed in the UI, either "list" (the default) or "visual"
-	Style       BoardStyle       `json:"style,omitempty"`
+	Style BoardStyle `json:"style,omitempty"`
 	// A list of queries to display on the board in order of appearance
-	Queries     []BoardQuery `json:"queries"`
+	Queries []BoardQuery `json:"queries"`
 }
 
 // BoardStyle determines how a Board should be displayed within the Honeycomb UI.
@@ -45,14 +45,14 @@ type BoardStyle string
 
 // List of available board styles.
 const (
-    BoardStyleList        BoardStyle = "visual"
-    BoardStyleVisual      BoardStyle = "list"
+	BoardStyleList   BoardStyle = "visual"
+	BoardStyleVisual BoardStyle = "list"
 )
 
 type BoardQuery struct {
-	Caption string `json:"caption,omitempty"`
-	Dataset string `json:"dataset"`
-	Query   QuerySpec  `json:"query"`
+	Caption string    `json:"caption,omitempty"`
+	Dataset string    `json:"dataset"`
+	Query   QuerySpec `json:"query"`
 }
 
 func (s *boards) List() ([]Board, error) {
@@ -87,12 +87,11 @@ func (s *boards) Create(b *Board) (*Board, error) {
 	return b, err
 }
 
-
 func (s *boards) Delete(id string) error {
-    req, err := s.client.newRequest("DELETE", fmt.Sprintf("/1/boards/%s", id), nil)
-    if err != nil {
-        return nil
-    }
+	req, err := s.client.newRequest("DELETE", fmt.Sprintf("/1/boards/%s", id), nil)
+	if err != nil {
+		return nil
+	}
 
-    return s.client.do(req, nil)
+	return s.client.do(req, nil)
 }
