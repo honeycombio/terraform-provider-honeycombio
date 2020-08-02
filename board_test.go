@@ -70,7 +70,7 @@ func TestBoards(t *testing.T) {
 
 	t.Run("Delete", func(t *testing.T) {
 		err := c.Boards.Delete(b.ID)
-		assert.Equal(t, ErrNotFound, err)
+		assert.NoError(t, err)
 	})
 
 	t.Run("Get_unexistingID", func(t *testing.T) {
