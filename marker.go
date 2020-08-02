@@ -10,17 +10,17 @@ var _ Markers = (*markers)(nil)
 // Markers describes all the markers related methods that Honeycomb supports.
 type Markers interface {
 	// List all markers present in this dataset.
-	List() ([]Marker, error)
+	List(dataset string) ([]Marker, error)
 
 	// Get a marker by its ID. Returns nil, ErrNotFound if there is no marker
 	// with the given ID.
 	//
 	// This method calls List internally since there is no API available to
 	// directly get a single marker.
-	Get(id string) (*Marker, error)
+	Get(dataset string, id string) (*Marker, error)
 
 	// Create a new marker in this dataset.
-	Create(data MarkerCreateData) (*Marker, error)
+	Create(dataset string, data MarkerCreateData) (*Marker, error)
 }
 
 // markers implements Markers.
@@ -49,8 +49,8 @@ type Marker struct {
 	Color string `json:"color,omitempty"`
 }
 
-func (s *markers) List() ([]Marker, error) {
-	req, err := s.client.newRequest("GET", "/1/markers/"+urlEncodeDataset(s.client.dataset), nil)
+func (s *markers) List(dataset string) ([]Marker, error) {
+	req, err := s.client.newRequest("GET", "/1/markers/"+urlEncodeDataset(dataset), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -60,14 +60,14 @@ func (s *markers) List() ([]Marker, error) {
 	return m, err
 }
 
-func (s *markers) Get(ID string) (*Marker, error) {
-	markers, err := s.List()
+func (s *markers) Get(dataset string, id string) (*Marker, error) {
+	markers, err := s.List(dataset)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, m := range markers {
-		if m.ID == ID {
+		if m.ID == id {
 			return &m, nil
 		}
 	}
@@ -83,8 +83,8 @@ type MarkerCreateData struct {
 	URL       string `json:"url,omitempty"`
 }
 
-func (s *markers) Create(d MarkerCreateData) (*Marker, error) {
-	req, err := s.client.newRequest("POST", "/1/markers/"+urlEncodeDataset(s.client.dataset), d)
+func (s *markers) Create(dataset string, d MarkerCreateData) (*Marker, error) {
+	req, err := s.client.newRequest("POST", "/1/markers/"+urlEncodeDataset(dataset), d)
 	if err != nil {
 		return nil, err
 	}

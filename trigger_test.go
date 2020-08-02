@@ -13,6 +13,7 @@ func TestTriggers(t *testing.T) {
 	var err error
 
 	c := newTestClient(t)
+	dataset := testDataset(t)
 
 	t.Run("Create", func(t *testing.T) {
 		filterCombinaton := FilterCombinationOr
@@ -54,7 +55,7 @@ func TestTriggers(t *testing.T) {
 				},
 			},
 		}
-		trigger, err = c.Triggers.Create(data)
+		trigger, err = c.Triggers.Create(dataset, data)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -66,7 +67,7 @@ func TestTriggers(t *testing.T) {
 	})
 
 	t.Run("List", func(t *testing.T) {
-		triggers, err := c.Triggers.List()
+		triggers, err := c.Triggers.List(dataset)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -86,7 +87,7 @@ func TestTriggers(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		getTrigger, err := c.Triggers.Get(trigger.ID)
+		getTrigger, err := c.Triggers.Get(dataset, trigger.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -95,14 +96,14 @@ func TestTriggers(t *testing.T) {
 	})
 
 	t.Run("Delete", func(t *testing.T) {
-		err = c.Triggers.Delete(trigger.ID)
+		err = c.Triggers.Delete(dataset, trigger.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
 	})
 
 	t.Run("Get_unexistingID", func(t *testing.T) {
-		_, err := c.Markers.Get(trigger.ID)
+		_, err := c.Markers.Get(dataset, trigger.ID)
 		assert.Equal(t, ErrNotFound, err)
 	})
 }

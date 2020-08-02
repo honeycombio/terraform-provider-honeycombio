@@ -13,14 +13,8 @@ func newTestClient(t *testing.T) *Client {
 		t.Fatal("expected environment variable HONEYCOMBIO_APIKEY")
 	}
 
-	dataset, ok := os.LookupEnv("HONEYCOMBIO_DATASET")
-	if !ok {
-		t.Fatal("expected environment variable HONEYCOMBIO_DATASET")
-	}
-
 	cfg := &Config{
-		APIKey:  apiKey,
-		Dataset: dataset,
+		APIKey: apiKey,
 	}
 	c, err := NewClient(cfg)
 	if err != nil {
@@ -30,25 +24,31 @@ func newTestClient(t *testing.T) *Client {
 	return c
 }
 
+func testDataset(t *testing.T) string {
+	dataset, ok := os.LookupEnv("HONEYCOMBIO_DATASET")
+	if !ok {
+		t.Fatalf("expected environment variable HONEYCOMBIO_DATASET")
+	}
+
+	return dataset
+}
+
 func TestConfig_merge(t *testing.T) {
 	config1 := &Config{
 		APIKey:    "123",
-		Dataset:   "",
-		APIUrl:    "http://localhost",
+		APIUrl:    "",
 		UserAgent: "",
 	}
 	config2 := &Config{
 		APIKey:    "",
-		Dataset:   "dataset",
-		APIUrl:    "",
-		UserAgent: "go-honeycombio",
+		APIUrl:    "http://localhost",
+		UserAgent: "",
 	}
 
 	expected := &Config{
 		APIKey:    "123",
-		Dataset:   "dataset",
 		APIUrl:    "http://localhost",
-		UserAgent: "go-honeycombio",
+		UserAgent: "",
 	}
 
 	config1.merge(config2)
@@ -58,23 +58,14 @@ func TestConfig_merge(t *testing.T) {
 
 func TestClient_invalidConfig(t *testing.T) {
 	cfg := &Config{
-		APIKey:  "",
-		Dataset: "dataset",
+		APIKey: "",
 	}
 	_, err := NewClient(cfg)
 	assert.Error(t, err, "APIKey must be configured")
 
 	cfg = &Config{
-		APIKey:  "123",
-		Dataset: "",
-	}
-	_, err = NewClient(cfg)
-	assert.Error(t, err, "Dataset must be configured")
-
-	cfg = &Config{
-		APIKey:  "123",
-		Dataset: "dataset",
-		APIUrl:  "cache_object:foo/bar",
+		APIKey: "123",
+		APIUrl: "cache_object:foo/bar",
 	}
 	_, err = NewClient(cfg)
 	assert.Error(t, err)

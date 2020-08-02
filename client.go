@@ -16,8 +16,6 @@ import (
 type Config struct {
 	// Required - the API key to use when sending request to Honeycomb.
 	APIKey string
-	// Required - the dataset to manipulate.
-	Dataset string
 	// URL of the Honeycomb API, defaults to "https://api.honeycomb.io".
 	APIUrl string
 	// User agent to send with all requests, defaults to "go-honeycombio".
@@ -27,7 +25,6 @@ type Config struct {
 func defaultConfig() *Config {
 	return &Config{
 		APIKey:    "",
-		Dataset:   "",
 		APIUrl:    "https://api.honeycomb.io",
 		UserAgent: "go-honeycombio",
 	}
@@ -37,9 +34,6 @@ func defaultConfig() *Config {
 func (c *Config) merge(other *Config) {
 	if other.APIKey != "" {
 		c.APIKey = other.APIKey
-	}
-	if other.Dataset != "" {
-		c.Dataset = other.Dataset
 	}
 	if other.APIUrl != "" {
 		c.APIUrl = other.APIUrl
@@ -52,7 +46,6 @@ func (c *Config) merge(other *Config) {
 // Client to interact with Honeycomb.
 type Client struct {
 	apiKey     string
-	dataset    string
 	apiURL     *url.URL
 	userAgent  string
 	httpClient *http.Client
@@ -70,9 +63,6 @@ func NewClient(config *Config) (*Client, error) {
 	if cfg.APIKey == "" {
 		return nil, errors.New("APIKey must be configured")
 	}
-	if cfg.Dataset == "" {
-		return nil, errors.New("Dataset must be configured")
-	}
 	apiURL, err := url.Parse(cfg.APIUrl)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse APIUrl: %w", err)
@@ -80,7 +70,6 @@ func NewClient(config *Config) (*Client, error) {
 
 	client := &Client{
 		apiKey:     cfg.APIKey,
-		dataset:    cfg.Dataset,
 		apiURL:     apiURL,
 		userAgent:  cfg.UserAgent,
 		httpClient: &http.Client{},

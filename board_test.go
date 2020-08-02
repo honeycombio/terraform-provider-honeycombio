@@ -11,6 +11,7 @@ func TestBoards(t *testing.T) {
 	var err error
 
 	c := newTestClient(t)
+	dataset := testDataset(t)
 
 	t.Run("Create", func(t *testing.T) {
 
@@ -21,7 +22,7 @@ func TestBoards(t *testing.T) {
 			Queries: []BoardQuery{
 				{
 					Caption: "A sample dataset",
-					Dataset: c.dataset,
+					Dataset: dataset,
 					Query:   QuerySpec{},
 				},
 			},

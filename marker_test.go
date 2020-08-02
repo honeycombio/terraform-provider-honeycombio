@@ -13,6 +13,7 @@ func TestMarkers(t *testing.T) {
 	var err error
 
 	c := newTestClient(t)
+	dataset := testDataset(t)
 
 	t.Run("Create", func(t *testing.T) {
 		data := MarkerCreateData{
@@ -20,7 +21,7 @@ func TestMarkers(t *testing.T) {
 			Type:    "deploys",
 			URL:     "http://example.com",
 		}
-		m, err = c.Markers.Create(data)
+		m, err = c.Markers.Create(dataset, data)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -32,7 +33,7 @@ func TestMarkers(t *testing.T) {
 	})
 
 	t.Run("List", func(t *testing.T) {
-		markers, err := c.Markers.List()
+		markers, err := c.Markers.List(dataset)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -52,7 +53,7 @@ func TestMarkers(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		marker, err := c.Markers.Get(m.ID)
+		marker, err := c.Markers.Get(dataset, m.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -61,7 +62,7 @@ func TestMarkers(t *testing.T) {
 	})
 
 	t.Run("Get_unexistingID", func(t *testing.T) {
-		_, err := c.Markers.Get("0")
+		_, err := c.Markers.Get(dataset, "0")
 		assert.Equal(t, ErrNotFound, err)
 	})
 }
