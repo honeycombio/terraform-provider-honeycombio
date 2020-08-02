@@ -16,7 +16,7 @@ func TestBoards(t *testing.T) {
 		data := &Board{
 			Name:        "Test Board",
 			Description: "A board with some queries",
-			Style:       "visual",
+			Style:       BoardStyleVisual,
 			Queries: []BoardQuery{
 				{
 					Caption: "A sample dataset",

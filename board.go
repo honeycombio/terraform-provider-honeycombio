@@ -31,10 +31,19 @@ type Board struct {
 	// The description of the board
 	Description string       `json:"description,omitempty"`
 	// How the board should be displayed in the UI, either "list" (the default) or "visual"
-	Style       string       `json:"style,omitempty"`
+	Style       BoardStyle       `json:"style,omitempty"`
 	// A list of queries to display on the board in order of appearance
 	Queries     []BoardQuery `json:"queries"`
 }
+
+// BoardStyle determines how a Board should be displayed within the Honeycomb UI.
+type BoardStyle string
+
+// List of available board styles.
+const (
+    BoardStyleList        BoardStyle = "visual"
+    BoardStyleVisual      BoardStyle = "list"
+)
 
 type BoardQuery struct {
 	Caption string `json:"caption,omitempty"`
