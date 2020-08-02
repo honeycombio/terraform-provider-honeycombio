@@ -1,5 +1,7 @@
 package honeycombio
 
+import "fmt"
+
 // Compile-time proof of interface implementation.
 var _ Boards = (*boards)(nil)
 
@@ -15,6 +17,8 @@ type Boards interface {
 	// Create a new board.
 	Create(b *Board) (*Board, error)
 
+	// Delete a board.
+	Delete(id string) error
 }
 
 // boards implements Boards.
@@ -81,4 +85,14 @@ func (s *boards) Create(b *Board) (*Board, error) {
 
 	err = s.client.do(req, &b)
 	return b, err
+}
+
+
+func (s *boards) Delete(id string) error {
+    req, err := s.client.newRequest("DELETE", fmt.Sprintf("/1/boards/%s", id), nil)
+    if err != nil {
+        return nil
+    }
+
+    return s.client.do(req, nil)
 }

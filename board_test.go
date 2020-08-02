@@ -1,7 +1,8 @@
 package honeycombio
 
 import (
-	"github.com/stretchr/testify/assert"
+    "fmt"
+    "github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -67,8 +68,14 @@ func TestBoards(t *testing.T) {
 		assert.Equal(t, *b, *board)
 	})
 
+
+    t.Run("Delete", func(t *testing.T) {
+        err := c.Boards.Delete(b.ID)
+        assert.Equal(t, ErrNotFound, err)
+    })
+
 	t.Run("Get_unexistingID", func(t *testing.T) {
-		_, err := c.Boards.Get("0")
+		_, err := c.Boards.Get(b.ID)
 		assert.Equal(t, ErrNotFound, err)
 	})
 }
