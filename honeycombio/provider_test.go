@@ -26,3 +26,7 @@ func testAccPreCheck(t *testing.T) {
 		t.Fatalf("environment variable HONEYCOMBIO_DATASET must be set to run acceptance tests")
 	}
 }
+
+func testAccDataset() string {
+	return os.Getenv("HONEYCOMBIO_DATASET")
+}

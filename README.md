@@ -30,15 +30,10 @@ Declare the provider in your Terraform configuration and run `terraform init`.
 provider "honeycombio" {
   # required, can also be set using environment variable HONEYCOMBIO_APIKEY
   api_key = "<your API key>"
-
-  # required, can also be set using environment variable HONEYCOMBIO_DATASET
-  dataset = "my-dataset"
 }
 ```
 
 Examples of resources can be found in the [examples directory](example/). Documentation can be found in the [docs directory](docs/).
-
-If you wish to manage multiple datasets, you can create multiple instances of the provider using aliases. Refer to the documentation [`alias`: Multiple Provider Instances](https://www.terraform.io/docs/configuration/providers.html#alias-multiple-provider-instances).
 
 ## License
 
