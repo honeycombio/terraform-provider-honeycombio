@@ -1,14 +1,12 @@
 provider "honeycombio" {
   # You can also set the environment variable HONEYCOMBIO_APIKEY
   api_key = "<your API key>"
-
-  # You can also set the environment variable HONEYCOMBIO_DATASET
-  dataset = "<your dataset>"
 }
 
 resource "honeycombio_trigger" "trigger" {
   name        = "Requests are slower than usuals"
   description = "Average duration of all requests for ThatSpecialTenant for the last 15 minutes."
+  dataset     = "<your dataset>"
 
   disabled = false
 

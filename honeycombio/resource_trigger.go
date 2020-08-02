@@ -22,6 +22,11 @@ func newTrigger() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"dataset": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"disabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -82,9 +87,10 @@ func newTrigger() *schema.Resource {
 func resourceTriggerCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*honeycombio.Client)
 
+	dataset := d.Get("dataset").(string)
 	t := expandTrigger(d)
 
-	t, err := client.Triggers.Create(t)
+	t, err := client.Triggers.Create(dataset, t)
 	if err != nil {
 		return err
 	}
@@ -96,7 +102,9 @@ func resourceTriggerCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceTriggerRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*honeycombio.Client)
 
-	t, err := client.Triggers.Get(d.Id())
+	dataset := d.Get("dataset").(string)
+
+	t, err := client.Triggers.Get(dataset, d.Id())
 	if err != nil {
 		if err == honeycombio.ErrNotFound {
 			d.SetId("")
@@ -142,9 +150,10 @@ func resourceTriggerRead(d *schema.ResourceData, meta interface{}) error {
 func resourceTriggerUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*honeycombio.Client)
 
+	dataset := d.Get("dataset").(string)
 	t := expandTrigger(d)
 
-	t, err := client.Triggers.Update(t)
+	t, err := client.Triggers.Update(dataset, t)
 	if err != nil {
 		return err
 	}
@@ -156,7 +165,9 @@ func resourceTriggerUpdate(d *schema.ResourceData, meta interface{}) error {
 func resourceTriggerDelete(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*honeycombio.Client)
 
-	return client.Triggers.Delete(d.Id())
+	dataset := d.Get("dataset").(string)
+
+	return client.Triggers.Delete(dataset, d.Id())
 }
 
 func expandTrigger(d *schema.ResourceData) *honeycombio.Trigger {

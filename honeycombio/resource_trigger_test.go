@@ -12,12 +12,14 @@ import (
 )
 
 func TestAccHoneycombioTrigger_basic(t *testing.T) {
+	dataset := testAccDataset()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTriggerConfig(),
+				Config: testAccTriggerConfig(dataset),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTriggerExists(t, "honeycombio_trigger.test"),
 				),
@@ -26,11 +28,12 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 	})
 }
 
-func testAccTriggerConfig() string {
-	return `
+func testAccTriggerConfig(dataset string) string {
+	return fmt.Sprintf(`
 resource "honeycombio_trigger" "test" {
-    name        = "Test trigger from terraform-provider-honeycombio"
-  
+    name    = "Test trigger from terraform-provider-honeycombio"
+    dataset = "%s"
+
     query {
       calculation {
         op     = "AVG"
@@ -63,7 +66,7 @@ resource "honeycombio_trigger" "test" {
       type   = "email"
       target = "bye@example.com"
     }
-}`
+}`, dataset)
 }
 
 func testAccCheckTriggerExists(t *testing.T, name string) resource.TestCheckFunc {
@@ -74,7 +77,7 @@ func testAccCheckTriggerExists(t *testing.T, name string) resource.TestCheckFunc
 		}
 
 		client := testAccProvider.Meta().(*honeycombio.Client)
-		createdTrigger, err := client.Triggers.Get(resourceState.Primary.ID)
+		createdTrigger, err := client.Triggers.Get(resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not find created trigger: %w", err)
 		}
