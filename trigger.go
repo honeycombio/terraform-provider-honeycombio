@@ -88,7 +88,7 @@ type TriggerRecipient struct {
 }
 
 func (s *triggers) List() ([]Trigger, error) {
-	req, err := s.client.newRequest("GET", "/1/triggers/"+s.client.dataset, nil)
+	req, err := s.client.newRequest("GET", "/1/triggers/"+urlEncodeDataset(s.client.dataset), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +99,7 @@ func (s *triggers) List() ([]Trigger, error) {
 }
 
 func (s *triggers) Get(id string) (*Trigger, error) {
-	req, err := s.client.newRequest("GET", fmt.Sprintf("/1/triggers/%s/%s", s.client.dataset, id), nil)
+	req, err := s.client.newRequest("GET", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(s.client.dataset), id), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (s *triggers) Create(data *Trigger) (*Trigger, error) {
 		return nil, errors.New("Trigger.ID must be empty when creating a trigger ")
 	}
 
-	req, err := s.client.newRequest("POST", fmt.Sprintf("/1/triggers/%s", s.client.dataset), data)
+	req, err := s.client.newRequest("POST", fmt.Sprintf("/1/triggers/%s", urlEncodeDataset(s.client.dataset)), data)
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +125,7 @@ func (s *triggers) Create(data *Trigger) (*Trigger, error) {
 }
 
 func (s *triggers) Update(data *Trigger) (*Trigger, error) {
-	req, err := s.client.newRequest("PUT", fmt.Sprintf("/1/triggers/%s/%s", s.client.dataset, data.ID), data)
+	req, err := s.client.newRequest("PUT", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(s.client.dataset), data.ID), data)
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +136,7 @@ func (s *triggers) Update(data *Trigger) (*Trigger, error) {
 }
 
 func (s *triggers) Delete(id string) error {
-	req, err := s.client.newRequest("DELETE", fmt.Sprintf("/1/triggers/%s/%s", s.client.dataset, id), nil)
+	req, err := s.client.newRequest("DELETE", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(s.client.dataset), id), nil)
 	if err != nil {
 		return nil
 	}

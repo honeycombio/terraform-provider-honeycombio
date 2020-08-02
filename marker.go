@@ -50,7 +50,7 @@ type Marker struct {
 }
 
 func (s *markers) List() ([]Marker, error) {
-	req, err := s.client.newRequest("GET", "/1/markers/"+s.client.dataset, nil)
+	req, err := s.client.newRequest("GET", "/1/markers/"+urlEncodeDataset(s.client.dataset), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ type MarkerCreateData struct {
 }
 
 func (s *markers) Create(d MarkerCreateData) (*Marker, error) {
-	req, err := s.client.newRequest("POST", "/1/markers/"+s.client.dataset, d)
+	req, err := s.client.newRequest("POST", "/1/markers/"+urlEncodeDataset(s.client.dataset), d)
 	if err != nil {
 		return nil, err
 	}

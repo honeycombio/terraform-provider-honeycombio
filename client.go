@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 // Config holds all configuration options for the client.
@@ -155,4 +156,10 @@ func (c *Client) do(req *http.Request, v interface{}) error {
 
 func is2xx(status int) bool {
 	return status >= 200 && status < 300
+}
+
+// urlEncodeDataset sanitizes the dataset name for when it is used as part of
+// the URL.
+func urlEncodeDataset(dataset string) string {
+	return strings.Replace(dataset, "/", "-", -1)
 }
