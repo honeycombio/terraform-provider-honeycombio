@@ -5,7 +5,7 @@ var _ Boards = (*boards)(nil)
 
 // Boards describes (some of) the board related methods that Honeycomb supports.
 type Boards interface {
-	// List all boards present in this dataset.
+	// List all boards.
 	List() ([]Board, error)
 
 	// Get a board by its ID. Returns nil, ErrNotFound if there is no board
