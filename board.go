@@ -33,7 +33,7 @@ type Board struct {
 type BoardQuery struct {
 	Caption string `json:"caption,omitempty"`
 	Dataset string `json:"dataset"`
-	Query   Query  `json:"query"`
+	Query   QuerySpec  `json:"query"`
 }
 
 func (s *boards) List() ([]Board, error) {

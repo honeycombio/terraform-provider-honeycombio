@@ -21,7 +21,7 @@ func TestBoards(t *testing.T) {
 				{
 					Caption: "A sample dataset",
 					Dataset: c.dataset,
-					Query:   Query{},
+					Query:   QuerySpec{},
 				},
 			},
 		}
