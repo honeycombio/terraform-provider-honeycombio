@@ -13,7 +13,7 @@ jobs:
       - uses: kvrhdn/gha-buildevents@main
         with:
           apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
+          dataset: ${{ secrets.HONEYCOMBIO_DATASET_URL_ENCODED }}
           job-status: ${{ job.status }}
 
       - uses: actions/setup-go@v2
