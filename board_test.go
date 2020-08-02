@@ -48,6 +48,7 @@ func TestBoards(t *testing.T) {
 		for _, board := range boards {
 			if board.ID == b.ID {
 				createdBoard = &board
+				break
 			}
 		}
 		if createdBoard == nil {
