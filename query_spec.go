@@ -10,6 +10,9 @@ type QuerySpec struct {
 	// If multiple filters are specified, filter_combination determines how
 	// they are applied. Set to OR to match any filter in the filter list,
 	// defaults to AND.
+	//
+	// From experience it seems the API will never answer with AND, instead
+	// always omitting the filter combination field entirely.
 	FilterCombination *FilterCombination `json:"filter_combination,omitempty"`
 	// A list of strings describing the columns by which to break events down
 	// into groups.
@@ -21,8 +24,7 @@ type QuerySpec struct {
 // CalculationSpec represents a calculation within a query.
 type CalculationSpec struct {
 	Op CalculationOp `json:"op"`
-	// Column to perform the operation on. Should not be used with COUNT, which
-	// needs no column.
+	// Column to perform the operation on. Not needed with COUNT.
 	Column *string `json:"column,omitempty"`
 }
 

@@ -15,6 +15,8 @@ func TestTriggers(t *testing.T) {
 	c := newTestClient(t)
 
 	t.Run("Create", func(t *testing.T) {
+		filterCombinaton := FilterCombinationOr
+
 		data := &Trigger{
 			Name:        fmt.Sprintf("Test trigger created at %v", time.Now()),
 			Description: "Some description",
@@ -27,8 +29,18 @@ func TestTriggers(t *testing.T) {
 						Column: &[]string{"duration_ms"}[0],
 					},
 				},
-				Filters:           nil,
-				FilterCombination: nil,
+				Filters: []FilterSpec{
+					{
+						Column: "trace.parent_id",
+						Op:     FilterOpExists,
+					},
+					{
+						Column: "github.ref",
+						Op:     FilterOpContains,
+						Value:  "main",
+					},
+				},
+				FilterCombination: &filterCombinaton,
 			},
 			Frequency: 300,
 			Threshold: &TriggerThreshold{

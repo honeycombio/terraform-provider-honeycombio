@@ -45,7 +45,9 @@ type Trigger struct {
 	// a trigger must contain exactly one item in `calculations`. The HEATMAP
 	// calculation may not be used.
 	Query *QuerySpec `json:"query,omitempty"`
-	// Frequency as an interval in seconds, defaults to 900 (15 minutes).
+	// Frequency as an interval in seconds, defaults to 900 (15 minutes). Value
+	// must be divisible by 60 and between 60 and 86400 (between 1 minute and 1
+	// day).
 	Frequency int `json:"frequency,omitempty"`
 	// Threshold, required when creating a new trigger.
 	Threshold  *TriggerThreshold  `json:"threshold,omitempty"`
