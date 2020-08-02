@@ -11,6 +11,7 @@ This is an API client for the [Honeycomb.io management APIs][honeycombio-api].
 
 Supported APIs:
 
+- [Boards API](https://docs.honeycomb.io/api/boards-api/)
 - [Markers API](https://docs.honeycomb.io/api/markers/)
 - [Triggers API](https://docs.honeycomb.io/api/triggers/)
 

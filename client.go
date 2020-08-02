@@ -21,6 +21,7 @@ type Client struct {
 	dataset    string
 	httpClient *http.Client
 
+	Boards   Boards
 	Markers  Markers
 	Triggers Triggers
 }
@@ -32,6 +33,7 @@ func NewClient(apiKey, dataset string) *Client {
 		dataset:    dataset,
 		httpClient: &http.Client{},
 	}
+	client.Boards = &boards{client: client}
 	client.Markers = &markers{client: client}
 	client.Triggers = &triggers{client: client}
 
