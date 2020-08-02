@@ -8,17 +8,52 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
-const (
-	apiURL    = "https://api.honeycomb.io"
-	userAgent = "terraform-provider-honeycombio"
-)
+// Config holds all configuration options for the client.
+type Config struct {
+	// Required - the API key to use when sending request to Honeycomb.
+	APIKey string
+	// Required - the dataset to manipulate.
+	Dataset string
+	// URL of the Honeycomb API, defaults to "https://api.honeycomb.io".
+	APIUrl string
+	// User agent to send with all requests, defaults to "go-honeycombio".
+	UserAgent string
+}
+
+func defaultConfig() *Config {
+	return &Config{
+		APIKey:    "",
+		Dataset:   "",
+		APIUrl:    "https://api.honeycomb.io",
+		UserAgent: "go-honeycombio",
+	}
+}
+
+// Merge the given config by copying all non-blank values.
+func (c *Config) merge(other *Config) {
+	if other.APIKey != "" {
+		c.APIKey = other.APIKey
+	}
+	if other.Dataset != "" {
+		c.Dataset = other.Dataset
+	}
+	if other.APIUrl != "" {
+		c.APIUrl = other.APIUrl
+	}
+	if other.UserAgent != "" {
+		c.UserAgent = other.UserAgent
+	}
+}
 
 // Client to interact with Honeycomb.
 type Client struct {
 	apiKey     string
 	dataset    string
+	apiURL     *url.URL
+	userAgent  string
 	httpClient *http.Client
 
 	Markers  Markers
@@ -26,16 +61,32 @@ type Client struct {
 }
 
 // NewClient creates a new Honeycomb API client.
-func NewClient(apiKey, dataset string) *Client {
+func NewClient(config *Config) (*Client, error) {
+	cfg := defaultConfig()
+	cfg.merge(config)
+
+	if cfg.APIKey == "" {
+		return nil, errors.New("APIKey must be configured")
+	}
+	if cfg.Dataset == "" {
+		return nil, errors.New("Dataset must be configured")
+	}
+	apiURL, err := url.Parse(cfg.APIUrl)
+	if err != nil {
+		return nil, fmt.Errorf("could not parse APIUrl: %w", err)
+	}
+
 	client := &Client{
-		apiKey:     apiKey,
-		dataset:    dataset,
+		apiKey:     cfg.APIKey,
+		dataset:    cfg.Dataset,
+		apiURL:     apiURL,
+		userAgent:  cfg.UserAgent,
 		httpClient: &http.Client{},
 	}
 	client.Markers = &markers{client: client}
 	client.Triggers = &triggers{client: client}
 
-	return client
+	return client, nil
 }
 
 // ErrNotFound means that the requested item could not be found.
@@ -55,14 +106,19 @@ func (c *Client) newRequest(method, path string, v interface{}) (*http.Request, 
 		body = buf
 	}
 
-	req, err := http.NewRequest(method, apiURL+path, body)
+	requestURL, err := c.apiURL.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(method, requestURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
 
 	req.Header.Add("X-Honeycomb-Team", c.apiKey)
 	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("User-Agent", userAgent)
+	req.Header.Add("User-Agent", c.userAgent)
 
 	return req, nil
 }
