@@ -30,27 +30,18 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 
 func testAccTriggerConfig(dataset string) string {
 	return fmt.Sprintf(`
+data "honeycombio_query" "test" {
+    calculation {
+        op     = "AVG"
+        column = "duration_ms"
+    }
+}
+
 resource "honeycombio_trigger" "test" {
     name    = "Test trigger from terraform-provider-honeycombio"
     dataset = "%s"
 
-    query {
-      calculation {
-        op     = "AVG"
-        column = "duration_ms"
-      }
-  
-      filter {
-        column = "trace.parent_id"
-        op     = "does-not-exist"
-      }
-  
-      filter {
-        column = "app.tenant"
-        op     = "="
-        value  = "ThatSpecialTenant"
-      }
-    }
+    query = data.honeycombio_query.test.rendered
   
     threshold {
       op    = ">"
@@ -92,18 +83,6 @@ func testAccCheckTriggerExists(t *testing.T, name string) resource.TestCheckFunc
 					{
 						Op:     honeycombio.CalculateOpAvg,
 						Column: &[]string{"duration_ms"}[0],
-					},
-				},
-				Filters: []honeycombio.FilterSpec{
-					{
-						Column: "trace.parent_id",
-						Op:     honeycombio.FilterOpDoesNotExist,
-						Value:  "",
-					},
-					{
-						Column: "app.tenant",
-						Op:     honeycombio.FilterOpEquals,
-						Value:  "ThatSpecialTenant",
 					},
 				},
 			},

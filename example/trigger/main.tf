@@ -3,6 +3,28 @@ provider "honeycombio" {
   api_key = "<your API key>"
 }
 
+data "honeycombio_query" "query" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  filter {
+    column = "trace.parent_id"
+    op     = "does-not-exist"
+  }
+
+  filter {
+    column = "app.tenant"
+    op     = "="
+    value  = "ThatSpecialTenant"
+  }
+
+  filter_combination = "AND"
+
+  # also supported: breakdowns
+}
+
 resource "honeycombio_trigger" "trigger" {
   name        = "Requests are slower than usuals"
   description = "Average duration of all requests for ThatSpecialTenant for the last 15 minutes."
@@ -10,30 +32,7 @@ resource "honeycombio_trigger" "trigger" {
 
   disabled = false
 
-  query {
-    # exactly one calculation is required
-    calculation {
-      op     = "AVG"
-      column = "duration_ms"
-    }
-
-    # zero or more filter blocks
-    filter {
-      column = "trace.parent_id"
-      op     = "does-not-exist"
-    }
-
-    filter {
-      column = "app.tenant"
-      op     = "="
-      value  = "ThatSpecialTenant"
-    }
-
-    # this can be ommited, AND is the default
-    filter_combination = "AND"
-
-    # also supported: breakdowns
-  }
+  query = data.honeycombio_query.query.rendered
 
   frequency = 900 // in seconds, 15 minutes
 

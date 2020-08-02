@@ -1,6 +1,8 @@
 package honeycombio
 
 import (
+	"encoding/json"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	honeycombio "github.com/kvrhdn/go-honeycombio"
@@ -31,9 +33,10 @@ func newTrigger() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"query": createQuerySpecSchema(&querySpecConstraints{
-				calculationCount: 1,
-			}),
+			"query": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
 			"threshold": {
 				Type:     schema.TypeSet,
 				Required: true,
@@ -88,9 +91,12 @@ func resourceTriggerCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
-	t := expandTrigger(d)
+	t, err := expandTrigger(d)
+	if err != nil {
+		return err
+	}
 
-	t, err := client.Triggers.Create(dataset, t)
+	t, err = client.Triggers.Create(dataset, t)
 	if err != nil {
 		return err
 	}
@@ -125,11 +131,12 @@ func resourceTriggerRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("description", t.Description)
 	d.Set("disabled", t.Disabled)
 
-	// TODO the diffs don't work well - it wants to replace the entire query block
-	err = d.Set("query", flattenQuerySpec(t.Query))
+	encodedQuery, err := encodeQuery(t.Query)
 	if err != nil {
 		return err
 	}
+
+	d.Set("query", encodedQuery)
 
 	// TODO the diffs don't work well - it wants to replace the entire threshold block
 	err = d.Set("threshold", flattenTriggerThreshold(t.Threshold))
@@ -151,9 +158,12 @@ func resourceTriggerUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
-	t := expandTrigger(d)
+	t, err := expandTrigger(d)
+	if err != nil {
+		return err
+	}
 
-	t, err := client.Triggers.Update(dataset, t)
+	t, err = client.Triggers.Update(dataset, t)
 	if err != nil {
 		return err
 	}
@@ -170,18 +180,25 @@ func resourceTriggerDelete(d *schema.ResourceData, meta interface{}) error {
 	return client.Triggers.Delete(dataset, d.Id())
 }
 
-func expandTrigger(d *schema.ResourceData) *honeycombio.Trigger {
+func expandTrigger(d *schema.ResourceData) (*honeycombio.Trigger, error) {
+	var query honeycombio.QuerySpec
+
+	err := json.Unmarshal([]byte(d.Get("query").(string)), &query)
+	if err != nil {
+		return nil, err
+	}
+
 	trigger := &honeycombio.Trigger{
 		ID:          d.Id(),
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		Disabled:    d.Get("disabled").(bool),
-		Query:       expandQuerySpec(d.Get("query").(*schema.Set)),
+		Query:       &query,
 		Threshold:   expandTriggerThreshold(d.Get("threshold").(*schema.Set)),
 		Frequency:   d.Get("frequency").(int),
 		Recipients:  expandTriggerRecipients(d.Get("recipient").(*schema.Set)),
 	}
-	return trigger
+	return trigger, nil
 }
 
 func expandTriggerThreshold(s *schema.Set) *honeycombio.TriggerThreshold {
