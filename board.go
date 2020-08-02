@@ -13,7 +13,7 @@ type Boards interface {
 	Get(id string) (*Board, error)
 
 	// Create a new board.
-	Create(data Board) (*Board, error)
+	Create(b *Board) (*Board, error)
 }
 
 // boards implements Boards.
@@ -58,12 +58,12 @@ func (s *boards) Get(ID string) (*Board, error) {
 	return &b, err
 }
 
-func (s *boards) Create(b Board) (*Board, error) {
+func (s *boards) Create(b *Board) (*Board, error) {
 	req, err := s.client.newRequest("POST", "/1/boards", b)
 	if err != nil {
 		return nil, err
 	}
 
 	err = s.client.do(req, &b)
-	return &b, err
+	return b, err
 }

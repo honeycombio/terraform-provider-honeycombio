@@ -13,7 +13,7 @@ func TestBoards(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 
-		data := Board{
+		data := &Board{
 			Name:        "Test Board",
 			Description: "A board with some queries",
 			Style:       "visual",
