@@ -24,10 +24,15 @@ type boards struct {
 
 // Board represents a Honeycomb board, as described by https://docs.honeycomb.io/api/boards-api/#fields-on-a-board
 type Board struct {
+    // The generated ID of the board.  This should not be specified by the user in the creation request.
 	ID          string       `json:"id,omitempty"`
+	// The (required) board's name displayed in the UI
 	Name        string       `json:"name"`
+	// The description of the board
 	Description string       `json:"description,omitempty"`
-	Style       string       `json:"style"`
+	// How the board should be displayed in the UI, either "list" (the default) or "visual"
+	Style       string       `json:"style,omitempty"`
+	// A list of queries to display on the board in order of appearance
 	Queries     []BoardQuery `json:"queries"`
 }
 
