@@ -20,7 +20,8 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"honeycombio_marker": newMarker(),
+			"honeycombio_marker":  newMarker(),
+			"honeycombio_trigger": newTrigger(),
 		},
 		ConfigureFunc: Configure,
 	}
