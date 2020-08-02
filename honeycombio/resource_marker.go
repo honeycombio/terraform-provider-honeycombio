@@ -28,6 +28,11 @@ func newMarker() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+			"dataset": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 		},
 	}
 }
@@ -35,12 +40,14 @@ func newMarker() *schema.Resource {
 func resourceMarkerCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*honeycombio.Client)
 
+	dataset := d.Get("dataset").(string)
+
 	data := honeycombio.MarkerCreateData{
 		Message: d.Get("message").(string),
 		Type:    d.Get("type").(string),
 		URL:     d.Get("url").(string),
 	}
-	marker, err := client.Markers.Create(data)
+	marker, err := client.Markers.Create(dataset, data)
 	if err != nil {
 		return err
 	}
@@ -52,7 +59,7 @@ func resourceMarkerCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceMarkerRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*honeycombio.Client)
 
-	marker, err := client.Markers.Get(d.Id())
+	marker, err := client.Markers.Get(d.Get("dataset").(string), d.Id())
 	if err != nil {
 		if err == honeycombio.ErrNotFound {
 			d.SetId("")
