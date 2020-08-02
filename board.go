@@ -3,7 +3,7 @@ package honeycombio
 // Compile-time proof of interface implementation.
 var _ Boards = (*boards)(nil)
 
-// Boards describes all the boards related methods that Honeycomb supports.
+// Boards describes (some of) the board related methods that Honeycomb supports.
 type Boards interface {
 	// List all boards present in this dataset.
 	List() ([]Board, error)
@@ -14,6 +14,7 @@ type Boards interface {
 
 	// Create a new board.
 	Create(b *Board) (*Board, error)
+
 }
 
 // boards implements Boards.
