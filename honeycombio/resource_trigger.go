@@ -38,7 +38,7 @@ func newTrigger() *schema.Resource {
 				Required: true,
 			},
 			"threshold": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Required: true,
 				MinItems: 1,
 				MaxItems: 1,
@@ -66,7 +66,7 @@ func newTrigger() *schema.Resource {
 				),
 			},
 			"recipient": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -194,15 +194,15 @@ func expandTrigger(d *schema.ResourceData) (*honeycombio.Trigger, error) {
 		Description: d.Get("description").(string),
 		Disabled:    d.Get("disabled").(bool),
 		Query:       &query,
-		Threshold:   expandTriggerThreshold(d.Get("threshold").(*schema.Set)),
+		Threshold:   expandTriggerThreshold(d.Get("threshold").([]interface{})),
 		Frequency:   d.Get("frequency").(int),
-		Recipients:  expandTriggerRecipients(d.Get("recipient").(*schema.Set)),
+		Recipients:  expandTriggerRecipients(d.Get("recipient").([]interface{})),
 	}
 	return trigger, nil
 }
 
-func expandTriggerThreshold(s *schema.Set) *honeycombio.TriggerThreshold {
-	d := s.List()[0].(map[string]interface{})
+func expandTriggerThreshold(s []interface{}) *honeycombio.TriggerThreshold {
+	d := s[0].(map[string]interface{})
 
 	value := d["value"].(float64)
 
@@ -212,11 +212,10 @@ func expandTriggerThreshold(s *schema.Set) *honeycombio.TriggerThreshold {
 	}
 }
 
-func expandTriggerRecipients(s *schema.Set) []honeycombio.TriggerRecipient {
-	rs := s.List()
-	triggerRecipients := make([]honeycombio.TriggerRecipient, len(rs))
+func expandTriggerRecipients(s []interface{}) []honeycombio.TriggerRecipient {
+	triggerRecipients := make([]honeycombio.TriggerRecipient, len(s))
 
-	for i, r := range rs {
+	for i, r := range s {
 		rMap := r.(map[string]interface{})
 
 		triggerRecipients[i] = honeycombio.TriggerRecipient{
