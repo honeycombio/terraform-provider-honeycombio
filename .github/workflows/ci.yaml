@@ -43,7 +43,7 @@ jobs:
       - uses: kvrhdn/gha-buildevents@main
         with:
           apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ env.HONEYCOMBIO_DATASET }}
+          dataset: ${{ secrets.HONEYCOMBIO_DATASET_URL_ENCODED }}
           job-status: ${{ job.status }}
 
       - uses: actions/setup-go@v2
@@ -54,6 +54,11 @@ jobs:
 
       - name: Check formatting
         run: |
+          # install goimports from another directory to not touch go.mod
+          pushd ../
+          go get golang.org/x/tools/cmd/goimports
+          popd
+
           goimports -l -w .
           go mod tidy
 
