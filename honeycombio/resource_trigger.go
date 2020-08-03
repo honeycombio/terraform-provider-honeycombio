@@ -33,7 +33,7 @@ func newTrigger() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"query": {
+			"query_json": {
 				Type:     schema.TypeString,
 				Required: true,
 			},
@@ -135,10 +135,8 @@ func resourceTriggerRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
+	d.Set("query_json", encodedQuery)
 
-	d.Set("query", encodedQuery)
-
-	// TODO the diffs don't work well - it wants to replace the entire threshold block
 	err = d.Set("threshold", flattenTriggerThreshold(t.Threshold))
 	if err != nil {
 		return err
@@ -183,7 +181,7 @@ func resourceTriggerDelete(d *schema.ResourceData, meta interface{}) error {
 func expandTrigger(d *schema.ResourceData) (*honeycombio.Trigger, error) {
 	var query honeycombio.QuerySpec
 
-	err := json.Unmarshal([]byte(d.Get("query").(string)), &query)
+	err := json.Unmarshal([]byte(d.Get("query_json").(string)), &query)
 	if err != nil {
 		return nil, err
 	}

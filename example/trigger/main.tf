@@ -32,7 +32,7 @@ resource "honeycombio_trigger" "trigger" {
 
   disabled = false
 
-  query = data.honeycombio_query.query.rendered
+  query_json = data.honeycombio_query.query.json
 
   frequency = 900 // in seconds, 15 minutes
 

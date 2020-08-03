@@ -44,16 +44,16 @@ data "honeycombio_query" "test" {
     }
 }
 
-output "rendered" {
-    value = data.honeycombio_query.test.rendered
+output "query_json" {
+    value = data.honeycombio_query.test.json
 }`
 }
 
 func testAccCheckQueryExists(t *testing.T) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		rendered, ok := s.RootModule().Outputs["rendered"]
+		rendered, ok := s.RootModule().Outputs["query_json"]
 		if !ok {
-			return errors.New("did not find output.rendered")
+			return errors.New("did not find output.query_json")
 		}
 
 		expectedRendered := `{

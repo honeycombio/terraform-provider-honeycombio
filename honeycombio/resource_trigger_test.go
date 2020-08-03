@@ -41,7 +41,7 @@ resource "honeycombio_trigger" "test" {
     name    = "Test trigger from terraform-provider-honeycombio"
     dataset = "%s"
 
-    query = data.honeycombio_query.test.rendered
+    query_json = data.honeycombio_query.test.json
   
     threshold {
       op    = ">"

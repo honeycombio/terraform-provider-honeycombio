@@ -101,7 +101,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"rendered": {
+			"json": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -158,7 +158,7 @@ func dataSourceHoneycombioQueryRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	d.Set("rendered", jsonQuery)
+	d.Set("json", jsonQuery)
 	d.SetId(strconv.Itoa(hashcode.String(jsonQuery)))
 
 	return nil
