@@ -45,8 +45,8 @@ type BoardStyle string
 
 // List of available board styles.
 const (
-	BoardStyleList   BoardStyle = "visual"
-	BoardStyleVisual BoardStyle = "list"
+	BoardStyleList   BoardStyle = "list"
+	BoardStyleVisual BoardStyle = "visual"
 )
 
 type BoardQuery struct {
