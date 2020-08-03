@@ -63,8 +63,15 @@ jobs:
           popd
 
           goimports -l -w .
+
+          if ! git diff --quiet; then
+            echo Running goimports has caused changes, please run go fmt
+            exit 1
+          fi
+
           go mod tidy
 
           if ! git diff --quiet; then
+            echo 'go mod tidy' has caused changes, please run go mod tidy
             exit 1
           fi
