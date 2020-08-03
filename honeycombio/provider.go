@@ -14,8 +14,12 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("HONEYCOMBIO_APIKEY", nil),
 			},
 		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"honeycombio_query": dataSourceHoneycombioQuery(),
+		},
 		ResourcesMap: map[string]*schema.Resource{
-			"honeycombio_marker": newMarker(),
+			"honeycombio_marker":  newMarker(),
+			"honeycombio_trigger": newTrigger(),
 		},
 		ConfigureFunc: Configure,
 	}

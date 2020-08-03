@@ -1,4 +1,4 @@
-# Marker Resource
+# Resource: honeycombio_marker
 
 Creates a marker. For more information about markers, check out [Annotate the timeline with Markers](https://docs.honeycomb.io/working-with-your-data/customizing-your-query/markers/).
 
