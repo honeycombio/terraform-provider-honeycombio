@@ -57,6 +57,11 @@ jobs:
 
       - name: Check formatting
         run: |
+          # install goimports from another directory to not touch go.mod
+          pushd ../
+          go get golang.org/x/tools/cmd/goimports
+          popd
+
           goimports -l -w .
           go mod tidy
 
