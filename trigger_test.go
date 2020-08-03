@@ -122,6 +122,6 @@ func TestTriggers(t *testing.T) {
 		}
 
 		_, err := c.Triggers.Create(dataset, &invalidTrigger)
-		assert.Equal(t, errors.New("request failed with status code 422: {\"error\":\"trigger query requires exactly one calculation\"}\n"), err)
+		assert.Equal(t, errors.New("request failed (422): trigger query requires exactly one calculation"), err)
 	})
 }

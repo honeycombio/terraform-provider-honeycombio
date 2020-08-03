@@ -130,11 +130,11 @@ func (c *Client) do(req *http.Request, v interface{}) error {
 			return ErrNotFound
 		}
 
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return fmt.Errorf("request failed with status code %d", resp.StatusCode)
+		errorMsg := attemptToExtractHoneycombioError(resp.Body)
+		if errorMsg == "" {
+			return fmt.Errorf("request failed (%d)", resp.StatusCode)
 		}
-		return fmt.Errorf("request failed with status code %d: %s", resp.StatusCode, body)
+		return fmt.Errorf("request failed (%d): %s", resp.StatusCode, errorMsg)
 	}
 
 	if v != nil {
@@ -145,6 +145,26 @@ func (c *Client) do(req *http.Request, v interface{}) error {
 
 func is2xx(status int) bool {
 	return status >= 200 && status < 300
+}
+
+type honeycombioError struct {
+	ErrorMessage string `json:"error"`
+}
+
+func attemptToExtractHoneycombioError(bodyReader io.Reader) string {
+	body, err := ioutil.ReadAll(bodyReader)
+	if err != nil {
+		return ""
+	}
+
+	var honeycombioErr honeycombioError
+
+	err = json.Unmarshal(body, &honeycombioErr)
+	if err != nil || honeycombioErr.ErrorMessage == "" {
+		return string(body)
+	}
+
+	return honeycombioErr.ErrorMessage
 }
 
 // urlEncodeDataset sanitizes the dataset name for when it is used as part of
