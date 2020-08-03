@@ -37,3 +37,29 @@ jobs:
       - uses: codecov/codecov-action@v1
         with:
           file: ./coverage.txt
+
+  fmt:
+    name: Formatting
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: kvrhdn/gha-buildevents@main
+        with:
+          apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
+          dataset: ${{ env.HONEYCOMBIO_DATASET }}
+          job-status: ${{ job.status }}
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ^1.14
+
+      - uses: actions/checkout@v2
+
+      - name: Check formatting
+        run: |
+          goimports -l -w .
+          go mod tidy
+
+          if ! git diff --quiet; then
+            exit 1
+          fi
