@@ -1,7 +1,6 @@
 package honeycombio
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 	"testing"
@@ -9,59 +8,38 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	honeycombio "github.com/kvrhdn/go-honeycombio"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAccHoneycombioTrigger_basic(t *testing.T) {
+	var triggerBefore, triggerAfter honeycombio.Trigger
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:      func() { testAccPreCheck(t) },
+		IDRefreshName: "honeycombio_trigger.test",
+		Providers:     testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTriggerConfig(dataset),
+				Config: testAccTriggerConfigWithFrequency(dataset, 900),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckTriggerExists(t, "honeycombio_trigger.test"),
+					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerBefore),
+					testAccCheckTriggerAttributes(&triggerBefore),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
+				),
+			},
+			{
+				Config: testAccTriggerConfigWithFrequency(dataset, 300),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerAfter),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "300"),
 				),
 			},
 		},
 	})
 }
 
-func testAccTriggerConfig(dataset string) string {
-	return fmt.Sprintf(`
-data "honeycombio_query" "test" {
-  calculation {
-    op     = "AVG"
-    column = "duration_ms"
-  }
-}
-
-resource "honeycombio_trigger" "test" {
-  name    = "Test trigger from terraform-provider-honeycombio"
-  dataset = "%s"
-
-  query_json = data.honeycombio_query.test.json
-  
-  threshold {
-    op    = ">"
-    value = 100
-  }
-  
-  recipient {
-    type   = "email"
-    target = "hello@example.com"
-  }
-  
-  recipient {
-    type   = "email"
-    target = "bye@example.com"
-  }
-}`, dataset)
-}
-
-func testAccCheckTriggerExists(t *testing.T, name string) resource.TestCheckFunc {
+func testAccCheckTriggerExists(t *testing.T, name string, trigger *honeycombio.Trigger) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -74,40 +52,21 @@ func testAccCheckTriggerExists(t *testing.T, name string) resource.TestCheckFunc
 			return fmt.Errorf("could not find created trigger: %w", err)
 		}
 
-		expectedTrigger := &honeycombio.Trigger{
-			ID:          createdTrigger.ID,
-			Name:        "Test trigger from terraform-provider-honeycombio",
-			Description: "",
-			Disabled:    false,
-			Query: &honeycombio.QuerySpec{
-				Calculations: []honeycombio.CalculationSpec{
-					{
-						Op:     honeycombio.CalculateOpAvg,
-						Column: &[]string{"duration_ms"}[0],
-					},
-				},
-			},
-			Frequency: 900,
-			Threshold: &honeycombio.TriggerThreshold{
-				Op:    honeycombio.TriggerThresholdOpGreaterThan,
-				Value: &[]float64{100}[0],
-			},
-			Recipients: []honeycombio.TriggerRecipient{
-				{
-					Type:   "email",
-					Target: "hello@example.com",
-				},
-				{
-					Type:   "email",
-					Target: "bye@example.com",
-				},
-			},
+		*trigger = *createdTrigger
+		return nil
+	}
+}
+
+func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if t.Name != "Test trigger from terraform-provider-honeycombio" {
+			return fmt.Errorf("Bad name: %s", t.Name)
 		}
 
-		ok = assert.Equal(t, expectedTrigger, createdTrigger)
-		if !ok {
-			return errors.New("created trigger did not match expected trigger")
+		if t.Frequency != 900 {
+			return fmt.Errorf("Bad frequency: %d", t.Frequency)
 		}
+
 		return nil
 	}
 }
@@ -139,6 +98,40 @@ func TestAccHoneycombioTrigger_validationErrors(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccTriggerConfigWithFrequency(dataset string, frequency int) string {
+	return fmt.Sprintf(`
+data "honeycombio_query" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger from terraform-provider-honeycombio"
+  dataset = "%s"
+
+  query_json = data.honeycombio_query.test.json
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = %d
+
+  recipient {
+    type   = "email"
+    target = "hello@example.com"
+  }
+
+  recipient {
+    type   = "email"
+    target = "bye@example.com"
+  }
+}`, dataset, frequency)
 }
 
 func testAccTriggerConfigWithQuery(dataset, query string) string {
