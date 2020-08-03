@@ -1,12 +1,9 @@
 package honeycombio
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
@@ -17,7 +14,7 @@ func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
 			{
 				Config: testAccQueryConfig(),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckQueryExists(t),
+					resource.TestCheckOutput("query_json", expectedJSON),
 				),
 			},
 		},
@@ -49,14 +46,7 @@ output "query_json" {
 }`
 }
 
-func testAccCheckQueryExists(t *testing.T) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rendered, ok := s.RootModule().Outputs["query_json"]
-		if !ok {
-			return errors.New("did not find output.query_json")
-		}
-
-		expectedRendered := `{
+const expectedJSON string = `{
   "calculations": [
     {
       "op": "AVG",
@@ -77,12 +67,3 @@ func testAccCheckQueryExists(t *testing.T) resource.TestCheckFunc {
   ],
   "filter_combination": "AND"
 }`
-
-		ok = assert.Equal(t, expectedRendered, rendered.Value.(string))
-		if !ok {
-			return errors.New("rendered query did not match expected query")
-		}
-
-		return nil
-	}
-}
