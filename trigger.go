@@ -22,7 +22,7 @@ type Triggers interface {
 
 	// Update an existing trigger. Missing (optional) fields will set to their
 	// respective defaults and not the currently existing values. Except for
-	// the disabled flag, which will retain its existing value when ommited.
+	// the disabled flag, which will retain its existing value when omitted.
 	Update(dataset string, t *Trigger) (*Trigger, error)
 
 	// Delete a trigger from the dataset.
@@ -60,7 +60,7 @@ type TriggerThreshold struct {
 	Value *float64           `json:"value"`
 }
 
-// TriggerThresholdOp the operation within a trigger threshold.
+// TriggerThresholdOp the operator of the trigger threshold.
 type TriggerThresholdOp string
 
 // List of available trigger op types.

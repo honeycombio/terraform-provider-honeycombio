@@ -49,6 +49,7 @@ const (
 	BoardStyleVisual BoardStyle = "visual"
 )
 
+// BoardQuery represents are query that is part of a board.
 type BoardQuery struct {
 	Caption string    `json:"caption,omitempty"`
 	Dataset string    `json:"dataset"`
