@@ -29,4 +29,8 @@ jobs:
         env:
           HONEYCOMBIO_APIKEY: ${{ secrets.HONEYCOMBIO_APIKEY }}
           HONEYCOMBIO_DATASET: ${{ secrets.HONEYCOMBIO_DATASET }}
-        run: go test -v .
+        run: go test -v -coverprofile=coverage.txt -covermode=atomic ./...
+
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.txt
