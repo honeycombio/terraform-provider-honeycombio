@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -103,7 +104,24 @@ func TestTriggers(t *testing.T) {
 	})
 
 	t.Run("Get_unexistingID", func(t *testing.T) {
-		_, err := c.Markers.Get(dataset, trigger.ID)
+		_, err := c.Triggers.Get(dataset, trigger.ID)
 		assert.Equal(t, ErrNotFound, err)
+	})
+
+	t.Run("Create_invalid", func(t *testing.T) {
+		invalidTrigger := *trigger
+		invalidTrigger.ID = ""
+		invalidTrigger.Query.Calculations = []CalculationSpec{
+			{
+				Op: "COUNT",
+			},
+			{
+				Op:     "AVG",
+				Column: &[]string{"duration_ms"}[0],
+			},
+		}
+
+		_, err := c.Triggers.Create(dataset, &invalidTrigger)
+		assert.Equal(t, errors.New("request failed with status code 422: {\"error\":\"trigger query requires exactly one calculation\"}\n"), err)
 	})
 }
