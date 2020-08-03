@@ -1,6 +1,8 @@
 # Honeycomb.io Terraform Provider
 
 ![CI](https://github.com/kvrhdn/terraform-provider-honeycombio/workflows/CI/badge.svg)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kvrhdn/terraform-provider-honeycombio)](https://goreportcard.com/report/github.com/kvrhdn/terraform-provider-honeycombio)
+[![codecov](https://codecov.io/gh/kvrhdn/terraform-provider-honeycombio/branch/main/graph/badge.svg)](https://codecov.io/gh/kvrhdn/terraform-provider-honeycombio)
 
 _This is not an official Honeycomb.io provider!_
 
