@@ -3,6 +3,7 @@ package honeycombio
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -31,32 +32,32 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 func testAccTriggerConfig(dataset string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query" "test" {
-    calculation {
-        op     = "AVG"
-        column = "duration_ms"
-    }
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
 }
 
 resource "honeycombio_trigger" "test" {
-    name    = "Test trigger from terraform-provider-honeycombio"
-    dataset = "%s"
+  name    = "Test trigger from terraform-provider-honeycombio"
+  dataset = "%s"
 
-    query_json = data.honeycombio_query.test.json
+  query_json = data.honeycombio_query.test.json
   
-    threshold {
-      op    = ">"
-      value = 100
-    }
+  threshold {
+    op    = ">"
+    value = 100
+  }
   
-    recipient {
-      type   = "email"
-      target = "hello@example.com"
-    }
+  recipient {
+    type   = "email"
+    target = "hello@example.com"
+  }
   
-    recipient {
-      type   = "email"
-      target = "bye@example.com"
-    }
+  recipient {
+    type   = "email"
+    target = "bye@example.com"
+  }
 }`, dataset)
 }
 
@@ -109,4 +110,50 @@ func testAccCheckTriggerExists(t *testing.T, name string) resource.TestCheckFunc
 		}
 		return nil
 	}
+}
+
+func TestAccHoneycombioTrigger_validationErrors(t *testing.T) {
+	dataset := testAccDataset()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccTriggerConfigWithQuery(dataset, `{]`),
+				ExpectError: regexp.MustCompile("Value of query_json is not a valid query specification"),
+			},
+			{
+				Config:      testAccTriggerConfigWithQuery(dataset, `{"calculations":"bar"}`),
+				ExpectError: regexp.MustCompile("Value of query_json is not a valid query specification"),
+			},
+			{
+				Config: testAccTriggerConfigWithQuery(dataset, `
+{
+    "calculations": [
+        {"op": "COUNT"},
+        {"op": "AVG", "column": "duration_ms"}
+    ]
+}`),
+				ExpectError: regexp.MustCompile("Query of a trigger must have exactly one calculation"),
+			},
+		},
+	})
+}
+
+func testAccTriggerConfigWithQuery(dataset, query string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger from terraform-provider-honeycombio"
+  dataset = "%s"
+
+  query_json = <<EOF
+%s
+EOF
+    
+  threshold {
+    op    = ">"
+    value = 100
+  }
+}`, dataset, query)
 }

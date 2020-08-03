@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -36,6 +37,19 @@ func newTrigger() *schema.Resource {
 			"query_json": {
 				Type:     schema.TypeString,
 				Required: true,
+				ValidateFunc: func(i interface{}, k string) (warnings []string, errs []error) {
+					var q honeycombio.QuerySpec
+
+					err := json.Unmarshal([]byte(i.(string)), &q)
+					if err != nil {
+						return nil, []error{errors.New("Value of query_json is not a valid query specification")}
+					}
+
+					if len(q.Calculations) != 1 {
+						return nil, []error{errors.New("Query of a trigger must have exactly one calculation")}
+					}
+					return nil, nil
+				},
 			},
 			"threshold": {
 				Type:     schema.TypeList,
