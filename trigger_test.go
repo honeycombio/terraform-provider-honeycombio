@@ -33,13 +33,13 @@ func TestTriggers(t *testing.T) {
 				},
 				Filters: []FilterSpec{
 					{
-						Column: "trace.parent_id",
+						Column: "column_1",
 						Op:     FilterOpExists,
 					},
 					{
-						Column: "github.ref",
+						Column: "column_2",
 						Op:     FilterOpContains,
-						Value:  "main",
+						Value:  "foobar",
 					},
 				},
 				FilterCombination: &filterCombinaton,
