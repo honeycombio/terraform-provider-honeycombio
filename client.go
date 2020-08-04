@@ -82,7 +82,7 @@ func NewClient(config *Config) (*Client, error) {
 }
 
 // ErrNotFound means that the requested item could not be found.
-var ErrNotFound = errors.New("request failed with status code 404")
+var ErrNotFound = errors.New("404 Not Found")
 
 // newRequest prepares a request to the Honeycomb API with the default Honeycomb
 // headers and a JSON body, if v is set.
