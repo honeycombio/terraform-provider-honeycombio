@@ -145,6 +145,6 @@ func TestTriggers(t *testing.T) {
 		}
 
 		_, err := c.Triggers.Create(dataset, &invalidTrigger)
-		assert.Equal(t, errors.New("request failed (422): trigger query requires exactly one calculation"), err)
+		assert.Equal(t, errors.New("422 Unprocessable Entity: trigger query requires exactly one calculation"), err)
 	})
 }

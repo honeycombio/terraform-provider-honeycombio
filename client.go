@@ -132,9 +132,9 @@ func (c *Client) do(req *http.Request, v interface{}) error {
 
 		errorMsg := attemptToExtractHoneycombioError(resp.Body)
 		if errorMsg == "" {
-			return fmt.Errorf("request failed (%d)", resp.StatusCode)
+			return fmt.Errorf("%s", resp.Status)
 		}
-		return fmt.Errorf("request failed (%d): %s", resp.StatusCode, errorMsg)
+		return fmt.Errorf("%s: %s", resp.Status, errorMsg)
 	}
 
 	if v != nil {
