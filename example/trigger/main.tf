@@ -48,7 +48,7 @@ resource "honeycombio_trigger" "trigger" {
   }
 
   recipient {
-    type   = "email"
-    target = "bye@example.com"
+    type   = "marker"
+    target = "Trigger - slow requests" # name of the marker
   }
 }
