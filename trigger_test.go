@@ -96,6 +96,20 @@ func TestTriggers(t *testing.T) {
 		assert.Equal(t, *trigger, *createdTrigger)
 	})
 
+	t.Run("Update", func(t *testing.T) {
+		newTrigger := *trigger
+		newTrigger.Disabled = true
+
+		updatedTrigger, err := c.Triggers.Update(dataset, trigger)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, newTrigger, *updatedTrigger)
+
+		trigger = updatedTrigger
+	})
+
 	t.Run("Get", func(t *testing.T) {
 		getTrigger, err := c.Triggers.Get(dataset, trigger.ID)
 		if err != nil {
