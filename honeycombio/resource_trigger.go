@@ -84,11 +84,15 @@ func newTrigger() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"type": {
+						"id": {
 							Type:     schema.TypeString,
-							Required: true,
-							// TODO there are more valid recipient types
-							ValidateFunc: validation.StringInSlice([]string{"email", "pagerduty"}, false),
+							Optional: true,
+							Computed: true,
+						},
+						"type": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice(validTriggerRecipientTypes, false),
 						},
 						"target": {
 							Type:     schema.TypeString,
@@ -100,6 +104,8 @@ func newTrigger() *schema.Resource {
 		},
 	}
 }
+
+var validTriggerRecipientTypes []string = []string{"email", "marker", "pagerduty", "slack"}
 
 func resourceTriggerCreate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*honeycombio.Client)
@@ -231,7 +237,8 @@ func expandTriggerRecipients(s []interface{}) []honeycombio.TriggerRecipient {
 		rMap := r.(map[string]interface{})
 
 		triggerRecipients[i] = honeycombio.TriggerRecipient{
-			Type:   rMap["type"].(string),
+			ID:     rMap["id"].(string),
+			Type:   honeycombio.TriggerRecipientType(rMap["type"].(string)),
 			Target: rMap["target"].(string),
 		}
 	}
@@ -253,7 +260,8 @@ func flattenTriggerRecipients(rs []honeycombio.TriggerRecipient) []map[string]in
 
 	for i, r := range rs {
 		result[i] = map[string]interface{}{
-			"type":   r.Type,
+			"id":     r.ID,
+			"type":   string(r.Type),
 			"target": r.Target,
 		}
 	}

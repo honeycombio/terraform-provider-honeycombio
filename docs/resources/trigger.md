@@ -68,8 +68,18 @@ Each trigger configuration must contain exactly one `threshold` block, which acc
 
 Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments:
 
-* `type` - (Required) The type of recipient, allowed types are `email` and `pagerduty`.
-* `target` - (Optional) Only needed if type is `email`: the email address to send notifications to.
+* `type` - (Required) The type of recipient, allowed types are `email`, `marker`, `pagerduty` and `slack`.
+* `target` - (Optional) Target of the trigger, this has another meaning depending on the type of recipient (see the table below).
+* `id` - (Optional) The ID of the recipient, this is necessary when type is Slack (see the note below).
+
+Type        | Target
+------------|-------------------------
+`email`     | an email address
+`marker`    | name of the marker
+`pagerduty` | _N/A_
+`slack`     | name of the channel
+
+~> **NOTE** When type is Slack you have to specify the ID. Refer to [Specifying Recipients](https://docs.honeycomb.io/api/triggers/#specifying-recipients) for more information. It's currently not possible to retrieve this ID using the Terraform provider.
 
 ## Attribute Reference
 
