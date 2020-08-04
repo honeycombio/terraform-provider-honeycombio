@@ -73,19 +73,29 @@ const (
 
 // TriggerRecipient represents a recipient that will receive a notification if
 // the trigger fires, as described by https://docs.honeycomb.io/api/triggers/#specifying-recipients
-//
-// Note: when adding Slack as recipient you have to specify the ID as well.
-// This is not supported yet.
 type TriggerRecipient struct {
-	// Type of the trigger, possible values (not exhaustive) are "email",
-	// "slack" and "pagerduty".
-	Type string `json:"type"`
-	// Target of the trigger, depending on the type this can be an email
-	// address or Slack channel.
+	// ID of the recipient, this is required when type is Slack.
+	ID string `json:"id,omitempty"`
+	// Type of the recipient.
+	Type TriggerRecipientType `json:"type"`
+	// Target of the trigger, this has another meaning depending on type:
+	// - email: an email address
+	// - marker: name of the marker
+	// - PagerDuty: N/A
+	// - Slack: name of a channel
 	Target string `json:"target,omitempty"`
-
-	// TODO add ID
 }
+
+// TriggerRecipientType holds all the possible trigger recipient types.
+type TriggerRecipientType string
+
+// List of available trigger recipient types
+const (
+	TriggerRecipientTypeEmail     TriggerRecipientType = "email"
+	TriggerRecipientTypeMarker    TriggerRecipientType = "marker"
+	TriggerRecipientTypePagerDuty TriggerRecipientType = "pagerduty"
+	TriggerRecipientTypeSlack     TriggerRecipientType = "slack"
+)
 
 func (s *triggers) List(dataset string) ([]Trigger, error) {
 	req, err := s.client.newRequest("GET", "/1/triggers/"+urlEncodeDataset(dataset), nil)

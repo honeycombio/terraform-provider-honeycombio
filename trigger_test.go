@@ -51,8 +51,12 @@ func TestTriggers(t *testing.T) {
 			},
 			Recipients: []TriggerRecipient{
 				{
-					Type:   "email",
+					Type:   TriggerRecipientTypeEmail,
 					Target: "hello@example.com",
+				},
+				{
+					Type:   TriggerRecipientTypeMarker,
+					Target: "This marker is created by a trigger",
 				},
 			},
 		}
@@ -63,7 +67,12 @@ func TestTriggers(t *testing.T) {
 
 		assert.NotNil(t, trigger.ID)
 
+		// copy IDs before asserting equality
 		data.ID = trigger.ID
+		for i := range trigger.Recipients {
+			data.Recipients[i].ID = trigger.Recipients[i].ID
+		}
+
 		assert.Equal(t, data, trigger)
 	})
 
