@@ -3,6 +3,7 @@
 [![CI](https://github.com/kvrhdn/terraform-provider-honeycombio/workflows/CI/badge.svg)](https://github.com/kvrhdn/terraform-provider-honeycombio/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kvrhdn/terraform-provider-honeycombio)](https://goreportcard.com/report/github.com/kvrhdn/terraform-provider-honeycombio)
 [![codecov](https://codecov.io/gh/kvrhdn/terraform-provider-honeycombio/branch/main/graph/badge.svg)](https://codecov.io/gh/kvrhdn/terraform-provider-honeycombio)
+[![Terraform Registry](https://img.shields.io/github/v/release/kvrhdn/terraform-provider-honeycombio?color=5e4fe3&label=Terraform%20Registry&logo=terraform&sort=semver)](https://registry.terraform.io/providers/kvrhdn/honeycombio/latest)
 
 A Terraform provider for Honeycomb.io.
 
