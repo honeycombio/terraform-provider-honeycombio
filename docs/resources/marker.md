@@ -15,6 +15,8 @@ resource "honeycombio_marker" "marker" {
   message = "deploy ${var.app_version}"
   type    = "deploys"
   url     = "http://www.example.com/"
+
+  dataset = "<your dataset>
 }
 ```
 
@@ -25,6 +27,7 @@ The following arguments are supported:
 * `message` - (Optional) The message on the marker.
 * `type` - (Optional) The type of the marker, Honeycomb.io can display markers in different colors depending on their type.
 * `url` - (Optional) A link to click on.
+* `dataset` - (Required) The dataset this marker is placed on.
 
 ## Attribute Reference
 
