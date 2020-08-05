@@ -1,6 +1,8 @@
 provider "honeycombio" {
-  # You can also set the environment variable HONEYCOMBIO_APIKEY
-  api_key = "<your API key>"
+}
+
+variable "dataset" {
+  type = string
 }
 
 variable "app_version" {
@@ -9,8 +11,8 @@ variable "app_version" {
 
 resource "honeycombio_marker" "marker" {
   message = "deploy ${var.app_version}"
-  type    = "deploys"
+  type    = "deploy"
   url     = "https://www.honeycomb.io/"
 
-  dataset = "<your dataset>"
+  dataset = var.dataset
 }

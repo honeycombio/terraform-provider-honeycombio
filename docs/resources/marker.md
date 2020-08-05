@@ -7,16 +7,20 @@ Creates a marker. For more information about markers, check out [Annotate the ti
 ## Example Usage
 
 ```hcl
+variable "dataset" {
+    type = string
+}
+
 variable "app_version" {
     type = string
 }
 
 resource "honeycombio_marker" "marker" {
   message = "deploy ${var.app_version}"
-  type    = "deploys"
+  type    = "deploy"
   url     = "http://www.example.com/"
 
-  dataset = "<your dataset>
+  dataset = var.dataset
 }
 ```
 
@@ -24,13 +28,13 @@ resource "honeycombio_marker" "marker" {
 
 The following arguments are supported:
 
+* `dataset` - (Required) The dataset this marker is placed on.
 * `message` - (Optional) The message on the marker.
 * `type` - (Optional) The type of the marker, Honeycomb.io can display markers in different colors depending on their type.
-* `url` - (Optional) A link to click on.
-* `dataset` - (Required) The dataset this marker is placed on.
+* `url` - (Optional) A target for the Marker. If you click on the Marker text, it will take you to this URL.
 
 ## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
-* `id` - ID for the marker.
+* `id` - ID of the marker.

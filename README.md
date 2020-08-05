@@ -4,42 +4,44 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/kvrhdn/terraform-provider-honeycombio)](https://goreportcard.com/report/github.com/kvrhdn/terraform-provider-honeycombio)
 [![codecov](https://codecov.io/gh/kvrhdn/terraform-provider-honeycombio/branch/main/graph/badge.svg)](https://codecov.io/gh/kvrhdn/terraform-provider-honeycombio)
 
-_This is not an official Honeycomb.io provider!_
+A Terraform provider for Honeycomb.io.
 
-Want to contribute? Check out [CONTRIBUTING.md](./CONTRIBUTING.md).
-
-Questions? Feel free to create a new issue or find us on the **Honeycomb Pollinators** Slack, channel **#terraform-provider** (you can find a link to request an invite [here](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/)).
+📄 Check out [the documentation](https://registry.terraform.io/providers/kvrhdn/honeycombio/latest/docs)  
+🏗️ Examples can be found in [example/](example/)  
+❓ Questions? Feel free to create a new issue or find us on the **Honeycomb Pollinators** Slack, channel **#terraform-provider** (you can find a link to request an invite [here](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/))  
+🔧 Want to contribute? Check out [CONTRIBUTING.md](./CONTRIBUTING.md)  
 
 ## Using the provider
 
-This provider is published on the [Terraform Registry](https://registry.terraform.io/providers/kvrhdn/honeycombio/latest)! You can try that out if you're using Terraform v0.13. If not, you'll have to install the provider manually.
+If you are using Terraform 0.13, you can install the provider directly from the [Terraform Registry](https://registry.terraform.io/providers/kvrhdn/honeycombio/latest). To use the provider with Terraform 0.12 you'll have to install the provider manually.
 
-### Building the provider
+### Terraform 0.13 (currently in beta)
 
-You need to have Go 1.14+ installed to build this provider.
+Add the following block in your Terraform config. For more information, refer to [Automatic installation of third-party providers](https://github.com/hashicorp/terraform/tree/guide-v0.13-beta/provider-sources#terraform-v013-beta-automatic-installation-of-third-party-providers).
 
-First, clone this repository and build the executable:
-
-```go
-go build -o terraform-provider-honeycombio
-```
-
-Next you can either:
-- place the executable in your working directory (the directory where you run `terraform init`).
-- install is as described here: [Third-party Plugins](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins).
-
-### Adding the provider
-
-Declare the provider in your Terraform configuration and run `terraform init`.
+This will download the provider from the Terraform Registry:
 
 ```hcl
-provider "honeycombio" {
-  # required, can also be set using environment variable HONEYCOMBIO_APIKEY
-  api_key = "<your API key>"
+terraform {
+  required_providers {
+    honeycombio = {
+      source  = "kvrhdn/honeycombio"
+      version = "~> 0.0.2"
+    }
+  }
 }
 ```
 
-Examples of resources can be found in the [examples directory](example/). Documentation can be found in the [docs directory](docs/).
+### Terraform 0.12
+
+To use this provider with Terraform 0.12, you will need to download and install the executable yourself. You can download the latest version from the [releases page](https://github.com/kvrhdn/terraform-provider-honeycombio/releases) or build it directly from source:
+
+```sh
+# clone the repository and run:
+go build -o terraform-provider-honeycombio
+```
+
+Once you have the executable (it should be named `terraform-provider-honeycombio`), you can either place it in your working directory (the directory you run `terraform init`) or [install it is a third-party plugin](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins).
 
 ## License
 

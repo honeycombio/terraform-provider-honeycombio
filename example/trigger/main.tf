@@ -1,6 +1,8 @@
 provider "honeycombio" {
-  # You can also set the environment variable HONEYCOMBIO_APIKEY
-  api_key = "<your API key>"
+}
+
+variable "dataset" {
+  type = string
 }
 
 data "honeycombio_query" "query" {
@@ -28,11 +30,11 @@ data "honeycombio_query" "query" {
 resource "honeycombio_trigger" "trigger" {
   name        = "Requests are slower than usuals"
   description = "Average duration of all requests for ThatSpecialTenant for the last 15 minutes."
-  dataset     = "<your dataset>"
 
   disabled = false
 
   query_json = data.honeycombio_query.query.json
+  dataset     = var.dataset
 
   frequency = 900 // in seconds, 15 minutes
 

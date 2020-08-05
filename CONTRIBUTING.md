@@ -1,20 +1,28 @@
 # Contributing
 
-All contributions are welcome, whether they are technical in nature or not. Feel free to open a new issue to ask questions, discuss issues or propose enhancements. You can also chat with us on the **Honeycomb Pollinators** Slack in the **#terraform-provider** channel, you can find a direct link to request an invite in [Spread the Love: Appreciating Our Pollinators Community](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/).
+All contributions are welcome, whether they are technical in nature or not.
+
+Feel free to open a new issue to ask questions, discuss issues or propose enhancements. You can also chat with us on the **Honeycomb Pollinators** Slack in the **#terraform-provider** channel, you can find a direct link to request an invite in [Spread the Love: Appreciating Our Pollinators Community](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/).
 
 The rest of this document describes how to get started developing on this repository.
 
 ## What should I know before I get started?
 
-Hashicorp has a lot of documentation on creating custom Terraform providers categorized under [Extending Terraform](https://www.terraform.io/docs/extend/index.html). These might help out with getting started, but are not a pre-requisite to contribute. Feel free to just open an issue and we can guide you along the way.
+### Relevant documentation
 
-We use [go-honeycombio](https://github.com/kvrhdn/go-honeycombio) to call the various Honeycomb APIs. While this takes care of most implementation details, it can still be interesting to check out [the documentation on the APIs here](https://docs.honeycomb.io/api/). The provider can only do as much as the APIs allow.
+Hashicorp has a lot of documentation on creating custom Terraform providers categorized under [Extending Terraform](https://www.terraform.io/docs/extend/index.html). This might help when getting started, but are not a pre-requisite to contribute. Feel free to just open an issue and we can guide you along the way.
+
+We use [go-honeycombio](https://github.com/kvrhdn/go-honeycombio) to call the various Honeycomb APIs. While this takes care of most implementation details, it can still be valuable to check out [the official documentation of the APIs](https://docs.honeycomb.io/api/). The provider can only do as much as the APIs allow.
+
+### What's in progress and what's next?
+
+We maintain [an activity board](https://github.com/kvrhdn/terraform-provider-honeycombio/projects/1) with all the work that is currently being worked on and/or considered. Hopefully this can give a sense of what is next to come. The board is intended to create overview across the project, it's not a strict plan of action.
 
 ## Contributing technical changes
 
 ### Running the test
 
-Most of the tests are accpetance tests, which will need to call real APIs. To run the tests you'll need to have access to a Honeycomb account. If not, you can create a new free team.
+Most of the tests are acceptance tests, which will call real APIs. To run the tests you'll need to have access to a Honeycomb account. If not, you can create a new free team.
 
 First, **create an API key**. Initially you'll have to check all permissions, but _Send Events_ and _Create Datasets_ can be disabled once setup is done.
 

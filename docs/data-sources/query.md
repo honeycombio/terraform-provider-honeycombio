@@ -8,11 +8,13 @@ The `json` attribute contains a serialized JSON representation which can be pass
 
 ```hcl
 data "honeycombio_query" "example" {
+  # zero or more calculation blocks
   calculation {
     op     = "AVG"
     column = "duration_ms"
   }
 
+  # zero or more filter blocks
   filter {
     column = "trace.parent_id"
     op     = "does-not-exist"
@@ -45,13 +47,13 @@ The following arguments are supported:
 
 Each query configuration may have zero or more `calculation` blocks, which each accept the following arguments:
 
-* `op` - (Required) The operator to apply, see the supported list of calculation operators at: [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators).
+* `op` - (Required) The operator to apply, see the supported list of calculation operators at [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators).
 * `column` - (Optional) The column to apply the operator to, not needed with `COUNT`.
 
 Each query configuration may have zero or more `filter` blocks, which each accept the following arguments:
 
 * `column` - (Required) The column to apply the filter to.
-* `op` - (Required) The operator to apply, see the supported list of filter operators at: [Filter Operators](https://docs.honeycomb.io/api/query-specification/#filter-operators).
+* `op` - (Required) The operator to apply, see the supported list of filter operators at [Filter Operators](https://docs.honeycomb.io/api/query-specification/#filter-operators).
 * `value` - (Optional) The value to be used with the operator, not all operators require a value.
 
 
