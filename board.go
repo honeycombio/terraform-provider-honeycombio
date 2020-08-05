@@ -17,6 +17,9 @@ type Boards interface {
 	// Create a new board.
 	Create(b *Board) (*Board, error)
 
+	// Update an existing board.
+	Update(b *Board) (*Board, error)
+
 	// Delete a board.
 	Delete(id string) error
 }
@@ -78,14 +81,26 @@ func (s *boards) Get(ID string) (*Board, error) {
 	return &b, err
 }
 
-func (s *boards) Create(b *Board) (*Board, error) {
-	req, err := s.client.newRequest("POST", "/1/boards", b)
+func (s *boards) Create(data *Board) (*Board, error) {
+	req, err := s.client.newRequest("POST", "/1/boards", data)
 	if err != nil {
 		return nil, err
 	}
 
+	var b Board
 	err = s.client.do(req, &b)
-	return b, err
+	return &b, err
+}
+
+func (s *boards) Update(data *Board) (*Board, error) {
+	req, err := s.client.newRequest("PUT", fmt.Sprintf("/1/boards/%s", data.ID), data)
+	if err != nil {
+		return nil, err
+	}
+
+	var b Board
+	err = s.client.do(req, &b)
+	return &b, err
 }
 
 func (s *boards) Delete(id string) error {

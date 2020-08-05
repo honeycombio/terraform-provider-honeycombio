@@ -21,9 +21,16 @@ func TestBoards(t *testing.T) {
 			Style:       BoardStyleVisual,
 			Queries: []BoardQuery{
 				{
-					Caption: "A sample dataset",
+					Caption: "A sample query",
 					Dataset: dataset,
-					Query:   QuerySpec{},
+					Query: QuerySpec{
+						Calculations: []CalculationSpec{
+							{
+								Op:     CalculateOpAvg,
+								Column: &[]string{"duration_ms"}[0],
+							},
+						},
+					},
 				},
 			},
 		}
@@ -58,6 +65,30 @@ func TestBoards(t *testing.T) {
 		}
 
 		assert.Equal(t, *b, *createdBoard)
+	})
+
+	t.Run("Update", func(t *testing.T) {
+		newBoard := *b
+		newBoard.Queries = append(newBoard.Queries, BoardQuery{
+			Caption: "A second query",
+			Dataset: dataset,
+			Query: QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op: CalculateOpCount,
+					},
+				},
+			},
+		})
+
+		updatedBoard, err := c.Boards.Update(&newBoard)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, newBoard, *updatedBoard)
+
+		b = updatedBoard
 	})
 
 	t.Run("Get", func(t *testing.T) {
