@@ -3,9 +3,9 @@ package honeycombio
 import (
 	"encoding/json"
 	"errors"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	honeycombio "github.com/kvrhdn/go-honeycombio"
 )
 
