@@ -95,9 +95,7 @@ func resourceBoardRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("name", b.Name)
 	d.Set("description", b.Description)
 	d.Set("style", b.Style)
-
-	//TODO queries
-	//d.Set("queries", queries)
+	d.Set("queries", b.Queries)
 
 	return nil
 }
