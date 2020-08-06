@@ -2,6 +2,8 @@ package honeycombio
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
@@ -81,6 +83,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 							Required:     true,
 							ValidateFunc: validation.StringInSlice(validQueryFilterOps, false),
 						},
+						//TODO add validation to make sure this doesn't exist when Op in ('exists', 'does-not-exist') if v2 SDK supports that
 						"value": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -134,6 +137,13 @@ func dataSourceHoneycombioQueryRead(d *schema.ResourceData, meta interface{}) er
 			Column: fMap["column"].(string),
 			Op:     honeycombio.FilterOp(fMap["op"].(string)),
 			Value:  fMap["value"].(string),
+		}
+		hf := filters[i]
+		if hf.Op == honeycombio.FilterOpExists || hf.Op == honeycombio.FilterOpDoesNotExist {
+			if hf.Value != "" {
+				return errors.New(fmt.Sprintf("Filter operation %s must not contain a value", hf.Op))
+			}
+			filters[i].Value = nil
 		}
 	}
 
