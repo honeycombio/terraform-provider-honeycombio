@@ -93,9 +93,9 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 						},
 						Filters: []honeycombio.FilterSpec{
 							{
-								Column: "avg",
-								Op:     "duration_ms",
-								Value:  0,
+								Column: "duration_ms",
+								Op:     ">",
+								Value:  "0",
 							},
 						},
 					},
@@ -112,9 +112,9 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 						},
 						Filters: []honeycombio.FilterSpec{
 							{
-								Column: "avg",
-								Op:     "duration_ms",
-								Value:  1,
+								Column: "duration_ms",
+								Op:     ">",
+								Value:  "1",
 							},
 						},
 					},
