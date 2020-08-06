@@ -1,8 +1,8 @@
 # Data Source: honeycombio_query
 
-Construct a query that can be used in triggers. For more information about the query specification, check out [Query Specification](https://docs.honeycomb.io/api/query-specification/).
+Construct a query that can be used in triggers and boards. For more information about the query specification, check out [Query Specification](https://docs.honeycomb.io/api/query-specification/).
 
-The `json` attribute contains a serialized JSON representation which can be passed to the `query_json` field of `honeycombio_trigger`.
+The `json` attribute contains a serialized JSON representation which can be passed to the `query_json` field of [`honeycombio_trigger`](../resources/trigger.md) and [`honeycombio_board`](../resources/board.md).
 
 ## Example Usage
 

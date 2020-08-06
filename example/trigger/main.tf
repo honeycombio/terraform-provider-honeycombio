@@ -21,10 +21,6 @@ data "honeycombio_query" "query" {
     op     = "="
     value  = "ThatSpecialTenant"
   }
-
-  filter_combination = "AND"
-
-  # also supported: breakdowns
 }
 
 resource "honeycombio_trigger" "trigger" {
@@ -34,7 +30,7 @@ resource "honeycombio_trigger" "trigger" {
   disabled = false
 
   query_json = data.honeycombio_query.query.json
-  dataset     = var.dataset
+  dataset    = var.dataset
 
   frequency = 900 // in seconds, 15 minutes
 
