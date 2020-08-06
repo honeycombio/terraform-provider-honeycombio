@@ -66,7 +66,7 @@ func resourceBoardCreate(d *schema.ResourceData, meta interface{}) error {
     }
 
     d.SetId(b.ID)
-    return resourceTriggerRead(d, meta)
+    return resourceBoardRead(d, meta)
 }
 
 func resourceBoardRead(d *schema.ResourceData, meta interface{}) error {
@@ -95,27 +95,23 @@ func resourceBoardRead(d *schema.ResourceData, meta interface{}) error {
 func resourceBoardUpdate(d *schema.ResourceData, meta interface{}) error {
     client := meta.(*honeycombio.Client)
 
-    dataset := d.Get("dataset").(string)
-    t, err := expandTrigger(d)
+    b, err := expandBoard(d)
     if err != nil {
         return err
     }
 
-    t, err = client.Triggers.Update(dataset, t)
+    b, err = client.Boards.Update(b)
     if err != nil {
         return err
     }
 
-    d.SetId(t.ID)
-    return resourceTriggerRead(d, meta)
+    d.SetId(b.ID)
+    return resourceBoardRead(d, meta)
 }
 
 func resourceBoardDelete(d *schema.ResourceData, meta interface{}) error {
     client := meta.(*honeycombio.Client)
-
-    dataset := d.Get("dataset").(string)
-
-    return client.Triggers.Delete(dataset, d.Id())
+    return client.Boards.Delete( d.Id())
 }
 
 func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
