@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	honeycombio "github.com/kvrhdn/go-honeycombio"
+	"github.com/kvrhdn/terraform-provider-honeycombio/util"
 )
 
 var validQueryCalculationOps = []string{
@@ -169,7 +169,7 @@ func dataSourceHoneycombioQueryRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	d.Set("json", jsonQuery)
-	d.SetId(strconv.Itoa(hashcode.String(jsonQuery)))
+	d.SetId(strconv.Itoa(util.HashString(jsonQuery)))
 
 	return nil
 }

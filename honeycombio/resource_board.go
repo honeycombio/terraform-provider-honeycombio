@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	honeycombio "github.com/kvrhdn/go-honeycombio"
 )
 
@@ -91,11 +91,37 @@ func resourceBoardRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	// API returns nil for filterCombination if set to the default value "AND"
+	// To keep the Terraform config simple, we'll explicitly set "AND" ourself
+	for i := range b.Queries {
+		q := &b.Queries[i]
+		if q.Query.FilterCombination == nil {
+			filterCombination := honeycombio.FilterCombinationAnd
+			q.Query.FilterCombination = &filterCombination
+		}
+	}
+
 	d.SetId(b.ID)
 	d.Set("name", b.Name)
 	d.Set("description", b.Description)
 	d.Set("style", b.Style)
-	d.Set("queries", b.Queries)
+
+	queries := make([]map[string]interface{}, len(b.Queries))
+
+	for i, q := range b.Queries {
+		queryJSON, err := encodeQuery(&q.Query)
+		if err != nil {
+			return err
+		}
+
+		queries[i] = map[string]interface{}{
+			"caption":    q.Caption,
+			"dataset":    q.Dataset,
+			"query_json": queryJSON,
+		}
+	}
+
+	d.Set("query", queries)
 
 	return nil
 }
