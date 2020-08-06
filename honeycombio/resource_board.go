@@ -30,6 +30,7 @@ func newBoard() *schema.Resource {
             },
             "query": {
                 Type: schema.TypeList,
+                Optional: true,
                 Elem: &schema.Resource{
                     Schema: map[string]*schema.Schema{
                         "caption": {
@@ -46,7 +47,6 @@ func newBoard() *schema.Resource {
                         },
                     },
                 },
-                Optional: true,
             },
         },
     }
