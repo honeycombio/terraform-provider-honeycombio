@@ -2,10 +2,11 @@ package honeycombio
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	honeycombio "github.com/kvrhdn/go-honeycombio"
@@ -83,7 +84,6 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 							Required:     true,
 							ValidateFunc: validation.StringInSlice(validQueryFilterOps, false),
 						},
-						//TODO add validation to make sure this doesn't exist when Op in ('exists', 'does-not-exist') if v2 SDK supports that
 						"value": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -138,10 +138,17 @@ func dataSourceHoneycombioQueryRead(d *schema.ResourceData, meta interface{}) er
 			Op:     honeycombio.FilterOp(fMap["op"].(string)),
 			Value:  fMap["value"].(string),
 		}
-		hf := filters[i]
-		if hf.Op == honeycombio.FilterOpExists || hf.Op == honeycombio.FilterOpDoesNotExist {
-			if hf.Value != "" {
-				return errors.New(fmt.Sprintf("Filter operation %s must not contain a value", hf.Op))
+
+		// Ensure we don't send filter.Value if op is "exists" or
+		// "does-not-exist". The Honeycomb API will refuse this.
+		//
+		// TODO ideally this check is part of the schema (as a ValidateFunc),
+		//      but this is not yet supported by the SDK.
+		//      https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
+		filter := filters[i]
+		if filter.Op == honeycombio.FilterOpExists || filter.Op == honeycombio.FilterOpDoesNotExist {
+			if filter.Value != "" {
+				return fmt.Errorf("Filter operation %s must not contain a value", filter.Op)
 			}
 			filters[i].Value = nil
 		}
@@ -178,4 +185,26 @@ func dataSourceHoneycombioQueryRead(d *schema.ResourceData, meta interface{}) er
 func encodeQuery(q *honeycombio.QuerySpec) (string, error) {
 	jsonQueryBytes, err := json.MarshalIndent(q, "", "  ")
 	return string(jsonQueryBytes), err
+}
+
+type querySpecValidateDiagFunc func(q *honeycombio.QuerySpec) diag.Diagnostics
+
+// validateQueryJSON checks that the input can be deserialized as a QuerySpec
+// and optionally runs a list of custom validation functions.
+func validateQueryJSON(validators ...querySpecValidateDiagFunc) schema.SchemaValidateDiagFunc {
+	return func(i interface{}, path cty.Path) diag.Diagnostics {
+		var q honeycombio.QuerySpec
+
+		err := json.Unmarshal([]byte(i.(string)), &q)
+		if err != nil {
+			return diag.Errorf("Value of query_json is not a valid query specification")
+		}
+
+		var diagnostics diag.Diagnostics
+
+		for _, validator := range validators {
+			diagnostics = append(diagnostics, validator(&q)...)
+		}
+		return diagnostics
+	}
 }

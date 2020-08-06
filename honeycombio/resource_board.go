@@ -2,7 +2,6 @@ package honeycombio
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -45,15 +44,9 @@ func newBoard() *schema.Resource {
 							Required: true,
 						},
 						"query_json": {
-							Type:     schema.TypeString,
-							Required: true,
-							ValidateFunc: func(i interface{}, s string) ([]string, []error) {
-								err := json.Unmarshal([]byte(i.(string)), &honeycombio.QuerySpec{})
-								if err != nil {
-									return nil, []error{errors.New("Value of query_json is not a valid query specification")}
-								}
-								return nil, nil
-							},
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: validateQueryJSON(),
 						},
 					},
 				},
