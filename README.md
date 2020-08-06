@@ -42,7 +42,13 @@ To use this provider with Terraform 0.12, you will need to download and install 
 go build -o terraform-provider-honeycombio
 ```
 
-Once you have the executable (it should be named `terraform-provider-honeycombio`), you can either place it in your working directory (the directory you run `terraform init`) or [install it is a third-party plugin](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins).
+Once you have the executable, you can either place it in your working directory (the directory you run `terraform init`) or [install it is a third-party plugin](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins):
+
+```sh
+# for Linux and macOS
+mkdir -p ~/.terraform.d/plugins/
+cp terraform-provider-honeycombio ~/.terraform.d/plugins/
+```
 
 ## License
 
