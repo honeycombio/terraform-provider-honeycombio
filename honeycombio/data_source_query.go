@@ -1,8 +1,8 @@
 package honeycombio
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 
 	"github.com/hashicorp/go-cty/cty"
@@ -50,7 +50,7 @@ var validQueryFilterOps = []string{
 
 func dataSourceHoneycombioQuery() *schema.Resource {
 	return &schema.Resource{
-		Read: dataSourceHoneycombioQueryRead,
+		ReadContext: dataSourceHoneycombioQueryRead,
 
 		Schema: map[string]*schema.Schema{
 			"calculation": {
@@ -112,7 +112,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 	}
 }
 
-func dataSourceHoneycombioQueryRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	calculationSchemas := d.Get("calculation").(*schema.Set).List()
 	calculations := make([]honeycombio.CalculationSpec, len(calculationSchemas))
 
@@ -148,7 +148,7 @@ func dataSourceHoneycombioQueryRead(d *schema.ResourceData, meta interface{}) er
 		filter := filters[i]
 		if filter.Op == honeycombio.FilterOpExists || filter.Op == honeycombio.FilterOpDoesNotExist {
 			if filter.Value != "" {
-				return fmt.Errorf("Filter operation %s must not contain a value", filter.Op)
+				return diag.Errorf("Filter operation %s must not contain a value", filter.Op)
 			}
 			filters[i].Value = nil
 		}
@@ -172,7 +172,7 @@ func dataSourceHoneycombioQueryRead(d *schema.ResourceData, meta interface{}) er
 
 	jsonQuery, err := encodeQuery(query)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.Set("json", jsonQuery)

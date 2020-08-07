@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -11,10 +12,10 @@ import (
 
 func newTrigger() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceTriggerCreate,
-		Read:   resourceTriggerRead,
-		Update: resourceTriggerUpdate,
-		Delete: resourceTriggerDelete,
+		CreateContext: resourceTriggerCreate,
+		ReadContext:   resourceTriggerRead,
+		UpdateContext: resourceTriggerUpdate,
+		DeleteContext: resourceTriggerDelete,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -100,25 +101,25 @@ func newTrigger() *schema.Resource {
 
 var validTriggerRecipientTypes []string = []string{"email", "marker", "pagerduty", "slack"}
 
-func resourceTriggerCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceTriggerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
 	t, err := expandTrigger(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	t, err = client.Triggers.Create(dataset, t)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(t.ID)
-	return resourceTriggerRead(d, meta)
+	return resourceTriggerRead(ctx, d, meta)
 }
 
-func resourceTriggerRead(d *schema.ResourceData, meta interface{}) error {
+func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
@@ -129,7 +130,7 @@ func resourceTriggerRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	// API returns nil for filterCombination if set to the default value "AND"
@@ -146,49 +147,53 @@ func resourceTriggerRead(d *schema.ResourceData, meta interface{}) error {
 
 	encodedQuery, err := encodeQuery(t.Query)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	d.Set("query_json", encodedQuery)
 
 	err = d.Set("threshold", flattenTriggerThreshold(t.Threshold))
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.Set("frequency", t.Frequency)
 
 	err = d.Set("recipient", flattenTriggerRecipients(t.Recipients))
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	return nil
 }
 
-func resourceTriggerUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceTriggerUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
 	t, err := expandTrigger(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	t, err = client.Triggers.Update(dataset, t)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(t.ID)
-	return resourceTriggerRead(d, meta)
+	return resourceTriggerRead(ctx, d, meta)
 }
 
-func resourceTriggerDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceTriggerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
 
-	return client.Triggers.Delete(dataset, d.Id())
+	err := client.Triggers.Delete(dataset, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 func expandTrigger(d *schema.ResourceData) (*honeycombio.Trigger, error) {

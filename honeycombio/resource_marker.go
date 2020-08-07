@@ -1,16 +1,19 @@
 package honeycombio
 
 import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/kvrhdn/go-honeycombio"
 )
 
 func newMarker() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMarkerCreate,
-		Read:   resourceMarkerRead,
-		Update: nil,
-		Delete: resourceMarkerDelete,
+		CreateContext: resourceMarkerCreate,
+		ReadContext:   resourceMarkerRead,
+		UpdateContext: nil,
+		DeleteContext: resourceMarkerDelete,
 
 		Schema: map[string]*schema.Schema{
 			"message": {
@@ -37,7 +40,7 @@ func newMarker() *schema.Resource {
 	}
 }
 
-func resourceMarkerCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
@@ -49,14 +52,14 @@ func resourceMarkerCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	marker, err := client.Markers.Create(dataset, data)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(marker.ID)
-	return resourceMarkerRead(d, meta)
+	return resourceMarkerRead(ctx, d, meta)
 }
 
-func resourceMarkerRead(d *schema.ResourceData, meta interface{}) error {
+func resourceMarkerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	marker, err := client.Markers.Get(d.Get("dataset").(string), d.Id())
@@ -65,7 +68,7 @@ func resourceMarkerRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(marker.ID)
@@ -75,7 +78,7 @@ func resourceMarkerRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceMarkerDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceMarkerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	// do nothing on destroy
 	return nil
 }

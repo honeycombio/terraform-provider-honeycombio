@@ -1,8 +1,10 @@
 package honeycombio
 
 import (
+	"context"
 	"encoding/json"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	honeycombio "github.com/kvrhdn/go-honeycombio"
@@ -10,10 +12,10 @@ import (
 
 func newBoard() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBoardCreate,
-		Read:   resourceBoardRead,
-		Update: resourceBoardUpdate,
-		Delete: resourceBoardDelete,
+		CreateContext: resourceBoardCreate,
+		ReadContext:   resourceBoardRead,
+		UpdateContext: resourceBoardUpdate,
+		DeleteContext: resourceBoardDelete,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -55,24 +57,24 @@ func newBoard() *schema.Resource {
 	}
 }
 
-func resourceBoardCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceBoardCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	b, err := expandBoard(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	b, err = client.Boards.Create(b)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(b.ID)
-	return resourceBoardRead(d, meta)
+	return resourceBoardRead(ctx, d, meta)
 }
 
-func resourceBoardRead(d *schema.ResourceData, meta interface{}) error {
+func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	b, err := client.Boards.Get(d.Id())
@@ -81,7 +83,7 @@ func resourceBoardRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		return err
+		return diag.FromErr(err)
 	}
 
 	// API returns nil for filterCombination if set to the default value "AND"
@@ -104,7 +106,7 @@ func resourceBoardRead(d *schema.ResourceData, meta interface{}) error {
 	for i, q := range b.Queries {
 		queryJSON, err := encodeQuery(&q.Query)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 
 		queries[i] = map[string]interface{}{
@@ -119,26 +121,31 @@ func resourceBoardRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceBoardUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceBoardUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	b, err := expandBoard(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	b, err = client.Boards.Update(b)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(b.ID)
-	return resourceBoardRead(d, meta)
+	return resourceBoardRead(ctx, d, meta)
 }
 
-func resourceBoardDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceBoardDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
-	return client.Boards.Delete(d.Id())
+
+	err := client.Boards.Delete(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
