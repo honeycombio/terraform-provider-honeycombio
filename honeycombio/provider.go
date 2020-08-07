@@ -42,7 +42,10 @@ func Provider() *schema.Provider {
 			UserAgent: provider.UserAgent("terraform-provider-honeycombio", providerVersion),
 		}
 		c, err := honeycombio.NewClient(config)
-		return c, diag.FromErr(err)
+		if err != nil {
+			return nil, diag.FromErr(err)
+		}
+		return c, nil
 	}
 
 	return provider
