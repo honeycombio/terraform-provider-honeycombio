@@ -15,6 +15,7 @@ func newTestClient(t *testing.T) *Client {
 
 	cfg := &Config{
 		APIKey: apiKey,
+		Debug:  true,
 	}
 	c, err := NewClient(cfg)
 	if err != nil {

@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/kvrhdn/go-honeycombio/util"
 )
 
 // Config holds all configuration options for the client.
@@ -20,6 +22,8 @@ type Config struct {
 	APIUrl string
 	// User agent to send with all requests, defaults to "go-honeycombio".
 	UserAgent string
+	// With debug enabled the client will log all requests and responses.
+	Debug bool
 }
 
 func defaultConfig() *Config {
@@ -27,6 +31,7 @@ func defaultConfig() *Config {
 		APIKey:    "",
 		APIUrl:    "https://api.honeycomb.io",
 		UserAgent: "go-honeycombio",
+		Debug:     false,
 	}
 }
 
@@ -40,6 +45,9 @@ func (c *Config) merge(other *Config) {
 	}
 	if other.UserAgent != "" {
 		c.UserAgent = other.UserAgent
+	}
+	if c.Debug || other.Debug {
+		c.Debug = true
 	}
 }
 
@@ -68,11 +76,16 @@ func NewClient(config *Config) (*Client, error) {
 		return nil, fmt.Errorf("could not parse APIUrl: %w", err)
 	}
 
+	httpClient := &http.Client{}
+	if cfg.Debug {
+		httpClient = util.WrapWithLogging(httpClient)
+	}
+
 	client := &Client{
 		apiKey:     cfg.APIKey,
 		apiURL:     apiURL,
 		userAgent:  cfg.UserAgent,
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 	}
 	client.Boards = &boards{client: client}
 	client.Markers = &markers{client: client}
@@ -125,16 +138,11 @@ func (c *Client) do(req *http.Request, v interface{}) error {
 	}
 	defer resp.Body.Close()
 
-	if !is2xx(resp.StatusCode) {
+	if !util.Is2xx(resp.StatusCode) {
 		if resp.StatusCode == 404 {
 			return ErrNotFound
 		}
-
-		errorMsg := attemptToExtractHoneycombioError(resp.Body)
-		if errorMsg == "" {
-			return fmt.Errorf("%s", resp.Status)
-		}
-		return fmt.Errorf("%s: %s", resp.Status, errorMsg)
+		return errorFromResponse(resp)
 	}
 
 	if v != nil {
@@ -143,8 +151,12 @@ func (c *Client) do(req *http.Request, v interface{}) error {
 	return err
 }
 
-func is2xx(status int) bool {
-	return status >= 200 && status < 300
+func errorFromResponse(resp *http.Response) error {
+	errorMsg := attemptToExtractHoneycombioError(resp.Body)
+	if errorMsg == "" {
+		return fmt.Errorf("%s", resp.Status)
+	}
+	return fmt.Errorf("%s: %s", resp.Status, errorMsg)
 }
 
 type honeycombioError struct {
