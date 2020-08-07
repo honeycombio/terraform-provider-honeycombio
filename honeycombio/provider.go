@@ -1,12 +1,19 @@
 package honeycombio
 
 import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/kvrhdn/go-honeycombio"
 )
 
+// providerVersion represents the current version of the provider. It should be
+// overwritten during the release process.
+var providerVersion = "dev"
+
 func Provider() *schema.Provider {
-	return &schema.Provider{
+	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"api_key": {
 				Type:        schema.TypeString,
@@ -26,15 +33,17 @@ func Provider() *schema.Provider {
 			"honeycombio_marker":  newMarker(),
 			"honeycombio_trigger": newTrigger(),
 		},
-		ConfigureFunc: Configure,
 	}
-}
 
-func Configure(d *schema.ResourceData) (interface{}, error) {
-	config := &honeycombio.Config{
-		APIKey:    d.Get("api_key").(string),
-		APIUrl:    d.Get("api_url").(string),
-		UserAgent: "terraform-provider-honeycombio",
+	provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		config := &honeycombio.Config{
+			APIKey:    d.Get("api_key").(string),
+			APIUrl:    d.Get("api_url").(string),
+			UserAgent: provider.UserAgent("terraform-provider-honeycombio", providerVersion),
+		}
+		c, err := honeycombio.NewClient(config)
+		return c, diag.FromErr(err)
 	}
-	return honeycombio.NewClient(config)
+
+	return provider
 }
