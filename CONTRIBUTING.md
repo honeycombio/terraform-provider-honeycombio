@@ -44,6 +44,22 @@ Finally, **run the acceptance tests** by passing the API key and dataset as envi
 HONEYCOMBIO_APIKEY=<your API key> HONEYCOMBIO_DATASET=<dataset> make testacc
 ```
 
+### Enabling log output
+
+To print logs (including full dumps of requests and their responses), you have to set `TF_LOG` to at least `debug` and enable `HONEYCOMBIO_DEBUG` when running Terraform:
+
+```sh
+TF_LOG=debug HONEYCOMBIO_DEBUG=true terraform apply
+```
+
+A handy one-liner to simultaneously write the output to a file:
+
+```sh
+TF_LOG=debug HONEYCOMBIO_DEBUG=true terraform apply 2>&1 | tee output.log
+```
+
+For more information, see [Debugging Terraform](https://www.terraform.io/docs/internals/debugging.html).
+
 ### Style convention
 
 CI will run the following tools to style code:

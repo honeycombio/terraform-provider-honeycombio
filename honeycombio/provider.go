@@ -2,6 +2,9 @@ package honeycombio
 
 import (
 	"context"
+	"log"
+	"os"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -24,6 +27,14 @@ func Provider() *schema.Provider {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
+			"debug": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				DefaultFunc: func() (interface{}, error) {
+					b, _ := strconv.ParseBool(os.Getenv("HONEYCOMBIO_DEBUG"))
+					return b, nil
+				},
+			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"honeycombio_query": dataSourceHoneycombioQuery(),
@@ -40,11 +51,16 @@ func Provider() *schema.Provider {
 			APIKey:    d.Get("api_key").(string),
 			APIUrl:    d.Get("api_url").(string),
 			UserAgent: provider.UserAgent("terraform-provider-honeycombio", providerVersion),
+			Debug:     d.Get("debug").(bool),
 		}
 		c, err := honeycombio.NewClient(config)
 		if err != nil {
 			return nil, diag.FromErr(err)
 		}
+
+		log.Printf("Configured honeycombio client with debug = %t", config.Debug)
+		log.Printf("To log requests and responses, set environment variable HONEYCOMBIO_DEBUG to true")
+
 		return c, nil
 	}
 

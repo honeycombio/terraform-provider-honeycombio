@@ -39,4 +39,5 @@ The key can be set with the `api_key` argument or via the `HONEYCOMBIO_APIKEY` e
 Arguments accepted by this provider include:
 
 * `api_key` - (Required) The Honeycomb API key to use. It can also be set using the `HONEYCOMBIO_APIKEY` environment variable.
-* `api_url` - (Optional) Override the url of the Honeycomb.io API. Defaults to `https://api.honeycomb.io`
+* `api_url` - (Optional) Override the url of the Honeycomb.io API. Defaults to `https://api.honeycomb.io`.
+* `debug` - (Optional) Enable to log additional debug information. To view the logs, set `TF_LOG` to at least debug.
