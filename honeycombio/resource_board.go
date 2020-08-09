@@ -1,20 +1,21 @@
 package honeycombio
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	honeycombio "github.com/kvrhdn/go-honeycombio"
 )
 
 func newBoard() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceBoardCreate,
-		Read:   resourceBoardRead,
-		Update: resourceBoardUpdate,
-		Delete: resourceBoardDelete,
+		CreateContext: resourceBoardCreate,
+		ReadContext:   resourceBoardRead,
+		UpdateContext: resourceBoardUpdate,
+		DeleteContext: resourceBoardDelete,
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -45,15 +46,9 @@ func newBoard() *schema.Resource {
 							Required: true,
 						},
 						"query_json": {
-							Type:     schema.TypeString,
-							Required: true,
-							ValidateFunc: func(i interface{}, s string) ([]string, []error) {
-								err := json.Unmarshal([]byte(i.(string)), &honeycombio.QuerySpec{})
-								if err != nil {
-									return nil, []error{errors.New("Value of query_json is not a valid query specification")}
-								}
-								return nil, nil
-							},
+							Type:             schema.TypeString,
+							Required:         true,
+							ValidateDiagFunc: validateQueryJSON(),
 						},
 					},
 				},
@@ -62,24 +57,24 @@ func newBoard() *schema.Resource {
 	}
 }
 
-func resourceBoardCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceBoardCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	b, err := expandBoard(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	b, err = client.Boards.Create(b)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(b.ID)
-	return resourceBoardRead(d, meta)
+	return resourceBoardRead(ctx, d, meta)
 }
 
-func resourceBoardRead(d *schema.ResourceData, meta interface{}) error {
+func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	b, err := client.Boards.Get(d.Id())
@@ -88,38 +83,69 @@ func resourceBoardRead(d *schema.ResourceData, meta interface{}) error {
 			d.SetId("")
 			return nil
 		}
-		return err
+		return diag.FromErr(err)
+	}
+
+	// API returns nil for filterCombination if set to the default value "AND"
+	// To keep the Terraform config simple, we'll explicitly set "AND" ourself
+	for i := range b.Queries {
+		q := &b.Queries[i]
+		if q.Query.FilterCombination == nil {
+			filterCombination := honeycombio.FilterCombinationAnd
+			q.Query.FilterCombination = &filterCombination
+		}
 	}
 
 	d.SetId(b.ID)
 	d.Set("name", b.Name)
 	d.Set("description", b.Description)
 	d.Set("style", b.Style)
-	d.Set("queries", b.Queries)
+
+	queries := make([]map[string]interface{}, len(b.Queries))
+
+	for i, q := range b.Queries {
+		queryJSON, err := encodeQuery(&q.Query)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		queries[i] = map[string]interface{}{
+			"caption":    q.Caption,
+			"dataset":    q.Dataset,
+			"query_json": queryJSON,
+		}
+	}
+
+	d.Set("query", queries)
 
 	return nil
 }
 
-func resourceBoardUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceBoardUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	b, err := expandBoard(d)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	b, err = client.Boards.Update(b)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	d.SetId(b.ID)
-	return resourceBoardRead(d, meta)
+	return resourceBoardRead(ctx, d, meta)
 }
 
-func resourceBoardDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceBoardDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
-	return client.Boards.Delete(d.Id())
+
+	err := client.Boards.Delete(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
@@ -130,9 +156,9 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 		m := q.(map[string]interface{})
 		caption := m["caption"].(string)
 		dataset := m["dataset"].(string)
-		queryJson := m["query_json"].(string)
+		queryJSON := m["query_json"].(string)
 		var query honeycombio.QuerySpec
-		err := json.Unmarshal([]byte(queryJson), &query)
+		err := json.Unmarshal([]byte(queryJSON), &query)
 		if err != nil {
 			return nil, err
 		}
