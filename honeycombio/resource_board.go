@@ -156,9 +156,9 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 		m := q.(map[string]interface{})
 		caption := m["caption"].(string)
 		dataset := m["dataset"].(string)
-		queryJson := m["query_json"].(string)
+		queryJSON := m["query_json"].(string)
 		var query honeycombio.QuerySpec
-		err := json.Unmarshal([]byte(queryJson), &query)
+		err := json.Unmarshal([]byte(queryJSON), &query)
 		if err != nil {
 			return nil, err
 		}
