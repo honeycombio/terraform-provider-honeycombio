@@ -1,4 +1,10 @@
-provider "honeycombio" {
+terraform {
+  required_providers {
+    honeycombio = {
+      source = "kvrhdn/honeycombio"
+      version = "~> 0.0.5"
+    }
+  }
 }
 
 variable "dataset" {

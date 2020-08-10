@@ -16,7 +16,7 @@ A Terraform provider for Honeycomb.io.
 
 If you are using Terraform 0.13, you can install the provider directly from the [Terraform Registry](https://registry.terraform.io/providers/kvrhdn/honeycombio/latest). To use the provider with Terraform 0.12 you'll have to install the provider manually.
 
-### Terraform 0.13 (currently in beta)
+### Terraform 0.13
 
 Add the following block in your Terraform config. For more information, refer to [Automatic installation of third-party providers](https://github.com/hashicorp/terraform/tree/guide-v0.13-beta/provider-sources#terraform-v013-beta-automatic-installation-of-third-party-providers).
 
