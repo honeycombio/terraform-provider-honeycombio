@@ -37,7 +37,8 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"honeycombio_query": dataSourceHoneycombioQuery(),
+			"honeycombio_query":             dataSourceHoneycombioQuery(),
+			"honeycombio_trigger_recipient": dataSourceHoneycombioSlackRecipient(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"honeycombio_board":   newBoard(),

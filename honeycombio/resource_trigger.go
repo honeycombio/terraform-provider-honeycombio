@@ -77,6 +77,7 @@ func newTrigger() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
+					// TODO can we validate either id or type+target is set?
 					Schema: map[string]*schema.Schema{
 						"id": {
 							Type:     schema.TypeString,
@@ -85,7 +86,7 @@ func newTrigger() *schema.Resource {
 						},
 						"type": {
 							Type:         schema.TypeString,
-							Required:     true,
+							Optional:     true,
 							ValidateFunc: validation.StringInSlice(validTriggerRecipientTypes, false),
 						},
 						"target": {
