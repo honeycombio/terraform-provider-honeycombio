@@ -66,11 +66,11 @@ Each trigger configuration must contain exactly one `threshold` block, which acc
 * `op` - (Required) The operator to apply, allowed threshold operators are `>`, `>=`, `<`, and `<=`.
 * `value` - (Required) The value to be used with the operator.
 
-Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments:
+Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments. A trigger recipient block can either refer to an existing recipient, i.e. a recipient that is already present in another trigger, or a new recipient. When specifying an existing recipient, only `id` must be set. To retrieve the ID of an existing recipient, refer to the [`honeycombio_trigger_recipient`](../data-sources/trigger_recipient.md) data source.
 
-* `type` - (Required) The type of recipient, allowed types are `email`, `marker`, `pagerduty` and `slack`.
-* `target` - (Optional) Target of the trigger, this has another meaning depending on the type of recipient (see the table below).
-* `id` - (Optional) The ID of the recipient, this is necessary when type is Slack (see the note below).
+* `type` - (Optional) The type of the trigger recipient, allowed types are `email`, `marker`, `pagerduty` and `slack`. Should not be used in combination with `id`.
+* `target` - (Optional) Target of the trigger recipient, this has another meaning depending on the type of recipient (see the table below). Should not be used in combination with `id`.
+* `id` - (Optional) The ID of an already existing recipient, this is necessary when type is Slack (see the note below). Should not be used in combination with `type`.
 
 Type      | Target
 ----------|-------------------------
@@ -79,7 +79,7 @@ marker    | name of the marker
 pagerduty | _N/A_
 slack     | name of the channel
 
-~> **NOTE** When type is Slack you have to specify the ID. Refer to [Specifying Recipients](https://docs.honeycomb.io/api/triggers/#specifying-recipients) for more information. It's currently not possible to retrieve this ID using the Terraform provider.
+~> **NOTE** Recipients of type `slack` can not be created using the API. Instead, you have to refer to existing Slack recipients using their ID. Refer to [Specifying Recipients](https://docs.honeycomb.io/api/triggers/#specifying-recipients) for more information. You can use the [`honeycombio_trigger_recipient`](../data-sources/trigger_recipient.md) data source to find an already existing recipient.
 
 ## Attribute Reference
 
