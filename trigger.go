@@ -153,3 +153,33 @@ func (s *triggers) Delete(dataset string, id string) error {
 
 	return s.client.do(req, nil)
 }
+
+// MatchesTriggerSubset checks that the given QuerySpec matches the strict
+// subset required to be used in a trigger.
+//
+// The following properties must be valid:
+//
+//   - the query must contain exactly one calculation
+//   - the HEATMAP calculation may not be used
+//   - only the following fields may be set: calculations, breakdown, filters, filter_combination and time_range
+//
+// For more information, refer to https://docs.honeycomb.io/api/triggers/#fields-on-a-trigger
+func MatchesTriggerSubset(query QuerySpec) (bool, error) {
+	if len(query.Calculations) != 1 {
+		return false, errors.New("a trigger query should contain exactly one calculation")
+	}
+
+	if query.Calculations[0].Op == CalculateOpHeatmap {
+		return false, errors.New("a trigger query may not contain a HEATMAP calculation")
+	}
+
+	if query.Orders != nil {
+		return false, errors.New("orders is not allowed in a trigger query")
+	}
+
+	if query.Limit != nil {
+		return false, errors.New("limit is not allowed in a trigger query")
+	}
+
+	return true, nil
+}
