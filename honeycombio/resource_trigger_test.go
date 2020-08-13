@@ -35,6 +35,12 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "300"),
 				),
 			},
+			{
+				Config: testAccTriggerConfigWithCount(dataset),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerAfter),
+				),
+			},
 		},
 	})
 }
@@ -132,6 +138,27 @@ resource "honeycombio_trigger" "test" {
     target = "bye@example.com"
   }
 }`, dataset, frequency)
+}
+
+func testAccTriggerConfigWithCount(dataset string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query" "test" {
+  calculation {
+    op     = "COUNT"
+  }
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger from terraform-provider-honeycombio"
+  dataset = "%s"
+
+  query_json = data.honeycombio_query.test.json
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+}`, dataset)
 }
 
 func testAccTriggerConfigWithQuery(dataset, query string) string {
