@@ -44,6 +44,20 @@ Finally, **run the acceptance tests** by passing the API key and dataset as envi
 HONEYCOMBIO_APIKEY=<your API key> HONEYCOMBIO_DATASET=<dataset> make testacc
 ```
 
+### Using a locally built version of the provider
+
+It can be handy to run terraform with a local version of the honeycombio provider.
+
+With **Terraform 0.12** this is very straightforward:
+
+- build the provider with `go build`
+- copy the executable (named `terraform-provider-honeycombio`) into your working directory
+- run `terraform init`
+
+This is a bit more involved with **Terraform 0.13**: the provider has to be installed in one of the [local mirror directories](https://www.terraform.io/docs/commands/cli-config.html#implied-local-mirror-directories) using the [new filesysem structure](https://www.terraform.io/upgrade-guides/0-13.html#new-filesystem-layout-for-local-copies-of-providers). Additinally, the provider should have a version.
+
+For macOS, I've added the `install_macos` target in [`Makefile`](Makefile). Other OS's should be similar, feel free to add an additional target.
+
 ### Enabling log output
 
 To print logs (including full dumps of requests and their responses), you have to set `TF_LOG` to at least `debug` and enable `HONEYCOMBIO_DEBUG` when running Terraform:
