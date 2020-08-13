@@ -78,6 +78,10 @@ func TestAccDataSourceHoneycombioQuery_noValueForExists(t *testing.T) {
 				Config:      testBadExistsQuery(),
 				ExpectError: regexp.MustCompile("Filter operation exists must not"),
 			},
+			{
+				Config:      testBadCountQuery(),
+				ExpectError: regexp.MustCompile("calculation op COUNT should not have an accompanying column"),
+			},
 		},
 	})
 }
@@ -90,6 +94,17 @@ data "honeycombio_query" "test" {
         op     = "exists"
         value  = "this-value-should-not-be-here"
     }
+}
+`
+}
+
+func testBadCountQuery() string {
+	return `
+data "honeycombio_query" "test" {
+  calculation {
+    op     = "COUNT"
+    column = "we-should-not-specify-a-column-with-COUNT"
+  }
 }
 `
 }
