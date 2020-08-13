@@ -148,3 +148,76 @@ func TestTriggers(t *testing.T) {
 		assert.Equal(t, errors.New("422 Unprocessable Entity: trigger query requires exactly one calculation"), err)
 	})
 }
+
+func TestMatchesTriggerSubset(t *testing.T) {
+	cases := []struct {
+		in          QuerySpec
+		expectedOk  bool
+		expectedErr error
+	}{
+		{
+			in: QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op: CalculateOpCount,
+					},
+				},
+			},
+			expectedOk:  true,
+			expectedErr: nil,
+		},
+		{
+			in: QuerySpec{
+				Calculations: nil,
+			},
+			expectedOk:  false,
+			expectedErr: errors.New("a trigger query should contain exactly one calculation"),
+		},
+		{
+			in: QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op: CalculateOpHeatmap,
+					},
+				},
+			},
+			expectedOk:  false,
+			expectedErr: errors.New("a trigger query may not contain a HEATMAP calculation"),
+		},
+		{
+			in: QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op: CalculateOpCount,
+					},
+				},
+				Limit: &[]int{100}[0],
+			},
+			expectedOk:  false,
+			expectedErr: errors.New("limit is not allowed in a trigger query"),
+		},
+		{
+			in: QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op: CalculateOpCount,
+					},
+				},
+				Orders: []OrderSpec{
+					{
+						Column: &[]string{"duration_ms"}[0],
+					},
+				},
+			},
+			expectedOk:  false,
+			expectedErr: errors.New("orders is not allowed in a trigger query"),
+		},
+	}
+
+	for i, c := range cases {
+		ok, err := MatchesTriggerSubset(c.in)
+
+		assert.Equal(t, c.expectedOk, ok, "Test case %d, QuerySpec: %v", i, c.in)
+		assert.Equal(t, c.expectedErr, err, "Test case %d, QuerySpec: %v", i, c.in)
+	}
+}
