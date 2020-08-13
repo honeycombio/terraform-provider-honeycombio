@@ -17,8 +17,15 @@ type QuerySpec struct {
 	// A list of strings describing the columns by which to break events down
 	// into groups.
 	Breakdowns []string `json:"breakdowns,omitempty"`
+	// A list of objects describing the terms on which to order the query
+	// results. Each term must appear in either the breakdowns field or the
+	// calculations field.
+	Orders []OrderSpec `json:"orders,omitempty"`
+	// The maximum number of query results.
+	Limit *int `json:"limit,omitempty"`
 
 	// not all available fields are currently implemented by QuerySpec, see https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification
+	// fields not implemented yet: granularity, time_range, start_time, end_time
 }
 
 // CalculationSpec represents a calculation within a query.
@@ -87,4 +94,20 @@ type FilterCombination string
 const (
 	FilterCombinationOr  FilterCombination = "OR"
 	FilterCombinationAnd FilterCombination = "AND"
+)
+
+// OrderSpec describes how to order the results of a query.
+type OrderSpec struct {
+	Op     *CalculationOp `json:"op,omitempty"`
+	Column *string        `json:"column,omitempty"`
+	Order  *SortOrder     `json:"order"`
+}
+
+// SortOrder describes in which order the results should be sorted.
+type SortOrder string
+
+// List of available sort orders.
+const (
+	SortOrderAsc  SortOrder = "ascending"
+	SortOrderDesc SortOrder = "descending"
 )
