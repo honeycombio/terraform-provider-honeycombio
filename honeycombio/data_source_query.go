@@ -119,14 +119,20 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 	for i, c := range calculationSchemas {
 		cMap := c.(map[string]interface{})
 
+		op := honeycombio.CalculationOp(cMap["op"].(string))
+
 		var column *string
 		c := cMap["column"].(string)
 		if c != "" {
 			column = &c
 		}
 
+		if op == honeycombio.CalculateOpCount && column != nil {
+			return diag.Errorf("calculation op COUNT should not have an accompanying column")
+		}
+
 		calculations[i] = honeycombio.CalculationSpec{
-			Op:     honeycombio.CalculationOp(cMap["op"].(string)),
+			Op:     op,
 			Column: column,
 		}
 	}
