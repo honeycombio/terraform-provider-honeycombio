@@ -119,11 +119,15 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 	for i, c := range calculationSchemas {
 		cMap := c.(map[string]interface{})
 
-		column := cMap["column"].(string)
+		var column *string
+		c := cMap["column"].(string)
+		if c != "" {
+			column = &c
+		}
 
 		calculations[i] = honeycombio.CalculationSpec{
 			Op:     honeycombio.CalculationOp(cMap["op"].(string)),
-			Column: &column,
+			Column: column,
 		}
 	}
 
