@@ -96,14 +96,14 @@ const (
 	FilterCombinationAnd FilterCombination = "AND"
 )
 
-// OrderSpec describes how to order result of a query.
+// OrderSpec describes how to order the results of a query.
 type OrderSpec struct {
 	Op     *CalculationOp `json:"op,omitempty"`
 	Column *string        `json:"column,omitempty"`
 	Order  *SortOrder     `json:"order"`
 }
 
-// SortOrder desribes in which order results should be sorted.
+// SortOrder describes in which order the results should be sorted.
 type SortOrder string
 
 // List of available sort orders.
