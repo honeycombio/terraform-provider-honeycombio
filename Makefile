@@ -12,7 +12,7 @@ testacc:
 # https://www.terraform.io/upgrade-guides/0-13.html#new-filesystem-layout-for-local-copies-of-providers
 
 version = 99.0.0
-os_arch = $(shell go version | cut -d' ' -f4 | tr / _)
+os_arch = $(shell go env GOOS)_$(shell go env GOARCH)
 provider_path = registry.terraform.io/kvrhdn/honeycombio/$(version)/$(os_arch)/
 
 install_macos:
