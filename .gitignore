@@ -5,6 +5,6 @@
 .terraform/
 *.log
 
-terraform-provider-honeycombio
+terraform-provider-honeycombio*
 
 coverage.txt
