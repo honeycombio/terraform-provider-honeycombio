@@ -101,7 +101,38 @@ func TestAccHoneycombioTrigger_validationErrors(t *testing.T) {
         {"op": "AVG", "column": "duration_ms"}
     ]
 }`),
-				ExpectError: regexp.MustCompile("Query of a trigger must have exactly one calculation"),
+				ExpectError: regexp.MustCompile("a trigger query should contain exactly one calculation"),
+			},
+			{
+				Config: testAccTriggerConfigWithQuery(dataset, `
+{
+    "calculations": [
+        {"op": "HEATMAP"}
+    ]
+}`),
+				ExpectError: regexp.MustCompile("a trigger query may not contain a HEATMAP calculation"),
+			},
+			{
+				Config: testAccTriggerConfigWithQuery(dataset, `
+{
+    "calculations": [
+        {"op": "AVG", "column": "duration_ms"}
+    ],
+    "orders": [
+        {"column": "column_1"}
+    ]
+}`),
+				ExpectError: regexp.MustCompile("orders is not allowed in a trigger query"),
+			},
+			{
+				Config: testAccTriggerConfigWithQuery(dataset, `
+{
+    "calculations": [
+        {"op": "AVG", "column": "duration_ms"}
+    ],
+    "limit": 100
+}`),
+				ExpectError: regexp.MustCompile("limit is not allowed in a trigger query"),
 			},
 		},
 	})

@@ -39,8 +39,9 @@ func newTrigger() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateDiagFunc: validateQueryJSON(func(q *honeycombio.QuerySpec) diag.Diagnostics {
-					if len(q.Calculations) != 1 {
-						return diag.Errorf("Query of a trigger must have exactly one calculation")
+					err := honeycombio.MatchesTriggerSubset(q)
+					if err != nil {
+						return diag.FromErr(err)
 					}
 					return nil
 				}),
