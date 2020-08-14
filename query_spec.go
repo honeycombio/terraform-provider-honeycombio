@@ -21,7 +21,7 @@ type QuerySpec struct {
 	// results. Each term must appear in either the breakdowns field or the
 	// calculations field.
 	Orders []OrderSpec `json:"orders,omitempty"`
-	// The maximum number of query results.
+	// The maximum number of query results, must be between 1 and 1000.
 	Limit *int `json:"limit,omitempty"`
 
 	// not all available fields are currently implemented by QuerySpec, see https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification
