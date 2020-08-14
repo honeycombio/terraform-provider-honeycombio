@@ -100,7 +100,7 @@ const (
 type OrderSpec struct {
 	Op     *CalculationOp `json:"op,omitempty"`
 	Column *string        `json:"column,omitempty"`
-	Order  *SortOrder     `json:"order"`
+	Order  *SortOrder     `json:"order,omitempty"`
 }
 
 // SortOrder describes in which order the results should be sorted.
