@@ -44,6 +44,7 @@ The following arguments are supported:
 * `filter` - (Optional) Zero or more configuration blocks (described below) with the filters that should be applied.
 * `filter_combination` - (Optional) How to combine multiple filters, either `AND` (default) or `OR`.
 * `breakdowns` - (Optional) A list of fields to group by.
+* `order` - (Optional) Zero or more configuration blocks (described below) describing how to order the query results. Each term must appear in either `calculation` or `breakdowns`.
 * `limit` - (Optional)  The maximum number of query results, must be between 1 and 1000.
 
 Each query configuration may have zero or more `calculation` blocks, which each accept the following arguments:
@@ -57,6 +58,11 @@ Each query configuration may have zero or more `filter` blocks, which each accep
 * `op` - (Required) The operator to apply, see the supported list of filter operators at [Filter Operators](https://docs.honeycomb.io/api/query-specification/#filter-operators).
 * `value` - (Optional) The value to be used with the operator, not all operators require a value.
 
+Each query configuration may have zero or more `order` blocks, which each accept the following arguments. An order term can refer to a `calculation` or a column set in `breakdowns`. When referring to a `calculation`, `op` and `column` must be the same as the calculation.
+
+* `op` - (Optional) The calculation operator to apply, see the supported list of calculation operators at [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators).
+* `column` - (Optional) Either a column present in `breakdown` or a column to `op` applies to.
+* `order` - (Optional) The sort direction, if set must be `ascending` or `descending`.
 
 ## Attribute Reference
 
