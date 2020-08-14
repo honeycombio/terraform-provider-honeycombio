@@ -166,14 +166,12 @@ func TestMatchesTriggerSubset(t *testing.T) {
 					},
 				},
 			},
-			expectedOk:  true,
 			expectedErr: nil,
 		},
 		{
 			in: QuerySpec{
 				Calculations: nil,
 			},
-			expectedOk:  false,
 			expectedErr: errors.New("a trigger query should contain exactly one calculation"),
 		},
 		{
@@ -184,7 +182,6 @@ func TestMatchesTriggerSubset(t *testing.T) {
 					},
 				},
 			},
-			expectedOk:  false,
 			expectedErr: errors.New("a trigger query may not contain a HEATMAP calculation"),
 		},
 		{
@@ -196,7 +193,6 @@ func TestMatchesTriggerSubset(t *testing.T) {
 				},
 				Limit: &[]int{100}[0],
 			},
-			expectedOk:  false,
 			expectedErr: errors.New("limit is not allowed in a trigger query"),
 		},
 		{
@@ -212,15 +208,13 @@ func TestMatchesTriggerSubset(t *testing.T) {
 					},
 				},
 			},
-			expectedOk:  false,
 			expectedErr: errors.New("orders is not allowed in a trigger query"),
 		},
 	}
 
 	for i, c := range cases {
-		ok, err := MatchesTriggerSubset(c.in)
+		err := MatchesTriggerSubset(&c.in)
 
-		assert.Equal(t, c.expectedOk, ok, "Test case %d, QuerySpec: %v", i, c.in)
 		assert.Equal(t, c.expectedErr, err, "Test case %d, QuerySpec: %v", i, c.in)
 	}
 }
