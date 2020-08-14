@@ -44,6 +44,7 @@ The following arguments are supported:
 * `filter` - (Optional) Zero or more configuration blocks (described below) with the filters that should be applied.
 * `filter_combination` - (Optional) How to combine multiple filters, either `AND` (default) or `OR`.
 * `breakdowns` - (Optional) A list of fields to group by.
+* `limit` - (Optional)  The maximum number of query results, must be between 1 and 1000.
 
 Each query configuration may have zero or more `calculation` blocks, which each accept the following arguments:
 
