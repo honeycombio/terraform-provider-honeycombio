@@ -104,6 +104,28 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"order": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"op": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice(validQueryCalculationOps, false),
+						},
+						"column": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"order": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"ascending", "descending"}, false),
+						},
+					},
+				},
+			},
 			"limit": {
 				Type:         schema.TypeInt,
 				Optional:     true,
@@ -184,11 +206,43 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 		limit = &l
 	}
 
+	orderSchemas := d.Get("order").([]interface{})
+	orders := make([]honeycombio.OrderSpec, len(orderSchemas))
+
+	for i, o := range orderSchemas {
+		oMap := o.(map[string]interface{})
+
+		var op *honeycombio.CalculationOp
+		opValue := honeycombio.CalculationOp(oMap["op"].(string))
+		if opValue != "" {
+			op = &opValue
+		}
+
+		var column *string
+		columnValue := oMap["column"].(string)
+		if columnValue != "" {
+			column = &columnValue
+		}
+
+		var sortOrder *honeycombio.SortOrder
+		sortOrderValue := honeycombio.SortOrder(oMap["order"].(string))
+		if sortOrderValue != "" {
+			sortOrder = &sortOrderValue
+		}
+
+		orders[i] = honeycombio.OrderSpec{
+			Op:     op,
+			Column: column,
+			Order:  sortOrder,
+		}
+	}
+
 	query := &honeycombio.QuerySpec{
 		Calculations:      calculations,
 		Filters:           filters,
 		FilterCombination: &filterCombination,
 		Breakdowns:        breakdowns,
+		Orders:            orders,
 		Limit:             limit,
 	}
 

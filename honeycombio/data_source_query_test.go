@@ -41,6 +41,17 @@ data "honeycombio_query" "test" {
         value  = "ThatSpecialTenant"
     }
 
+    breakdowns = ["column_1"]
+
+    order {
+        op     = "AVG"
+        column = "duration_ms"
+    }
+    order {
+        column = "column_1"
+        order  = "descending"
+    }
+
     limit = 250
 }
 
@@ -68,6 +79,19 @@ const expectedJSON string = `{
     }
   ],
   "filter_combination": "AND",
+  "breakdowns": [
+    "column_1"
+  ],
+  "orders": [
+    {
+      "op": "AVG",
+      "column": "duration_ms"
+    },
+    {
+      "column": "column_1",
+      "order": "descending"
+    }
+  ],
   "limit": 250
 }`
 
