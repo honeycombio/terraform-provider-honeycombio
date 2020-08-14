@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -53,7 +54,7 @@ func testAccCheckTriggerExists(t *testing.T, name string, trigger *honeycombio.T
 		}
 
 		client := testAccProvider.Meta().(*honeycombio.Client)
-		createdTrigger, err := client.Triggers.Get(resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+		createdTrigger, err := client.Triggers.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not find created trigger: %w", err)
 		}

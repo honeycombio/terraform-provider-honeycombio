@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -65,7 +66,7 @@ func testAccTriggerRecipientCreateTrigger(t *testing.T, c *honeycombio.Client, d
 			},
 		},
 	}
-	trigger, err := c.Triggers.Create(dataset, trigger)
+	trigger, err := c.Triggers.Create(context.Background(), dataset, trigger)
 	if err != nil {
 		t.Error(err)
 	}
@@ -73,7 +74,7 @@ func testAccTriggerRecipientCreateTrigger(t *testing.T, c *honeycombio.Client, d
 }
 
 func testAccTriggerRecipientDeleteTrigger(t *testing.T, c *honeycombio.Client, dataset string, trigger *honeycombio.Trigger) {
-	err := c.Triggers.Delete(dataset, trigger.ID)
+	err := c.Triggers.Delete(context.Background(), dataset, trigger.ID)
 	if err != nil {
 		t.Error(err)
 	}

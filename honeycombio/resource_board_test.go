@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -70,7 +71,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 		}
 
 		client := testAccProvider.Meta().(*honeycombio.Client)
-		createdBoard, err := client.Boards.Get(resourceState.Primary.ID)
+		createdBoard, err := client.Boards.Get(context.Background(), resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not find created board: %w", err)
 		}

@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -50,7 +51,7 @@ func testAccCheckMarkerExists(name string) resource.TestCheckFunc {
 		}
 
 		client := testAccProvider.Meta().(*honeycombio.Client)
-		_, err := client.Markers.Get(resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+		_, err := client.Markers.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not retrieve marker: %w", err)
 		}
