@@ -104,6 +104,11 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"limit": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				ValidateFunc: validation.IntBetween(1, 1000),
+			},
 			"json": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -173,11 +178,18 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 		breakdowns[i] = b.(string)
 	}
 
+	var limit *int
+	l := d.Get("limit").(int)
+	if l != 0 {
+		limit = &l
+	}
+
 	query := &honeycombio.QuerySpec{
 		Calculations:      calculations,
 		Filters:           filters,
 		FilterCombination: &filterCombination,
 		Breakdowns:        breakdowns,
+		Limit:             limit,
 	}
 
 	jsonQuery, err := encodeQuery(query)
