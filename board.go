@@ -1,6 +1,9 @@
 package honeycombio
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 // Compile-time proof of interface implementation.
 var _ Boards = (*boards)(nil)
@@ -8,20 +11,20 @@ var _ Boards = (*boards)(nil)
 // Boards describes (some of) the board related methods that Honeycomb supports.
 type Boards interface {
 	// List all boards.
-	List() ([]Board, error)
+	List(ctx context.Context) ([]Board, error)
 
 	// Get a board by its ID. Returns nil, ErrNotFound if there is no board
 	// with the given ID.
-	Get(id string) (*Board, error)
+	Get(ctx context.Context, id string) (*Board, error)
 
 	// Create a new board.
-	Create(b *Board) (*Board, error)
+	Create(ctx context.Context, b *Board) (*Board, error)
 
 	// Update an existing board.
-	Update(b *Board) (*Board, error)
+	Update(ctx context.Context, b *Board) (*Board, error)
 
 	// Delete a board.
-	Delete(id string) error
+	Delete(ctx context.Context, id string) error
 }
 
 // boards implements Boards.
@@ -59,8 +62,8 @@ type BoardQuery struct {
 	Query   QuerySpec `json:"query"`
 }
 
-func (s *boards) List() ([]Board, error) {
-	req, err := s.client.newRequest("GET", "/1/boards", nil)
+func (s *boards) List(ctx context.Context) ([]Board, error) {
+	req, err := s.client.newRequest(ctx, "GET", "/1/boards", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -70,8 +73,8 @@ func (s *boards) List() ([]Board, error) {
 	return b, err
 }
 
-func (s *boards) Get(ID string) (*Board, error) {
-	req, err := s.client.newRequest("GET", "/1/boards/"+ID, nil)
+func (s *boards) Get(ctx context.Context, ID string) (*Board, error) {
+	req, err := s.client.newRequest(ctx, "GET", "/1/boards/"+ID, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +84,8 @@ func (s *boards) Get(ID string) (*Board, error) {
 	return &b, err
 }
 
-func (s *boards) Create(data *Board) (*Board, error) {
-	req, err := s.client.newRequest("POST", "/1/boards", data)
+func (s *boards) Create(ctx context.Context, data *Board) (*Board, error) {
+	req, err := s.client.newRequest(ctx, "POST", "/1/boards", data)
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +95,8 @@ func (s *boards) Create(data *Board) (*Board, error) {
 	return &b, err
 }
 
-func (s *boards) Update(data *Board) (*Board, error) {
-	req, err := s.client.newRequest("PUT", fmt.Sprintf("/1/boards/%s", data.ID), data)
+func (s *boards) Update(ctx context.Context, data *Board) (*Board, error) {
+	req, err := s.client.newRequest(ctx, "PUT", fmt.Sprintf("/1/boards/%s", data.ID), data)
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +106,8 @@ func (s *boards) Update(data *Board) (*Board, error) {
 	return &b, err
 }
 
-func (s *boards) Delete(id string) error {
-	req, err := s.client.newRequest("DELETE", fmt.Sprintf("/1/boards/%s", id), nil)
+func (s *boards) Delete(ctx context.Context, id string) error {
+	req, err := s.client.newRequest(ctx, "DELETE", fmt.Sprintf("/1/boards/%s", id), nil)
 	if err != nil {
 		return nil
 	}

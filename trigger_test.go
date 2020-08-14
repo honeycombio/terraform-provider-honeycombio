@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -10,6 +11,8 @@ import (
 )
 
 func TestTriggers(t *testing.T) {
+	ctx := context.Background()
+
 	var trigger *Trigger
 	var err error
 
@@ -60,7 +63,7 @@ func TestTriggers(t *testing.T) {
 				},
 			},
 		}
-		trigger, err = c.Triggers.Create(dataset, data)
+		trigger, err = c.Triggers.Create(ctx, dataset, data)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -77,7 +80,7 @@ func TestTriggers(t *testing.T) {
 	})
 
 	t.Run("List", func(t *testing.T) {
-		triggers, err := c.Triggers.List(dataset)
+		triggers, err := c.Triggers.List(ctx, dataset)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -100,7 +103,7 @@ func TestTriggers(t *testing.T) {
 		newTrigger := *trigger
 		newTrigger.Disabled = true
 
-		updatedTrigger, err := c.Triggers.Update(dataset, trigger)
+		updatedTrigger, err := c.Triggers.Update(ctx, dataset, trigger)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -111,7 +114,7 @@ func TestTriggers(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		getTrigger, err := c.Triggers.Get(dataset, trigger.ID)
+		getTrigger, err := c.Triggers.Get(ctx, dataset, trigger.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -120,14 +123,14 @@ func TestTriggers(t *testing.T) {
 	})
 
 	t.Run("Delete", func(t *testing.T) {
-		err = c.Triggers.Delete(dataset, trigger.ID)
+		err = c.Triggers.Delete(ctx, dataset, trigger.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
 	})
 
 	t.Run("Get_unexistingID", func(t *testing.T) {
-		_, err := c.Triggers.Get(dataset, trigger.ID)
+		_, err := c.Triggers.Get(ctx, dataset, trigger.ID)
 		assert.Equal(t, ErrNotFound, err)
 	})
 
@@ -144,7 +147,7 @@ func TestTriggers(t *testing.T) {
 			},
 		}
 
-		_, err := c.Triggers.Create(dataset, &invalidTrigger)
+		_, err := c.Triggers.Create(ctx, dataset, &invalidTrigger)
 		assert.Equal(t, errors.New("422 Unprocessable Entity: trigger query requires exactly one calculation"), err)
 	})
 }

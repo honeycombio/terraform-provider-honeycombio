@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -9,6 +10,8 @@ import (
 )
 
 func TestMarkers(t *testing.T) {
+	ctx := context.Background()
+
 	var m *Marker
 	var err error
 
@@ -21,7 +24,7 @@ func TestMarkers(t *testing.T) {
 			Type:    "deploys",
 			URL:     "http://example.com",
 		}
-		m, err = c.Markers.Create(dataset, data)
+		m, err = c.Markers.Create(ctx, dataset, data)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -33,7 +36,7 @@ func TestMarkers(t *testing.T) {
 	})
 
 	t.Run("List", func(t *testing.T) {
-		markers, err := c.Markers.List(dataset)
+		markers, err := c.Markers.List(ctx, dataset)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -53,7 +56,7 @@ func TestMarkers(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		marker, err := c.Markers.Get(dataset, m.ID)
+		marker, err := c.Markers.Get(ctx, dataset, m.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -62,7 +65,7 @@ func TestMarkers(t *testing.T) {
 	})
 
 	t.Run("Get_unexistingID", func(t *testing.T) {
-		_, err := c.Markers.Get(dataset, "0")
+		_, err := c.Markers.Get(ctx, dataset, "0")
 		assert.Equal(t, ErrNotFound, err)
 	})
 }

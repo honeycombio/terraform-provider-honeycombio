@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"context"
 	"time"
 )
 
@@ -10,17 +11,17 @@ var _ Markers = (*markers)(nil)
 // Markers describes all the markers related methods that Honeycomb supports.
 type Markers interface {
 	// List all markers present in this dataset.
-	List(dataset string) ([]Marker, error)
+	List(ctx context.Context, dataset string) ([]Marker, error)
 
 	// Get a marker by its ID. Returns nil, ErrNotFound if there is no marker
 	// with the given ID.
 	//
 	// This method calls List internally since there is no API available to
 	// directly get a single marker.
-	Get(dataset string, id string) (*Marker, error)
+	Get(ctx context.Context, dataset string, id string) (*Marker, error)
 
 	// Create a new marker in this dataset.
-	Create(dataset string, data MarkerCreateData) (*Marker, error)
+	Create(ctx context.Context, dataset string, data MarkerCreateData) (*Marker, error)
 }
 
 // markers implements Markers.
@@ -49,8 +50,8 @@ type Marker struct {
 	Color string `json:"color,omitempty"`
 }
 
-func (s *markers) List(dataset string) ([]Marker, error) {
-	req, err := s.client.newRequest("GET", "/1/markers/"+urlEncodeDataset(dataset), nil)
+func (s *markers) List(ctx context.Context, dataset string) ([]Marker, error) {
+	req, err := s.client.newRequest(ctx, "GET", "/1/markers/"+urlEncodeDataset(dataset), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -60,8 +61,8 @@ func (s *markers) List(dataset string) ([]Marker, error) {
 	return m, err
 }
 
-func (s *markers) Get(dataset string, id string) (*Marker, error) {
-	markers, err := s.List(dataset)
+func (s *markers) Get(ctx context.Context, dataset string, id string) (*Marker, error) {
+	markers, err := s.List(ctx, dataset)
 	if err != nil {
 		return nil, err
 	}
@@ -83,8 +84,8 @@ type MarkerCreateData struct {
 	URL       string `json:"url,omitempty"`
 }
 
-func (s *markers) Create(dataset string, d MarkerCreateData) (*Marker, error) {
-	req, err := s.client.newRequest("POST", "/1/markers/"+urlEncodeDataset(dataset), d)
+func (s *markers) Create(ctx context.Context, dataset string, d MarkerCreateData) (*Marker, error) {
+	req, err := s.client.newRequest(ctx, "POST", "/1/markers/"+urlEncodeDataset(dataset), d)
 	if err != nil {
 		return nil, err
 	}

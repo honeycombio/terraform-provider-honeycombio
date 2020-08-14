@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -8,6 +9,8 @@ import (
 
 // create a board with an elaborate QuerySpec as smoke test
 func TestQuerySpec(t *testing.T) {
+	ctx := context.Background()
+
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
@@ -57,12 +60,12 @@ func TestQuerySpec(t *testing.T) {
 		},
 	}
 
-	b, err := c.Boards.Create(b)
+	b, err := c.Boards.Create(ctx, b)
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer func() {
-		err := c.Boards.Delete(b.ID)
+		err := c.Boards.Delete(ctx, b.ID)
 		if err != nil {
 			t.Fatal(err)
 		}

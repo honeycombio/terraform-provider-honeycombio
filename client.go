@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -99,7 +100,7 @@ var ErrNotFound = errors.New("404 Not Found")
 
 // newRequest prepares a request to the Honeycomb API with the default Honeycomb
 // headers and a JSON body, if v is set.
-func (c *Client) newRequest(method, path string, v interface{}) (*http.Request, error) {
+func (c *Client) newRequest(ctx context.Context, method, path string, v interface{}) (*http.Request, error) {
 	var body io.Reader
 
 	if v != nil {
@@ -116,7 +117,7 @@ func (c *Client) newRequest(method, path string, v interface{}) (*http.Request, 
 		return nil, err
 	}
 
-	req, err := http.NewRequest(method, requestURL.String(), body)
+	req, err := http.NewRequestWithContext(ctx, method, requestURL.String(), body)
 	if err != nil {
 		return nil, err
 	}

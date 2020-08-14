@@ -1,12 +1,15 @@
 package honeycombio
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBoards(t *testing.T) {
+	ctx := context.Background()
+
 	var b *Board
 	var err error
 
@@ -34,7 +37,7 @@ func TestBoards(t *testing.T) {
 				},
 			},
 		}
-		b, err = c.Boards.Create(data)
+		b, err = c.Boards.Create(ctx, data)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -47,7 +50,7 @@ func TestBoards(t *testing.T) {
 	})
 
 	t.Run("List", func(t *testing.T) {
-		boards, err := c.Boards.List()
+		boards, err := c.Boards.List(ctx)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -81,7 +84,7 @@ func TestBoards(t *testing.T) {
 			},
 		})
 
-		updatedBoard, err := c.Boards.Update(&newBoard)
+		updatedBoard, err := c.Boards.Update(ctx, &newBoard)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -92,7 +95,7 @@ func TestBoards(t *testing.T) {
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		board, err := c.Boards.Get(b.ID)
+		board, err := c.Boards.Get(ctx, b.ID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -101,12 +104,12 @@ func TestBoards(t *testing.T) {
 	})
 
 	t.Run("Delete", func(t *testing.T) {
-		err := c.Boards.Delete(b.ID)
+		err := c.Boards.Delete(ctx, b.ID)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get_unexistingID", func(t *testing.T) {
-		_, err := c.Boards.Get(b.ID)
+		_, err := c.Boards.Get(ctx, b.ID)
 		assert.Equal(t, ErrNotFound, err)
 	})
 }
