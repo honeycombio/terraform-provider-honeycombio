@@ -111,7 +111,7 @@ func resourceTriggerCreate(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	t, err = client.Triggers.Create(dataset, t)
+	t, err = client.Triggers.Create(ctx, dataset, t)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -125,7 +125,7 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 
 	dataset := d.Get("dataset").(string)
 
-	t, err := client.Triggers.Get(dataset, d.Id())
+	t, err := client.Triggers.Get(ctx, dataset, d.Id())
 	if err != nil {
 		if err == honeycombio.ErrNotFound {
 			d.SetId("")
@@ -176,7 +176,7 @@ func resourceTriggerUpdate(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 
-	t, err = client.Triggers.Update(dataset, t)
+	t, err = client.Triggers.Update(ctx, dataset, t)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -190,7 +190,7 @@ func resourceTriggerDelete(ctx context.Context, d *schema.ResourceData, meta int
 
 	dataset := d.Get("dataset").(string)
 
-	err := client.Triggers.Delete(dataset, d.Id())
+	err := client.Triggers.Delete(ctx, dataset, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

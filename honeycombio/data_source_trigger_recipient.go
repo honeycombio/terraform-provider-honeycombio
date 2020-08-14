@@ -35,7 +35,7 @@ func dataSourceHoneycombioSlackRecipientRead(ctx context.Context, d *schema.Reso
 	client := meta.(*honeycombio.Client)
 	dataset := d.Get("dataset").(string)
 
-	triggers, err := client.Triggers.List(dataset)
+	triggers, err := client.Triggers.List(ctx, dataset)
 	if err != nil {
 		return diag.FromErr(err)
 	}

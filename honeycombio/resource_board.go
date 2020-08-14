@@ -65,7 +65,7 @@ func resourceBoardCreate(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	b, err = client.Boards.Create(b)
+	b, err = client.Boards.Create(ctx, b)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -77,7 +77,7 @@ func resourceBoardCreate(ctx context.Context, d *schema.ResourceData, meta inter
 func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
-	b, err := client.Boards.Get(d.Id())
+	b, err := client.Boards.Get(ctx, d.Id())
 	if err != nil {
 		if err == honeycombio.ErrNotFound {
 			d.SetId("")
@@ -129,7 +129,7 @@ func resourceBoardUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	b, err = client.Boards.Update(b)
+	b, err = client.Boards.Update(ctx, b)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -141,7 +141,7 @@ func resourceBoardUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 func resourceBoardDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
-	err := client.Boards.Delete(d.Id())
+	err := client.Boards.Delete(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -50,7 +50,7 @@ func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		Type:    d.Get("type").(string),
 		URL:     d.Get("url").(string),
 	}
-	marker, err := client.Markers.Create(dataset, data)
+	marker, err := client.Markers.Create(ctx, dataset, data)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -62,7 +62,7 @@ func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 func resourceMarkerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
-	marker, err := client.Markers.Get(d.Get("dataset").(string), d.Id())
+	marker, err := client.Markers.Get(ctx, d.Get("dataset").(string), d.Id())
 	if err != nil {
 		if err == honeycombio.ErrNotFound {
 			d.SetId("")
