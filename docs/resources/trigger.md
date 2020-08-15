@@ -61,16 +61,18 @@ The following arguments are supported:
 * `frequency` - (Optional) The interval (in seconds) in which to check the results of the query’s calculation against the threshold. Value must be divisible by 60 and between 60 and 86400 (between 1 minute and 1 day). Defaults to 900 (15 minutes).
 * `recipient` - (Optional) Zero or more configuration blocks (described below) with the recipients to notify when the trigger fires.
 
+-> **NOTE** The query used in a trigger must follow a strict subset: a query must contain exactly one calcuation and may only contain `calculation`, `filter`, `flter_combination` and `breakdowns` fields. This will be validated during the plan phase.
+
 Each trigger configuration must contain exactly one `threshold` block, which accepts the following arguments:
 
 * `op` - (Required) The operator to apply, allowed threshold operators are `>`, `>=`, `<`, and `<=`.
 * `value` - (Required) The value to be used with the operator.
 
-Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments. A trigger recipient block can either refer to an existing recipient, i.e. a recipient that is already present in another trigger, or a new recipient. When specifying an existing recipient, only `id` must be set. To retrieve the ID of an existing recipient, refer to the [`honeycombio_trigger_recipient`](../data-sources/trigger_recipient.md) data source.
+Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments. A trigger recipient block can either refer to an existing recipient (a recipient that is already present in another trigger) or a new recipient. When specifying an existing recipient, only `id` must be set. To retrieve the ID of an existing recipient, refer to the [`honeycombio_trigger_recipient`](../data-sources/trigger_recipient.md) data source.
 
 * `type` - (Optional) The type of the trigger recipient, allowed types are `email`, `marker`, `pagerduty` and `slack`. Should not be used in combination with `id`.
 * `target` - (Optional) Target of the trigger recipient, this has another meaning depending on the type of recipient (see the table below). Should not be used in combination with `id`.
-* `id` - (Optional) The ID of an already existing recipient, this is necessary when type is Slack (see the note below). Should not be used in combination with `type`.
+* `id` - (Optional) The ID of an already existing recipient. Should not be used in combination with `type` and `target`.
 
 Type      | Target
 ----------|-------------------------

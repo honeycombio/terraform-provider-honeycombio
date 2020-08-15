@@ -2,14 +2,14 @@
 
 The Honeycomb.io provider is used to manage various resources on Honeycomb. You can use it to create and manage markers and triggers.
 
-Use the navigation to the left to read about the available resources.
+Use the navigation to the left to read about the available resources and data sources.
 
 ## Example usage
 
 ```hcl
 # Configure the Honeycomb.io provider
 provider "honeycombio" {
-  version = "~> 0.0.2"
+  version = "~> 0.0.7"
 
   # You can set the API key with the environment variable HONEYCOMBIO_APIKEY
 }

@@ -85,11 +85,11 @@ go mod tidy
 
 `goimports` will format the code like `gofmt` but will also fix imports. It can be installed with `go get golang.org/x/tools/cmd/goimports`.
 
-Both commands should create no changes for a pull request to get merged.
+Both commands should create no changes before a pull request can be merged.
 
 ### Run GitHub Actions in your fork
 
-If you fork the repository, you can also run the tests on GitHub Actions (without costs since it's a public repository). Unfortunatly there is no mechanism to share secrets, so all runs will fail until the necessary secrets are configured.
+If you fork the repository, you can also run the tests on GitHub Actions (for free since it's a public repository). Unfortunatly there is no mechanism to share secrets, so all runs will fail until the necessary secrets are configured.
 
 To properly setup the GitHub Actions, add the following secrets:
 

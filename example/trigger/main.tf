@@ -2,7 +2,6 @@ terraform {
   required_providers {
     honeycombio = {
       source = "kvrhdn/honeycombio"
-      version = "~> 0.0.5"
     }
   }
 }
@@ -30,7 +29,7 @@ data "honeycombio_query" "query" {
 }
 
 resource "honeycombio_trigger" "trigger" {
-  name        = "Requests are slower than usuals"
+  name        = "Requests are slower than usual"
   description = "Average duration of all requests for ThatSpecialTenant for the last 15 minutes."
 
   disabled = false
@@ -42,7 +41,7 @@ resource "honeycombio_trigger" "trigger" {
 
   threshold {
     op    = ">"
-    value = 100
+    value = 1000
   }
 
   # zero or more recipients

@@ -1,6 +1,6 @@
 # Data Source: honeycombio_trigger_recipient
 
-Search the triggers of a dataset for a trigger recipient. The ID of the already existing trigger recipient can be used when creating new triggers. Specifying a trigger recipient by ID is necessary when creating Slack recipients using the API.
+Search the triggers of a dataset for a trigger recipient. The ID of the existing trigger recipient can be used when adding trigger recipients to new triggers. Specifying a trigger recipient by its ID is necessary when adding Slack recipients, since these can not be created using the API.
 
 ## Example Usage
 
@@ -9,7 +9,7 @@ variable "dataset" {
   type = string
 }
 
-# search for a trigger recipient of type "slack" and target "honeycomb-triggers" in the given dataaset
+# search for a trigger recipient of type "slack" and target "honeycomb-triggers" in the given dataset
 data "honeycombio_trigger_recipient" "slack" {
   dataset = var.dataset
   type    = "slack"
@@ -28,8 +28,6 @@ resource "honeycombio_trigger" "example" {
 
   query_json = data.honeycombio_query.example.json
   dataset    = var.dataset
-
-  frequency = 600 // in seconds, 10 minutes
 
   threshold {
     op    = ">"

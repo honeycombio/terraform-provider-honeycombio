@@ -18,16 +18,14 @@ If you are using Terraform 0.13, you can install the provider directly from the 
 
 ### Terraform 0.13
 
-Add the following block in your Terraform config. For more information, refer to [Automatic installation of third-party providers](https://github.com/hashicorp/terraform/tree/guide-v0.13-beta/provider-sources#terraform-v013-beta-automatic-installation-of-third-party-providers).
-
-This will download the provider from the Terraform Registry:
+Add the following block in your Terraform config. For more information, refer to [Automatic installation of third-party providers](https://github.com/hashicorp/terraform/tree/guide-v0.13-beta/provider-sources#terraform-v013-beta-automatic-installation-of-third-party-providers). This will download the provider from the Terraform Registry:
 
 ```hcl
 terraform {
   required_providers {
     honeycombio = {
       source  = "kvrhdn/honeycombio"
-      version = "~> 0.0.4"
+      version = "~> 0.0.7"
     }
   }
 }
