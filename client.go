@@ -15,7 +15,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/kvrhdn/go-honeycombio/util"
+	"github.com/kvrhdn/go-honeycombio/internal/httputil"
 )
 
 // Config holds all configuration options for the client.
@@ -82,7 +82,7 @@ func NewClient(config *Config) (*Client, error) {
 
 	httpClient := &http.Client{}
 	if cfg.Debug {
-		httpClient = util.WrapWithLogging(httpClient)
+		httpClient = httputil.WrapWithLogging(httpClient)
 	}
 
 	client := &Client{
@@ -102,7 +102,7 @@ func NewClient(config *Config) (*Client, error) {
 var ErrNotFound = errors.New("404 Not Found")
 
 // newRequest prepares a request to the Honeycomb API with the default Honeycomb
-// headers and a JSON body, if v is set.
+// headers and, if v is set, a JSON body.
 func (c *Client) newRequest(ctx context.Context, method, path string, v interface{}) (*http.Request, error) {
 	var body io.Reader
 
@@ -132,9 +132,9 @@ func (c *Client) newRequest(ctx context.Context, method, path string, v interfac
 	return req, nil
 }
 
-// do a request and parse the response in v, if v is not nil. Returns an error
-// if the request failed or if the response contained a non-2xx status code.
-// ErrNotFound is returned on a 404 response.
+// do a request and, if v is not nil, parse the response in v. Returns an error
+// if the request failed, if the response contained a non-2xx status code or if
+// parsing the reponse in v failed. ErrNotFound is returned on a 404 response.
 func (c *Client) do(req *http.Request, v interface{}) error {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -142,7 +142,7 @@ func (c *Client) do(req *http.Request, v interface{}) error {
 	}
 	defer resp.Body.Close()
 
-	if !util.Is2xx(resp.StatusCode) {
+	if !httputil.Is2xx(resp.StatusCode) {
 		if resp.StatusCode == 404 {
 			return ErrNotFound
 		}

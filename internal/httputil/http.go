@@ -1,4 +1,4 @@
-package util
+package httputil
 
 import (
 	"log"
@@ -11,12 +11,16 @@ func Is2xx(status int) bool {
 	return status >= 200 && status < 300
 }
 
-// roundTripFunc implements http.RoundTripper
+// roundTripFunc implements http.RoundTripper and can be used as utility
+// function to simplify creating a new http.RoundTripper.
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (rf roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return rf(req)
 }
+
+// Compile-time proof of interface implementation.
+var _ http.RoundTripper = (*roundTripFunc)(nil)
 
 // WrapWithLogging wraps the HTTP client to log the entire request and
 // response.
