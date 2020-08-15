@@ -30,7 +30,7 @@ func TestBoards(t *testing.T) {
 						Calculations: []CalculationSpec{
 							{
 								Op:     CalculateOpAvg,
-								Column: &[]string{"duration_ms"}[0],
+								Column: StringPtr("duration_ms"),
 							},
 						},
 					},

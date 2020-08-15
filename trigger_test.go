@@ -31,7 +31,7 @@ func TestTriggers(t *testing.T) {
 				Calculations: []CalculationSpec{
 					{
 						Op:     CalculateOpP99,
-						Column: &[]string{"duration_ms"}[0],
+						Column: StringPtr("duration_ms"),
 					},
 				},
 				Filters: []FilterSpec{
@@ -50,7 +50,7 @@ func TestTriggers(t *testing.T) {
 			Frequency: 300,
 			Threshold: &TriggerThreshold{
 				Op:    TriggerThresholdOpGreaterThan,
-				Value: &[]float64{10000}[0],
+				Value: Float64Ptr(10000),
 			},
 			Recipients: []TriggerRecipient{
 				{
@@ -143,7 +143,7 @@ func TestTriggers(t *testing.T) {
 			},
 			{
 				Op:     "AVG",
-				Column: &[]string{"duration_ms"}[0],
+				Column: StringPtr("duration_ms"),
 			},
 		}
 
@@ -191,7 +191,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 						Op: CalculateOpCount,
 					},
 				},
-				Limit: &[]int{100}[0],
+				Limit: IntPtr(100),
 			},
 			expectedErr: errors.New("limit is not allowed in a trigger query"),
 		},
@@ -204,7 +204,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 				},
 				Orders: []OrderSpec{
 					{
-						Column: &[]string{"duration_ms"}[0],
+						Column: StringPtr("duration_ms"),
 					},
 				},
 			},
