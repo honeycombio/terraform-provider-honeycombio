@@ -1,3 +1,6 @@
+// Package honeycombio provides a client to interact with the Honeycomb API.
+//
+// Documentation of the API can be found here: https://docs.honeycomb.io/api/
 package honeycombio
 
 import (
@@ -95,7 +98,7 @@ func NewClient(config *Config) (*Client, error) {
 	return client, nil
 }
 
-// ErrNotFound means that the requested item could not be found.
+// ErrNotFound is returned when the requested item could not be found.
 var ErrNotFound = errors.New("404 Not Found")
 
 // newRequest prepares a request to the Honeycomb API with the default Honeycomb
