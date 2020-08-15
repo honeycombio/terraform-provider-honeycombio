@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -34,12 +35,24 @@ data "honeycombio_query" "test" {
         column = "trace.parent_id"
         op     = "does-not-exist"
     }
-
     filter {
         column = "app.tenant"
         op     = "="
         value  = "ThatSpecialTenant"
     }
+
+    breakdowns = ["column_1"]
+
+    order {
+        op     = "AVG"
+        column = "duration_ms"
+    }
+    order {
+        column = "column_1"
+        order  = "descending"
+    }
+
+    limit = 250
 }
 
 output "query_json" {
@@ -65,12 +78,26 @@ const expectedJSON string = `{
       "value": "ThatSpecialTenant"
     }
   ],
-  "filter_combination": "AND"
+  "filter_combination": "AND",
+  "breakdowns": [
+    "column_1"
+  ],
+  "orders": [
+    {
+      "op": "AVG",
+      "column": "duration_ms"
+    },
+    {
+      "column": "column_1",
+      "order": "descending"
+    }
+  ],
+  "limit": 250
 }`
 
 //Honeycomb API blows up if you send a Value with a FilterOp of `exists` or `does-not-exist`
 func TestAccDataSourceHoneycombioQuery_noValueForExists(t *testing.T) {
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -81,6 +108,18 @@ func TestAccDataSourceHoneycombioQuery_noValueForExists(t *testing.T) {
 			{
 				Config:      testBadCountQuery(),
 				ExpectError: regexp.MustCompile("calculation op COUNT should not have an accompanying column"),
+			},
+			{
+				Config:      testQueryWithLimit(0),
+				ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+			},
+			{
+				Config:      testQueryWithLimit(-5),
+				ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+			},
+			{
+				Config:      testQueryWithLimit(1200),
+				ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
 			},
 		},
 	})
@@ -107,4 +146,12 @@ data "honeycombio_query" "test" {
   }
 }
 `
+}
+
+func testQueryWithLimit(limit int) string {
+	return fmt.Sprintf(`
+data "honeycombio_query" "test" {
+  limit = %d
+}
+`, limit)
 }
