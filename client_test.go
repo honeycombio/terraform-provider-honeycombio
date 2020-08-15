@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,9 +14,11 @@ func newTestClient(t *testing.T) *Client {
 		t.Fatal("expected environment variable HONEYCOMBIO_APIKEY")
 	}
 
+	debug, _ := strconv.ParseBool(os.Getenv("HONEYCOMBIO_DEBUG"))
+
 	cfg := &Config{
 		APIKey: apiKey,
-		Debug:  true,
+		Debug:  debug,
 	}
 	c, err := NewClient(cfg)
 	if err != nil {
