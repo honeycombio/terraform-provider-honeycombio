@@ -22,8 +22,8 @@ data "honeycombio_query" "query" {
 // this will fail during the plan phase.
 data "honeycombio_trigger_recipient" "slack" {
   dataset = var.dataset
-  type   = "slack"
-  target = "honeycombio"
+  type    = "slack"
+  target  = "honeycombio"
 }
 
 resource "honeycombio_trigger" "trigger" {
