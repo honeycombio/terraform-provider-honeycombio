@@ -78,6 +78,29 @@ func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFun
 	}
 }
 
+// add a trigger recipient by ID to verify the diff is stable
+func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
+	c := testAccProvider.Meta().(*honeycombio.Client)
+	dataset := testAccDataset()
+
+	trigger, deleteFn := createTriggerWithRecipient(t, c, dataset, honeycombio.TriggerRecipient{
+		Type:   honeycombio.TriggerRecipientTypeEmail,
+		Target: "acctest@example.com",
+	})
+	defer deleteFn()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:      func() { testAccPreCheck(t) },
+		IDRefreshName: "honeycombio_trigger.test",
+		Providers:     testAccProviders,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTriggerConfigWithRecipientID(dataset, trigger.Recipients[0].ID),
+			},
+		},
+	})
+}
+
 func TestAccHoneycombioTrigger_validationErrors(t *testing.T) {
 	dataset := testAccDataset()
 
@@ -208,4 +231,30 @@ EOF
     value = 100
   }
 }`, dataset, query)
+}
+
+func testAccTriggerConfigWithRecipientID(dataset, recipientID string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger from terraform-provider-honeycombio"
+  dataset = "%s"
+
+  query_json = data.honeycombio_query.test.json
+        
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  recipient {
+    id = "%s"
+  }
+}`, dataset, recipientID)
 }
