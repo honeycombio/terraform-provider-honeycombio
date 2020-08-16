@@ -88,11 +88,13 @@ func newTrigger() *schema.Resource {
 						"type": {
 							Type:         schema.TypeString,
 							Optional:     true,
+							Computed:     true,
 							ValidateFunc: validation.StringInSlice(validTriggerRecipientTypes, false),
 						},
 						"target": {
 							Type:     schema.TypeString,
 							Optional: true,
+							Computed: true,
 						},
 					},
 				},
