@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	honeycombio "github.com/kvrhdn/go-honeycombio"
+	"github.com/kvrhdn/go-honeycombio"
 )
 
 // providerVersion represents the current version of the provider. It should be

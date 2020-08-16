@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	honeycombio "github.com/kvrhdn/go-honeycombio"
+	"github.com/kvrhdn/go-honeycombio"
 )
 
 func TestAccHoneycombioMarker_basic(t *testing.T) {

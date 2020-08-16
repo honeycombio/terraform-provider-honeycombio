@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	honeycombio "github.com/kvrhdn/go-honeycombio"
+	"github.com/kvrhdn/go-honeycombio"
 )
 
 func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
