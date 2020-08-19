@@ -49,11 +49,16 @@ type Board struct {
 // BoardStyle determines how a Board should be displayed within the Honeycomb UI.
 type BoardStyle string
 
-// List of available board styles.
+// Declaration of board styles.
 const (
 	BoardStyleList   BoardStyle = "list"
 	BoardStyleVisual BoardStyle = "visual"
 )
+
+// BoardStyles returns an exhaustive list of board styles.
+func BoardStyles() []BoardStyle {
+	return []BoardStyle{BoardStyleList, BoardStyleVisual}
+}
 
 // BoardQuery represents are query that is part of a board.
 type BoardQuery struct {

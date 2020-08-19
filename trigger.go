@@ -64,13 +64,23 @@ type TriggerThreshold struct {
 // TriggerThresholdOp the operator of the trigger threshold.
 type TriggerThresholdOp string
 
-// List of available trigger op types.
+// Declaration of trigger threshold ops.
 const (
 	TriggerThresholdOpGreaterThan        TriggerThresholdOp = ">"
 	TriggerThresholdOpGreaterThanOrEqual TriggerThresholdOp = ">="
 	TriggerThresholdOpLessThan           TriggerThresholdOp = "<"
 	TriggerThresholdOpLessThanOrEqual    TriggerThresholdOp = "<="
 )
+
+// TriggerThresholdOps returns an exhaustive list of trigger threshold ops.
+func TriggerThresholdOps() []TriggerThresholdOp {
+	return []TriggerThresholdOp{
+		TriggerThresholdOpGreaterThan,
+		TriggerThresholdOpGreaterThanOrEqual,
+		TriggerThresholdOpLessThan,
+		TriggerThresholdOpLessThanOrEqual,
+	}
+}
 
 // TriggerRecipient represents a recipient that will receive a notification if
 // the trigger fires, as described by https://docs.honeycomb.io/api/triggers/#specifying-recipients
@@ -90,13 +100,23 @@ type TriggerRecipient struct {
 // TriggerRecipientType holds all the possible trigger recipient types.
 type TriggerRecipientType string
 
-// List of available trigger recipient types
+// Declaration of trigger recipient types
 const (
 	TriggerRecipientTypeEmail     TriggerRecipientType = "email"
 	TriggerRecipientTypeMarker    TriggerRecipientType = "marker"
 	TriggerRecipientTypePagerDuty TriggerRecipientType = "pagerduty"
 	TriggerRecipientTypeSlack     TriggerRecipientType = "slack"
 )
+
+// TriggerRecipientTypes returns an exhaustive list of trigger recipient types.
+func TriggerRecipientTypes() []TriggerRecipientType {
+	return []TriggerRecipientType{
+		TriggerRecipientTypeEmail,
+		TriggerRecipientTypeMarker,
+		TriggerRecipientTypePagerDuty,
+		TriggerRecipientTypeSlack,
+	}
+}
 
 func (s *triggers) List(ctx context.Context, dataset string) ([]Trigger, error) {
 	req, err := s.client.newRequest(ctx, "GET", "/1/triggers/"+urlEncodeDataset(dataset), nil)

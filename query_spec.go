@@ -38,7 +38,7 @@ type CalculationSpec struct {
 // CalculationOp represents the operation of a calculation.
 type CalculationOp string
 
-// List of available calculation op types.
+// Declaration of calculation ops.
 const (
 	CalculateOpCount         CalculationOp = "COUNT"
 	CalculateOpSum           CalculationOp = "SUM"
@@ -60,6 +60,30 @@ const (
 	CalculateOpHeatmap       CalculationOp = "HEATMAP"
 )
 
+// CalculationOps returns an exhaustive list of calculation ops.
+func CalculationOps() []CalculationOp {
+	return []CalculationOp{
+		CalculateOpCount,
+		CalculateOpSum,
+		CalculateOpAvg,
+		CalculateOpCountDistinct,
+		CalculateOpMax,
+		CalculateOpMin,
+		CalculateOpP001,
+		CalculateOpP01,
+		CalculateOpP05,
+		CalculateOpP10,
+		CalculateOpP25,
+		CalculateOpP50,
+		CalculateOpP75,
+		CalculateOpP90,
+		CalculateOpP95,
+		CalculateOpP99,
+		CalculateOpP999,
+		CalculateOpHeatmap,
+	}
+}
+
 // FilterSpec represents a filter within a query.
 type FilterSpec struct {
 	Column string   `json:"column"`
@@ -71,7 +95,7 @@ type FilterSpec struct {
 // FilterOp represents the operation of a filter.
 type FilterOp string
 
-// List of available filter op types.
+// Declaration of filter ops.
 const (
 	FilterOpEquals             FilterOp = "="
 	FilterOpNotEquals          FilterOp = "!="
@@ -87,14 +111,37 @@ const (
 	FilterOpDoesNotContain     FilterOp = "does-not-contain"
 )
 
+// FilterOps returns an exhaustive list of available filter ops.
+func FilterOps() []FilterOp {
+	return []FilterOp{
+		FilterOpEquals,
+		FilterOpNotEquals,
+		FilterOpGreaterThan,
+		FilterOpGreaterThanOrEqual,
+		FilterOpSmallerThan,
+		FilterOpSmallerThanOrEqual,
+		FilterOpStartsWith,
+		FilterOpDoesNotStartWith,
+		FilterOpExists,
+		FilterOpDoesNotExist,
+		FilterOpContains,
+		FilterOpDoesNotContain,
+	}
+}
+
 // FilterCombination describes how the filters of a query should be combined.
 type FilterCombination string
 
-// List of available filter combination options.
+// Declaration of filter combinations.
 const (
 	FilterCombinationOr  FilterCombination = "OR"
 	FilterCombinationAnd FilterCombination = "AND"
 )
+
+// FilterCombinations returns an exhaustive list of filter combinations.
+func FilterCombinations() []FilterCombination {
+	return []FilterCombination{FilterCombinationOr, FilterCombinationAnd}
+}
 
 // OrderSpec describes how to order the results of a query.
 type OrderSpec struct {
@@ -106,8 +153,13 @@ type OrderSpec struct {
 // SortOrder describes in which order the results should be sorted.
 type SortOrder string
 
-// List of available sort orders.
+// Declaration of sort orders.
 const (
 	SortOrderAsc  SortOrder = "ascending"
 	SortOrderDesc SortOrder = "descending"
 )
+
+// SortOrders returns an exhaustive list of all sort orders.
+func SortOrders() []SortOrder {
+	return []SortOrder{SortOrderAsc, SortOrderDesc}
+}
