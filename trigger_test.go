@@ -30,7 +30,7 @@ func TestTriggers(t *testing.T) {
 				Breakdowns: nil,
 				Calculations: []CalculationSpec{
 					{
-						Op:     CalculateOpP99,
+						Op:     CalculationOpP99,
 						Column: StringPtr("duration_ms"),
 					},
 				},
@@ -162,7 +162,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 			in: QuerySpec{
 				Calculations: []CalculationSpec{
 					{
-						Op: CalculateOpCount,
+						Op: CalculationOpCount,
 					},
 				},
 			},
@@ -178,7 +178,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 			in: QuerySpec{
 				Calculations: []CalculationSpec{
 					{
-						Op: CalculateOpHeatmap,
+						Op: CalculationOpHeatmap,
 					},
 				},
 			},
@@ -188,7 +188,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 			in: QuerySpec{
 				Calculations: []CalculationSpec{
 					{
-						Op: CalculateOpCount,
+						Op: CalculationOpCount,
 					},
 				},
 				Limit: IntPtr(100),
@@ -199,7 +199,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 			in: QuerySpec{
 				Calculations: []CalculationSpec{
 					{
-						Op: CalculateOpCount,
+						Op: CalculationOpCount,
 					},
 				},
 				Orders: []OrderSpec{

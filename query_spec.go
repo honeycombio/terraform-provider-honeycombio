@@ -40,47 +40,47 @@ type CalculationOp string
 
 // Declaration of calculation ops.
 const (
-	CalculateOpCount         CalculationOp = "COUNT"
-	CalculateOpSum           CalculationOp = "SUM"
-	CalculateOpAvg           CalculationOp = "AVG"
-	CalculateOpCountDistinct CalculationOp = "COUNT_DISTINCT"
-	CalculateOpMax           CalculationOp = "MAX"
-	CalculateOpMin           CalculationOp = "MIN"
-	CalculateOpP001          CalculationOp = "P001"
-	CalculateOpP01           CalculationOp = "P01"
-	CalculateOpP05           CalculationOp = "P05"
-	CalculateOpP10           CalculationOp = "P10"
-	CalculateOpP25           CalculationOp = "P25"
-	CalculateOpP50           CalculationOp = "P50"
-	CalculateOpP75           CalculationOp = "P75"
-	CalculateOpP90           CalculationOp = "P90"
-	CalculateOpP95           CalculationOp = "P95"
-	CalculateOpP99           CalculationOp = "P99"
-	CalculateOpP999          CalculationOp = "P999"
-	CalculateOpHeatmap       CalculationOp = "HEATMAP"
+	CalculationOpCount         CalculationOp = "COUNT"
+	CalculationOpSum           CalculationOp = "SUM"
+	CalculationOpAvg           CalculationOp = "AVG"
+	CalculationOpCountDistinct CalculationOp = "COUNT_DISTINCT"
+	CalculationOpMax           CalculationOp = "MAX"
+	CalculationOpMin           CalculationOp = "MIN"
+	CalculationOpP001          CalculationOp = "P001"
+	CalculationOpP01           CalculationOp = "P01"
+	CalculationOpP05           CalculationOp = "P05"
+	CalculationOpP10           CalculationOp = "P10"
+	CalculationOpP25           CalculationOp = "P25"
+	CalculationOpP50           CalculationOp = "P50"
+	CalculationOpP75           CalculationOp = "P75"
+	CalculationOpP90           CalculationOp = "P90"
+	CalculationOpP95           CalculationOp = "P95"
+	CalculationOpP99           CalculationOp = "P99"
+	CalculationOpP999          CalculationOp = "P999"
+	CalculationOpHeatmap       CalculationOp = "HEATMAP"
 )
 
 // CalculationOps returns an exhaustive list of calculation ops.
 func CalculationOps() []CalculationOp {
 	return []CalculationOp{
-		CalculateOpCount,
-		CalculateOpSum,
-		CalculateOpAvg,
-		CalculateOpCountDistinct,
-		CalculateOpMax,
-		CalculateOpMin,
-		CalculateOpP001,
-		CalculateOpP01,
-		CalculateOpP05,
-		CalculateOpP10,
-		CalculateOpP25,
-		CalculateOpP50,
-		CalculateOpP75,
-		CalculateOpP90,
-		CalculateOpP95,
-		CalculateOpP99,
-		CalculateOpP999,
-		CalculateOpHeatmap,
+		CalculationOpCount,
+		CalculationOpSum,
+		CalculationOpAvg,
+		CalculationOpCountDistinct,
+		CalculationOpMax,
+		CalculationOpMin,
+		CalculationOpP001,
+		CalculationOpP01,
+		CalculationOpP05,
+		CalculationOpP10,
+		CalculationOpP25,
+		CalculationOpP50,
+		CalculationOpP75,
+		CalculationOpP90,
+		CalculationOpP95,
+		CalculationOpP99,
+		CalculationOpP999,
+		CalculationOpHeatmap,
 	}
 }
 

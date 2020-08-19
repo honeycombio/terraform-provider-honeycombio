@@ -29,7 +29,7 @@ func TestBoards(t *testing.T) {
 					Query: QuerySpec{
 						Calculations: []CalculationSpec{
 							{
-								Op:     CalculateOpAvg,
+								Op:     CalculationOpAvg,
 								Column: StringPtr("duration_ms"),
 							},
 						},
@@ -78,7 +78,7 @@ func TestBoards(t *testing.T) {
 			Query: QuerySpec{
 				Calculations: []CalculationSpec{
 					{
-						Op: CalculateOpCount,
+						Op: CalculationOpCount,
 					},
 				},
 			},

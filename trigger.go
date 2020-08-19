@@ -190,7 +190,7 @@ func MatchesTriggerSubset(query *QuerySpec) error {
 		return errors.New("a trigger query should contain exactly one calculation")
 	}
 
-	if query.Calculations[0].Op == CalculateOpHeatmap {
+	if query.Calculations[0].Op == CalculationOpHeatmap {
 		return errors.New("a trigger query may not contain a HEATMAP calculation")
 	}
 

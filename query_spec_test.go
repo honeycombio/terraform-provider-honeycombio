@@ -17,10 +17,10 @@ func TestQuerySpec(t *testing.T) {
 	query := QuerySpec{
 		Calculations: []CalculationSpec{
 			{
-				Op: CalculateOpCount,
+				Op: CalculationOpCount,
 			},
 			{
-				Op:     CalculateOpHeatmap,
+				Op:     CalculationOpHeatmap,
 				Column: StringPtr("duration_ms"),
 			},
 		},
@@ -42,7 +42,7 @@ func TestQuerySpec(t *testing.T) {
 				Column: StringPtr("column_1"),
 			},
 			{
-				Op:    CalculationOpPtr(CalculateOpCount),
+				Op:    CalculationOpPtr(CalculationOpCount),
 				Order: SortOrderPtr(SortOrderDesc),
 			},
 		},
