@@ -141,10 +141,6 @@ func (s *triggers) Get(ctx context.Context, dataset string, id string) (*Trigger
 }
 
 func (s *triggers) Create(ctx context.Context, dataset string, data *Trigger) (*Trigger, error) {
-	if data.ID != "" {
-		return nil, errors.New("Trigger.ID must be empty when creating a trigger ")
-	}
-
 	req, err := s.client.newRequest(ctx, "POST", fmt.Sprintf("/1/triggers/%s", urlEncodeDataset(dataset)), data)
 	if err != nil {
 		return nil, err
