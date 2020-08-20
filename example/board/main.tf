@@ -30,7 +30,7 @@ data "honeycombio_query" "query" {
   filter {
     column = "app.tenant"
     op     = "="
-    value  = "ThatSpecialTenant"
+    value_string  = "ThatSpecialTenant"
   }
 }
 

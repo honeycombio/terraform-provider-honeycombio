@@ -36,6 +36,11 @@ data "honeycombio_query" "test" {
         op     = "does-not-exist"
     }
     filter {
+        column        = "duration_ms"
+        op            = ">"
+        value_integer = 100
+    }
+    filter {
         column = "app.tenant"
         op     = "="
         value  = "ThatSpecialTenant"
@@ -60,6 +65,7 @@ output "query_json" {
 }`
 }
 
+//Note: By default go encodes `<` and `>` for html, hence the `\u003e`
 const expectedJSON string = `{
   "calculations": [
     {
@@ -71,6 +77,11 @@ const expectedJSON string = `{
     {
       "column": "trace.parent_id",
       "op": "does-not-exist"
+    },
+    {
+      "column": "duration_ms",
+      "op": "\u003e",
+      "value": 100
     },
     {
       "column": "app.tenant",
@@ -95,15 +106,14 @@ const expectedJSON string = `{
   "limit": 250
 }`
 
-//Honeycomb API blows up if you send a Value with a FilterOp of `exists` or `does-not-exist`
-func TestAccDataSourceHoneycombioQuery_noValueForExists(t *testing.T) {
+func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
 				Config:      testBadExistsQuery(),
-				ExpectError: regexp.MustCompile("Filter operation exists must not"),
+				ExpectError: regexp.MustCompile("filter operation exists must not"),
 			},
 			{
 				Config:      testBadCountQuery(),
@@ -120,6 +130,10 @@ func TestAccDataSourceHoneycombioQuery_noValueForExists(t *testing.T) {
 			{
 				Config:      testQueryWithLimit(1200),
 				ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+			},
+			{
+				Config:      testConflictingValues(),
+				ExpectError: regexp.MustCompile(multipleValuesError),
 			},
 		},
 	})
@@ -143,6 +157,19 @@ data "honeycombio_query" "test" {
   calculation {
     op     = "COUNT"
     column = "we-should-not-specify-a-column-with-COUNT"
+  }
+}
+`
+}
+
+func testConflictingValues() string {
+	return `
+data "honeycombio_query" "test" {
+  filter {
+    column = "column"
+    op     = ">"
+    value  = "1"
+    value_integer = 10
   }
 }
 `
