@@ -350,6 +350,10 @@ func extractFilter(d *schema.ResourceData, id int) (honeycombio.FilterSpec, erro
 		if filter.Value != nil {
 			return filter, fmt.Errorf("filter operation %s must not contain a value", filter.Op)
 		}
+	} else {
+		if filter.Value == nil {
+			return filter, fmt.Errorf("filter operation %s requires a value", filter.Op)
+		}
 	}
 	return filter, nil
 }

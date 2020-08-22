@@ -135,6 +135,10 @@ func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
 				Config:      testConflictingValues(),
 				ExpectError: regexp.MustCompile(multipleValuesError),
 			},
+			{
+				Config:      testMissingFilterValue(),
+				ExpectError: regexp.MustCompile("filter operation > requires a value"),
+			},
 		},
 	})
 }
@@ -170,6 +174,17 @@ data "honeycombio_query" "test" {
     op     = ">"
     value  = "1"
     value_integer = 10
+  }
+}
+`
+}
+
+func testMissingFilterValue() string {
+	return `
+data "honeycombio_query" "test" {
+  filter {
+    column = "column"
+    op     = ">"
   }
 }
 `
