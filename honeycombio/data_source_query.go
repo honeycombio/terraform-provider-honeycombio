@@ -87,8 +87,9 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 						},
 						"value": {
 							Type:        schema.TypeString,
-							Description: "The value used for the filter.  Use of the explicitly typed `value_*` variants is recommended until the honeycomb API is able to support type inference as initially described in https://github.com/kvrhdn/terraform-provider-honeycombio/issues/27.",
+							Description: "Deprecated: use the explicitly typed `value_string` instead. Mutually exclusive with the other `value_*` options.",
 							Optional:    true,
+							Deprecated:  "Use of attribute `value` is discouraged, prefer using the explicitly typed `value_*` variants instead",
 						},
 						"value_string": {
 							Type:        schema.TypeString,
