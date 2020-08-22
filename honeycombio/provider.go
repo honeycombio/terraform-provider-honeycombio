@@ -11,6 +11,12 @@ import (
 	"github.com/kvrhdn/go-honeycombio"
 )
 
+func init() {
+	// set global description kind to markdown, as described in:
+	// https://www.terraform.io/docs/extend/guides/v2-upgrade-guide.html#support-for-resource-level-and-field-level-descriptions
+	schema.DescriptionKind = schema.StringMarkdown
+}
+
 // providerVersion represents the current version of the provider. It should be
 // overwritten during the release process.
 var providerVersion = "dev"
