@@ -72,7 +72,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 				},
 			},
 			"filter": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -287,11 +287,11 @@ func validateQueryJSON(validators ...querySpecValidateDiagFunc) schema.SchemaVal
 }
 
 func extractFilters(d *schema.ResourceData) ([]honeycombio.FilterSpec, error) {
-	filterSet := d.Get("filter").(*schema.Set)
-	hashFn := filterSet.F
-	filters := make([]honeycombio.FilterSpec, filterSet.Len())
-	for i, schemaFilter := range filterSet.List() {
-		honeyFilter, err := extractFilter(d, hashFn(schemaFilter))
+	filterSchemas := d.Get("filter").([]interface{})
+	filters := make([]honeycombio.FilterSpec, len(filterSchemas))
+
+	for i := range filterSchemas {
+		honeyFilter, err := extractFilter(d, i)
 		if err != nil {
 			return nil, err
 		}
@@ -302,18 +302,19 @@ func extractFilters(d *schema.ResourceData) ([]honeycombio.FilterSpec, error) {
 
 const multipleValuesError = "must choose one of 'value', 'value_string', 'value_integer', 'value_float', 'value_boolean'"
 
-func extractFilter(d *schema.ResourceData, id int) (honeycombio.FilterSpec, error) {
+func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, error) {
 	var filter honeycombio.FilterSpec
-	filter.Column = d.Get(fmt.Sprintf("filter.%d.column", id)).(string)
-	filter.Op = honeycombio.FilterOp(d.Get(fmt.Sprintf("filter.%d.op", id)).(string))
+
+	filter.Column = d.Get(fmt.Sprintf("filter.%d.column", index)).(string)
+	filter.Op = honeycombio.FilterOp(d.Get(fmt.Sprintf("filter.%d.op", index)).(string))
 
 	valueSet := false
-	v, vOk := d.GetOk(fmt.Sprintf("filter.%d.value", id))
+	v, vOk := d.GetOk(fmt.Sprintf("filter.%d.value", index))
 	if vOk {
 		filter.Value = v
 		valueSet = true
 	}
-	vs, vsOk := d.GetOk(fmt.Sprintf("filter.%d.value_string", id))
+	vs, vsOk := d.GetOk(fmt.Sprintf("filter.%d.value_string", index))
 	if vsOk {
 		if valueSet {
 			return filter, fmt.Errorf(multipleValuesError)
@@ -321,7 +322,7 @@ func extractFilter(d *schema.ResourceData, id int) (honeycombio.FilterSpec, erro
 		filter.Value = vs
 		valueSet = true
 	}
-	vi, viOk := d.GetOk(fmt.Sprintf("filter.%d.value_integer", id))
+	vi, viOk := d.GetOk(fmt.Sprintf("filter.%d.value_integer", index))
 	if viOk {
 		if valueSet {
 			return filter, fmt.Errorf(multipleValuesError)
@@ -329,7 +330,7 @@ func extractFilter(d *schema.ResourceData, id int) (honeycombio.FilterSpec, erro
 		filter.Value = vi
 		valueSet = true
 	}
-	vf, vfOk := d.GetOk(fmt.Sprintf("filter.%d.value_float", id))
+	vf, vfOk := d.GetOk(fmt.Sprintf("filter.%d.value_float", index))
 	if vfOk {
 		if valueSet {
 			return filter, fmt.Errorf(multipleValuesError)
@@ -337,7 +338,7 @@ func extractFilter(d *schema.ResourceData, id int) (honeycombio.FilterSpec, erro
 		filter.Value = vf
 		valueSet = true
 	}
-	vb, vbOk := d.GetOk(fmt.Sprintf("filter.%d.value_boolean", id))
+	vb, vbOk := d.GetOk(fmt.Sprintf("filter.%d.value_boolean", index))
 	if vbOk {
 		if valueSet {
 			return filter, fmt.Errorf(multipleValuesError)
