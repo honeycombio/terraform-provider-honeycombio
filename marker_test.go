@@ -42,7 +42,7 @@ func TestMarkers(t *testing.T) {
 		markers, err := c.Markers.List(ctx, dataset)
 
 		assert.NoError(t, err)
-		assert.Contains(t, markers, *m, "Could not find newly created marker with List")
+		assert.Contains(t, markers, *m, "could not find newly created marker with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
@@ -68,9 +68,8 @@ func TestMarkers(t *testing.T) {
 	})
 
 	t.Run("Get_deletedMarker", func(t *testing.T) {
-		result, err := c.Markers.Get(ctx, dataset, m.ID)
+		_, err := c.Markers.Get(ctx, dataset, m.ID)
 
 		assert.Equal(t, ErrNotFound, err)
-		assert.Nil(t, result)
 	})
 }

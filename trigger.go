@@ -6,18 +6,19 @@ import (
 	"fmt"
 )
 
-// Compile-time proof of interface implementation.
-var _ Triggers = (*triggers)(nil)
-
-// Triggers describes all the trigger-related methods that Honeycomb supports.
+// Triggers describes all the trigger-related methods that the Honeycomb API
+// supports.
+//
+// API docs: https://docs.honeycomb.io/api/triggers/
 type Triggers interface {
 	// List all triggers present in this dataset.
 	List(ctx context.Context, dataset string) ([]Trigger, error)
 
-	// Get a trigger by its ID.
+	// Get a trigger by its ID. Returns ErrNotFound if there is no trigger with
+	// the given ID in this dataset.
 	Get(ctx context.Context, dataset string, id string) (*Trigger, error)
 
-	// Create a new trigger in this dataset. When creating a new trigger, ID
+	// Create a new trigger in this dataset. When creating a new trigger ID
 	// may not be set.
 	Create(ctx context.Context, dataset string, t *Trigger) (*Trigger, error)
 
@@ -35,23 +36,34 @@ type triggers struct {
 	client *Client
 }
 
-// Trigger represents a Honeycomb trigger, as described by https://docs.honeycomb.io/api/triggers/#fields-on-a-trigger
+// Compile-time proof of interface implementation by type triggers.
+var _ Triggers = (*triggers)(nil)
+
+// Trigger represents a Honeycomb trigger.
+//
+// API docs: https://docs.honeycomb.io/api/triggers/#fields-on-a-trigger
 type Trigger struct {
 	ID string `json:"id,omitempty"`
+
 	// Name of the trigger, required when creating a new trigger.
-	Name        string `json:"name,omitempty"`
-	Disabled    bool   `json:"disabled,omitempty"`
+	Name string `json:"name"`
+	// Description is displayed on the triggers page.
 	Description string `json:"description,omitempty"`
-	// Query of the trigger, required when creating a new trigger. The query of
-	// a trigger must contain exactly one item in `calculations`. The HEATMAP
-	// calculation may not be used.
-	Query *QuerySpec `json:"query,omitempty"`
-	// Frequency as an interval in seconds, defaults to 900 (15 minutes). Value
-	// must be divisible by 60 and between 60 and 86400 (between 1 minute and 1
-	// day).
-	Frequency int `json:"frequency,omitempty"`
+	// State of the trigger, if disabled is true the trigger will not run.
+	Disabled bool `json:"disabled,omitempty"`
+	// Query of the trigger, required when creating a new trigger. The query
+	// must respect the properties described with and validated by
+	// MatchesTriggerSubset.
+	// Additionally, time_range of the query can be at most 1 day and may not
+	// be greater than 4 times the frequency.
+	Query *QuerySpec `json:"query"`
 	// Threshold, required when creating a new trigger.
-	Threshold  *TriggerThreshold  `json:"threshold,omitempty"`
+	Threshold *TriggerThreshold `json:"threshold"`
+	// Frequency describes how often the trigger should run. Frequency is an
+	// interval in seconds, defaulting to 900 (15 minutes). Its value must be
+	// divisible by 60 and between 60 and 86400 (between 1 minute and 1 day).
+	Frequency int `json:"frequency,omitempty"`
+	// Recipients are notified when the trigger fires.
 	Recipients []TriggerRecipient `json:"recipients,omitempty"`
 }
 
@@ -82,8 +94,10 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 	}
 }
 
-// TriggerRecipient represents a recipient that will receive a notification if
-// the trigger fires, as described by https://docs.honeycomb.io/api/triggers/#specifying-recipients
+// TriggerRecipient represents a recipient that will receive a notification
+// when the trigger fires.
+//
+// API docs: https://docs.honeycomb.io/api/triggers/#specifying-recipients
 type TriggerRecipient struct {
 	// ID of the recipient, this is required when type is Slack.
 	ID string `json:"id,omitempty"`

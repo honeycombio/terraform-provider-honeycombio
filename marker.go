@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Markers describes all the markers-related methods that the Honeycomb API
+// Markers describes all the marker-related methods that the Honeycomb API
 // supports.
 //
 // API docs: https://docs.honeycomb.io/api/markers/
@@ -14,8 +14,8 @@ type Markers interface {
 	// List all markers present in this dataset.
 	List(ctx context.Context, dataset string) ([]Marker, error)
 
-	// Get a marker by its ID. Returns (nil, ErrNotFound) if there is no marker
-	// with the given ID in this dataset.
+	// Get a marker by its ID. Returns ErrNotFound if there is no marker with
+	// the given ID in this dataset.
 	//
 	// This method calls List internally since there is no API available to
 	// directly get a single marker.
