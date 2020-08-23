@@ -119,56 +119,31 @@ func TriggerRecipientTypes() []TriggerRecipientType {
 }
 
 func (s *triggers) List(ctx context.Context, dataset string) ([]Trigger, error) {
-	req, err := s.client.newRequest(ctx, "GET", "/1/triggers/"+urlEncodeDataset(dataset), nil)
-	if err != nil {
-		return nil, err
-	}
-
 	var t []Trigger
-	err = s.client.do(req, &t)
+	err := s.client.performRequest(ctx, "GET", "/1/triggers/"+urlEncodeDataset(dataset), nil, &t)
 	return t, err
 }
 
 func (s *triggers) Get(ctx context.Context, dataset string, id string) (*Trigger, error) {
-	req, err := s.client.newRequest(ctx, "GET", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), id), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	var t *Trigger
-	err = s.client.do(req, &t)
-	return t, err
+	var t Trigger
+	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), id), nil, &t)
+	return &t, err
 }
 
 func (s *triggers) Create(ctx context.Context, dataset string, data *Trigger) (*Trigger, error) {
-	req, err := s.client.newRequest(ctx, "POST", fmt.Sprintf("/1/triggers/%s", urlEncodeDataset(dataset)), data)
-	if err != nil {
-		return nil, err
-	}
-
-	var t *Trigger
-	err = s.client.do(req, &t)
-	return t, err
+	var t Trigger
+	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/triggers/%s", urlEncodeDataset(dataset)), data, &t)
+	return &t, err
 }
 
 func (s *triggers) Update(ctx context.Context, dataset string, data *Trigger) (*Trigger, error) {
-	req, err := s.client.newRequest(ctx, "PUT", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), data.ID), data)
-	if err != nil {
-		return nil, err
-	}
-
-	var t *Trigger
-	err = s.client.do(req, &t)
-	return t, err
+	var t Trigger
+	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), data.ID), data, &t)
+	return &t, err
 }
 
 func (s *triggers) Delete(ctx context.Context, dataset string, id string) error {
-	req, err := s.client.newRequest(ctx, "DELETE", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), id), nil)
-	if err != nil {
-		return nil
-	}
-
-	return s.client.do(req, nil)
+	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
 }
 
 // MatchesTriggerSubset checks that the given QuerySpec matches the strict

@@ -51,13 +51,8 @@ type Marker struct {
 }
 
 func (s *markers) List(ctx context.Context, dataset string) ([]Marker, error) {
-	req, err := s.client.newRequest(ctx, "GET", "/1/markers/"+urlEncodeDataset(dataset), nil)
-	if err != nil {
-		return nil, err
-	}
-
 	var m []Marker
-	err = s.client.do(req, &m)
+	err := s.client.performRequest(ctx, "GET", "/1/markers/"+urlEncodeDataset(dataset), nil, &m)
 	return m, err
 }
 
@@ -84,13 +79,8 @@ type MarkerCreateData struct {
 	URL       string `json:"url,omitempty"`
 }
 
-func (s *markers) Create(ctx context.Context, dataset string, d MarkerCreateData) (*Marker, error) {
-	req, err := s.client.newRequest(ctx, "POST", "/1/markers/"+urlEncodeDataset(dataset), d)
-	if err != nil {
-		return nil, err
-	}
-
+func (s *markers) Create(ctx context.Context, dataset string, data MarkerCreateData) (*Marker, error) {
 	var m Marker
-	err = s.client.do(req, &m)
+	err := s.client.performRequest(ctx, "POST", "/1/markers/"+urlEncodeDataset(dataset), data, &m)
 	return &m, err
 }

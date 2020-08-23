@@ -101,41 +101,38 @@ func NewClient(config *Config) (*Client, error) {
 // ErrNotFound is returned when the requested item could not be found.
 var ErrNotFound = errors.New("404 Not Found")
 
-// newRequest prepares a request to the Honeycomb API with the default Honeycomb
-// headers and, if v is set, a JSON body.
-func (c *Client) newRequest(ctx context.Context, method, path string, v interface{}) (*http.Request, error) {
+// performRequest against the Honeycomb API with the necessary headers and, if
+// requestBody is not nil, a JSON body. The response is parsed in responseBody,
+// if responseBody is not nil.
+// Returns an error if the request failed, if the response contained a non-2xx
+// status code or if parsing the reponse in responseBody failed. ErrNotFound is
+// returned on a 404 response.
+func (c *Client) performRequest(ctx context.Context, method, path string, requestBody, responseBody interface{}) error {
 	var body io.Reader
 
-	if v != nil {
+	if requestBody != nil {
 		buf := new(bytes.Buffer)
-		err := json.NewEncoder(buf).Encode(v)
+		err := json.NewEncoder(buf).Encode(requestBody)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		body = buf
 	}
 
 	requestURL, err := c.apiURL.Parse(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, requestURL.String(), body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	req.Header.Add("X-Honeycomb-Team", c.apiKey)
 	req.Header.Add("Content-Type", "application/json")
 	req.Header.Add("User-Agent", c.userAgent)
 
-	return req, nil
-}
-
-// do a request and, if v is not nil, parse the response in v. Returns an error
-// if the request failed, if the response contained a non-2xx status code or if
-// parsing the reponse in v failed. ErrNotFound is returned on a 404 response.
-func (c *Client) do(req *http.Request, v interface{}) error {
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -149,8 +146,8 @@ func (c *Client) do(req *http.Request, v interface{}) error {
 		return errorFromResponse(resp)
 	}
 
-	if v != nil {
-		err = json.NewDecoder(resp.Body).Decode(v)
+	if responseBody != nil {
+		err = json.NewDecoder(resp.Body).Decode(responseBody)
 	}
 	return err
 }

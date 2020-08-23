@@ -68,54 +68,29 @@ type BoardQuery struct {
 }
 
 func (s *boards) List(ctx context.Context) ([]Board, error) {
-	req, err := s.client.newRequest(ctx, "GET", "/1/boards", nil)
-	if err != nil {
-		return nil, err
-	}
-
 	var b []Board
-	err = s.client.do(req, &b)
+	err := s.client.performRequest(ctx, "GET", "/1/boards", nil, &b)
 	return b, err
 }
 
 func (s *boards) Get(ctx context.Context, ID string) (*Board, error) {
-	req, err := s.client.newRequest(ctx, "GET", "/1/boards/"+ID, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	var b Board
-	err = s.client.do(req, &b)
+	err := s.client.performRequest(ctx, "GET", "/1/boards/"+ID, nil, &b)
 	return &b, err
 }
 
 func (s *boards) Create(ctx context.Context, data *Board) (*Board, error) {
-	req, err := s.client.newRequest(ctx, "POST", "/1/boards", data)
-	if err != nil {
-		return nil, err
-	}
-
 	var b Board
-	err = s.client.do(req, &b)
+	err := s.client.performRequest(ctx, "POST", "/1/boards", data, &b)
 	return &b, err
 }
 
 func (s *boards) Update(ctx context.Context, data *Board) (*Board, error) {
-	req, err := s.client.newRequest(ctx, "PUT", fmt.Sprintf("/1/boards/%s", data.ID), data)
-	if err != nil {
-		return nil, err
-	}
-
 	var b Board
-	err = s.client.do(req, &b)
+	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/boards/%s", data.ID), data, &b)
 	return &b, err
 }
 
 func (s *boards) Delete(ctx context.Context, id string) error {
-	req, err := s.client.newRequest(ctx, "DELETE", fmt.Sprintf("/1/boards/%s", id), nil)
-	if err != nil {
-		return nil
-	}
-
-	return s.client.do(req, nil)
+	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/boards/%s", id), nil, nil)
 }
