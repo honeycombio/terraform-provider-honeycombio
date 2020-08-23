@@ -28,9 +28,9 @@ data "honeycombio_query" "query" {
   }
 
   filter {
-    column = "app.tenant"
-    op     = "="
-    value  = "ThatSpecialTenant"
+    column       = "app.tenant"
+    op           = "="
+    value_string = "ThatSpecialTenant"
   }
 }
 

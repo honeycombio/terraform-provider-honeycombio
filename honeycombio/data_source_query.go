@@ -3,6 +3,7 @@ package honeycombio
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/hashicorp/go-cty/cty"
@@ -71,7 +72,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 				},
 			},
 			"filter": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -85,8 +86,30 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 							ValidateFunc: validation.StringInSlice(validQueryFilterOps, false),
 						},
 						"value": {
-							Type:     schema.TypeString,
-							Optional: true,
+							Type:        schema.TypeString,
+							Description: "Deprecated: use the explicitly typed `value_string` instead. This variant will break queries when used with non-string columns. Mutually exclusive with the other `value_*` options.",
+							Optional:    true,
+							Deprecated:  "Use of attribute `value` is discouraged and will break queries when used with non-string columns. The explicitly typed `value_*` variants are preferred instead.",
+						},
+						"value_string": {
+							Type:        schema.TypeString,
+							Description: "The value used for the filter when the column is a string. Mutually exclusive with `value` and the other `value_*` options",
+							Optional:    true,
+						},
+						"value_integer": {
+							Type:        schema.TypeInt,
+							Description: "The value used for the filter when the column is an integer. Mutually exclusive with `value` and the other `value_*` options",
+							Optional:    true,
+						},
+						"value_float": {
+							Type:        schema.TypeFloat,
+							Description: "The value used for the filter when the column is a float. Mutually exclusive with `value` and the other `value_*` options",
+							Optional:    true,
+						},
+						"value_boolean": {
+							Type:        schema.TypeBool,
+							Description: "The value used for the filter when the column is a boolean. Mutually exclusive with `value` and the other `value_*` options",
+							Optional:    true,
 						},
 					},
 				},
@@ -164,31 +187,9 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	filterSchemas := d.Get("filter").(*schema.Set).List()
-	filters := make([]honeycombio.FilterSpec, len(filterSchemas))
-
-	for i, f := range filterSchemas {
-		fMap := f.(map[string]interface{})
-
-		filters[i] = honeycombio.FilterSpec{
-			Column: fMap["column"].(string),
-			Op:     honeycombio.FilterOp(fMap["op"].(string)),
-			Value:  fMap["value"].(string),
-		}
-
-		// Ensure we don't send filter.Value if op is "exists" or
-		// "does-not-exist". The Honeycomb API will refuse this.
-		//
-		// TODO ideally this check is part of the schema (as a ValidateFunc),
-		//      but this is not yet supported by the SDK.
-		//      https://github.com/hashicorp/terraform-plugin-sdk/issues/155#issuecomment-489699737
-		filter := filters[i]
-		if filter.Op == honeycombio.FilterOpExists || filter.Op == honeycombio.FilterOpDoesNotExist {
-			if filter.Value != "" {
-				return diag.Errorf("Filter operation %s must not contain a value", filter.Op)
-			}
-			filters[i].Value = nil
-		}
+	filters, err := extractFilters(d)
+	if err != nil {
+		return diag.FromErr(err)
 	}
 
 	filterCombination := honeycombio.FilterCombination(d.Get("filter_combination").(string))
@@ -283,4 +284,77 @@ func validateQueryJSON(validators ...querySpecValidateDiagFunc) schema.SchemaVal
 		}
 		return diagnostics
 	}
+}
+
+func extractFilters(d *schema.ResourceData) ([]honeycombio.FilterSpec, error) {
+	filterSchemas := d.Get("filter").([]interface{})
+	filters := make([]honeycombio.FilterSpec, len(filterSchemas))
+
+	for i := range filterSchemas {
+		honeyFilter, err := extractFilter(d, i)
+		if err != nil {
+			return nil, err
+		}
+		filters[i] = honeyFilter
+	}
+	return filters, nil
+}
+
+const multipleValuesError = "must choose one of 'value', 'value_string', 'value_integer', 'value_float', 'value_boolean'"
+
+func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, error) {
+	var filter honeycombio.FilterSpec
+
+	filter.Column = d.Get(fmt.Sprintf("filter.%d.column", index)).(string)
+	filter.Op = honeycombio.FilterOp(d.Get(fmt.Sprintf("filter.%d.op", index)).(string))
+
+	valueSet := false
+	v, vOk := d.GetOk(fmt.Sprintf("filter.%d.value", index))
+	if vOk {
+		filter.Value = v
+		valueSet = true
+	}
+	vs, vsOk := d.GetOk(fmt.Sprintf("filter.%d.value_string", index))
+	if vsOk {
+		if valueSet {
+			return filter, fmt.Errorf(multipleValuesError)
+		}
+		filter.Value = vs
+		valueSet = true
+	}
+	vi, viOk := d.GetOk(fmt.Sprintf("filter.%d.value_integer", index))
+	if viOk {
+		if valueSet {
+			return filter, fmt.Errorf(multipleValuesError)
+		}
+		filter.Value = vi
+		valueSet = true
+	}
+	vf, vfOk := d.GetOk(fmt.Sprintf("filter.%d.value_float", index))
+	if vfOk {
+		if valueSet {
+			return filter, fmt.Errorf(multipleValuesError)
+		}
+		filter.Value = vf
+		valueSet = true
+	}
+	vb, vbOk := d.GetOk(fmt.Sprintf("filter.%d.value_boolean", index))
+	if vbOk {
+		if valueSet {
+			return filter, fmt.Errorf(multipleValuesError)
+		}
+		filter.Value = vb
+		valueSet = true
+	}
+
+	if filter.Op == honeycombio.FilterOpExists || filter.Op == honeycombio.FilterOpDoesNotExist {
+		if filter.Value != nil {
+			return filter, fmt.Errorf("filter operation %s must not contain a value", filter.Op)
+		}
+	} else {
+		if filter.Value == nil {
+			return filter, fmt.Errorf("filter operation %s requires a value", filter.Op)
+		}
+	}
+	return filter, nil
 }

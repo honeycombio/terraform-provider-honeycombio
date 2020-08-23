@@ -55,8 +55,14 @@ Each query configuration may have zero or more `calculation` blocks, which each 
 Each query configuration may have zero or more `filter` blocks, which each accept the following arguments:
 
 * `column` - (Required) The column to apply the filter to.
-* `op` - (Required) The operator to apply, see the supported list of filter operators at [Filter Operators](https://docs.honeycomb.io/api/query-specification/#filter-operators).
-* `value` - (Optional) The value to be used with the operator, not all operators require a value.
+* `op` - (Required) The operator to apply, see the supported list of filter operators at [Filter Operators](https://docs.honeycomb.io/api/query-specification/#filter-operators). Not all operators require a value.
+* `value_string` - (Optional) The value used for the filter when the column is a string. Mutually exclusive with `value` and the other `value_*` options.
+* `value_integer` - (Optional) The value used for the filter when the column is an integer. Mutually exclusive with `value` and the other `value_*` options.
+* `value_float` - (Optional) The value used for the filter when the column is a float. Mutually exclusive with `value` and the other `value_*` options.
+* `value_boolean` - (Optional) The value used for the filter when the column is a boolean. Mutually exclusive with `value` and the other `value_*` options.
+* `value` - (Optional) Deprecated: use the explicitly typed `value_string` instead. This variant will break queries when used with non-string columns. Mutually exclusive with the other `value_*` options.
+
+-> **NOTE** The type of the filter value should match with the type of the column. To determine the type of a column visit the dataset settings page, all the columns and their type are listed under _Schema_. This provider will not be able to detect invalid combinations.
 
 Each query configuration may have zero or more `order` blocks, which each accept the following arguments. An order term can refer to a `calculation` or a column set in `breakdowns`. When referring to a `calculation`, `op` and `column` must be the same as the calculation.
 
