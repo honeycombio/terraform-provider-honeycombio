@@ -60,7 +60,7 @@ Each query configuration may have zero or more `filter` blocks, which each accep
 * `value_integer` - (Optional) The value used for the filter when the column is an integer. Mutually exclusive with `value` and the other `value_*` options.
 * `value_float` - (Optional) The value used for the filter when the column is a float. Mutually exclusive with `value` and the other `value_*` options.
 * `value_boolean` - (Optional) The value used for the filter when the column is a boolean. Mutually exclusive with `value` and the other `value_*` options.
-* `value` - (Optional) Deprecated: use the explicitly typed `value_string` instead. This variant will potentially break dashboards if used with non-string columns. Mutually exclusive with the other `value_*` options.
+* `value` - (Optional) Deprecated: use the explicitly typed `value_string` instead. This variant will break queries when used with non-string columns. Mutually exclusive with the other `value_*` options.
 
 -> **NOTE** The type of the filter value should match with the type of the column. To determine the type of a column visit the dataset settings page, all the columns and their type are listed under _Schema_. This provider will not be able to detect invalid combinations.
 

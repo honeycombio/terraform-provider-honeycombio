@@ -87,9 +87,9 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 						},
 						"value": {
 							Type:        schema.TypeString,
-							Description: "Deprecated: use the explicitly typed `value_string` instead. This variant will potentially break dashboards if used with non-string columns. Mutually exclusive with the other `value_*` options.",
+							Description: "Deprecated: use the explicitly typed `value_string` instead. This variant will break queries when used with non-string columns. Mutually exclusive with the other `value_*` options.",
 							Optional:    true,
-							Deprecated:  "Use of attribute `value` is discouraged and will potentially break dashboards if used with non-string columns. The explicitly typed `value_*` variants are preferred instead.",
+							Deprecated:  "Use of attribute `value` is discouraged and will break queries when used with non-string columns. The explicitly typed `value_*` variants are preferred instead.",
 						},
 						"value_string": {
 							Type:        schema.TypeString,
