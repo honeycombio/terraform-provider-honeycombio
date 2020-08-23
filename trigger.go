@@ -45,19 +45,18 @@ var _ Triggers = (*triggers)(nil)
 type Trigger struct {
 	ID string `json:"id,omitempty"`
 
-	// Name of the trigger, required when creating a new trigger.
+	// Name of the trigger. This field is required.
 	Name string `json:"name"`
 	// Description is displayed on the triggers page.
 	Description string `json:"description,omitempty"`
 	// State of the trigger, if disabled is true the trigger will not run.
 	Disabled bool `json:"disabled,omitempty"`
-	// Query of the trigger, required when creating a new trigger. The query
-	// must respect the properties described with and validated by
-	// MatchesTriggerSubset.
+	// Query of the trigger. This field is required. The query must respect the
+	// properties described with and validated by MatchesTriggerSubset.
 	// Additionally, time_range of the query can be at most 1 day and may not
 	// be greater than 4 times the frequency.
 	Query *QuerySpec `json:"query"`
-	// Threshold, required when creating a new trigger.
+	// Threshold. This fild is required.
 	Threshold *TriggerThreshold `json:"threshold"`
 	// Frequency describes how often the trigger should run. Frequency is an
 	// interval in seconds, defaulting to 900 (15 minutes). Its value must be

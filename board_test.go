@@ -2,7 +2,9 @@ package honeycombio
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -17,9 +19,8 @@ func TestBoards(t *testing.T) {
 	dataset := testDataset(t)
 
 	t.Run("Create", func(t *testing.T) {
-
 		data := &Board{
-			Name:        "Test Board",
+			Name:        fmt.Sprintf("Test Board, created at %v", time.Now()),
 			Description: "A board with some queries",
 			Style:       BoardStyleVisual,
 			Queries: []BoardQuery{
@@ -38,60 +39,23 @@ func TestBoards(t *testing.T) {
 			},
 		}
 		b, err = c.Boards.Create(ctx, data)
+
 		if err != nil {
 			t.Fatal(err)
 		}
-
 		assert.NotNil(t, b.ID)
-		assert.Equal(t, data.Name, b.Name)
-		assert.Equal(t, data.Description, b.Description)
-		assert.Equal(t, data.Style, b.Style)
-		assert.Equal(t, data.Queries, b.Queries)
+
+		// copy ID before asserting equality
+		data.ID = b.ID
+
+		assert.Equal(t, data, b)
 	})
 
 	t.Run("List", func(t *testing.T) {
-		boards, err := c.Boards.List(ctx)
-		if err != nil {
-			t.Fatal(err)
-		}
+		result, err := c.Boards.List(ctx)
 
-		var createdBoard *Board
-
-		for _, board := range boards {
-			if board.ID == b.ID {
-				createdBoard = &board
-				break
-			}
-		}
-		if createdBoard == nil {
-			t.Fatalf("could not find newly created board with ID = %s", b.ID)
-		}
-
-		assert.Equal(t, *b, *createdBoard)
-	})
-
-	t.Run("Update", func(t *testing.T) {
-		newBoard := *b
-		newBoard.Queries = append(newBoard.Queries, BoardQuery{
-			Caption: "A second query",
-			Dataset: dataset,
-			Query: QuerySpec{
-				Calculations: []CalculationSpec{
-					{
-						Op: CalculationOpCount,
-					},
-				},
-			},
-		})
-
-		updatedBoard, err := c.Boards.Update(ctx, &newBoard)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		assert.Equal(t, newBoard, *updatedBoard)
-
-		b = updatedBoard
+		assert.NoError(t, err)
+		assert.Contains(t, result, *b, "could not find newly created board with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
@@ -103,13 +67,34 @@ func TestBoards(t *testing.T) {
 		assert.Equal(t, *b, *board)
 	})
 
+	t.Run("Update", func(t *testing.T) {
+		b.Queries = append(b.Queries, BoardQuery{
+			Caption: "A second query",
+			Dataset: dataset,
+			Query: QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op: CalculationOpCount,
+					},
+				},
+			},
+		})
+
+		result, err := c.Boards.Update(ctx, b)
+
+		assert.NoError(t, err)
+		assert.Equal(t, b, result)
+	})
+
 	t.Run("Delete", func(t *testing.T) {
 		err := c.Boards.Delete(ctx, b.ID)
+
 		assert.NoError(t, err)
 	})
 
-	t.Run("Get_unexistingID", func(t *testing.T) {
+	t.Run("Get_deletedBoard", func(t *testing.T) {
 		_, err := c.Boards.Get(ctx, b.ID)
+
 		assert.Equal(t, ErrNotFound, err)
 	})
 }

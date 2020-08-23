@@ -5,19 +5,19 @@ import (
 	"fmt"
 )
 
-// Compile-time proof of interface implementation.
-var _ Boards = (*boards)(nil)
-
-// Boards describes (some of) the board related methods that Honeycomb supports.
+// Boards describes all the board-related methods that the Honeycomb API
+// supports.
+//
+// API docs: https://docs.honeycomb.io/api/boards-api/
 type Boards interface {
 	// List all boards.
 	List(ctx context.Context) ([]Board, error)
 
-	// Get a board by its ID. Returns nil, ErrNotFound if there is no board
-	// with the given ID.
+	// Get a board by its ID. Returns ErrNotFound if there is no board with the
+	// given ID.
 	Get(ctx context.Context, id string) (*Board, error)
 
-	// Create a new board.
+	// Create a new board. When creating a new board ID may not be set.
 	Create(ctx context.Context, b *Board) (*Board, error)
 
 	// Update an existing board.
@@ -32,17 +32,23 @@ type boards struct {
 	client *Client
 }
 
-// Board represents a Honeycomb board, as described by https://docs.honeycomb.io/api/boards-api/#fields-on-a-board
+// Compile-time proof of interface implementation by type boards.
+var _ Boards = (*boards)(nil)
+
+// Board represents a Honeycomb board.
+//
+// API docs: https://docs.honeycomb.io/api/boards-api/#fields-on-a-board
 type Board struct {
-	// The generated ID of the board.  This should not be specified by the user in the creation request.
 	ID string `json:"id,omitempty"`
-	// The (required) board's name displayed in the UI
+
+	// Name of the board, this is displayed in the Honeycomb UI. This field is
+	// required.
 	Name string `json:"name"`
-	// The description of the board
+	// Description of the board.
 	Description string `json:"description,omitempty"`
-	// How the board should be displayed in the UI, either "list" (the default) or "visual"
+	// How the board should be displayed in the UI, defaults to "list".
 	Style BoardStyle `json:"style,omitempty"`
-	// A list of queries to display on the board in order of appearance
+	// A list of queries displayed on the board, in order of appearance.
 	Queries []BoardQuery `json:"queries"`
 }
 
@@ -60,11 +66,13 @@ func BoardStyles() []BoardStyle {
 	return []BoardStyle{BoardStyleList, BoardStyleVisual}
 }
 
-// BoardQuery represents are query that is part of a board.
+// BoardQuery represents a query that is part of a board.
 type BoardQuery struct {
-	Caption string    `json:"caption,omitempty"`
-	Dataset string    `json:"dataset"`
-	Query   QuerySpec `json:"query"`
+	Caption string `json:"caption,omitempty"`
+	// This field is required.
+	Dataset string `json:"dataset"`
+	// This field is required.
+	Query QuerySpec `json:"query"`
 }
 
 func (s *boards) List(ctx context.Context) ([]Board, error) {
@@ -75,7 +83,7 @@ func (s *boards) List(ctx context.Context) ([]Board, error) {
 
 func (s *boards) Get(ctx context.Context, ID string) (*Board, error) {
 	var b Board
-	err := s.client.performRequest(ctx, "GET", "/1/boards/"+ID, nil, &b)
+	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/boards/%s", ID), nil, &b)
 	return &b, err
 }
 
