@@ -20,7 +20,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"calculation": {
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -128,7 +128,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 }
 
 func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	calculationSchemas := d.Get("calculation").(*schema.Set).List()
+	calculationSchemas := d.Get("calculation").([]interface{})
 	calculations := make([]honeycombio.CalculationSpec, len(calculationSchemas))
 
 	for i, c := range calculationSchemas {
