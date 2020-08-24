@@ -239,7 +239,7 @@ func validateQueryJSON(validators ...querySpecValidateDiagFunc) schema.SchemaVal
 
 		err := json.Unmarshal([]byte(i.(string)), &q)
 		if err != nil {
-			return diag.Errorf("Value of query_json is not a valid query specification")
+			return diag.Errorf("value of query_json is not a valid query specification")
 		}
 
 		var diagnostics diag.Diagnostics

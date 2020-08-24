@@ -67,11 +67,11 @@ func testAccCheckTriggerExists(t *testing.T, name string, trigger *honeycombio.T
 func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if t.Name != "Test trigger from terraform-provider-honeycombio" {
-			return fmt.Errorf("Bad name: %s", t.Name)
+			return fmt.Errorf("bad name: %s", t.Name)
 		}
 
 		if t.Frequency != 900 {
-			return fmt.Errorf("Bad frequency: %d", t.Frequency)
+			return fmt.Errorf("bad frequency: %d", t.Frequency)
 		}
 
 		return nil
@@ -110,11 +110,11 @@ func TestAccHoneycombioTrigger_validationErrors(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccTriggerConfigWithQuery(dataset, `{]`),
-				ExpectError: regexp.MustCompile("Value of query_json is not a valid query specification"),
+				ExpectError: regexp.MustCompile("value of query_json is not a valid query specification"),
 			},
 			{
 				Config:      testAccTriggerConfigWithQuery(dataset, `{"calculations":"bar"}`),
-				ExpectError: regexp.MustCompile("Value of query_json is not a valid query specification"),
+				ExpectError: regexp.MustCompile("value of query_json is not a valid query specification"),
 			},
 			{
 				Config: testAccTriggerConfigWithQuery(dataset, `
