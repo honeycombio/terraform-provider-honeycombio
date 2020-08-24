@@ -5,11 +5,6 @@ func CalculationOpPtr(v CalculationOp) *CalculationOp {
 	return &v
 }
 
-// FilterCombinationPtr returns a pointer to the given FilterCombination.
-func FilterCombinationPtr(v FilterCombination) *FilterCombination {
-	return &v
-}
-
 // Float64Ptr returns a pointer to the given float64.
 func Float64Ptr(v float64) *float64 {
 	return &v
