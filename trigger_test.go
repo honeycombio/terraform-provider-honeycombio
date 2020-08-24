@@ -20,8 +20,6 @@ func TestTriggers(t *testing.T) {
 	dataset := testDataset(t)
 
 	t.Run("Create", func(t *testing.T) {
-		filterCombinaton := FilterCombinationOr
-
 		data := &Trigger{
 			Name:        fmt.Sprintf("Test trigger created at %v", time.Now()),
 			Description: "Some description",
@@ -30,8 +28,8 @@ func TestTriggers(t *testing.T) {
 				Breakdowns: nil,
 				Calculations: []CalculationSpec{
 					{
-						Op:     CalculateOpP99,
-						Column: &[]string{"duration_ms"}[0],
+						Op:     CalculationOpP99,
+						Column: StringPtr("duration_ms"),
 					},
 				},
 				Filters: []FilterSpec{
@@ -45,12 +43,12 @@ func TestTriggers(t *testing.T) {
 						Value:  "foobar",
 					},
 				},
-				FilterCombination: &filterCombinaton,
+				FilterCombination: FilterCombinationOr,
 			},
 			Frequency: 300,
 			Threshold: &TriggerThreshold{
 				Op:    TriggerThresholdOpGreaterThan,
-				Value: &[]float64{10000}[0],
+				Value: Float64Ptr(10000),
 			},
 			Recipients: []TriggerRecipient{
 				{
@@ -64,10 +62,10 @@ func TestTriggers(t *testing.T) {
 			},
 		}
 		trigger, err = c.Triggers.Create(ctx, dataset, data)
+
 		if err != nil {
 			t.Fatal(err)
 		}
-
 		assert.NotNil(t, trigger.ID)
 
 		// copy IDs before asserting equality
@@ -80,89 +78,51 @@ func TestTriggers(t *testing.T) {
 	})
 
 	t.Run("List", func(t *testing.T) {
-		triggers, err := c.Triggers.List(ctx, dataset)
-		if err != nil {
-			t.Fatal(err)
-		}
+		result, err := c.Triggers.List(ctx, dataset)
 
-		var createdTrigger *Trigger
-
-		for _, tr := range triggers {
-			if trigger.ID == tr.ID {
-				createdTrigger = &tr
-			}
-		}
-		if createdTrigger == nil {
-			t.Fatalf("could not find newly created trigger with ID = %s", trigger.ID)
-		}
-
-		assert.Equal(t, *trigger, *createdTrigger)
-	})
-
-	t.Run("Update", func(t *testing.T) {
-		newTrigger := *trigger
-		newTrigger.Disabled = true
-
-		updatedTrigger, err := c.Triggers.Update(ctx, dataset, trigger)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		assert.Equal(t, newTrigger, *updatedTrigger)
-
-		trigger = updatedTrigger
+		assert.NoError(t, err)
+		assert.Contains(t, result, *trigger, "could not find newly created trigger with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		getTrigger, err := c.Triggers.Get(ctx, dataset, trigger.ID)
-		if err != nil {
-			t.Fatal(err)
-		}
 
+		assert.NoError(t, err)
 		assert.Equal(t, *trigger, *getTrigger)
+	})
+
+	t.Run("Update", func(t *testing.T) {
+		trigger.Description = "A new description"
+
+		result, err := c.Triggers.Update(ctx, dataset, trigger)
+
+		assert.NoError(t, err)
+		assert.Equal(t, trigger, result)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
 		err = c.Triggers.Delete(ctx, dataset, trigger.ID)
-		if err != nil {
-			t.Fatal(err)
-		}
+
+		assert.NoError(t, err)
 	})
 
-	t.Run("Get_unexistingID", func(t *testing.T) {
+	t.Run("Get_deletedTrigger", func(t *testing.T) {
 		_, err := c.Triggers.Get(ctx, dataset, trigger.ID)
+
 		assert.Equal(t, ErrNotFound, err)
-	})
-
-	t.Run("Create_invalid", func(t *testing.T) {
-		invalidTrigger := *trigger
-		invalidTrigger.ID = ""
-		invalidTrigger.Query.Calculations = []CalculationSpec{
-			{
-				Op: "COUNT",
-			},
-			{
-				Op:     "AVG",
-				Column: &[]string{"duration_ms"}[0],
-			},
-		}
-
-		_, err := c.Triggers.Create(ctx, dataset, &invalidTrigger)
-		assert.Equal(t, errors.New("422 Unprocessable Entity: trigger query requires exactly one calculation"), err)
 	})
 }
 
 func TestMatchesTriggerSubset(t *testing.T) {
 	cases := []struct {
 		in          QuerySpec
-		expectedOk  bool
 		expectedErr error
 	}{
 		{
 			in: QuerySpec{
 				Calculations: []CalculationSpec{
 					{
-						Op: CalculateOpCount,
+						Op: CalculationOpCount,
 					},
 				},
 			},
@@ -178,7 +138,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 			in: QuerySpec{
 				Calculations: []CalculationSpec{
 					{
-						Op: CalculateOpHeatmap,
+						Op: CalculationOpHeatmap,
 					},
 				},
 			},
@@ -188,10 +148,10 @@ func TestMatchesTriggerSubset(t *testing.T) {
 			in: QuerySpec{
 				Calculations: []CalculationSpec{
 					{
-						Op: CalculateOpCount,
+						Op: CalculationOpCount,
 					},
 				},
-				Limit: &[]int{100}[0],
+				Limit: IntPtr(100),
 			},
 			expectedErr: errors.New("limit is not allowed in a trigger query"),
 		},
@@ -199,12 +159,12 @@ func TestMatchesTriggerSubset(t *testing.T) {
 			in: QuerySpec{
 				Calculations: []CalculationSpec{
 					{
-						Op: CalculateOpCount,
+						Op: CalculationOpCount,
 					},
 				},
 				Orders: []OrderSpec{
 					{
-						Column: &[]string{"duration_ms"}[0],
+						Column: StringPtr("duration_ms"),
 					},
 				},
 			},
