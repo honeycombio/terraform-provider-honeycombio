@@ -14,41 +14,6 @@ import (
 	"github.com/kvrhdn/terraform-provider-honeycombio/util"
 )
 
-var validQueryCalculationOps = []string{
-	"COUNT",
-	"SUM",
-	"AVG",
-	"COUNT_DISTINCT",
-	"MAX",
-	"MIN",
-	"P001",
-	"P01",
-	"P05",
-	"P10",
-	"P25",
-	"P50",
-	"P75",
-	"P90",
-	"P95",
-	"P99",
-	"P999",
-	"HEATMAP",
-}
-var validQueryFilterOps = []string{
-	"=",
-	"!=",
-	">",
-	">=",
-	"<",
-	"<=",
-	"starts-with",
-	"does-not-start-with",
-	"exists",
-	"does-not-exist",
-	"contains",
-	"does-not-contain",
-}
-
 func dataSourceHoneycombioQuery() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceHoneycombioQueryRead,
@@ -62,7 +27,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 						"op": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(validQueryCalculationOps, false),
+							ValidateFunc: validation.StringInSlice(calculationOpStrings(), false),
 						},
 						"column": {
 							Type:     schema.TypeString,
@@ -83,7 +48,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 						"op": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(validQueryFilterOps, false),
+							ValidateFunc: validation.StringInSlice(filterOpStrings(), false),
 						},
 						"value": {
 							Type:        schema.TypeString,
@@ -135,7 +100,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 						"op": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice(validQueryCalculationOps, false),
+							ValidateFunc: validation.StringInSlice(calculationOpStrings(), false),
 						},
 						"column": {
 							Type:     schema.TypeString,
@@ -144,7 +109,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 						"order": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ascending", "descending"}, false),
+							ValidateFunc: validation.StringInSlice(sortOrderStrings(), false),
 						},
 					},
 				},
@@ -177,7 +142,7 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 			column = &c
 		}
 
-		if op == honeycombio.CalculateOpCount && column != nil {
+		if op == honeycombio.CalculationOpCount && column != nil {
 			return diag.Errorf("calculation op COUNT should not have an accompanying column")
 		}
 
@@ -241,7 +206,7 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 	query := &honeycombio.QuerySpec{
 		Calculations:      calculations,
 		Filters:           filters,
-		FilterCombination: &filterCombination,
+		FilterCombination: filterCombination,
 		Breakdowns:        breakdowns,
 		Orders:            orders,
 		Limit:             limit,

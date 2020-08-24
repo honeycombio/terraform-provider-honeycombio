@@ -45,7 +45,7 @@ func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	dataset := d.Get("dataset").(string)
 
-	data := honeycombio.MarkerCreateData{
+	data := &honeycombio.Marker{
 		Message: d.Get("message").(string),
 		Type:    d.Get("type").(string),
 		URL:     d.Get("url").(string),

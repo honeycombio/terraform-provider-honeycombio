@@ -30,7 +30,7 @@ func newBoard() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "list",
-				ValidateFunc: validation.StringInSlice([]string{"list", "visual"}, false),
+				ValidateFunc: validation.StringInSlice(boardStyleStrings(), false),
 			},
 			"query": {
 				Type:     schema.TypeList,
@@ -86,13 +86,12 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.FromErr(err)
 	}
 
-	// API returns nil for filterCombination if set to the default value "AND"
+	// API returns "" for filterCombination if set to the default value "AND"
 	// To keep the Terraform config simple, we'll explicitly set "AND" ourself
 	for i := range b.Queries {
 		q := &b.Queries[i]
-		if q.Query.FilterCombination == nil {
-			filterCombination := honeycombio.FilterCombinationAnd
-			q.Query.FilterCombination = &filterCombination
+		if q.Query.FilterCombination == "" {
+			q.Query.FilterCombination = honeycombio.FilterCombinationAnd
 		}
 	}
 
@@ -154,17 +153,16 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 	qs := d.Get("query").([]interface{})
 	for _, q := range qs {
 		m := q.(map[string]interface{})
-		caption := m["caption"].(string)
-		dataset := m["dataset"].(string)
-		queryJSON := m["query_json"].(string)
+
 		var query honeycombio.QuerySpec
-		err := json.Unmarshal([]byte(queryJSON), &query)
+		err := json.Unmarshal([]byte(m["query_json"].(string)), &query)
 		if err != nil {
 			return nil, err
 		}
+
 		queries = append(queries, honeycombio.BoardQuery{
-			Caption: caption,
-			Dataset: dataset,
+			Caption: m["caption"].(string),
+			Dataset: m["dataset"].(string),
 			Query:   query,
 		})
 	}
