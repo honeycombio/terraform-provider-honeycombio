@@ -15,9 +15,8 @@ Supported APIs:
 - [Markers API](https://docs.honeycomb.io/api/markers/)
 - [Triggers API](https://docs.honeycomb.io/api/triggers/)
 
-🔧 Want to contribute? Check out [CONTRIBUTING.md](./CONTRIBUTING.md).
-
 ❓ Questions? Feel free to create a new issue or find us on the **Honeycomb Pollinators** Slack, channel **#terraform-provider** (you can find a link to request an invite [here](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/)).
+🔧 Want to contribute? Check out [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
