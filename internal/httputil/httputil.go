@@ -19,7 +19,7 @@ func (rf roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return rf(req)
 }
 
-// Compile-time proof of interface implementation.
+// Compile-time proof of interface implementation by type roundTripFunc.
 var _ http.RoundTripper = (*roundTripFunc)(nil)
 
 // WrapWithLogging wraps the HTTP client to log the entire request and
