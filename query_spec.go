@@ -1,6 +1,8 @@
 package honeycombio
 
-// QuerySpec represents a Honeycomb query, as described by https://docs.honeycomb.io/api/query-specification/
+// QuerySpec represents a Honeycomb query.
+//
+// API docs: https://docs.honeycomb.io/api/query-specification/
 type QuerySpec struct {
 	// The calculations to return as a time series and summary table. If no
 	// calculations are provided, COUNT is applied.
@@ -8,12 +10,11 @@ type QuerySpec struct {
 	// The filters with which to restrict the considered events.
 	Filters []FilterSpec `json:"filters,omitempty"`
 	// If multiple filters are specified, filter_combination determines how
-	// they are applied. Set to OR to match any filter in the filter list,
-	// defaults to AND.
+	// they are applied. Defaults to AND.
 	//
 	// From experience it seems the API will never answer with AND, instead
 	// always omitting the filter combination field entirely.
-	FilterCombination *FilterCombination `json:"filter_combination,omitempty"`
+	FilterCombination FilterCombination `json:"filter_combination,omitempty"`
 	// A list of strings describing the columns by which to break events down
 	// into groups.
 	Breakdowns []string `json:"breakdowns,omitempty"`
@@ -35,10 +36,10 @@ type CalculationSpec struct {
 	Column *string `json:"column,omitempty"`
 }
 
-// CalculationOp represents the operation of a calculation.
+// CalculationOp represents the operator of a calculation.
 type CalculationOp string
 
-// Declaration of calculation ops.
+// Declaration of calculation operators.
 const (
 	CalculationOpCount         CalculationOp = "COUNT"
 	CalculationOpSum           CalculationOp = "SUM"
@@ -60,7 +61,7 @@ const (
 	CalculationOpHeatmap       CalculationOp = "HEATMAP"
 )
 
-// CalculationOps returns an exhaustive list of calculation ops.
+// CalculationOps returns an exhaustive list of calculation operators.
 func CalculationOps() []CalculationOp {
 	return []CalculationOp{
 		CalculationOpCount,
@@ -88,14 +89,14 @@ func CalculationOps() []CalculationOp {
 type FilterSpec struct {
 	Column string   `json:"column"`
 	Op     FilterOp `json:"op"`
-	// Value to use with the filter operation, not all operations need a value.
+	// Value to use with the filter operation, not all operators need a value.
 	Value interface{} `json:"value,omitempty"`
 }
 
-// FilterOp represents the operation of a filter.
+// FilterOp represents the operator of a filter.
 type FilterOp string
 
-// Declaration of filter ops.
+// Declaration of filter operators.
 const (
 	FilterOpEquals             FilterOp = "="
 	FilterOpNotEquals          FilterOp = "!="
@@ -111,7 +112,7 @@ const (
 	FilterOpDoesNotContain     FilterOp = "does-not-contain"
 )
 
-// FilterOps returns an exhaustive list of available filter ops.
+// FilterOps returns an exhaustive list of available filter operators.
 func FilterOps() []FilterOp {
 	return []FilterOp{
 		FilterOpEquals,

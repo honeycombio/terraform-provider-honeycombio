@@ -43,7 +43,7 @@ func TestTriggers(t *testing.T) {
 						Value:  "foobar",
 					},
 				},
-				FilterCombination: FilterCombinationPtr(FilterCombinationOr),
+				FilterCombination: FilterCombinationOr,
 			},
 			Frequency: 300,
 			Threshold: &TriggerThreshold{

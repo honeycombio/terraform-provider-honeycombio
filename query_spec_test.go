@@ -2,7 +2,9 @@ package honeycombio
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -35,7 +37,7 @@ func TestQuerySpec(t *testing.T) {
 				Value:  10000.0,
 			},
 		},
-		FilterCombination: FilterCombinationPtr(FilterCombinationOr),
+		FilterCombination: FilterCombinationOr,
 		Breakdowns:        []string{"column_1", "column_2"},
 		Orders: []OrderSpec{
 			{
@@ -50,7 +52,7 @@ func TestQuerySpec(t *testing.T) {
 	}
 
 	b := &Board{
-		Name: "go-honeycombio - test QuerySpec",
+		Name: fmt.Sprintf("Test QuerySpec, created at %v", time.Now()),
 
 		Queries: []BoardQuery{
 			{
