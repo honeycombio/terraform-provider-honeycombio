@@ -5,11 +5,6 @@ func CalculationOpPtr(v CalculationOp) *CalculationOp {
 	return &v
 }
 
-// Float64Ptr returns a pointer to the given float64.
-func Float64Ptr(v float64) *float64 {
-	return &v
-}
-
 // IntPtr returns a pointer to the given int.
 func IntPtr(v int) *int {
 	return &v
