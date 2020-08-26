@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/kvrhdn/go-honeycombio"
-	"github.com/kvrhdn/terraform-provider-honeycombio/util"
+	"github.com/kvrhdn/terraform-provider-honeycombio/honeycombio/internal/hashcode"
 )
 
 func dataSourceHoneycombioQuery() *schema.Resource {
@@ -151,7 +151,7 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 	}
 
 	d.Set("json", jsonQuery)
-	d.SetId(strconv.Itoa(util.HashString(jsonQuery)))
+	d.SetId(strconv.Itoa(hashcode.String(jsonQuery)))
 
 	return nil
 }
