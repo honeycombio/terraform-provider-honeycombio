@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -126,6 +127,37 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 }
 
 func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	calculations, err := extractCalculations(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	filters, err := extractFilters(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	query := &honeycombio.QuerySpec{
+		Calculations:      calculations,
+		Filters:           filters,
+		FilterCombination: honeycombio.FilterCombination(d.Get("filter_combination").(string)),
+		Breakdowns:        extractBreakdowns(d),
+		Orders:            extractOrders(d),
+		Limit:             extractLimit(d),
+	}
+
+	jsonQuery, err := encodeQuery(query)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.Set("json", jsonQuery)
+	d.SetId(strconv.Itoa(util.HashString(jsonQuery)))
+
+	return nil
+}
+
+func extractCalculations(d *schema.ResourceData) ([]honeycombio.CalculationSpec, error) {
 	calculationSchemas := d.Get("calculation").([]interface{})
 	calculations := make([]honeycombio.CalculationSpec, len(calculationSchemas))
 
@@ -141,7 +173,7 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 		}
 
 		if op == honeycombio.CalculationOpCount && column != nil {
-			return diag.Errorf("calculation op COUNT should not have an accompanying column")
+			return nil, errors.New("calculation op COUNT should not have an accompanying column")
 		}
 
 		calculations[i] = honeycombio.CalculationSpec{
@@ -150,75 +182,7 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 		}
 	}
 
-	filters, err := extractFilters(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	filterCombination := honeycombio.FilterCombination(d.Get("filter_combination").(string))
-
-	breakdownsRaw := d.Get("breakdowns").([]interface{})
-	breakdowns := make([]string, len(breakdownsRaw))
-
-	for i, b := range breakdownsRaw {
-		breakdowns[i] = b.(string)
-	}
-
-	var limit *int
-	l := d.Get("limit").(int)
-	if l != 0 {
-		limit = &l
-	}
-
-	orderSchemas := d.Get("order").([]interface{})
-	orders := make([]honeycombio.OrderSpec, len(orderSchemas))
-
-	for i, o := range orderSchemas {
-		oMap := o.(map[string]interface{})
-
-		var op *honeycombio.CalculationOp
-		opValue := honeycombio.CalculationOp(oMap["op"].(string))
-		if opValue != "" {
-			op = &opValue
-		}
-
-		var column *string
-		columnValue := oMap["column"].(string)
-		if columnValue != "" {
-			column = &columnValue
-		}
-
-		var sortOrder *honeycombio.SortOrder
-		sortOrderValue := honeycombio.SortOrder(oMap["order"].(string))
-		if sortOrderValue != "" {
-			sortOrder = &sortOrderValue
-		}
-
-		orders[i] = honeycombio.OrderSpec{
-			Op:     op,
-			Column: column,
-			Order:  sortOrder,
-		}
-	}
-
-	query := &honeycombio.QuerySpec{
-		Calculations:      calculations,
-		Filters:           filters,
-		FilterCombination: filterCombination,
-		Breakdowns:        breakdowns,
-		Orders:            orders,
-		Limit:             limit,
-	}
-
-	jsonQuery, err := encodeQuery(query)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.Set("json", jsonQuery)
-	d.SetId(strconv.Itoa(util.HashString(jsonQuery)))
-
-	return nil
+	return calculations, nil
 }
 
 func extractFilters(d *schema.ResourceData) ([]honeycombio.FilterSpec, error) {
@@ -292,4 +256,59 @@ func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, e
 		}
 	}
 	return filter, nil
+}
+
+func extractBreakdowns(d *schema.ResourceData) []string {
+	breakdownsRaw := d.Get("breakdowns").([]interface{})
+	breakdowns := make([]string, len(breakdownsRaw))
+
+	for i, b := range breakdownsRaw {
+		breakdowns[i] = b.(string)
+	}
+
+	return breakdowns
+}
+
+func extractOrders(d *schema.ResourceData) []honeycombio.OrderSpec {
+	orderSchemas := d.Get("order").([]interface{})
+	orders := make([]honeycombio.OrderSpec, len(orderSchemas))
+
+	for i, o := range orderSchemas {
+		oMap := o.(map[string]interface{})
+
+		var op *honeycombio.CalculationOp
+		opValue := honeycombio.CalculationOp(oMap["op"].(string))
+		if opValue != "" {
+			op = &opValue
+		}
+
+		var column *string
+		columnValue := oMap["column"].(string)
+		if columnValue != "" {
+			column = &columnValue
+		}
+
+		var sortOrder *honeycombio.SortOrder
+		sortOrderValue := honeycombio.SortOrder(oMap["order"].(string))
+		if sortOrderValue != "" {
+			sortOrder = &sortOrderValue
+		}
+
+		orders[i] = honeycombio.OrderSpec{
+			Op:     op,
+			Column: column,
+			Order:  sortOrder,
+		}
+	}
+
+	return orders
+}
+
+func extractLimit(d *schema.ResourceData) *int {
+	l, ok := d.GetOk("limit")
+	if !ok {
+		return nil
+	}
+	li := l.(int)
+	return &li
 }
