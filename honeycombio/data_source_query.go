@@ -2,7 +2,6 @@ package honeycombio
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strconv"
 
@@ -161,24 +160,20 @@ func extractCalculations(d *schema.ResourceData) ([]honeycombio.CalculationSpec,
 	calculationSchemas := d.Get("calculation").([]interface{})
 	calculations := make([]honeycombio.CalculationSpec, len(calculationSchemas))
 
-	for i, c := range calculationSchemas {
-		cMap := c.(map[string]interface{})
+	for i := range calculationSchemas {
+		calculation := &calculations[i]
 
-		op := honeycombio.CalculationOp(cMap["op"].(string))
+		calculation.Op = honeycombio.CalculationOp(d.Get(fmt.Sprintf("calculation.%d.op", i)).(string))
 
-		var column *string
-		c := cMap["column"].(string)
-		if c != "" {
-			column = &c
+		c, ok := d.GetOk(fmt.Sprintf("calculation.%d.column", i))
+		if ok {
+			calculations[i].Column = honeycombio.StringPtr(c.(string))
 		}
 
-		if op == honeycombio.CalculationOpCount && column != nil {
-			return nil, errors.New("calculation op COUNT should not have an accompanying column")
-		}
-
-		calculations[i] = honeycombio.CalculationSpec{
-			Op:     op,
-			Column: column,
+		if calculation.Op == honeycombio.CalculationOpCount && calculation.Column != nil {
+			return nil, fmt.Errorf("calculation op %s should not have an accompanying column", calculation.Op)
+		} else if calculation.Op != honeycombio.CalculationOpCount && calculation.Column == nil {
+			return nil, fmt.Errorf("calculation op %s is missing an accompanying column", calculation.Op)
 		}
 	}
 
@@ -273,32 +268,25 @@ func extractOrders(d *schema.ResourceData) []honeycombio.OrderSpec {
 	orderSchemas := d.Get("order").([]interface{})
 	orders := make([]honeycombio.OrderSpec, len(orderSchemas))
 
-	for i, o := range orderSchemas {
-		oMap := o.(map[string]interface{})
+	for i := range orderSchemas {
+		order := &orders[i]
 
-		var op *honeycombio.CalculationOp
-		opValue := honeycombio.CalculationOp(oMap["op"].(string))
-		if opValue != "" {
-			op = &opValue
+		op, ok := d.GetOk(fmt.Sprintf("order.%d.op", i))
+		if ok {
+			order.Op = honeycombio.CalculationOpPtr(honeycombio.CalculationOp(op.(string)))
 		}
 
-		var column *string
-		columnValue := oMap["column"].(string)
-		if columnValue != "" {
-			column = &columnValue
+		c, ok := d.GetOk(fmt.Sprintf("order.%d.column", i))
+		if ok {
+			order.Column = honeycombio.StringPtr(c.(string))
 		}
 
-		var sortOrder *honeycombio.SortOrder
-		sortOrderValue := honeycombio.SortOrder(oMap["order"].(string))
-		if sortOrderValue != "" {
-			sortOrder = &sortOrderValue
+		so, ok := d.GetOk(fmt.Sprintf("order.%d.order", i))
+		if ok {
+			order.Order = honeycombio.SortOrderPtr(honeycombio.SortOrder(so.(string)))
 		}
 
-		orders[i] = honeycombio.OrderSpec{
-			Op:     op,
-			Column: column,
-			Order:  sortOrder,
-		}
+		// TODO: validation
 	}
 
 	return orders
@@ -309,6 +297,5 @@ func extractLimit(d *schema.ResourceData) *int {
 	if !ok {
 		return nil
 	}
-	li := l.(int)
-	return &li
+	return honeycombio.IntPtr(l.(int))
 }

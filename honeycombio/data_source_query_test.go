@@ -116,8 +116,12 @@ func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
 				ExpectError: regexp.MustCompile("filter operation exists must not"),
 			},
 			{
-				Config:      testBadCountQuery(),
+				Config:      testQueryCalculationUnneededColumn(),
 				ExpectError: regexp.MustCompile("calculation op COUNT should not have an accompanying column"),
+			},
+			{
+				Config:      testQueryCalculationMissingColumn(),
+				ExpectError: regexp.MustCompile("calculation op AVG is missing an accompanying column"),
 			},
 			{
 				Config:      testQueryWithLimit(0),
@@ -155,12 +159,22 @@ data "honeycombio_query" "test" {
 `
 }
 
-func testBadCountQuery() string {
+func testQueryCalculationUnneededColumn() string {
 	return `
 data "honeycombio_query" "test" {
   calculation {
     op     = "COUNT"
     column = "we-should-not-specify-a-column-with-COUNT"
+  }
+}
+`
+}
+
+func testQueryCalculationMissingColumn() string {
+	return `
+data "honeycombio_query" "test" {
+  calculation {
+    op     = "AVG"
   }
 }
 `
