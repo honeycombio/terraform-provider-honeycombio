@@ -21,7 +21,7 @@ func dataSourceHoneycombioSlackRecipient() *schema.Resource {
 			"type": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(validTriggerRecipientTypes, false),
+				ValidateFunc: validation.StringInSlice(triggerRecipientTypeStrings(), false),
 			},
 			"target": {
 				Type:     schema.TypeString,

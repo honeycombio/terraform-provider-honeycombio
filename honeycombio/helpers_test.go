@@ -15,13 +15,13 @@ func createTriggerWithRecipient(t *testing.T, c *honeycombio.Client, dataset str
 		Query: &honeycombio.QuerySpec{
 			Calculations: []honeycombio.CalculationSpec{
 				{
-					Op: honeycombio.CalculateOpCount,
+					Op: honeycombio.CalculationOpCount,
 				},
 			},
 		},
 		Threshold: &honeycombio.TriggerThreshold{
 			Op:    honeycombio.TriggerThresholdOpGreaterThan,
-			Value: &[]float64{100}[0],
+			Value: honeycombio.Float64Ptr(100),
 		},
 		Recipients: []honeycombio.TriggerRecipient{recipient},
 	}

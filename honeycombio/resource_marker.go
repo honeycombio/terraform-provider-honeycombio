@@ -13,7 +13,7 @@ func newMarker() *schema.Resource {
 		CreateContext: resourceMarkerCreate,
 		ReadContext:   resourceMarkerRead,
 		UpdateContext: nil,
-		DeleteContext: resourceMarkerDelete,
+		DeleteContext: schema.NoopContext,
 
 		Schema: map[string]*schema.Schema{
 			"message": {
@@ -45,7 +45,7 @@ func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	dataset := d.Get("dataset").(string)
 
-	data := honeycombio.MarkerCreateData{
+	data := &honeycombio.Marker{
 		Message: d.Get("message").(string),
 		Type:    d.Get("type").(string),
 		URL:     d.Get("url").(string),
@@ -75,10 +75,5 @@ func resourceMarkerRead(ctx context.Context, d *schema.ResourceData, meta interf
 	d.Set("message", marker.Message)
 	d.Set("type", marker.Type)
 	d.Set("url", marker.URL)
-	return nil
-}
-
-func resourceMarkerDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// do nothing on destroy
 	return nil
 }

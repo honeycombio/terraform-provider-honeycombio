@@ -56,7 +56,7 @@ func newTrigger() *schema.Resource {
 						"op": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{">", ">=", "<", "<="}, false),
+							ValidateFunc: validation.StringInSlice(triggerThresholdOpStrings(), false),
 						},
 						"value": {
 							Type:     schema.TypeFloat,
@@ -89,7 +89,7 @@ func newTrigger() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Computed:     true,
-							ValidateFunc: validation.StringInSlice(validTriggerRecipientTypes, false),
+							ValidateFunc: validation.StringInSlice(triggerRecipientTypeStrings(), false),
 						},
 						"target": {
 							Type:     schema.TypeString,
@@ -102,8 +102,6 @@ func newTrigger() *schema.Resource {
 		},
 	}
 }
-
-var validTriggerRecipientTypes []string = []string{"email", "marker", "pagerduty", "slack"}
 
 func resourceTriggerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
@@ -139,9 +137,8 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 
 	// API returns nil for filterCombination if set to the default value "AND"
 	// To keep the Terraform config simple, we'll explicitly set "AND" ourself
-	if t.Query.FilterCombination == nil {
-		filterCombination := honeycombio.FilterCombinationAnd
-		t.Query.FilterCombination = &filterCombination
+	if t.Query.FilterCombination == "" {
+		t.Query.FilterCombination = honeycombio.FilterCombinationAnd
 	}
 
 	d.SetId(t.ID)
@@ -224,11 +221,9 @@ func expandTrigger(d *schema.ResourceData) (*honeycombio.Trigger, error) {
 func expandTriggerThreshold(s []interface{}) *honeycombio.TriggerThreshold {
 	d := s[0].(map[string]interface{})
 
-	value := d["value"].(float64)
-
 	return &honeycombio.TriggerThreshold{
 		Op:    honeycombio.TriggerThresholdOp(d["op"].(string)),
-		Value: &value,
+		Value: honeycombio.Float64Ptr(d["value"].(float64)),
 	}
 }
 

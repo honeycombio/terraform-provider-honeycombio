@@ -88,8 +88,8 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					Query: honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{
-								Op:     honeycombio.CalculateOpAvg,
-								Column: &[]string{"duration_ms"}[0],
+								Op:     honeycombio.CalculationOpAvg,
+								Column: honeycombio.StringPtr("duration_ms"),
 							},
 						},
 						Filters: []honeycombio.FilterSpec{
@@ -107,8 +107,8 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					Query: honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{
-								Op:     honeycombio.CalculateOpAvg,
-								Column: &[]string{"duration_ms"}[0],
+								Op:     honeycombio.CalculationOpAvg,
+								Column: honeycombio.StringPtr("duration_ms"),
 							},
 						},
 						Filters: []honeycombio.FilterSpec{
