@@ -1,8 +1,8 @@
 package honeycombio
 
 import (
+	"context"
 	"os"
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,11 +14,9 @@ func newTestClient(t *testing.T) *Client {
 		t.Fatal("expected environment variable HONEYCOMBIO_APIKEY")
 	}
 
-	debug, _ := strconv.ParseBool(os.Getenv("HONEYCOMBIO_DEBUG"))
-
 	cfg := &Config{
 		APIKey: apiKey,
-		Debug:  debug,
+		Debug:  true,
 	}
 	c, err := NewClient(cfg)
 	if err != nil {
@@ -74,4 +72,13 @@ func TestClient_invalidConfig(t *testing.T) {
 	_, err = NewClient(cfg)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "could not parse APIUrl")
+}
+
+func TestClient_parseHoneycombioError(t *testing.T) {
+	ctx := context.Background()
+	c := newTestClient(t)
+
+	err := c.performRequest(ctx, "POST", "/1/boards/", nil, nil)
+
+	assert.Error(t, err, "400 Bad Request: request body should not be empty")
 }
