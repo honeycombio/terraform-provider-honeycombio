@@ -37,9 +37,9 @@ func testDataset(t *testing.T) string {
 
 func TestConfig_merge(t *testing.T) {
 	config1 := &Config{
-		APIKey:    "123",
+		APIKey:    "",
 		APIUrl:    "",
-		UserAgent: "",
+		UserAgent: "go-honeycombio",
 	}
 	config2 := &Config{
 		APIKey:    "",
@@ -48,9 +48,9 @@ func TestConfig_merge(t *testing.T) {
 	}
 
 	expected := &Config{
-		APIKey:    "123",
+		APIKey:    "",
 		APIUrl:    "http://localhost",
-		UserAgent: "",
+		UserAgent: "go-honeycombio",
 	}
 
 	config1.merge(config2)
