@@ -51,7 +51,7 @@ resource "honeycombio_trigger" "example" {
 The following arguments are supported:
 
 * `dataset` - (Required) Search through all triggers linked to this dataset.
-* `type` - (Required) The type of recipient, allowed types are `email`, `marker`, `pagerduty` and `slack`.
+* `type` - (Required) The type of recipient, allowed types are `email`, `marker`, `pagerduty`, `slack` and `webhook`.
 * `target` - (Optional) Target of the trigger, this has another meaning depending on the type of recipient (see the table below).
 
 Type      | Target
@@ -60,6 +60,7 @@ email     | an email address
 marker    | name of the marker
 pagerduty | _N/A_
 slack     | name of the channel
+webhook   | name of the webhook
 
 ## Attribute Reference
 

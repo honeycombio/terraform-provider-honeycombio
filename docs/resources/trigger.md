@@ -70,7 +70,7 @@ Each trigger configuration must contain exactly one `threshold` block, which acc
 
 Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments. A trigger recipient block can either refer to an existing recipient (a recipient that is already present in another trigger) or a new recipient. When specifying an existing recipient, only `id` must be set. To retrieve the ID of an existing recipient, refer to the [`honeycombio_trigger_recipient`](../data-sources/trigger_recipient.md) data source.
 
-* `type` - (Optional) The type of the trigger recipient, allowed types are `email`, `marker`, `pagerduty` and `slack`. Should not be used in combination with `id`.
+* `type` - (Optional) The type of the trigger recipient, allowed types are `email`, `marker`, `pagerduty`, `slack` and `webhook`. Should not be used in combination with `id`.
 * `target` - (Optional) Target of the trigger recipient, this has another meaning depending on the type of recipient (see the table below). Should not be used in combination with `id`.
 * `id` - (Optional) The ID of an already existing recipient. Should not be used in combination with `type` and `target`.
 
@@ -80,6 +80,7 @@ email     | an email address
 marker    | name of the marker
 pagerduty | _N/A_
 slack     | name of the channel
+webhook   | name of the webhook
 
 ~> **NOTE** Recipients of type `slack` can not be created using the API. Instead, you have to refer to existing Slack recipients using their ID. Refer to [Specifying Recipients](https://docs.honeycomb.io/api/triggers/#specifying-recipients) for more information. You can use the [`honeycombio_trigger_recipient`](../data-sources/trigger_recipient.md) data source to find an already existing recipient.
 
