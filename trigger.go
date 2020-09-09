@@ -97,8 +97,18 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 // when the trigger fires.
 //
 // API docs: https://docs.honeycomb.io/api/triggers/#specifying-recipients
+//
+// Notes
+//
+// Recipients of type Slack should be specified by their ID. It is not possible
+// to create a new recipient of type Slack using the API. Instead use the ID of
+// a recipient of type Slack that was manually added to another trigger.
+//
+// Recipients of type webhook can be added by their name. If a webhook with
+// this name does not exist yet (or if the name contains a typo), the Honeycomb
+// API will not complain about this but the webhook will not be valid.
 type TriggerRecipient struct {
-	// ID of the recipient, this is required when type is Slack.
+	// ID of the recipient.
 	ID string `json:"id,omitempty"`
 	// Type of the recipient.
 	Type TriggerRecipientType `json:"type"`
@@ -107,6 +117,7 @@ type TriggerRecipient struct {
 	// - marker: name of the marker
 	// - PagerDuty: N/A
 	// - Slack: name of a channel
+	// - Webhook: name of the webhook
 	Target string `json:"target,omitempty"`
 }
 
@@ -119,6 +130,7 @@ const (
 	TriggerRecipientTypeMarker    TriggerRecipientType = "marker"
 	TriggerRecipientTypePagerDuty TriggerRecipientType = "pagerduty"
 	TriggerRecipientTypeSlack     TriggerRecipientType = "slack"
+	TriggerRecipientTypeWebhook   TriggerRecipientType = "webhook"
 )
 
 // TriggerRecipientTypes returns an exhaustive list of trigger recipient types.
@@ -128,6 +140,7 @@ func TriggerRecipientTypes() []TriggerRecipientType {
 		TriggerRecipientTypeMarker,
 		TriggerRecipientTypePagerDuty,
 		TriggerRecipientTypeSlack,
+		TriggerRecipientTypeWebhook,
 	}
 }
 
