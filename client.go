@@ -105,8 +105,8 @@ var ErrNotFound = errors.New("404 Not Found")
 // requestBody is not nil, a JSON body. The response is parsed in responseBody,
 // if responseBody is not nil.
 // Returns an error if the request failed, if the response contained a non-2xx
-// status code or if parsing the reponse in responseBody failed. ErrNotFound is
-// returned on a 404 response.
+// status code or if parsing the response in responseBody failed. ErrNotFound
+// is returned on a 404 response.
 func (c *Client) performRequest(ctx context.Context, method, path string, requestBody, responseBody interface{}) error {
 	var body io.Reader
 
