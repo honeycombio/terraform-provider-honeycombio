@@ -32,34 +32,34 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 func testAccBoardConfig(dataset string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query" "test" {
-    count = 2
-    calculation {
-        op     = "AVG"
-        column = "duration_ms"
-    }
-    filter {
-        op     = ">"
-        column = "duration_ms"
-        value  = count.index 
-    }
+  count = 2
+
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  filter {
+    column = "duration_ms"
+    op     = ">"
+    value  = count.index 
+  }
 }
 
 resource "honeycombio_board" "test" {
-    name  = "Test board from terraform-provider-honeycombio"
-    style = "list"
+  name  = "Test board from terraform-provider-honeycombio"
+  style = "list"
      
-    query {
-        caption = "test query 0"
-        dataset = "%s"
-        query_json = data.honeycombio_query.test[0].json
-    }
-      
-    query {
-        caption = "test query 1"
-        dataset = "%s"
-        query_json = data.honeycombio_query.test[1].json
-    }
-
+  query {
+    caption = "test query 0"
+    dataset = "%s"
+    query_json = data.honeycombio_query.test[0].json
+  }
+  query {
+    caption = "test query 1"
+    dataset = "%s"
+    query_json = data.honeycombio_query.test[1].json
+  }
 }`, dataset, dataset)
 }
 

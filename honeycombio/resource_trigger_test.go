@@ -80,10 +80,9 @@ func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFun
 
 // add a trigger recipient by ID to verify the diff is stable
 func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
-	c := testAccClient(t)
 	dataset := testAccDataset()
 
-	trigger, deleteFn := createTriggerWithRecipient(t, c, dataset, honeycombio.TriggerRecipient{
+	trigger, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.TriggerRecipient{
 		Type:   honeycombio.TriggerRecipientTypeEmail,
 		Target: "acctest@example.com",
 	})

@@ -14,7 +14,7 @@ func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccQueryConfig(),
+				Config: testAccQueryConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckOutput("query_json", expectedJSON),
 				),
@@ -23,8 +23,7 @@ func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
 	})
 }
 
-func testAccQueryConfig() string {
-	return `
+const testAccQueryConfig = `
 data "honeycombio_query" "test" {
     calculation {
         op     = "AVG"
@@ -63,7 +62,6 @@ data "honeycombio_query" "test" {
 output "query_json" {
     value = data.honeycombio_query.test.json
 }`
-}
 
 //Note: By default go encodes `<` and `>` for html, hence the `\u003e`
 const expectedJSON string = `{
@@ -110,104 +108,102 @@ func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config:      testBadExistsQuery(),
-				ExpectError: regexp.MustCompile("filter operation exists must not"),
-			},
-			{
-				Config:      testQueryCalculationUnneededColumn(),
-				ExpectError: regexp.MustCompile("calculation op COUNT should not have an accompanying column"),
-			},
-			{
-				Config:      testQueryCalculationMissingColumn(),
-				ExpectError: regexp.MustCompile("calculation op AVG is missing an accompanying column"),
-			},
-			{
-				Config:      testQueryWithLimit(0),
-				ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
-			},
-			{
-				Config:      testQueryWithLimit(-5),
-				ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
-			},
-			{
-				Config:      testQueryWithLimit(1200),
-				ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
-			},
-			{
-				Config:      testConflictingValues(),
-				ExpectError: regexp.MustCompile(multipleValuesError),
-			},
-			{
-				Config:      testMissingFilterValue(),
-				ExpectError: regexp.MustCompile("filter operation > requires a value"),
-			},
-		},
+		Steps: appendAllTestSteps(
+			testStepsQueryValidationChecks_calculation,
+			testStepsQueryValidationChecks_filter,
+			testStepsQueryValidationChecks_limit(),
+		),
 	})
 }
 
-func testBadExistsQuery() string {
-	return `
-data "honeycombio_query" "test" {
-    filter {
-        column = "column"
-        op     = "exists"
-        value  = "this-value-should-not-be-here"
-    }
-}
-`
-}
-
-func testQueryCalculationUnneededColumn() string {
-	return `
+var testStepsQueryValidationChecks_calculation = []resource.TestStep{
+	{
+		Config: `
 data "honeycombio_query" "test" {
   calculation {
     op     = "COUNT"
     column = "we-should-not-specify-a-column-with-COUNT"
   }
 }
-`
-}
-
-func testQueryCalculationMissingColumn() string {
-	return `
+`,
+		ExpectError: regexp.MustCompile("calculation op COUNT should not have an accompanying column"),
+	},
+	{
+		Config: `
 data "honeycombio_query" "test" {
   calculation {
     op     = "AVG"
   }
 }
-`
+`,
+		ExpectError: regexp.MustCompile("calculation op AVG is missing an accompanying column"),
+	},
 }
 
-func testConflictingValues() string {
-	return `
+var testStepsQueryValidationChecks_filter = []resource.TestStep{
+	{
+		Config: `
+data "honeycombio_query" "test" {
+  filter {
+    column = "column"
+    op     = "exists"
+    value  = "this-value-should-not-be-here"
+  }
+}
+`,
+		ExpectError: regexp.MustCompile("filter operation exists must not contain a value"),
+	},
+	{
+		Config: `
 data "honeycombio_query" "test" {
   filter {
     column = "column"
     op     = ">"
-    value  = "1"
+  }
+}
+`,
+		ExpectError: regexp.MustCompile("filter operation > requires a value"),
+	},
+	{
+		Config: `
+data "honeycombio_query" "test" {
+  filter {
+    column        = "column"
+    op            = ">"
+    value_string  = "1"
     value_integer = 10
   }
 }
-`
+`,
+		ExpectError: regexp.MustCompile(multipleValuesError),
+	},
 }
 
-func testMissingFilterValue() string {
-	return `
-data "honeycombio_query" "test" {
-  filter {
-    column = "column"
-    op     = ">"
-  }
-}
-`
-}
-
-func testQueryWithLimit(limit int) string {
-	return fmt.Sprintf(`
+func testStepsQueryValidationChecks_limit() []resource.TestStep {
+	var queryLimitFmt = `
 data "honeycombio_query" "test" {
   limit = %d
+}`
+	return []resource.TestStep{
+		{
+			Config:      fmt.Sprintf(queryLimitFmt, 0),
+			ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+		},
+		{
+			Config:      fmt.Sprintf(queryLimitFmt, -5),
+			ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+		},
+		{
+			Config:      fmt.Sprintf(queryLimitFmt, 1200),
+			ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+		},
+	}
 }
-`, limit)
+
+func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {
+	var allSteps []resource.TestStep
+	for _, s := range steps {
+		allSteps = append(allSteps, s...)
+	}
+	return allSteps
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAccHoneycombioMarker_basic(t *testing.T) {
@@ -50,10 +51,14 @@ func testAccCheckMarkerExists(t *testing.T, name string) resource.TestCheckFunc 
 		}
 
 		c := testAccClient(t)
-		_, err := c.Markers.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+		m, err := c.Markers.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not retrieve marker: %w", err)
 		}
+
+		assert.Equal(t, "Hello world!", m.Message)
+		assert.Equal(t, "deploys", m.Type)
+		assert.Equal(t, "https://www.honeycomb.io/", m.URL)
 
 		return nil
 	}
