@@ -16,8 +16,8 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccBoardConfig(dataset),
@@ -70,7 +70,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 			return fmt.Errorf("not found: %s", name)
 		}
 
-		client := testAccProvider.Meta().(*honeycombio.Client)
+		client := testAccClient(t)
 		createdBoard, err := client.Boards.Get(context.Background(), resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not find created board: %w", err)

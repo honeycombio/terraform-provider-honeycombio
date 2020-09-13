@@ -10,7 +10,7 @@ import (
 )
 
 func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
-	c := testAccProvider.Meta().(*honeycombio.Client)
+	c := testAccClient(t)
 	dataset := testAccDataset()
 
 	_, deleteFn := createTriggerWithRecipient(t, c, dataset, honeycombio.TriggerRecipient{
@@ -20,8 +20,8 @@ func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
 	defer deleteFn()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccTriggerRecipient(dataset, "email", "acctest@example.com"),

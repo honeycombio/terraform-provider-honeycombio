@@ -7,20 +7,19 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/kvrhdn/go-honeycombio"
 )
 
 func TestAccHoneycombioMarker_basic(t *testing.T) {
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccMarkerConfig(dataset),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMarkerExists("honeycombio_marker.test"),
+					testAccCheckMarkerExists(t, "honeycombio_marker.test"),
 					resource.TestCheckResourceAttr("honeycombio_marker.test", "message", "Hello world!"),
 					resource.TestCheckResourceAttr("honeycombio_marker.test", "type", "deploys"),
 					resource.TestCheckResourceAttr("honeycombio_marker.test", "url", "https://www.honeycomb.io/"),
@@ -43,15 +42,15 @@ resource "honeycombio_marker" "test" {
 
 // testAccCheckMarkerExists queries the API to verify the Marker exists and
 // matches with the Terraform state.
-func testAccCheckMarkerExists(name string) resource.TestCheckFunc {
+func testAccCheckMarkerExists(t *testing.T, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
 			return fmt.Errorf("not found: %s", name)
 		}
 
-		client := testAccProvider.Meta().(*honeycombio.Client)
-		_, err := client.Markers.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+		c := testAccClient(t)
+		_, err := c.Markers.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not retrieve marker: %w", err)
 		}
