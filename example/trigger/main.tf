@@ -20,11 +20,10 @@ data "honeycombio_query" "query" {
     column = "trace.parent_id"
     op     = "does-not-exist"
   }
-
   filter {
-    column = "app.tenant"
-    op     = "="
-    value  = "ThatSpecialTenant"
+    column       = "app.tenant"
+    op           = "="
+    value_string = "ThatSpecialTenant"
   }
 }
 
@@ -49,7 +48,6 @@ resource "honeycombio_trigger" "trigger" {
     type   = "email"
     target = "hello@example.com"
   }
-
   recipient {
     type   = "marker"
     target = "Trigger - slow requests" # name of the marker
