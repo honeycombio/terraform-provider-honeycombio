@@ -73,6 +73,8 @@ func TestTriggers(t *testing.T) {
 		for i := range trigger.Recipients {
 			data.Recipients[i].ID = trigger.Recipients[i].ID
 		}
+		// set default time range
+		data.Query.TimeRange = IntPtr(300)
 
 		assert.Equal(t, data, trigger)
 	})

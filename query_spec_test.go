@@ -48,7 +48,10 @@ func TestQuerySpec(t *testing.T) {
 				Order: SortOrderPtr(SortOrderDesc),
 			},
 		},
-		Limit: IntPtr(100),
+		Limit:       IntPtr(100),
+		TimeRange:   IntPtr(3600), // 1 hour
+		Granularity: IntPtr(60),   // 1 minute
+		EndTime:     Int64Ptr(time.Now().Unix()),
 	}
 
 	b := &Board{

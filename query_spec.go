@@ -24,9 +24,19 @@ type QuerySpec struct {
 	Orders []OrderSpec `json:"orders,omitempty"`
 	// The maximum number of query results, must be between 1 and 1000.
 	Limit *int `json:"limit,omitempty"`
-
-	// not all available fields are currently implemented by QuerySpec, see https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification
-	// fields not implemented yet: granularity, time_range, start_time, end_time
+	// The time range of query in seconds. Defaults to two hours. If combined
+	// with start time or end time, this time range is added after start time
+	// or before end time. Cannot be combined with both start time and end time.
+	//
+	// For more details, check https://docs.honeycomb.io/api/query-specification/#a-caveat-on-time
+	TimeRange *int `json:"time_range,omitempty"`
+	// The absolute start time of the query, in Unix Time (= seconds since epoch).
+	StartTime *int64 `json:"start_time,omitempty"`
+	// The absolute end time of the query, in Unix Time (= seconds since epoch).
+	EndTime *int64 `json:"end_time,omitempty"`
+	// The time resolution of the query’s graph, in seconds. Valid values are
+	// the query’s time range /10 at maximum, and /1000 at minimum.
+	Granularity *int `json:"granularity,omitempty"`
 }
 
 // CalculationSpec represents a calculation within a query.

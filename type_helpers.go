@@ -15,6 +15,11 @@ func IntPtr(v int) *int {
 	return &v
 }
 
+// Int64Ptr returns a pointer to the given int64.
+func Int64Ptr(v int64) *int64 {
+	return &v
+}
+
 // SortOrderPtr returns a pointer to the given SortOrder.
 func SortOrderPtr(v SortOrder) *SortOrder {
 	return &v
