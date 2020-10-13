@@ -25,8 +25,9 @@ func TestBoards(t *testing.T) {
 			Style:       BoardStyleVisual,
 			Queries: []BoardQuery{
 				{
-					Caption: "A sample query",
-					Dataset: dataset,
+					Caption:    "A sample query",
+					QueryStyle: BoardQueryStyleCombo,
+					Dataset:    dataset,
 					Query: QuerySpec{
 						Calculations: []CalculationSpec{
 							{
@@ -34,6 +35,7 @@ func TestBoards(t *testing.T) {
 								Column: StringPtr("duration_ms"),
 							},
 						},
+						TimeRange: IntPtr(3600), // 1 hour
 					},
 				},
 			},
@@ -69,14 +71,16 @@ func TestBoards(t *testing.T) {
 
 	t.Run("Update", func(t *testing.T) {
 		b.Queries = append(b.Queries, BoardQuery{
-			Caption: "A second query",
-			Dataset: dataset,
+			Caption:    "A second query",
+			QueryStyle: BoardQueryStyleGraph,
+			Dataset:    dataset,
 			Query: QuerySpec{
 				Calculations: []CalculationSpec{
 					{
 						Op: CalculationOpCount,
 					},
 				},
+				TimeRange: IntPtr(7200), // 2 hours
 			},
 		})
 

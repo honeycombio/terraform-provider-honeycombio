@@ -69,10 +69,27 @@ func BoardStyles() []BoardStyle {
 // BoardQuery represents a query that is part of a board.
 type BoardQuery struct {
 	Caption string `json:"caption,omitempty"`
+	// Defaults to graph.
+	QueryStyle BoardQueryStyle `json:"query_style,omitempty"`
 	// This field is required.
 	Dataset string `json:"dataset"`
 	// This field is required.
 	Query QuerySpec `json:"query"`
+}
+
+// BoardQueryStyle determines how a query should be displayed on the board.
+type BoardQueryStyle string
+
+// Declaration of board query styles.
+const (
+	BoardQueryStyleGraph BoardQueryStyle = "graph"
+	BoardQueryStyleTable BoardQueryStyle = "table"
+	BoardQueryStyleCombo BoardQueryStyle = "combo"
+)
+
+// BoardQueryStyles returns an exhaustive list of board query styles.
+func BoardQueryStyles() []BoardQueryStyle {
+	return []BoardQueryStyle{BoardQueryStyleGraph, BoardQueryStyleTable, BoardQueryStyleCombo}
 }
 
 func (s *boards) List(ctx context.Context) ([]Board, error) {
