@@ -10,29 +10,28 @@ import (
 )
 
 func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
-	c := testAccProvider.Meta().(*honeycombio.Client)
 	dataset := testAccDataset()
 
-	_, deleteFn := createTriggerWithRecipient(t, c, dataset, honeycombio.TriggerRecipient{
+	_, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.TriggerRecipient{
 		Type:   honeycombio.TriggerRecipientTypeEmail,
 		Target: "acctest@example.com",
 	})
 	defer deleteFn()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccTriggerRecipient(dataset, "email", "acctest@example.com"),
 			},
 			{
 				Config:      testAccTriggerRecipient(dataset, "email", "another@example.com"),
-				ExpectError: regexp.MustCompile("could not find a trigger recipient in "),
+				ExpectError: regexp.MustCompile("could not find a trigger recipient in .* with type = \"email\" and target = \"another@example.com\""),
 			},
 			{
-				Config:      testAccTriggerRecipient(dataset, "slack", "acctest@example.com"),
-				ExpectError: regexp.MustCompile("could not find a trigger recipient in "),
+				Config:      testAccTriggerRecipient(dataset, "slack", "honeycombio"),
+				ExpectError: regexp.MustCompile("could not find a trigger recipient in .* with type = \"slack\" and target = \"honeycombio\""),
 			},
 		},
 	})

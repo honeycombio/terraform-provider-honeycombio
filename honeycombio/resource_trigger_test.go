@@ -17,9 +17,9 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:      func() { testAccPreCheck(t) },
-		IDRefreshName: "honeycombio_trigger.test",
-		Providers:     testAccProviders,
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		IDRefreshName:     "honeycombio_trigger.test",
 		Steps: []resource.TestStep{
 			{
 				Config: testAccTriggerConfigWithFrequency(dataset, 900),
@@ -53,7 +53,7 @@ func testAccCheckTriggerExists(t *testing.T, name string, trigger *honeycombio.T
 			return fmt.Errorf("not found: %s", name)
 		}
 
-		client := testAccProvider.Meta().(*honeycombio.Client)
+		client := testAccClient(t)
 		createdTrigger, err := client.Triggers.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not find created trigger: %w", err)
@@ -80,19 +80,18 @@ func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFun
 
 // add a trigger recipient by ID to verify the diff is stable
 func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
-	c := testAccProvider.Meta().(*honeycombio.Client)
 	dataset := testAccDataset()
 
-	trigger, deleteFn := createTriggerWithRecipient(t, c, dataset, honeycombio.TriggerRecipient{
+	trigger, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.TriggerRecipient{
 		Type:   honeycombio.TriggerRecipientTypeEmail,
 		Target: "acctest@example.com",
 	})
 	defer deleteFn()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:      func() { testAccPreCheck(t) },
-		IDRefreshName: "honeycombio_trigger.test",
-		Providers:     testAccProviders,
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		IDRefreshName:     "honeycombio_trigger.test",
 		Steps: []resource.TestStep{
 			{
 				Config: testAccTriggerConfigWithRecipientID(dataset, trigger.Recipients[0].ID),
@@ -105,8 +104,8 @@ func TestAccHoneycombioTrigger_validationErrors(t *testing.T) {
 	dataset := testAccDataset()
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccTriggerConfigWithQuery(dataset, `{]`),

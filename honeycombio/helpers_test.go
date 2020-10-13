@@ -7,8 +7,9 @@ import (
 	"github.com/kvrhdn/go-honeycombio"
 )
 
-func createTriggerWithRecipient(t *testing.T, c *honeycombio.Client, dataset string, recipient honeycombio.TriggerRecipient) (trigger *honeycombio.Trigger, deleteFn func()) {
+func createTriggerWithRecipient(t *testing.T, dataset string, recipient honeycombio.TriggerRecipient) (trigger *honeycombio.Trigger, deleteFn func()) {
 	ctx := context.Background()
+	c := testAccClient(t)
 
 	trigger = &honeycombio.Trigger{
 		Name: "Terraform provider - acc test trigger recipient",

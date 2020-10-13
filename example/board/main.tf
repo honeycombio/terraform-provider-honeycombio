@@ -26,7 +26,6 @@ data "honeycombio_query" "query" {
     column = "trace.parent_id"
     op     = "does-not-exist"
   }
-
   filter {
     column       = "app.tenant"
     op           = "="
