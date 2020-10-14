@@ -51,7 +51,7 @@ The following arguments are supported:
 * `time_range` - (Optional) The time range of the query in seconds, defaults to two hours.
 * `start_time` - (Optional) The absolute start time of the query in Unix Time (= seconds since epoch).
 * `end_time` - (Optional) The absolute end time of the query in Unix Time (= seconds since epoch).
-* `granularity` - (Optional) The time resolution of the query’s graph, in seconds. Valid values must be in between the query’s time range/10 at maximum, and /1000 at minimum.
+* `granularity` - (Optional) The time resolution of the query’s graph, in seconds. Valid values must be in between the query’s time range /10 at maximum, and /1000 at minimum.
 
 ~> **NOTE** It is not allowed to specify all three of `time_range`, `start_time` and `end_time`. For more details about specifying time windows, check [Query specification: A caveat on time](https://docs.honeycomb.io/api/query-specification/#a-caveat-on-time).
 

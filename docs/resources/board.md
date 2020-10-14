@@ -66,7 +66,7 @@ Each board configuration may have zero or more `query` blocks, which accepts the
 * `query_json` - (Required) A JSON object describing the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification). While the JSON can be constructed manually, it is easiest to use the [`honeycombio_query`](../data-sources/query.md) data source.
 * `dataset` - (Required) The dataset this query is associated with.
 * `caption` - (Optional) A description of the query that will be displayed on the board. Supports markdown.
-* `query_style` - (Optional) How the query should be displyaed within the board, either `graph` (the default), `table` or `combo`.
+* `query_style` - (Optional) How the query should be displayed within the board, either `graph` (the default), `table` or `combo`.
 
 ## Attribute Reference
 
