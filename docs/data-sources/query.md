@@ -29,6 +29,8 @@ data "honeycombio_query" "example" {
   filter_combination = "AND"
 
   breakdowns = ["app.tenant"]
+    
+  time_range = 28800 // in seconds, 8 hours
 }
 
 output "json_query" {
@@ -46,6 +48,12 @@ The following arguments are supported:
 * `breakdowns` - (Optional) A list of fields to group by.
 * `order` - (Optional) Zero or more configuration blocks (described below) describing how to order the query results. Each term must appear in either `calculation` or `breakdowns`.
 * `limit` - (Optional)  The maximum number of query results, must be between 1 and 1000.
+* `time_range` - (Optional) The time range of the query in seconds, defaults to two hours.
+* `start_time` - (Optional) The absolute start time of the query in Unix Time (= seconds since epoch).
+* `end_time` - (Optional) The absolute end time of the query in Unix Time (= seconds since epoch).
+* `granularity` - (Optional) The time resolution of the query’s graph, in seconds. Valid values must be in between the query’s time range/10 at maximum, and /1000 at minimum.
+
+~> **NOTE** It is not allowed to specify all three of `time_range`, `start_time` and `end_time`. For more details about specifying time windows, check [Query specification: A caveat on time](https://docs.honeycomb.io/api/query-specification/#a-caveat-on-time).
 
 Each query configuration may have zero or more `calculation` blocks, which each accept the following arguments:
 
