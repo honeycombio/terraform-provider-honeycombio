@@ -56,7 +56,10 @@ data "honeycombio_query" "test" {
         order  = "descending"
     }
 
-    limit = 250
+    limit 	    = 250
+	time_range  = 7200
+	start_time  = 1577836800
+    granularity = 30
 }
 
 output "query_json" {
@@ -101,7 +104,10 @@ const expectedJSON string = `{
       "order": "descending"
     }
   ],
-  "limit": 250
+  "limit": 250,
+  "time_range": 7200,
+  "start_time": 1577836800,
+  "granularity": 30
 }`
 
 func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
@@ -112,6 +118,7 @@ func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
 			testStepsQueryValidationChecks_calculation,
 			testStepsQueryValidationChecks_filter,
 			testStepsQueryValidationChecks_limit(),
+			testStepsQueryValidationChecks_time,
 		),
 	})
 }
@@ -198,6 +205,37 @@ data "honeycombio_query" "test" {
 			ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
 		},
 	}
+}
+
+var testStepsQueryValidationChecks_time = []resource.TestStep{
+	{
+		Config: `
+data "honeycombio_query" "test" {
+  time_range = 7200
+  start_time = 1577836800
+  end_time   = 1577844000
+}
+`,
+		ExpectError: regexp.MustCompile("specify at most two of time_range, start_time and end_time"),
+	},
+	{
+		Config: `
+data "honeycombio_query" "test" {
+  time_range  = 120
+  granularity = 13
+}
+`,
+		ExpectError: regexp.MustCompile("granularity can not be greater than time_range/10"),
+	},
+	{
+		Config: `
+data "honeycombio_query" "test" {
+  time_range  = 60000
+  granularity = 59
+}
+`,
+		ExpectError: regexp.MustCompile("granularity can not be less than time_range/1000"),
+	},
 }
 
 func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {

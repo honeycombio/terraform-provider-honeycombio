@@ -167,6 +167,7 @@ data "honeycombio_query" "test" {
     op     = "AVG"
     column = "duration_ms"
   }
+  time_range = 1200
 }
 
 resource "honeycombio_trigger" "test" {
@@ -200,6 +201,7 @@ data "honeycombio_query" "test" {
   calculation {
     op     = "COUNT"
   }
+  time_range = 1200
 }
 
 resource "honeycombio_trigger" "test" {
@@ -239,6 +241,7 @@ data "honeycombio_query" "test" {
     op     = "AVG"
     column = "duration_ms"
   }
+  time_range = 1800
 }
 
 resource "honeycombio_trigger" "test" {

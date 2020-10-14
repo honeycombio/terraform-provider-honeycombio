@@ -117,6 +117,28 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validation.IntBetween(1, 1000),
 			},
+			"time_range": {
+				Type:     schema.TypeInt,
+				Optional: true,
+				// Note: this field could have been set to be computed, but
+				// when only the JSON output is used by another resource,
+				// Terraform isn't able to set the computed value causing a
+				// constant diff. By using a default value instead, we don't
+				// need the feedback from the API.
+				Default: 7200,
+			},
+			"start_time": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"end_time": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
+			"granularity": {
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"json": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -143,6 +165,23 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 		Breakdowns:        extractBreakdowns(d),
 		Orders:            extractOrders(d),
 		Limit:             extractLimit(d),
+		TimeRange:         extractTimeRange(d),
+		StartTime:         extractStartTime(d),
+		EndTime:           extractEndTime(d),
+		Granularity:       extractGranularity(d),
+	}
+
+	if query.TimeRange != nil && query.StartTime != nil && query.EndTime != nil {
+		return diag.Errorf("specify at most two of time_range, start_time and end_time")
+	}
+
+	if query.TimeRange != nil && query.Granularity != nil {
+		if *query.Granularity > (*query.TimeRange / 10) {
+			return diag.Errorf("granularity can not be greater than time_range/10")
+		}
+		if *query.Granularity < (*query.TimeRange / 1000) {
+			return diag.Errorf("granularity can not be less than time_range/1000")
+		}
 	}
 
 	jsonQuery, err := encodeQuery(query)
@@ -298,4 +337,36 @@ func extractLimit(d *schema.ResourceData) *int {
 		return nil
 	}
 	return honeycombio.IntPtr(l.(int))
+}
+
+func extractTimeRange(d *schema.ResourceData) *int {
+	t, ok := d.GetOk("time_range")
+	if !ok {
+		return nil
+	}
+	return honeycombio.IntPtr(t.(int))
+}
+
+func extractStartTime(d *schema.ResourceData) *int64 {
+	s, ok := d.GetOk("start_time")
+	if !ok {
+		return nil
+	}
+	return honeycombio.Int64Ptr(int64(s.(int)))
+}
+
+func extractEndTime(d *schema.ResourceData) *int64 {
+	e, ok := d.GetOk("end_time")
+	if !ok {
+		return nil
+	}
+	return honeycombio.Int64Ptr(int64(e.(int)))
+}
+
+func extractGranularity(d *schema.ResourceData) *int {
+	g, ok := d.GetOk("granularity")
+	if !ok {
+		return nil
+	}
+	return honeycombio.IntPtr(g.(int))
 }

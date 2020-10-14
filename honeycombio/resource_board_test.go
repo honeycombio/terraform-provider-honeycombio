@@ -99,6 +99,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 								Value:  "0",
 							},
 						},
+						TimeRange: honeycombio.IntPtr(7200),
 					},
 				},
 				{
@@ -118,6 +119,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 								Value:  "1",
 							},
 						},
+						TimeRange: honeycombio.IntPtr(7200),
 					},
 				},
 			},
