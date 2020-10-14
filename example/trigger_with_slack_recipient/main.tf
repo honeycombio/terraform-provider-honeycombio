@@ -23,7 +23,7 @@ data "honeycombio_query" "query" {
 data "honeycombio_trigger_recipient" "slack" {
   dataset = var.dataset
   type    = "slack"
-  target  = "honeycombio"
+  target  = "#honeycombio"
 }
 
 resource "honeycombio_trigger" "trigger" {

@@ -38,7 +38,7 @@ resource "honeycombio_board" "board" {
   description = "${join(", ", local.percentiles)} of all requests for ThatSpecialTenant for the last 15 minutes."
   style       = "list"
 
-  // Use dynamic config blocks to generate a query for each of the percentiles we're interested in
+  # Use dynamic config blocks to generate a query for each of the percentiles we're interested in
   dynamic "query" {
     for_each = local.percentiles
 
