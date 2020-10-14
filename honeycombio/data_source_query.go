@@ -164,11 +164,11 @@ func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData,
 		FilterCombination: honeycombio.FilterCombination(d.Get("filter_combination").(string)),
 		Breakdowns:        extractBreakdowns(d),
 		Orders:            extractOrders(d),
-		Limit:             extractLimit(d),
-		TimeRange:         extractTimeRange(d),
-		StartTime:         extractStartTime(d),
-		EndTime:           extractEndTime(d),
-		Granularity:       extractGranularity(d),
+		Limit:             extractOptionalInt(d, "limit"),
+		TimeRange:         extractOptionalInt(d, "time_range"),
+		StartTime:         extractOptionalInt64(d, "start_time"),
+		EndTime:           extractOptionalInt64(d, "end_time"),
+		Granularity:       extractOptionalInt(d, "granularity"),
 	}
 
 	if query.TimeRange != nil && query.StartTime != nil && query.EndTime != nil {
@@ -331,42 +331,18 @@ func extractOrders(d *schema.ResourceData) []honeycombio.OrderSpec {
 	return orders
 }
 
-func extractLimit(d *schema.ResourceData) *int {
-	l, ok := d.GetOk("limit")
+func extractOptionalInt(d *schema.ResourceData, key string) *int {
+	value, ok := d.GetOk(key)
 	if !ok {
 		return nil
 	}
-	return honeycombio.IntPtr(l.(int))
+	return honeycombio.IntPtr(value.(int))
 }
 
-func extractTimeRange(d *schema.ResourceData) *int {
-	t, ok := d.GetOk("time_range")
+func extractOptionalInt64(d *schema.ResourceData, key string) *int64 {
+	value, ok := d.GetOk(key)
 	if !ok {
 		return nil
 	}
-	return honeycombio.IntPtr(t.(int))
-}
-
-func extractStartTime(d *schema.ResourceData) *int64 {
-	s, ok := d.GetOk("start_time")
-	if !ok {
-		return nil
-	}
-	return honeycombio.Int64Ptr(int64(s.(int)))
-}
-
-func extractEndTime(d *schema.ResourceData) *int64 {
-	e, ok := d.GetOk("end_time")
-	if !ok {
-		return nil
-	}
-	return honeycombio.Int64Ptr(int64(e.(int)))
-}
-
-func extractGranularity(d *schema.ResourceData) *int {
-	g, ok := d.GetOk("granularity")
-	if !ok {
-		return nil
-	}
-	return honeycombio.IntPtr(g.(int))
+	return honeycombio.Int64Ptr(int64(value.(int)))
 }
