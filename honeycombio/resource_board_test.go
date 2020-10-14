@@ -56,9 +56,10 @@ resource "honeycombio_board" "test" {
     query_json = data.honeycombio_query.test[0].json
   }
   query {
-    caption = "test query 1"
-    dataset = "%s"
-    query_json = data.honeycombio_query.test[1].json
+    caption     = "test query 1"
+    query_style = "combo"
+    dataset     = "%s"
+    query_json  = data.honeycombio_query.test[1].json
   }
 }`, dataset, dataset)
 }
@@ -83,8 +84,9 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 			Style:       honeycombio.BoardStyleList,
 			Queries: []honeycombio.BoardQuery{
 				{
-					Caption: "test query 0",
-					Dataset: testAccDataset(),
+					Caption:    "test query 0",
+					QueryStyle: honeycombio.BoardQueryStyleGraph,
+					Dataset:    testAccDataset(),
 					Query: honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{
@@ -103,8 +105,9 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					},
 				},
 				{
-					Caption: "test query 1",
-					Dataset: testAccDataset(),
+					Caption:    "test query 1",
+					QueryStyle: honeycombio.BoardQueryStyleCombo,
+					Dataset:    testAccDataset(),
 					Query: honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{

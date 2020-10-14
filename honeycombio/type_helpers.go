@@ -13,6 +13,17 @@ func boardStyleStrings() []string {
 	return out
 }
 
+func boardQueryStyleStrings() []string {
+	in := honeycombio.BoardQueryStyles()
+	out := make([]string, len(in))
+
+	for i := range in {
+		out[i] = string(in[i])
+	}
+
+	return out
+}
+
 func calculationOpStrings() []string {
 	in := honeycombio.CalculationOps()
 	out := make([]string, len(in))

@@ -41,6 +41,12 @@ func newBoard() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 						},
+						"query_style": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringInSlice(boardQueryStyleStrings(), false),
+						},
 						"dataset": {
 							Type:     schema.TypeString,
 							Required: true,
@@ -109,9 +115,10 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		}
 
 		queries[i] = map[string]interface{}{
-			"caption":    q.Caption,
-			"dataset":    q.Dataset,
-			"query_json": queryJSON,
+			"caption":     q.Caption,
+			"query_style": q.QueryStyle,
+			"dataset":     q.Dataset,
+			"query_json":  queryJSON,
 		}
 	}
 
@@ -161,9 +168,10 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 		}
 
 		queries = append(queries, honeycombio.BoardQuery{
-			Caption: m["caption"].(string),
-			Dataset: m["dataset"].(string),
-			Query:   query,
+			Caption:    m["caption"].(string),
+			QueryStyle: honeycombio.BoardQueryStyle(m["query_style"].(string)),
+			Dataset:    m["dataset"].(string),
+			Query:      query,
 		})
 	}
 
