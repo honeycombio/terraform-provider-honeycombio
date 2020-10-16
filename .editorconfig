@@ -11,6 +11,7 @@ insert_final_newline = true
 
 [*.go]
 indent_style = tab
+ij_go_import_sorting = goimports
 
 [*.tf]
 indent_size = 2
