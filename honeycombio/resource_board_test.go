@@ -25,6 +25,11 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 					testAccCheckBoardExists(t, "honeycombio_board.test"),
 				),
 			},
+			{
+				ResourceName:      "honeycombio_board.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }

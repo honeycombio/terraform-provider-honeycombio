@@ -73,3 +73,13 @@ Each board configuration may have zero or more `query` blocks, which accepts the
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - ID of the trigger.
+
+## Import
+
+Boards can be imported using their ID, e.g.
+
+```
+$ terraform import honeycombio_board.my_board AobW9oAZX71
+```
+
+You can find the ID in the URL bar when visiting the board from the UI.
