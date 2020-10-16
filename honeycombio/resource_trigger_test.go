@@ -42,6 +42,12 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerAfter),
 				),
 			},
+			{
+				ResourceName:        "honeycombio_trigger.test",
+				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
 		},
 	})
 }
@@ -155,6 +161,13 @@ func TestAccHoneycombioTrigger_validationErrors(t *testing.T) {
     "limit": 100
 }`),
 				ExpectError: regexp.MustCompile("limit is not allowed in a trigger query"),
+			},
+			{
+				ResourceName:      "honeycombio_trigger.test",
+				ImportStateId:     "someId",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ExpectError:       regexp.MustCompile("invalid import ID, supplied ID must be written as <dataset>/<trigger ID>"),
 			},
 		},
 	})

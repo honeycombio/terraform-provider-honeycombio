@@ -89,3 +89,13 @@ webhook   | name of the webhook
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - ID of the trigger.
+
+## Import
+
+Triggers can be imported using a combination of the dataset name and their ID, e.g.
+
+```
+$ terraform import honeycombio_board.my_board my-dataaset/AeZzSoWws9G
+```
+
+You can find the ID in the URL bar when visiting the trigger from the UI.

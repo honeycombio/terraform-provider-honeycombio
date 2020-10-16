@@ -3,6 +3,8 @@ package honeycombio
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -16,6 +18,9 @@ func newTrigger() *schema.Resource {
 		ReadContext:   resourceTriggerRead,
 		UpdateContext: resourceTriggerUpdate,
 		DeleteContext: resourceTriggerDelete,
+		Importer: &schema.ResourceImporter{
+			StateContext: resourceTriggerImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
@@ -101,6 +106,23 @@ func newTrigger() *schema.Resource {
 			},
 		},
 	}
+}
+
+func resourceTriggerImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
+	// import ID is of the format <dataset>/<trigger ID>
+	// note that the dataset name can also contain '/'
+	idSegments := strings.Split(d.Id(), "/")
+	if len(idSegments) < 2 {
+		return nil, fmt.Errorf("invalid import ID, supplied ID must be written as <dataset>/<trigger ID>")
+	}
+
+	dataset := strings.Join(idSegments[0:len(idSegments)-1], "/")
+	id := idSegments[len(idSegments)-1]
+
+	d.Set("dataset", dataset)
+	d.SetId(id)
+
+	return []*schema.ResourceData{d}, nil
 }
 
 func resourceTriggerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
