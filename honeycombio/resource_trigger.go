@@ -245,7 +245,7 @@ func expandTriggerThreshold(s []interface{}) *honeycombio.TriggerThreshold {
 
 	return &honeycombio.TriggerThreshold{
 		Op:    honeycombio.TriggerThresholdOp(d["op"].(string)),
-		Value: honeycombio.Float64Ptr(d["value"].(float64)),
+		Value: d["value"].(float64),
 	}
 }
 

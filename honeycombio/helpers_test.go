@@ -22,7 +22,7 @@ func createTriggerWithRecipient(t *testing.T, dataset string, recipient honeycom
 		},
 		Threshold: &honeycombio.TriggerThreshold{
 			Op:    honeycombio.TriggerThresholdOpGreaterThan,
-			Value: honeycombio.Float64Ptr(100),
+			Value: 100,
 		},
 		Recipients: []honeycombio.TriggerRecipient{recipient},
 	}
