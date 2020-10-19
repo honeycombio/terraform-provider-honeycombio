@@ -79,6 +79,40 @@ func TestQuerySpec(t *testing.T) {
 	assert.Equal(t, query, b.Queries[0].Query)
 }
 
+func TestCalcuationOps(t *testing.T) {
+	ctx := context.Background()
+	c := newTestClient(t)
+	dataset := testDataset(t)
+
+	b := &Board{
+		Name: "go-honeycombio: TestCalcula§tionOps",
+	}
+	b, err := c.Boards.Create(ctx, b)
+	assert.NoError(t, err)
+
+	defer c.Boards.Delete(ctx, b.ID)
+
+	for _, calculationOp := range CalculationOps() {
+		column := StringPtr("duration_ms")
+		if calculationOp == CalculationOpCount {
+			column = nil
+		}
+
+		q := QuerySpec{
+			Calculations: []CalculationSpec{
+				{
+					Op:     calculationOp,
+					Column: column,
+				},
+			},
+		}
+		b.Queries = []BoardQuery{{Dataset: dataset, Query: q}}
+
+		_, err = c.Boards.Update(ctx, b)
+		assert.NoError(t, err, fmt.Sprintf("Failed to create board that contains calcuation with op \"%v\"", calculationOp))
+	}
+}
+
 func TestFilterOps(t *testing.T) {
 	ctx := context.Background()
 	c := newTestClient(t)
