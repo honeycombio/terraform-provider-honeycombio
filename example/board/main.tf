@@ -28,8 +28,8 @@ data "honeycombio_query" "query" {
   }
   filter {
     column       = "app.tenant"
-    op           = "="
-    value_string = "ThatSpecialTenant"
+    op           = "in"
+    value_string = "foo,bar" # op 'in' expects a list of values
   }
 }
 

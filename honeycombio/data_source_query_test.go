@@ -184,6 +184,18 @@ data "honeycombio_query" "test" {
 `,
 		ExpectError: regexp.MustCompile(multipleValuesError),
 	},
+	{
+		Config: `
+data "honeycombio_query" "test" {
+  filter {
+    column        = "column"
+    op            = "in"
+    value_integer = 10
+  }
+}
+`,
+		ExpectError: regexp.MustCompile("value must be a string if filter op is 'in' or 'not-in'"),
+	},
 }
 
 func testStepsQueryValidationChecks_limit() []resource.TestStep {
@@ -244,4 +256,42 @@ func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {
 		allSteps = append(allSteps, s...)
 	}
 	return allSteps
+}
+
+func TestAccDataSourceHoneycombioQuery_filterOpInAndNotIn(t *testing.T) {
+	dataset := testAccDataset()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  filter {
+    column = "app.tenant"
+    op     = "in"
+    value  = "foo,bar"
+  }
+  filter {
+    column = "app.tenant"
+    op     = "not-in"
+    value  = "fzz,bzz"
+  }
+}
+
+resource "honeycombio_board" "test" {
+  name = "terraform-provider-honeycombio - Test honeycombio-query - filter ops in/not-in"
+  query {
+    dataset    = "%v"
+    query_json = data.honeycombio_query.test.json
+  }
+}`, dataset),
+			},
+		},
+	})
 }
