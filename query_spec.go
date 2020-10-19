@@ -99,7 +99,11 @@ func CalculationOps() []CalculationOp {
 type FilterSpec struct {
 	Column string   `json:"column"`
 	Op     FilterOp `json:"op"`
-	// Value to use with the filter operation, not all operators need a value.
+	// Value to use with the filter operation. The type of the filter value
+	// depends on the operator:
+	//  - 'exists' and 'does-not-exist': value should be nil
+	//  - 'in' and 'not-in': value should be a []string
+	//  - all other ops: value should be a string
 	Value interface{} `json:"value,omitempty"`
 }
 
@@ -120,6 +124,8 @@ const (
 	FilterOpDoesNotExist       FilterOp = "does-not-exist"
 	FilterOpContains           FilterOp = "contains"
 	FilterOpDoesNotContain     FilterOp = "does-not-contain"
+	FilterOpIn                 FilterOp = "in"
+	FilterOpNotIn              FilterOp = "not-in"
 )
 
 // FilterOps returns an exhaustive list of available filter operators.
@@ -137,6 +143,8 @@ func FilterOps() []FilterOp {
 		FilterOpDoesNotExist,
 		FilterOpContains,
 		FilterOpDoesNotContain,
+		FilterOpIn,
+		FilterOpNotIn,
 	}
 }
 
