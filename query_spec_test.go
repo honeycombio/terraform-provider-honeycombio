@@ -78,3 +78,44 @@ func TestQuerySpec(t *testing.T) {
 	assert.Len(t, b.Queries, 1)
 	assert.Equal(t, query, b.Queries[0].Query)
 }
+
+func TestFilterOps(t *testing.T) {
+	ctx := context.Background()
+	c := newTestClient(t)
+	dataset := testDataset(t)
+
+	b := &Board{
+		Name: "go-honeycombio: TestFilterOps",
+	}
+	b, err := c.Boards.Create(ctx, b)
+	assert.NoError(t, err)
+
+	defer c.Boards.Delete(ctx, b.ID)
+
+	for _, filterOp := range FilterOps() {
+		var value interface{}
+
+		switch filterOp {
+		case FilterOpExists, FilterOpDoesNotExist:
+			value = nil
+		case FilterOpIn, FilterOpNotIn:
+			value = []string{"foo", "bar"}
+		default:
+			value = "foo"
+		}
+
+		q := QuerySpec{
+			Filters: []FilterSpec{
+				{
+					Column: "column_1",
+					Op:     filterOp,
+					Value:  value,
+				},
+			},
+		}
+		b.Queries = []BoardQuery{{Dataset: dataset, Query: q}}
+
+		_, err = c.Boards.Update(ctx, b)
+		assert.NoError(t, err, fmt.Sprintf("Failed to create board that contains filter with op \"%v\"", filterOp))
+	}
+}
