@@ -25,6 +25,8 @@ data "honeycombio_query" "query" {
     op           = "="
     value_string = "ThatSpecialTenant"
   }
+
+  time_range = 900 // in seconds, 15 minutes
 }
 
 resource "honeycombio_trigger" "trigger" {
