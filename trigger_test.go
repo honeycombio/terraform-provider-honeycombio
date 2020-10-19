@@ -48,7 +48,7 @@ func TestTriggers(t *testing.T) {
 			Frequency: 300,
 			Threshold: &TriggerThreshold{
 				Op:    TriggerThresholdOpGreaterThan,
-				Value: Float64Ptr(10000),
+				Value: 10000,
 			},
 			Recipients: []TriggerRecipient{
 				{

@@ -69,7 +69,7 @@ type Trigger struct {
 // TriggerThreshold represents the threshold of a trigger.
 type TriggerThreshold struct {
 	Op    TriggerThresholdOp `json:"op"`
-	Value *float64           `json:"value"`
+	Value float64            `json:"value"`
 }
 
 // TriggerThresholdOp the operator of the trigger threshold.
