@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -278,6 +279,14 @@ func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, e
 		}
 		filter.Value = vb
 		valueSet = true
+	}
+
+	if filter.Op == honeycombio.FilterOpIn || filter.Op == honeycombio.FilterOpNotIn {
+		vs, ok := filter.Value.(string)
+		if !ok {
+			return filter, fmt.Errorf("value must be a string if filter op is 'in' or 'not-in'")
+		}
+		filter.Value = strings.Split(vs, ",")
 	}
 
 	if filter.Op == honeycombio.FilterOpExists || filter.Op == honeycombio.FilterOpDoesNotExist {
