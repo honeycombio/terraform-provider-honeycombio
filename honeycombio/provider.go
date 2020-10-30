@@ -28,6 +28,7 @@ func Provider() *schema.Provider {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("HONEYCOMBIO_APIKEY", nil),
+				Sensitive:   true,
 			},
 			"api_url": {
 				Type:     schema.TypeString,
