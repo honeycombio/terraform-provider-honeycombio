@@ -1,7 +1,17 @@
 package honeycombio
 
+// BoolPtr returns a pointer to the given bool
+func BoolPtr(v bool) *bool {
+	return &v
+}
+
 // CalculationOpPtr returns a pointer to the given CalculationOp.
 func CalculationOpPtr(v CalculationOp) *CalculationOp {
+	return &v
+}
+
+// ColumnTypePtr returns a pointer to the given ColumnType.
+func ColumnTypePtr(v ColumnType) *ColumnType {
 	return &v
 }
 

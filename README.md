@@ -12,6 +12,7 @@ This is an API client for the [Honeycomb.io management APIs](https://docs.honeyc
 Supported APIs:
 
 - [Boards API](https://docs.honeycomb.io/api/boards-api/)
+- [Columns API](https://docs.honeycomb.io/api/columns/)
 - [Markers API](https://docs.honeycomb.io/api/markers/)
 - [Triggers API](https://docs.honeycomb.io/api/triggers/)
 - [Query Specification](https://docs.honeycomb.io/api/query-specification/)

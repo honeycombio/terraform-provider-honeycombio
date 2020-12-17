@@ -63,6 +63,7 @@ type Client struct {
 	httpClient *http.Client
 
 	Boards   Boards
+	Columns  Columns
 	Markers  Markers
 	Triggers Triggers
 }
@@ -92,6 +93,7 @@ func NewClient(config *Config) (*Client, error) {
 		httpClient: httpClient,
 	}
 	client.Boards = &boards{client: client}
+	client.Columns = &columns{client: client}
 	client.Markers = &markers{client: client}
 	client.Triggers = &triggers{client: client}
 
