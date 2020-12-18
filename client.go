@@ -62,10 +62,11 @@ type Client struct {
 	userAgent  string
 	httpClient *http.Client
 
-	Boards   Boards
-	Columns  Columns
-	Markers  Markers
-	Triggers Triggers
+	Boards         Boards
+	Columns        Columns
+	DerivedColumns DerivedColumns
+	Markers        Markers
+	Triggers       Triggers
 }
 
 // NewClient creates a new Honeycomb API client.
@@ -94,6 +95,7 @@ func NewClient(config *Config) (*Client, error) {
 	}
 	client.Boards = &boards{client: client}
 	client.Columns = &columns{client: client}
+	client.DerivedColumns = &derivedColumns{client: client}
 	client.Markers = &markers{client: client}
 	client.Triggers = &triggers{client: client}
 
