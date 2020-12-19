@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: kvrhdn/gha-buildevents@main
+      - uses: kvrhdn/gha-buildevents@v1
         with:
           apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
           dataset: ${{ secrets.HONEYCOMBIO_DATASET_URL_ENCODED }}
@@ -18,7 +18,7 @@ jobs:
 
       - uses: actions/setup-go@v2
         with:
-          go-version: ^1.14
+          go-version: ^1.15
 
       - uses: actions/checkout@v2
 
@@ -48,16 +48,13 @@ jobs:
 
       - uses: actions/setup-go@v2
         with:
-          go-version: ^1.14
+          go-version: ^1.15
 
       - uses: actions/checkout@v2
 
       - name: Check formatting
         run: |
-          # install goimports from another directory to not touch go.mod
-          pushd ../
           go get golang.org/x/tools/cmd/goimports
-          popd
 
           goimports -l -w .
           go mod tidy
