@@ -13,6 +13,7 @@ Supported APIs:
 
 - [Boards API](https://docs.honeycomb.io/api/boards-api/)
 - [Columns API](https://docs.honeycomb.io/api/columns/)
+- [Datasets API](https://docs.honeycomb.io/api/datasets/)
 - [Derived Columns API](https://docs.honeycomb.io/api/derived_columns/)
 - [Markers API](https://docs.honeycomb.io/api/markers/)
 - [Triggers API](https://docs.honeycomb.io/api/triggers/)
