@@ -44,6 +44,7 @@ func Provider() *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
+			"honeycombio_datasets":          dataSourceHoneycombioDatasets(),
 			"honeycombio_query":             dataSourceHoneycombioQuery(),
 			"honeycombio_trigger_recipient": dataSourceHoneycombioSlackRecipient(),
 		},
