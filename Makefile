@@ -9,7 +9,7 @@ fmt:
 	go mod tidy
 	terraform fmt --recursive
 
-# Terraform 0.13 only: build the repository and install the provider in one of
+# Terraform 0.13+ only: build the repository and install the provider in one of
 # the local mirror directories following the new fileystem layout. Additionally,
 # we have to specify a version.
 #
