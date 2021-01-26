@@ -35,6 +35,17 @@ func calculationOpStrings() []string {
 	return out
 }
 
+func columnTypeStrings() []string {
+	in := honeycombio.ColumnTypes()
+	out := make([]string, len(in))
+
+	for i := range in {
+		out[i] = string(in[i])
+	}
+
+	return out
+}
+
 func filterOpStrings() []string {
 	in := honeycombio.FilterOps()
 	out := make([]string, len(in))

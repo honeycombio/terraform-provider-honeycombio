@@ -50,6 +50,7 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"honeycombio_board":          newBoard(),
+			"honeycombio_column":         newColumn(),
 			"honeycombio_dataset":        newDataset(),
 			"honeycombio_derived_column": newDerivedColumn(),
 			"honeycombio_marker":         newMarker(),
