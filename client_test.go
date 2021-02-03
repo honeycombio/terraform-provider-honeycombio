@@ -5,18 +5,25 @@ import (
 	"os"
 	"testing"
 
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
+
+func init() {
+	// load environment values from a .env, if available
+	_ = godotenv.Load()
+}
 
 func newTestClient(t *testing.T) *Client {
 	apiKey, ok := os.LookupEnv("HONEYCOMBIO_APIKEY")
 	if !ok {
 		t.Fatal("expected environment variable HONEYCOMBIO_APIKEY")
 	}
+	_, debug := os.LookupEnv("DEBUG")
 
 	cfg := &Config{
 		APIKey: apiKey,
-		Debug:  true,
+		Debug:  debug,
 	}
 	c, err := NewClient(cfg)
 	if err != nil {
