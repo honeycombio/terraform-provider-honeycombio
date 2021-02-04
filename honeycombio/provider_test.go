@@ -5,8 +5,14 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/joho/godotenv"
 	"github.com/kvrhdn/go-honeycombio"
 )
+
+func init() {
+	// load environment values from a .env, if available
+	_ = godotenv.Load("../.env")
+}
 
 func testAccPreCheck(t *testing.T) func() {
 	return func() {
