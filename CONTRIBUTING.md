@@ -18,7 +18,11 @@ We use [go-honeycombio](https://github.com/kvrhdn/go-honeycombio) to call the va
 
 We maintain [an activity board](https://github.com/kvrhdn/terraform-provider-honeycombio/projects/1) with all the work that is currently being worked on and/or considered. Hopefully this can give a sense of what is next to come. The board is intended to create overview across the project, it's not a strict plan of action.
 
-## Contributing technical changes
+## Contributing changes
+
+### Preview document changes
+
+Hashicorp has a tool to preview documentation. Visit [registry.terraform.io/tools/doc-preview](https://registry.terraform.io/tools/doc-preview). 
 
 ### Running the test
 
