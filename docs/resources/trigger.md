@@ -6,7 +6,7 @@ Creates a trigger. For more information about triggers, check out [Alert with Tr
 
 ```hcl
 variable "dataset" {
-    type = string
+  type = string
 }
 
 data "honeycombio_query" "example" {

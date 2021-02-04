@@ -8,11 +8,11 @@ Creates a marker. For more information about markers, check out [Annotate the ti
 
 ```hcl
 variable "dataset" {
-    type = string
+  type = string
 }
 
 variable "app_version" {
-    type = string
+  type = string
 }
 
 resource "honeycombio_marker" "marker" {
