@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: kvrhdn/gha-buildevents@main
+      - uses: kvrhdn/gha-buildevents@v1
         with:
           apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
           dataset: ${{ env.HONEYCOMBIO_DATASET }}
@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/setup-go@v2
         with:
-          go-version: 1.14
+          go-version: 1.16
 
       - uses: actions/checkout@v2
         with:
