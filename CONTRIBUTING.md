@@ -58,3 +58,12 @@ To properly setup the GitHub Actions, add the following secrets:
 - `HONEYCOMBIO_APIKEY`: an API key for Honeycombio
 - `HONEYCOMBIO_DATASET`: name of the test dataset
 - `HONEYCOMBIO_DATASET_URL_ENCODED`: the same as `HONEYCOMBIO_DATASET`, but replace `/` with `-`. I.e. `foo/bar` becomes `foo-bar`.
+
+## Release procedure
+
+Since this is a library, no binaries have to be built. Only a new tag should be created with the semantic version in the form `vMAJOR.MINOR.PATCH`.
+
+- Create [a new release on GitHub](https://github.com/kvrhdn/go-honeycombio/releases/new)
+- The tag and release title should be of the format `vMAJOR.MINOR.PATCH`
+- When the release is published a tag will also be created
+- Tags are automatically indexed by [pkg.go.dev/github.com/kvrhdn/go-honeycombio](https://pkg.go.dev/github.com/kvrhdn/go-honeycombio). If not, visit `pkg.go.dev/github.com/kvrhdn/go-honeycombio@<the new tag>` and request an update.
