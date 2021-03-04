@@ -10,8 +10,7 @@ import (
 //
 // API docs: https://docs.honeycomb.io/api/queries/
 type Queries interface {
-	// Get a query by its ID. Returns ErrNotFound if there is no query with
-	// the given ID in this dataset.
+	// Get a query by its ID.
 	Get(ctx context.Context, dataset string, id string) (*QuerySpec, error)
 
 	// Create a new query in this dataset. When creating a new query ID may
