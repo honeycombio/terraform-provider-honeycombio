@@ -4,6 +4,10 @@ package honeycombio
 //
 // API docs: https://docs.honeycomb.io/api/query-specification/
 type QuerySpec struct {
+	// ID of a query is only set when QuerySpec is returned from the Queries
+	// API. This value should not be set when creating or updating queries.
+	ID *string `json:"id,omitempty"`
+
 	// The calculations to return as a time series and summary table. If no
 	// calculations are provided, COUNT is applied.
 	Calculations []CalculationSpec `json:"calculations,omitempty"`

@@ -67,6 +67,7 @@ type Client struct {
 	Datasets       Datasets
 	DerivedColumns DerivedColumns
 	Markers        Markers
+	Queries        Queries
 	Triggers       Triggers
 }
 
@@ -99,6 +100,7 @@ func NewClient(config *Config) (*Client, error) {
 	client.Datasets = &datasets{client: client}
 	client.DerivedColumns = &derivedColumns{client: client}
 	client.Markers = &markers{client: client}
+	client.Queries = &queries{client: client}
 	client.Triggers = &triggers{client: client}
 
 	return client, nil
