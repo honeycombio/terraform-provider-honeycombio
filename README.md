@@ -17,6 +17,8 @@ Supported APIs:
 - [Derived Columns API](https://docs.honeycomb.io/api/derived_columns/)
 - [Markers API](https://docs.honeycomb.io/api/markers/)
 - [Triggers API](https://docs.honeycomb.io/api/triggers/)
+- [Queries API](https://docs.honeycomb.io/api/queries/)
+- [Query Annotations API](https://docs.honeycomb.io/api/query-annotations/)
 - [Query Specification](https://docs.honeycomb.io/api/query-specification/)
 
 ❓ Questions? Feel free to create [a new Discussion](https://github.com/kvrhdn/go-honeycombio/discussions) or find us on the **Honeycomb Pollinators** Slack, channel **#terraform-provider** (you can [find a link to request an invite here](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/)).
