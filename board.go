@@ -73,8 +73,11 @@ type BoardQuery struct {
 	QueryStyle BoardQueryStyle `json:"query_style,omitempty"`
 	// This field is required.
 	Dataset string `json:"dataset"`
-	// This field is required.
-	Query QuerySpec `json:"query"`
+	// Either QueryID or Query is required.
+	QueryID string     `json:"query_id"`
+	Query   *QuerySpec `json:"query,omitempty"`
+	// Optional
+	QueryAnnotationID string `json:"query_annotation_id,omitempty"`
 }
 
 // BoardQueryStyle determines how a query should be displayed on the board.
