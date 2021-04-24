@@ -9,16 +9,21 @@ A Terraform provider for Honeycomb.io.
 
 📄 Check out [the documentation](https://registry.terraform.io/providers/kvrhdn/honeycombio/latest/docs)  
 🏗️ Examples can be found in [example/](example/)  
-❓ Questions? Feel free to create a new issue or find us on the **Honeycomb Pollinators** Slack, channel **#terraform-provider** (you can find a link to request an invite [here](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/))  
+❓ Questions? Feel free to create a new issue or find us on the **Honeycomb Pollinators** Slack, channel 
+**#terraform-provider** (you can find a link to request an invite [here](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/))  
 🔧 Want to contribute? Check out [CONTRIBUTING.md](./CONTRIBUTING.md)  
 
 ## Using the provider
 
-If you are using Terraform 0.13, you can install the provider directly from the [Terraform Registry](https://registry.terraform.io/providers/kvrhdn/honeycombio/latest). To use the provider with Terraform 0.12 you'll have to install the provider manually.
+If you are using Terraform 0.13, you can install the provider directly from the 
+[Terraform Registry](https://registry.terraform.io/providers/kvrhdn/honeycombio/latest). To use the provider with 
+Terraform 0.12 you'll have to install the provider manually.
 
 ### Terraform 0.13
 
-Add the following block in your Terraform config. For more information, refer to [Automatic installation of third-party providers](https://github.com/hashicorp/terraform/tree/guide-v0.13-beta/provider-sources#terraform-v013-beta-automatic-installation-of-third-party-providers). This will download the provider from the Terraform Registry:
+Add the following block in your Terraform config. For more information, refer to 
+[Automatic installation of third-party providers](https://github.com/hashicorp/terraform/tree/guide-v0.13-beta/provider-sources#terraform-v013-beta-automatic-installation-of-third-party-providers). 
+This will download the provider from the Terraform Registry:
 
 ```hcl
 terraform {
@@ -33,14 +38,17 @@ terraform {
 
 ### Terraform 0.12
 
-To use this provider with Terraform 0.12, you will need to download and install the executable yourself. You can download the latest version from the [releases page](https://github.com/kvrhdn/terraform-provider-honeycombio/releases) or build it directly from source:
+To use this provider with Terraform 0.12, you will need to download and install the executable yourself. You can 
+download the latest version from the [releases page](https://github.com/kvrhdn/terraform-provider-honeycombio/releases) 
+or build it directly from source:
 
 ```sh
 # clone the repository and run:
 go build -o terraform-provider-honeycombio
 ```
 
-Once you have the executable, you can either place it in your working directory (the directory you run `terraform init`) or [install it is a third-party plugin](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins):
+Once you have the executable, you can either place it in your working directory (the directory you run `terraform init`) 
+or [install it is a third-party plugin](https://www.terraform.io/docs/configuration/providers.html#third-party-plugins):
 
 ```sh
 # for Linux and macOS
