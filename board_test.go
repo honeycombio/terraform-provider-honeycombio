@@ -28,7 +28,7 @@ func TestBoards(t *testing.T) {
 					Caption:    "A sample query",
 					QueryStyle: BoardQueryStyleCombo,
 					Dataset:    dataset,
-					Query: QuerySpec{
+					Query: &QuerySpec{
 						Calculations: []CalculationSpec{
 							{
 								Op:     CalculationOpAvg,
@@ -49,6 +49,7 @@ func TestBoards(t *testing.T) {
 
 		// copy ID before asserting equality
 		data.ID = b.ID
+		data.Queries[0].QueryID = b.Queries[0].QueryID
 
 		assert.Equal(t, data, b)
 	})
@@ -70,11 +71,12 @@ func TestBoards(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
+		b.Queries[0].QueryID = ""
 		b.Queries = append(b.Queries, BoardQuery{
 			Caption:    "A second query",
 			QueryStyle: BoardQueryStyleGraph,
 			Dataset:    dataset,
-			Query: QuerySpec{
+			Query: &QuerySpec{
 				Calculations: []CalculationSpec{
 					{
 						Op: CalculationOpCount,
@@ -85,6 +87,8 @@ func TestBoards(t *testing.T) {
 		})
 
 		result, err := c.Boards.Update(ctx, b)
+		b.Queries[0].QueryID = result.Queries[0].QueryID
+		b.Queries[1].QueryID = result.Queries[1].QueryID
 
 		assert.NoError(t, err)
 		assert.Equal(t, b, result)

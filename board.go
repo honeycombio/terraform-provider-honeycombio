@@ -74,7 +74,7 @@ type BoardQuery struct {
 	// This field is required.
 	Dataset string `json:"dataset"`
 	// Either QueryID or Query is required.
-	QueryID string     `json:"query_id"`
+	QueryID string     `json:"query_id,omitempty"`
 	Query   *QuerySpec `json:"query,omitempty"`
 	// Optional
 	QueryAnnotationID string `json:"query_annotation_id,omitempty"`

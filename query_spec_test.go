@@ -59,7 +59,7 @@ func TestQuerySpec(t *testing.T) {
 		Queries: []BoardQuery{
 			{
 				Dataset: dataset,
-				Query:   query,
+				Query:   &query,
 			},
 		},
 	}
@@ -76,7 +76,7 @@ func TestQuerySpec(t *testing.T) {
 	}()
 
 	assert.Len(t, b.Queries, 1)
-	assert.Equal(t, query, b.Queries[0].Query)
+	assert.Equal(t, &query, b.Queries[0].Query)
 }
 
 func TestCalcuationOps(t *testing.T) {
@@ -106,7 +106,7 @@ func TestCalcuationOps(t *testing.T) {
 				},
 			},
 		}
-		b.Queries = []BoardQuery{{Dataset: dataset, Query: q}}
+		b.Queries = []BoardQuery{{Dataset: dataset, Query: &q}}
 
 		_, err = c.Boards.Update(ctx, b)
 		assert.NoError(t, err, fmt.Sprintf("Failed to create board that contains calcuation with op \"%v\"", calculationOp))
@@ -147,7 +147,7 @@ func TestFilterOps(t *testing.T) {
 				},
 			},
 		}
-		b.Queries = []BoardQuery{{Dataset: dataset, Query: q}}
+		b.Queries = []BoardQuery{{Dataset: dataset, Query: &q}}
 
 		_, err = c.Boards.Update(ctx, b)
 		assert.NoError(t, err, fmt.Sprintf("Failed to create board that contains filter with op \"%v\"", filterOp))
