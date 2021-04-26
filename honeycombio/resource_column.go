@@ -71,7 +71,14 @@ func resourceColumnCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	dataset := d.Get("dataset").(string)
 	column := readColumn(d)
 
-	column, err := client.Columns.Create(ctx, dataset, column)
+	existing, err := client.Columns.GetByKeyName(ctx, dataset, column.KeyName)
+
+	if err == nil {
+		d.SetId(existing.ID)
+		return resourceColumnUpdate(ctx, d, meta)
+	}
+
+	column, err = client.Columns.Create(ctx, dataset, column)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -119,6 +126,7 @@ func resourceColumnUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 func readColumn(d *schema.ResourceData) *honeycombio.Column {
 	return &honeycombio.Column{
+		ID:          d.Id(),
 		KeyName:     d.Get("key_name").(string),
 		Hidden:      honeycombio.BoolPtr(d.Get("hidden").(bool)),
 		Description: d.Get("description").(string),

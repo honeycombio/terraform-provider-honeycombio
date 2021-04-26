@@ -66,7 +66,13 @@ func resourceDerivedColumnCreate(ctx context.Context, d *schema.ResourceData, me
 	dataset := d.Get("dataset").(string)
 	derivedColumn := readDerivedColumn(d)
 
-	derivedColumn, err := client.DerivedColumns.Create(ctx, dataset, derivedColumn)
+	existing, err := client.DerivedColumns.GetByAlias(ctx, dataset, derivedColumn.Alias)
+	if err == nil {
+		d.SetId(existing.ID)
+		return resourceDerivedColumnUpdate(ctx, d, meta)
+	}
+
+	derivedColumn, err = client.DerivedColumns.Create(ctx, dataset, derivedColumn)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -125,6 +131,7 @@ func resourceDerivedColumnDelete(ctx context.Context, d *schema.ResourceData, me
 
 func readDerivedColumn(d *schema.ResourceData) *honeycombio.DerivedColumn {
 	return &honeycombio.DerivedColumn{
+		ID:          d.Id(),
 		Alias:       d.Get("alias").(string),
 		Expression:  d.Get("expression").(string),
 		Description: d.Get("description").(string),
