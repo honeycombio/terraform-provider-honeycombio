@@ -55,6 +55,7 @@ func Provider() *schema.Provider {
 			"honeycombio_derived_column": newDerivedColumn(),
 			"honeycombio_marker":         newMarker(),
 			"honeycombio_trigger":        newTrigger(),
+			"honeycombio_query":          newQuery(),
 		},
 	}
 
