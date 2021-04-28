@@ -41,7 +41,7 @@ resource "honeycombio_trigger" "example" {
 
   # add an already existing recipient
   recipient {
-    id = data.honeycombio_trigger_recipient.slack
+    id = data.honeycombio_trigger_recipient.slack.id
   }
 }
 ```
