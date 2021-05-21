@@ -2,7 +2,6 @@ package honeycombio
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -53,11 +52,6 @@ func newBoard() *schema.Resource {
 						"dataset": {
 							Type:     schema.TypeString,
 							Required: true,
-						},
-						"query_json": {
-							Type:             schema.TypeString,
-							Optional:         true,
-							ValidateDiagFunc: validateQueryJSON(),
 						},
 						"query_id": {
 							Type:     schema.TypeString,
@@ -120,16 +114,10 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	queries := make([]map[string]interface{}, len(b.Queries))
 
 	for i, q := range b.Queries {
-		queryJSON, err := encodeQuery(q.Query)
-		if err != nil {
-			return diag.FromErr(err)
-		}
-
 		queries[i] = map[string]interface{}{
 			"caption":             q.Caption,
 			"query_style":         q.QueryStyle,
 			"dataset":             q.Dataset,
-			"query_json":          queryJSON,
 			"query_id":            q.QueryID,
 			"query_annotation_id": q.QueryAnnotationID,
 		}
@@ -174,20 +162,10 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 	for _, q := range qs {
 		m := q.(map[string]interface{})
 
-		var query *honeycombio.QuerySpec
-		if m["query_json"] != nil {
-			query = new(honeycombio.QuerySpec)
-			err := json.Unmarshal([]byte(m["query_json"].(string)), query)
-			if err != nil {
-				return nil, err
-			}
-		}
-
 		queries = append(queries, honeycombio.BoardQuery{
 			Caption:           m["caption"].(string),
 			QueryStyle:        honeycombio.BoardQueryStyle(m["query_style"].(string)),
 			Dataset:           m["dataset"].(string),
-			Query:             query,
 			QueryID:           m["query_id"].(string),
 			QueryAnnotationID: m["query_annotation_id"].(string),
 		})
