@@ -49,12 +49,14 @@ func Provider() *schema.Provider {
 			"honeycombio_trigger_recipient": dataSourceHoneycombioSlackRecipient(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"honeycombio_board":          newBoard(),
-			"honeycombio_column":         newColumn(),
-			"honeycombio_dataset":        newDataset(),
-			"honeycombio_derived_column": newDerivedColumn(),
-			"honeycombio_marker":         newMarker(),
-			"honeycombio_trigger":        newTrigger(),
+			"honeycombio_board":            newBoard(),
+			"honeycombio_column":           newColumn(),
+			"honeycombio_dataset":          newDataset(),
+			"honeycombio_derived_column":   newDerivedColumn(),
+			"honeycombio_marker":           newMarker(),
+			"honeycombio_query":            newQuery(),
+			"honeycombio_query_annotation": newQueryAnnotation(),
+			"honeycombio_trigger":          newTrigger(),
 		},
 	}
 
