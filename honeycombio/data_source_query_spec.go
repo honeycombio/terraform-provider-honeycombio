@@ -172,15 +172,15 @@ func dataSourceHoneycombioQuerySpecRead(ctx context.Context, d *schema.ResourceD
 		Granularity:       extractOptionalInt(d, "granularity"),
 	}
 
-	if querySpec.TimeRange != nil && query.StartTime != nil && query.EndTime != nil {
+	if querySpec.TimeRange != nil && querySpec.StartTime != nil && querySpec.EndTime != nil {
 		return diag.Errorf("specify at most two of time_range, start_time and end_time")
 	}
 
-	if querySpec.TimeRange != nil && query.Granularity != nil {
-		if *querySpec.Granularity > (*query.TimeRange / 10) {
+	if querySpec.TimeRange != nil && querySpec.Granularity != nil {
+		if *querySpec.Granularity > (*querySpec.TimeRange / 10) {
 			return diag.Errorf("granularity can not be greater than time_range/10")
 		}
-		if *querySpec.Granularity < (*query.TimeRange / 1000) {
+		if *querySpec.Granularity < (*querySpec.TimeRange / 1000) {
 			return diag.Errorf("granularity can not be less than time_range/1000")
 		}
 	}
