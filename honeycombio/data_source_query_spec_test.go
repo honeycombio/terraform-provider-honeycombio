@@ -286,9 +286,9 @@ data "honeycombio_query_spec" "test" {
 
 resource "honeycombio_board" "test" {
   name = "terraform-provider-honeycombio - Test honeycombio-query - filter ops in/not-in"
-  queries {
+  query {
     dataset    = "%v"
-    query = data.honeycombio_query_spec.test.json
+    query_json = data.honeycombio_query_spec.test.json
   }
 }`, dataset),
 			},

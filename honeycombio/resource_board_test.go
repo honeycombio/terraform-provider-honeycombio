@@ -55,16 +55,16 @@ resource "honeycombio_board" "test" {
   name  = "Test board from terraform-provider-honeycombio"
   style = "list"
      
-  queries {
+  query {
     caption = "test query 0"
     dataset = "%s"
-    query = data.honeycombio_query_spec.test[0].json
+    query_json = data.honeycombio_query_spec.test[0].json
   }
-  queries {
+  query {
     caption     = "test query 1"
     query_style = "combo"
     dataset     = "%s"
-    query  = data.honeycombio_query_spec.test[1].json
+    query_json  = data.honeycombio_query_spec.test[1].json
   }
 }`, dataset, dataset)
 }

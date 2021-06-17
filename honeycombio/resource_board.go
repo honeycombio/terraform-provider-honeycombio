@@ -35,7 +35,7 @@ func newBoard() *schema.Resource {
 				Default:      "list",
 				ValidateFunc: validation.StringInSlice(boardStyleStrings(), false),
 			},
-			"queries": {
+			"query": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
@@ -54,7 +54,7 @@ func newBoard() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 						},
-						"query": {
+						"query_json": {
 							Type:             schema.TypeString,
 							Required:         true,
 							ValidateDiagFunc: validateQueryJSON(),
@@ -121,11 +121,11 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 			"caption":     q.Caption,
 			"query_style": q.QueryStyle,
 			"dataset":     q.Dataset,
-			"query":       queryJSON,
+			"query_json":  queryJSON,
 		}
 	}
 
-	d.Set("queries", queries)
+	d.Set("query", queries)
 
 	return nil
 }
@@ -160,12 +160,12 @@ func resourceBoardDelete(ctx context.Context, d *schema.ResourceData, meta inter
 func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 	var queries []honeycombio.BoardQuery
 
-	qs := d.Get("queries").([]interface{})
+	qs := d.Get("query").([]interface{})
 	for _, q := range qs {
 		m := q.(map[string]interface{})
 
 		var query honeycombio.QuerySpec
-		err := json.Unmarshal([]byte(m["query"].(string)), &query)
+		err := json.Unmarshal([]byte(m["query_json"].(string)), &query)
 		if err != nil {
 			return nil, err
 		}
