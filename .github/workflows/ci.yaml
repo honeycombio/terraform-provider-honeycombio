@@ -37,7 +37,7 @@ jobs:
           TF_ACC: 1
         run: go test -v -coverprofile=coverage.txt -covermode=atomic ./...
 
-      - uses: codecov/codecov-action@v2.0.2
+      - uses: codecov/codecov-action@v2.1.0
         with:
           file: ./coverage.txt
 
