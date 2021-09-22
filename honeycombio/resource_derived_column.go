@@ -29,7 +29,6 @@ func newDerivedColumn() *schema.Resource {
 			"expression": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"description": {
 				Type:     schema.TypeString,
