@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: crazy-max/ghaction-import-gpg@v3
+      - uses: crazy-max/ghaction-import-gpg@v4
         with:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
