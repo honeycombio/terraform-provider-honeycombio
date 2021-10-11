@@ -47,8 +47,13 @@ data "honeycombio_query" "test" {
   filter {
     column = "duration_ms"
     op     = ">"
-    value  = count.index 
+    value  = count.index
   }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query.test[1].json
 }
 
 resource "honeycombio_board" "test" {
@@ -56,15 +61,14 @@ resource "honeycombio_board" "test" {
   style = "list"
      
   query {
-    caption = "test query 0"
-    dataset = "%s"
+    caption    = "test query with json"
+    dataset    = "%s"
     query_json = data.honeycombio_query.test[0].json
   }
   query {
-    caption     = "test query 1"
+    caption     = "test query by query id"
     query_style = "combo"
-    dataset     = "%s"
-    query_json  = data.honeycombio_query.test[1].json
+    query_id    = honeycombio_query.test.id
   }
 }`, dataset, dataset)
 }
@@ -92,7 +96,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					Caption:    "test query 0",
 					QueryStyle: honeycombio.BoardQueryStyleGraph,
 					Dataset:    testAccDataset(),
-					Query: honeycombio.QuerySpec{
+					Query: &honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{
 								Op:     honeycombio.CalculationOpAvg,
@@ -113,7 +117,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					Caption:    "test query 1",
 					QueryStyle: honeycombio.BoardQueryStyleCombo,
 					Dataset:    testAccDataset(),
-					Query: honeycombio.QuerySpec{
+					Query: &honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{
 								Op:     honeycombio.CalculationOpAvg,
