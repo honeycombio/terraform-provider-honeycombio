@@ -52,6 +52,33 @@ resource "honeycombio_board" "board" {
 }
 ```
 
+## Example with Query IDs and Annotations
+
+```hcl
+resource "honeycombio_query" "example" {
+  dataset    = "my-traces"
+  query_json = file("${path.cwd}/board-queries/example.hny")
+}
+
+resource "honeycombio_query_annotation" "example" {
+  dataset     = "my-traces"
+  query_id    = honeycombio_query.example.id
+  name        = "My Example Query"
+  description = "My Helpful Description"
+}
+
+resource "honeycombio_board" "example" {
+  name  = "My example board"
+  style = "list"
+
+  query {
+    query_id            = honeycombio_query.example.id
+    query_annotation_id = honeycombio_query_annotation.example.id
+    query_style         = "combo"
+  }
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -63,16 +90,20 @@ The following arguments are supported:
 
 Each board configuration may have zero or more `query` blocks, which accepts the following arguments:
 
-* `query_json` - (Required) A JSON object describing the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification). While the JSON can be constructed manually, it is easiest to use the [`honeycombio_query`](../data-sources/query.md) data source.
+* `query_json` - (Optional) A JSON object describing the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification). While the JSON can be constructed manually, it is easiest to use the [`honeycombio_query`](../data-sources/query.md) data source.
+* `query_id` - (Optional) The ID of the Query to run.
+* `query_annotation_id` - (Optional) The ID of the Query Annotation to associate with this query.
 * `dataset` - (Required) The dataset this query is associated with.
 * `caption` - (Optional) A description of the query that will be displayed on the board. Supports markdown.
 * `query_style` - (Optional) How the query should be displayed within the board, either `graph` (the default), `table` or `combo`.
+
+~> **NOTE** One of `query_id` or `query_json` is required.
 
 ## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
-* `id` - ID of the trigger.
+* `id` - ID of the board.
 
 ## Import
 
