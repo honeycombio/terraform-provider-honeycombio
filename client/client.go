@@ -1,7 +1,7 @@
-// Package honeycombio provides a client to interact with the Honeycomb API.
+// Package client provides a client to interact with the Honeycomb API.
 //
 // Documentation of the API can be found here: https://docs.honeycomb.io/api/
-package honeycombio
+package client
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/kvrhdn/go-honeycombio/internal/httputil"
+	"github.com/honeycombio/terraform-provider-honeycombio/client/internal/httputil"
 )
 
 // Config holds all configuration options for the client.

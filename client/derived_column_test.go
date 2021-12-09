@@ -1,4 +1,4 @@
-package honeycombio
+package client
 
 import (
 	"context"

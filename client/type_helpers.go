@@ -1,4 +1,4 @@
-package honeycombio
+package client
 
 // BoolPtr returns a pointer to the given bool
 func BoolPtr(v bool) *bool {

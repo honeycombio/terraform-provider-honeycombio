@@ -1,4 +1,4 @@
-package honeycombio
+package client
 
 // QuerySpec represents a Honeycomb query.
 //

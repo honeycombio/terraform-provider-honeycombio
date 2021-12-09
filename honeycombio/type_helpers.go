@@ -1,6 +1,6 @@
 package honeycombio
 
-import "github.com/kvrhdn/go-honeycombio"
+import honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 
 func boardStyleStrings() []string {
 	in := honeycombio.BoardStyles()
