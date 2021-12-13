@@ -50,7 +50,7 @@ type Trigger struct {
 	// Description is displayed on the triggers page.
 	Description string `json:"description,omitempty"`
 	// State of the trigger, if disabled is true the trigger will not run.
-	Disabled bool `json:"disabled,omitempty"`
+	Disabled bool `json:"disabled"`
 	// Query of the trigger. This field is required. The query must respect the
 	// properties described with and validated by MatchesTriggerSubset.
 	// Additionally, time_range of the query can be at most 1 day and may not
