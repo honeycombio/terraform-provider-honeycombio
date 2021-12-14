@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/kvrhdn/go-honeycombio"
+	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -92,7 +92,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					Caption:    "test query 0",
 					QueryStyle: honeycombio.BoardQueryStyleGraph,
 					Dataset:    testAccDataset(),
-					Query: honeycombio.QuerySpec{
+					Query: &honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{
 								Op:     honeycombio.CalculationOpAvg,
@@ -113,7 +113,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					Caption:    "test query 1",
 					QueryStyle: honeycombio.BoardQueryStyleCombo,
 					Dataset:    testAccDataset(),
-					Query: honeycombio.QuerySpec{
+					Query: &honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{
 								Op:     honeycombio.CalculationOpAvg,

@@ -7,8 +7,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/kvrhdn/go-honeycombio"
-	"github.com/kvrhdn/terraform-provider-honeycombio/honeycombio/internal/hashcode"
+	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/honeycombio/internal/hashcode"
 )
 
 func dataSourceHoneycombioDatasets() *schema.Resource {

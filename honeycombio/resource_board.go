@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"github.com/kvrhdn/go-honeycombio"
+	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func newBoard() *schema.Resource {
@@ -112,7 +112,7 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	queries := make([]map[string]interface{}, len(b.Queries))
 
 	for i, q := range b.Queries {
-		queryJSON, err := encodeQuery(&q.Query)
+		queryJSON, err := encodeQuery(q.Query)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -174,7 +174,7 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 			Caption:    m["caption"].(string),
 			QueryStyle: honeycombio.BoardQueryStyle(m["query_style"].(string)),
 			Dataset:    m["dataset"].(string),
-			Query:      query,
+			Query:      &query,
 		})
 	}
 

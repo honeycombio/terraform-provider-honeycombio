@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/joho/godotenv"
-	"github.com/kvrhdn/go-honeycombio"
 )
 
 func init() {
