@@ -11,7 +11,7 @@ import (
 
 func init() {
 	// load environment values from a .env, if available
-	_ = godotenv.Load()
+	_ = godotenv.Load("../.env")
 }
 
 func newTestClient(t *testing.T) *Client {

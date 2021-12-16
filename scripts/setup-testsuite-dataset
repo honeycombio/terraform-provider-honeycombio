@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+# the integration testsuite requires that a dataset and particular columns already exist
+# this little script handles that bit of bootstrapping in an idempotent fashion
+
+HONEYCOMB_API="${HONEYCOMB_API:=https://api.honeycomb.io}"
+COLUMNS_API="${HONEYCOMB_API}/1/columns"
+DATASETS_API="${HONEYCOMB_API}/1/datasets"
+
+# a map of required columns for the integration tests and their types
+declare -A REQUIRED_COLUMNS=(
+  [trace.parent_id]=string
+  [trace.trace_id]=string
+  [app.tenant]=string
+  [column_1]=string
+  [column_2]=string
+  [duration_ms]=float
+)
+
+log () {
+  echo "$(date +"%Y-%m-%dT%H:%M:%S%z") $1"
+}
+
+dataset_exists() {
+  local name="$1"
+
+  curl -sf -H "x-honeycomb-team: $HONEYCOMBIO_APIKEY" \
+    -X GET "${DATASETS_API}/${HONEYCOMBIO_DATASET}" >/dev/null
+}
+
+create_dataset_if_missing () {
+  local name="$1"
+
+  if ! dataset_exists "$name"; then
+    curl -sf -H "x-honeycomb-team: $HONEYCOMBIO_APIKEY" \
+      -X POST "${DATASETS_API}" \
+      -d '{"name": "'"$name"'"}' >/dev/null
+    status_code=$?
+    if [[ $status_code -ne 0 ]]; then
+      log "error creating dataset \"$name\""
+    fi
+
+    log "created dataset \"$name}\""
+  fi
+}
+
+column_exists () {
+  local name="$1"
+
+  curl -sf -H "x-honeycomb-team: $HONEYCOMBIO_APIKEY" \
+    -X GET "${COLUMNS_API}/${HONEYCOMBIO_DATASET}?key_name=${name}" >/dev/null
+}
+
+create_column_if_missing () {
+  local name="$1"
+  local type="$2"
+
+  if ! column_exists "$name"; then
+    curl -sf -H "x-honeycomb-team: $HONEYCOMBIO_APIKEY" \
+      -X POST "${COLUMNS_API}/${HONEYCOMBIO_DATASET}" \
+      -d '{"key_name": "'"$name"'", "type": "'"$type"'"}' >/dev/null
+    status_code=$?
+    if [[ $status_code -ne 0 ]]; then
+      log "error creating column \"$name\""
+    fi
+
+    log "created column \"$name\" in \"${HONEYCOMBIO_DATASET}\""
+  fi
+}
+
+if [ -z "${HONEYCOMBIO_APIKEY+x}" ]; then
+  echo "HONEYCOMBIO_APIKEY is not set"
+  exit 255
+fi
+
+if [ -z "${HONEYCOMBIO_DATASET+x}" ]; then
+  echo "HONEYCOMBIO_DATASET is not set"
+  exit 255
+fi
+
+if ! create_dataset_if_missing "${HONEYCOMBIO_DATASET}"; then
+  exit 255
+fi
+
+err=0
+for col in "${!REQUIRED_COLUMNS[@]}"; do
+  if ! create_column_if_missing "$col" "${REQUIRED_COLUMNS[$col]}"; then
+    (( err++ ))
+  fi
+done
+
+if [[ $err -ne 0 ]]; then
+  # failed to create some columns: fail out
+  exit 255
+fi

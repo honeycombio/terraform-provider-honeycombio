@@ -13,7 +13,7 @@ jobs:
       - uses: kvrhdn/gha-buildevents@v1
         with:
           apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ secrets.HONEYCOMBIO_DATASET_URL_ENCODED }}
+          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
           job-status: ${{ job.status }}
 
       - uses: actions/setup-go@v2
@@ -35,7 +35,9 @@ jobs:
           HONEYCOMBIO_APIKEY: ${{ secrets.HONEYCOMBIO_APIKEY }}
           HONEYCOMBIO_DATASET: ${{ secrets.HONEYCOMBIO_DATASET }}
           TF_ACC: 1
-        run: go test -v -coverprofile=coverage.txt -covermode=atomic ./...
+        run: |
+          ./scripts/setup-testsuite-dataset
+          go test -v -coverprofile=coverage.txt -covermode=atomic ./...
 
       - uses: codecov/codecov-action@v2.1.0
         with:
@@ -49,7 +51,7 @@ jobs:
       - uses: kvrhdn/gha-buildevents@v1
         with:
           apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ secrets.HONEYCOMBIO_DATASET_URL_ENCODED }}
+          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
           job-status: ${{ job.status }}
 
       - uses: actions/setup-go@v2

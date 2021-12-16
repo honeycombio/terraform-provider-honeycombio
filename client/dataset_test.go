@@ -40,7 +40,7 @@ func TestDatasets(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		createDataset := &Dataset{
-			Name: "kvrhdn/go-honeycombio",
+			Name: datasetName,
 		}
 		d, err := c.Datasets.Create(ctx, createDataset)
 
