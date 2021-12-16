@@ -16,13 +16,13 @@ We use [go-honeycombio](https://github.com/kvrhdn/go-honeycombio) to call the va
 
 ### What's in progress and what's next?
 
-We maintain [an activity board](https://github.com/kvrhdn/terraform-provider-honeycombio/projects/1) with all the work that is currently being worked on and/or considered. Hopefully this can give a sense of what is next to come. The board is intended to create overview across the project, it's not a strict plan of action.
+We maintain [an activity board](https://github.com/honeycombio/terraform-provider-honeycombio/projects/1) with all the work that is currently being worked on and/or considered. Hopefully this can give a sense of what is next to come. The board is intended to create overview across the project, it's not a strict plan of action.
 
 ## Contributing changes
 
 ### Preview document changes
 
-Hashicorp has a tool to preview documentation. Visit [registry.terraform.io/tools/doc-preview](https://registry.terraform.io/tools/doc-preview). 
+Hashicorp has a tool to preview documentation. Visit [registry.terraform.io/tools/doc-preview](https://registry.terraform.io/tools/doc-preview).
 
 ### Running the test
 
@@ -30,17 +30,7 @@ Most of the tests are acceptance tests, which will call real APIs. To run the te
 
 First, **create an API key**. Initially you'll have to check all permissions, but _Send Events_ and _Create Datasets_ can be disabled once setup is done.
 
-Next, **initialize the dataset by sending a test event**. This will 1) create the dataset and 2) create columns that are used in the tests.  We need the following columns to exist: `duration_ms`, `trace.parent_id` and `app.tenant`.
-
-The easiest way to send an event is with [honeyvent](https://github.com/honeycombio/honeyvent):
-
-```sh
-# install honeyvent - you can also clone the repository and build it
-go get github.com/honeycombio/honeyvent
-
-# use honeyvent to send an event with dummy values
-honeyvent -k <your API key> -d <dataset> -n duration_ms -v 100 -n trace.parent_id -v abc -n app.tenant -v def
-```
+Next, **initialize the dataset**. The helper script [setup-testsuite-dataset](scripts/setup-testsuite-dataset) will create the dataset and required columns that are used in the tests.
 
 Finally, **run the acceptance tests** by passing the API key and dataset as environment variables:
 
@@ -99,20 +89,21 @@ To properly setup the GitHub Actions, add the following secrets:
 
 - `HONEYCOMBIO_APIKEY`: an API key for Honeycombio
 - `HONEYCOMBIO_DATASET`: name of the test dataset
-- `HONEYCOMBIO_DATASET_URL_ENCODED`: the same as `HONEYCOMBIO_DATASET`, but replace `/` with `-`. I.e. `foo/bar` becomes `foo-bar`.
 
 ## Release procedure
 
 To release a new version of the Terraform provider a binary has to be built for a list of platforms ([more information](https://www.terraform.io/docs/registry/providers/publishing.html#creating-a-github-release)). This process is automated with GoReleaser and GitHub Actions.
 
-- Create [a new release](https://github.com/kvrhdn/terraform-provider-honeycombio/releases/new)
+- Create [a new release](https://github.com/honeycombio/terraform-provider-honeycombio/releases/new)
 - The tag and release title should be a semantic version
 - To follow convention of other Terraform providers the description has the following sections (each section can be omitted if empty):
-```
+
+```text
 NOTES:
 FEATURES:
 ENHANCEMENTS:
 BUG FIXES:
 ```
+
 - After that tag has been created a GitHub Actions workflow Release will run and add binaries to the release (this workflow can run over 5 minutes)
-- Once the tag is created, the [Terraform Registry](https://registry.terraform.io/providers/kvrhdn/honeycombio/latest) should also list the new version
+- Once the tag is created, the [Terraform Registry](https://registry.terraform.io/providers/honeycombio/honeycombio/latest) should also list the new version
