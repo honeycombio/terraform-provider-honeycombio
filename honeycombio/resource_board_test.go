@@ -92,6 +92,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					Caption:    "test query 0",
 					QueryStyle: honeycombio.BoardQueryStyleGraph,
 					Dataset:    testAccDataset(),
+					QueryID:    createdBoard.Queries[0].QueryID,
 					Query: &honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{
@@ -113,6 +114,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					Caption:    "test query 1",
 					QueryStyle: honeycombio.BoardQueryStyleCombo,
 					Dataset:    testAccDataset(),
+					QueryID:    createdBoard.Queries[1].QueryID,
 					Query: &honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{
