@@ -73,6 +73,9 @@ const (
 	CalculationOpP99           CalculationOp = "P99"
 	CalculationOpP999          CalculationOp = "P999"
 	CalculationOpHeatmap       CalculationOp = "HEATMAP"
+	CalculationOpRateAvg       CalculationOp = "RATE_AVG"
+	CalculationOpRateSum       CalculationOp = "RATE_SUM"
+	CalculationOpRateMax       CalculationOp = "RATE_MAX"
 )
 
 // CalculationOps returns an exhaustive list of calculation operators.
@@ -96,6 +99,9 @@ func CalculationOps() []CalculationOp {
 		CalculationOpP99,
 		CalculationOpP999,
 		CalculationOpHeatmap,
+		CalculationOpRateAvg,
+		CalculationOpRateSum,
+		CalculationOpRateMax,
 	}
 }
 
