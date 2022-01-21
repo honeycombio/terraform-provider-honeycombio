@@ -10,7 +10,7 @@ variable "dataset" {
   type = string
 }
 
-data "honeycombio_query" "query" {
+data "honeycombio_query_specification" "query" {
   calculation {
     op     = "AVG"
     column = "duration_ms"
@@ -35,7 +35,7 @@ resource "honeycombio_trigger" "trigger" {
 
   disabled = false
 
-  query_json = data.honeycombio_query.query.json
+  query_json = data.honeycombio_query_specification.query.json
   dataset    = var.dataset
 
   frequency = 900 // in seconds, 15 minutes

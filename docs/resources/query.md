@@ -11,7 +11,7 @@ variable "dataset" {
   type = string
 }
 
-data "honeycombio_query" "test_query" {
+data "honeycombio_query_specification" "test_query" {
   calculation {
     op     = "AVG"
     column = "duration_ms"
@@ -26,7 +26,7 @@ data "honeycombio_query" "test_query" {
 
 resource "honeycombio_query" "test_query" {
   dataset = "%s"
-  query_json = data.honeycombio_query.test_query.json
+  query_json = data.honeycombio_query_specification.test_query.json
 }
 ```
 
@@ -35,7 +35,7 @@ resource "honeycombio_query" "test_query" {
 The following arguments are supported:
 
 * `dataset` - (Required) The dataset this query is added to.
-* `query_json` - (Required) A JSON object describing the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification). While the JSON can be constructed manually, it is easiest to use the [`honeycombio_query`](../data-sources/query.md) data source.
+* `query_json` - (Required) A JSON object describing the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification). While the JSON can be constructed manually, it is easiest to use the [`honeycombio_query_specification`](../data-sources/query_specification.md) data source.
 
 ## Attribute Reference
 

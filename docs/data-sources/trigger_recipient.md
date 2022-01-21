@@ -16,7 +16,7 @@ data "honeycombio_trigger_recipient" "slack" {
   target  = "honeycomb-triggers"
 }
 
-data "honeycombio_query" "example" {
+data "honeycombio_query_specification" "example" {
   calculation {
     op     = "AVG"
     column = "duration_ms"
@@ -26,7 +26,7 @@ data "honeycombio_query" "example" {
 resource "honeycombio_trigger" "example" {
   name        = "Requests are slower than usuals"
 
-  query_json = data.honeycombio_query.example.json
+  query_json = data.honeycombio_query_specification.example.json
   dataset    = var.dataset
 
   threshold {

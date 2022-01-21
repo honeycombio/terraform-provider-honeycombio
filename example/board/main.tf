@@ -14,7 +14,7 @@ locals {
   percentiles = ["P50", "P75", "P90", "P95"]
 }
 
-data "honeycombio_query" "query" {
+data "honeycombio_query_specification" "query" {
   count = length(local.percentiles)
 
   calculation {
@@ -45,7 +45,7 @@ resource "honeycombio_board" "board" {
     content {
       caption    = query.value
       dataset    = var.dataset
-      query_json = data.honeycombio_query.query[query.key].json
+      query_json = data.honeycombio_query_specification.query[query.key].json
     }
   }
 }
