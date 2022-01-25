@@ -14,7 +14,7 @@ locals {
 }
 
 data "honeycombio_query_specification" "query" {
-  count = length(local.percentiles)
+  for_each = local.percentiles
 
   calculation {
     op     = local.percentiles[count.index]
@@ -31,6 +31,13 @@ data "honeycombio_query_specification" "query" {
     op     = "="
     value  = "ThatSpecialTenant"
   }
+}
+
+resource "honeycombio_query" "query" {
+  for_each = local.percentiles
+
+  dataset    = var.dataset
+  query_json = data.honeycombio_query_specification.query[each.key].json
 }
 
 resource "honeycombio_board" "board" {
@@ -63,7 +70,8 @@ The following arguments are supported:
 
 Each board configuration may have zero or more `query` blocks, which accepts the following arguments:
 
-* `query_json` - (Required) A JSON object describing the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification). While the JSON can be constructed manually, it is easiest to use the [`honeycombio_query_specification`](../data-sources/query_specification.md) data source.
+* `query_id` - (Required) The ID of the Query to run.
+* `query_annotation_id` - (Optional) The ID of the Query Annotation to associate with this query.
 * `dataset` - (Required) The dataset this query is associated with.
 * `caption` - (Optional) A description of the query that will be displayed on the board. Supports markdown.
 * `query_style` - (Optional) How the query should be displayed within the board, either `graph` (the default), `table` or `combo`.

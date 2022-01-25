@@ -15,7 +15,7 @@ locals {
 }
 
 data "honeycombio_query_specification" "query" {
-  count = length(local.percentiles)
+  for_each = local.percentiles
 
   calculation {
     op     = local.percentiles[count.index]
@@ -33,6 +33,13 @@ data "honeycombio_query_specification" "query" {
   }
 }
 
+resource "honeycombio_query" "query" {
+  for_each = local.percentiles
+
+  dataset    = var.dataset
+  query_json = data.honeycombio_query_specification.query[each.key].json
+}
+
 resource "honeycombio_board" "board" {
   name        = "Request percentiles"
   description = "${join(", ", local.percentiles)} of all requests for ThatSpecialTenant for the last 15 minutes."
@@ -43,9 +50,9 @@ resource "honeycombio_board" "board" {
     for_each = local.percentiles
 
     content {
-      caption    = query.value
-      dataset    = var.dataset
-      query_json = data.honeycombio_query_specification.query[query.key].json
+      caption = query.value
+      dataset = var.dataset
+      query_id = honeycombio_query.query[query.key].id
     }
   }
 }
