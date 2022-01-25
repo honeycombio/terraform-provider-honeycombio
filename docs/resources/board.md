@@ -72,7 +72,7 @@ Each board configuration may have zero or more `query` blocks, which accepts the
 
 In addition to all arguments above, the following attributes are exported:
 
-* `id` - ID of the trigger.
+* `id` - ID of the board.
 
 ## Import
 
