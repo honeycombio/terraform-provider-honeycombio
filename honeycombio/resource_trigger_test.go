@@ -3,7 +3,6 @@ package honeycombio
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -106,73 +105,6 @@ func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
 	})
 }
 
-func TestAccHoneycombioTrigger_validationErrors(t *testing.T) {
-	dataset := testAccDataset()
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccTriggerConfigWithQuery(dataset, `{]`),
-				ExpectError: regexp.MustCompile("value of query_json is not a valid query specification"),
-			},
-			{
-				Config:      testAccTriggerConfigWithQuery(dataset, `{"calculations":"bar"}`),
-				ExpectError: regexp.MustCompile("value of query_json is not a valid query specification"),
-			},
-			{
-				Config: testAccTriggerConfigWithQuery(dataset, `
-{
-    "calculations": [
-        {"op": "COUNT"},
-        {"op": "AVG", "column": "duration_ms"}
-    ]
-}`),
-				ExpectError: regexp.MustCompile("a trigger query should contain exactly one calculation"),
-			},
-			{
-				Config: testAccTriggerConfigWithQuery(dataset, `
-{
-    "calculations": [
-        {"op": "HEATMAP"}
-    ]
-}`),
-				ExpectError: regexp.MustCompile("a trigger query may not contain a HEATMAP calculation"),
-			},
-			{
-				Config: testAccTriggerConfigWithQuery(dataset, `
-{
-    "calculations": [
-        {"op": "AVG", "column": "duration_ms"}
-    ],
-    "orders": [
-        {"column": "column_1"}
-    ]
-}`),
-				ExpectError: regexp.MustCompile("orders is not allowed in a trigger query"),
-			},
-			{
-				Config: testAccTriggerConfigWithQuery(dataset, `
-{
-    "calculations": [
-        {"op": "AVG", "column": "duration_ms"}
-    ],
-    "limit": 100
-}`),
-				ExpectError: regexp.MustCompile("limit is not allowed in a trigger query"),
-			},
-			{
-				ResourceName:      "honeycombio_trigger.test",
-				ImportStateId:     "someId",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ExpectError:       regexp.MustCompile("invalid import ID, supplied ID must be written as <dataset>/<trigger ID>"),
-			},
-		},
-	})
-}
-
 func testAccTriggerConfigWithFrequency(dataset string, frequency int) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
@@ -183,11 +115,16 @@ data "honeycombio_query_specification" "test" {
   time_range = 1200
 }
 
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
 resource "honeycombio_trigger" "test" {
   name    = "Test trigger from terraform-provider-honeycombio"
   dataset = "%s"
 
-  query_json = data.honeycombio_query_specification.test.json
+  query_id = honeycombio_query.test.id
 
   threshold {
     op    = ">"
@@ -205,7 +142,7 @@ resource "honeycombio_trigger" "test" {
     type   = "email"
     target = "bye@example.com"
   }
-}`, dataset, frequency)
+}`, dataset, dataset, frequency)
 }
 
 func testAccTriggerConfigWithCount(dataset string) string {
@@ -217,34 +154,22 @@ data "honeycombio_query_specification" "test" {
   time_range = 1200
 }
 
-resource "honeycombio_trigger" "test" {
-  name    = "Test trigger from terraform-provider-honeycombio"
-  dataset = "%s"
-
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
   query_json = data.honeycombio_query_specification.test.json
-
-  threshold {
-    op    = ">"
-    value = 100
-  }
-}`, dataset)
 }
 
-func testAccTriggerConfigWithQuery(dataset, query string) string {
-	return fmt.Sprintf(`
 resource "honeycombio_trigger" "test" {
   name    = "Test trigger from terraform-provider-honeycombio"
   dataset = "%s"
 
-  query_json = <<EOF
-%s
-EOF
-    
+  query_id = honeycombio_query.test.id
+
   threshold {
     op    = ">"
     value = 100
   }
-}`, dataset, query)
+}`, dataset, dataset)
 }
 
 func testAccTriggerConfigWithRecipientID(dataset, recipientID string) string {
@@ -257,12 +182,17 @@ data "honeycombio_query_specification" "test" {
   time_range = 1800
 }
 
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
 resource "honeycombio_trigger" "test" {
   name    = "Test trigger from terraform-provider-honeycombio"
   dataset = "%s"
 
-  query_json = data.honeycombio_query_specification.test.json
-        
+  query_id = honeycombio_query.test.id
+
   threshold {
     op    = ">"
     value = 100
@@ -271,5 +201,5 @@ resource "honeycombio_trigger" "test" {
   recipient {
     id = "%s"
   }
-}`, dataset, recipientID)
+}`, dataset, dataset, recipientID)
 }

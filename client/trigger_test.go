@@ -70,6 +70,7 @@ func TestTriggers(t *testing.T) {
 
 		// copy IDs before asserting equality
 		data.ID = trigger.ID
+		data.QueryID = trigger.QueryID
 		for i := range trigger.Recipients {
 			data.Recipients[i].ID = trigger.Recipients[i].ID
 		}
@@ -97,6 +98,9 @@ func TestTriggers(t *testing.T) {
 		trigger.Description = "A new description"
 
 		result, err := c.Triggers.Update(ctx, dataset, trigger)
+
+		// copy IDs before asserting equality
+		trigger.QueryID = result.QueryID
 
 		assert.NoError(t, err)
 		assert.Equal(t, trigger, result)

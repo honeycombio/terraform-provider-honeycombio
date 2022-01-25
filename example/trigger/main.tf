@@ -29,14 +29,19 @@ data "honeycombio_query_specification" "query" {
   time_range = 900 // in seconds, 15 minutes
 }
 
+resource "honeycombio_query" "trigger-query" {
+  dataset    = var.dataset
+  query_json = data.honeycombio_query_specification.query.json
+}
+
 resource "honeycombio_trigger" "trigger" {
   name        = "Requests are slower than usual"
   description = "Average duration of all requests for ThatSpecialTenant for the last 15 minutes."
 
   disabled = false
 
-  query_json = data.honeycombio_query_specification.query.json
-  dataset    = var.dataset
+  query_id = honeycombio_query.trigger-query.id
+  dataset  = var.dataset
 
   frequency = 900 // in seconds, 15 minutes
 
