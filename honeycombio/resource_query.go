@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/honeycombio/internal/verify"
 )
 
 func newQuery() *schema.Resource {
@@ -23,6 +24,7 @@ func newQuery() *schema.Resource {
 				Required:         true,
 				ForceNew:         true,
 				ValidateDiagFunc: validateQueryJSON(),
+				DiffSuppressFunc: verify.SuppressEquivJSONDiffs,
 			},
 			"dataset": {
 				Type:     schema.TypeString,
@@ -66,12 +68,10 @@ func resourceQueryRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diag.FromErr(err)
 	}
 
+	// Track ID at the Resource level
 	d.SetId(*query.ID)
-	// Normalize the query before converting it to JSON to avoid unwanted diffs
 	query.ID = nil
-	if query.FilterCombination == "" {
-		query.FilterCombination = honeycombio.FilterCombinationAnd
-	}
+
 	queryJSON, err := encodeQuery(query)
 	if err != nil {
 		return diag.FromErr(err)

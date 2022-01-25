@@ -57,8 +57,8 @@ data "honeycombio_query_specification" "test" {
     }
 
     limit 	    = 250
-	time_range  = 7200
-	start_time  = 1577836800
+    time_range  = 7200
+    start_time  = 1577836800
     granularity = 30
 }
 
@@ -90,7 +90,6 @@ const expectedJSON string = `{
       "value": "ThatSpecialTenant"
     }
   ],
-  "filter_combination": "AND",
   "breakdowns": [
     "column_1"
   ],
@@ -259,14 +258,12 @@ func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {
 }
 
 func TestAccDataSourceHoneycombioQuery_filterOpInAndNotIn(t *testing.T) {
-	dataset := testAccDataset()
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(`
+				Config: `
 data "honeycombio_query_specification" "test" {
   calculation {
     op = "COUNT"
@@ -283,14 +280,7 @@ data "honeycombio_query_specification" "test" {
     value  = "fzz,bzz"
   }
 }
-
-resource "honeycombio_board" "test" {
-  name = "terraform-provider-honeycombio - Test honeycombio-query - filter ops in/not-in"
-  query {
-    dataset    = "%v"
-    query_json = data.honeycombio_query_specification.test.json
-  }
-}`, dataset),
+`,
 			},
 		},
 	})

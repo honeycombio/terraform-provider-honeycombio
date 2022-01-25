@@ -79,9 +79,9 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 				},
 			},
 			"filter_combination": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "AND",
+				Type:     schema.TypeString,
+				Optional: true,
+				// Note: API assumes 'AND' if not provided
 				ValidateFunc: validation.StringInSlice([]string{"AND", "OR"}, false),
 			},
 			"breakdowns": {
