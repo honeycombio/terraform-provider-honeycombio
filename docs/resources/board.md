@@ -14,10 +14,10 @@ locals {
 }
 
 data "honeycombio_query_specification" "query" {
-  for_each = local.percentiles
+  for_each = toset(local.percentiles)
 
   calculation {
-    op     = local.percentiles[count.index]
+    op     = local.percentiles[each.key]
     column = "duration_ms"
   }
 
@@ -34,7 +34,7 @@ data "honeycombio_query_specification" "query" {
 }
 
 resource "honeycombio_query" "query" {
-  for_each = local.percentiles
+  for_each = toset(local.percentiles)
 
   dataset    = var.dataset
   query_json = data.honeycombio_query_specification.query[each.key].json
