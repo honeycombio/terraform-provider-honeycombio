@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     honeycombio = {
-      source = "kvrhdn/honeycombio"
+      source = "honeycombio/honeycombio"
     }
   }
 }
