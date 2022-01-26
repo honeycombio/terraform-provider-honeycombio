@@ -2,7 +2,6 @@ package honeycombio
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -40,16 +39,9 @@ func newTrigger() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
-			"query_json": {
+			"query_id": {
 				Type:     schema.TypeString,
 				Required: true,
-				ValidateDiagFunc: validateQueryJSON(func(q *honeycombio.QuerySpec) diag.Diagnostics {
-					err := honeycombio.MatchesTriggerSubset(q)
-					if err != nil {
-						return diag.FromErr(err)
-					}
-					return nil
-				}),
 			},
 			"threshold": {
 				Type:     schema.TypeList,
@@ -157,22 +149,11 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 
-	// API returns nil for filterCombination if set to the default value "AND"
-	// To keep the Terraform config simple, we'll explicitly set "AND" ourself
-	if t.Query.FilterCombination == "" {
-		t.Query.FilterCombination = honeycombio.FilterCombinationAnd
-	}
-
 	d.SetId(t.ID)
 	d.Set("name", t.Name)
 	d.Set("description", t.Description)
 	d.Set("disabled", t.Disabled)
-
-	encodedQuery, err := encodeQuery(t.Query)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	d.Set("query_json", encodedQuery)
+	d.Set("query_id", t.QueryID)
 
 	err = d.Set("threshold", flattenTriggerThreshold(t.Threshold))
 	if err != nil {
@@ -220,19 +201,12 @@ func resourceTriggerDelete(ctx context.Context, d *schema.ResourceData, meta int
 }
 
 func expandTrigger(d *schema.ResourceData) (*honeycombio.Trigger, error) {
-	var query honeycombio.QuerySpec
-
-	err := json.Unmarshal([]byte(d.Get("query_json").(string)), &query)
-	if err != nil {
-		return nil, err
-	}
-
 	trigger := &honeycombio.Trigger{
 		ID:          d.Id(),
 		Name:        d.Get("name").(string),
 		Description: d.Get("description").(string),
 		Disabled:    d.Get("disabled").(bool),
-		Query:       &query,
+		QueryID:     d.Get("query_id").(string),
 		Threshold:   expandTriggerThreshold(d.Get("threshold").([]interface{})),
 		Frequency:   d.Get("frequency").(int),
 		Recipients:  expandTriggerRecipients(d.Get("recipient").([]interface{})),

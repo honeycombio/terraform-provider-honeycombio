@@ -13,9 +13,9 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/honeycombio/internal/hashcode"
 )
 
-func dataSourceHoneycombioQuery() *schema.Resource {
+func dataSourceHoneycombioQuerySpec() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceHoneycombioQueryRead,
+		ReadContext: dataSourceHoneycombioQuerySpecRead,
 
 		Schema: map[string]*schema.Schema{
 			"calculation": {
@@ -79,9 +79,9 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 				},
 			},
 			"filter_combination": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "AND",
+				Type:     schema.TypeString,
+				Optional: true,
+				// Note: API assumes 'AND' if not provided
 				ValidateFunc: validation.StringInSlice([]string{"AND", "OR"}, false),
 			},
 			"breakdowns": {
@@ -148,7 +148,7 @@ func dataSourceHoneycombioQuery() *schema.Resource {
 	}
 }
 
-func dataSourceHoneycombioQueryRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceHoneycombioQuerySpecRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	calculations, err := extractCalculations(d)
 	if err != nil {
 		return diag.FromErr(err)

@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -55,7 +56,8 @@ type Trigger struct {
 	// properties described with and validated by MatchesTriggerSubset.
 	// Additionally, time_range of the query can be at most 1 day and may not
 	// be greater than 4 times the frequency.
-	Query *QuerySpec `json:"query"`
+	Query   *QuerySpec `json:"query,omitempty"`
+	QueryID string     `json:"query_id,omitempty"`
 	// Threshold. This fild is required.
 	Threshold *TriggerThreshold `json:"threshold"`
 	// Frequency describes how often the trigger should run. Frequency is an
@@ -142,6 +144,30 @@ func TriggerRecipientTypes() []TriggerRecipientType {
 		TriggerRecipientTypeSlack,
 		TriggerRecipientTypeWebhook,
 	}
+}
+
+func (t *Trigger) MarshalJSON() ([]byte, error) {
+	// aliased type to avoid stack overflows due to recursion
+	type ATrigger Trigger
+
+	if t.QueryID != "" && t.Query != nil {
+		// we can't sent both to the API, so favour QueryID
+		// this doesn't work in the general case, but this
+		// client is now purpose-built for the Terraform provider
+		a := &ATrigger{
+			ID:          t.ID,
+			Name:        t.Name,
+			Description: t.Description,
+			Disabled:    t.Disabled,
+			QueryID:     t.QueryID,
+			Threshold:   t.Threshold,
+			Frequency:   t.Frequency,
+			Recipients:  t.Recipients,
+		}
+		return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(a)})
+	}
+
+	return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(t)})
 }
 
 func (s *triggers) List(ctx context.Context, dataset string) ([]Trigger, error) {

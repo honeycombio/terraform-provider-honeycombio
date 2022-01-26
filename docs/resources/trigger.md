@@ -9,7 +9,7 @@ variable "dataset" {
   type = string
 }
 
-data "honeycombio_query" "example" {
+data "honeycombio_query_specification" "example" {
   calculation {
     op     = "AVG"
     column = "duration_ms"
@@ -21,11 +21,16 @@ data "honeycombio_query" "example" {
   }
 }
 
+resource "honeycombio_query" "example" {
+  dataset    = var.dataset
+  query_json = data.honeycombio_query_specification.example.json
+}
+
 resource "honeycombio_trigger" "example" {
   name        = "Requests are slower than usuals"
   description = "Average duration of all requests for the last 10 minutes."
 
-  query_json = data.honeycombio_query.example.json
+  query_json = honeycombio_query.example.id
   dataset    = var.dataset
 
   frequency = 600 // in seconds, 10 minutes
@@ -54,14 +59,14 @@ The following arguments are supported:
 
 * `name` - (Required) Name of the trigger.
 * `dataset` - (Required) The dataset this trigger is associated with.
-* `query_json` - (Required) A JSON object describng the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification). While the JSON can be constructed manually, it is easiest to use the [`honeycombio_query`](../data-sources/query.md) data source.
+* `query_id` - (Required) The ID of the Query that the Trigger will execute.
 * `threshold` - (Required) A configuration block (described below) describing the threshold of the trigger.
 * `description` - (Optional) Description of the trigger.
 * `disabled` - (Optional) The state of the trigger. If true, the trigger will not be run. Defaults to false.
 * `frequency` - (Optional) The interval (in seconds) in which to check the results of the query’s calculation against the threshold. Value must be divisible by 60 and between 60 and 86400 (between 1 minute and 1 day). Defaults to 900 (15 minutes).
 * `recipient` - (Optional) Zero or more configuration blocks (described below) with the recipients to notify when the trigger fires.
 
--> **NOTE** The query used in a trigger must follow a strict subset: a query must contain exactly one calcuation and may only contain `calculation`, `filter`, `flter_combination` and `breakdowns` fields. This will be validated during the plan phase.
+-> **NOTE** The query used in a Trigger must follow a strict subset: a query must contain exactly one calcuation and may only contain `calculation`, `filter`, `filter_combination` and `breakdowns` fields. The query's duration cannot be more than four times the trigger's frequency.
 
 Each trigger configuration must contain exactly one `threshold` block, which accepts the following arguments:
 

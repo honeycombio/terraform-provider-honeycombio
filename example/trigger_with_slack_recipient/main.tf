@@ -10,7 +10,7 @@ variable "dataset" {
   type = string
 }
 
-data "honeycombio_query" "query" {
+data "honeycombio_query_specification" "query" {
   calculation {
     op     = "AVG"
     column = "duration_ms"
@@ -26,11 +26,16 @@ data "honeycombio_trigger_recipient" "slack" {
   target  = "#honeycombio"
 }
 
+resource "honeycombio_query" "trigger-query" {
+  dataset    = var.dataset
+  query_json = data.honeycombio_query_specification.query.json
+}
+
 resource "honeycombio_trigger" "trigger" {
   name = "Requests are slower than usual"
 
-  query_json = data.honeycombio_query.query.json
-  dataset    = var.dataset
+  query_id = honeycombio_query.trigger-query.id
+  dataset  = var.dataset
 
   threshold {
     op    = ">"

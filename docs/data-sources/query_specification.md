@@ -1,4 +1,4 @@
-# Data Source: honeycombio_query
+# Data Source: honeycombio_query_specification
 
 Construct a query that can be used in triggers and boards. For more information about the query specification, check out [Query Specification](https://docs.honeycomb.io/api/query-specification/).
 
@@ -7,7 +7,7 @@ The `json` attribute contains a serialized JSON representation which can be pass
 ## Example Usage
 
 ```hcl
-data "honeycombio_query" "example" {
+data "honeycombio_query_specification" "example" {
   # zero or more calculation blocks
   calculation {
     op     = "AVG"
@@ -34,7 +34,7 @@ data "honeycombio_query" "example" {
 }
 
 output "json_query" {
-    value = data.honeycombio_query.example.json
+    value = data.honeycombio_query_specification.example.json
 }
 ```
 

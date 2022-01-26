@@ -36,7 +36,7 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 
 func testAccBoardConfig(dataset string) string {
 	return fmt.Sprintf(`
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   count = 2
 
   calculation {
@@ -51,22 +51,40 @@ data "honeycombio_query" "test" {
   }
 }
 
+resource "honeycombio_query" "test" {
+  count = 2
+
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test[count.index].json
+}
+
+resource "honeycombio_query_annotation" "test" {
+  count = 2
+
+  dataset     = "%s"
+  name        = "My annotated query"
+  description = "My lovely description"
+  query_id    = honeycombio_query.test[count.index].id
+}
+
 resource "honeycombio_board" "test" {
   name  = "Test board from terraform-provider-honeycombio"
   style = "list"
-     
+
   query {
-    caption = "test query 0"
-    dataset = "%s"
-    query_json = data.honeycombio_query.test[0].json
+    caption             = "test query 0"
+    dataset             = "%s"
+    query_id            = honeycombio_query.test[0].id
+    query_annotation_id = honeycombio_query_annotation.test[0].id
   }
   query {
-    caption     = "test query 1"
-    query_style = "combo"
-    dataset     = "%s"
-    query_json  = data.honeycombio_query.test[1].json
+    caption             = "test query 1"
+    query_style         = "combo"
+    dataset             = "%s"
+    query_id            = honeycombio_query.test[1].id
+    query_annotation_id = honeycombio_query_annotation.test[1].id
   }
-}`, dataset, dataset)
+}`, dataset, dataset, dataset, dataset)
 }
 
 func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
@@ -89,10 +107,11 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 			Style:       honeycombio.BoardStyleList,
 			Queries: []honeycombio.BoardQuery{
 				{
-					Caption:    "test query 0",
-					QueryStyle: honeycombio.BoardQueryStyleGraph,
-					Dataset:    testAccDataset(),
-					QueryID:    createdBoard.Queries[0].QueryID,
+					Caption:           "test query 0",
+					QueryStyle:        honeycombio.BoardQueryStyleGraph,
+					Dataset:           testAccDataset(),
+					QueryID:           createdBoard.Queries[0].QueryID,
+					QueryAnnotationID: createdBoard.Queries[0].QueryAnnotationID,
 					Query: &honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{
@@ -111,10 +130,11 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					},
 				},
 				{
-					Caption:    "test query 1",
-					QueryStyle: honeycombio.BoardQueryStyleCombo,
-					Dataset:    testAccDataset(),
-					QueryID:    createdBoard.Queries[1].QueryID,
+					Caption:           "test query 1",
+					QueryStyle:        honeycombio.BoardQueryStyleCombo,
+					Dataset:           testAccDataset(),
+					QueryID:           createdBoard.Queries[1].QueryID,
+					QueryAnnotationID: createdBoard.Queries[1].QueryAnnotationID,
 					Query: &honeycombio.QuerySpec{
 						Calculations: []honeycombio.CalculationSpec{
 							{

@@ -24,7 +24,7 @@ func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
 }
 
 const testAccQueryConfig = `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
     calculation {
         op     = "AVG"
         column = "duration_ms"
@@ -57,13 +57,13 @@ data "honeycombio_query" "test" {
     }
 
     limit 	    = 250
-	time_range  = 7200
-	start_time  = 1577836800
+    time_range  = 7200
+    start_time  = 1577836800
     granularity = 30
 }
 
 output "query_json" {
-    value = data.honeycombio_query.test.json
+    value = data.honeycombio_query_specification.test.json
 }`
 
 //Note: By default go encodes `<` and `>` for html, hence the `\u003e`
@@ -90,7 +90,6 @@ const expectedJSON string = `{
       "value": "ThatSpecialTenant"
     }
   ],
-  "filter_combination": "AND",
   "breakdowns": [
     "column_1"
   ],
@@ -126,7 +125,7 @@ func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
 var testStepsQueryValidationChecks_calculation = []resource.TestStep{
 	{
 		Config: `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   calculation {
     op     = "COUNT"
     column = "we-should-not-specify-a-column-with-COUNT"
@@ -137,7 +136,7 @@ data "honeycombio_query" "test" {
 	},
 	{
 		Config: `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   calculation {
     op     = "AVG"
   }
@@ -150,7 +149,7 @@ data "honeycombio_query" "test" {
 var testStepsQueryValidationChecks_filter = []resource.TestStep{
 	{
 		Config: `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   filter {
     column = "column"
     op     = "exists"
@@ -162,7 +161,7 @@ data "honeycombio_query" "test" {
 	},
 	{
 		Config: `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   filter {
     column = "column"
     op     = ">"
@@ -173,7 +172,7 @@ data "honeycombio_query" "test" {
 	},
 	{
 		Config: `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   filter {
     column        = "column"
     op            = ">"
@@ -186,7 +185,7 @@ data "honeycombio_query" "test" {
 	},
 	{
 		Config: `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   filter {
     column        = "column"
     op            = "in"
@@ -200,7 +199,7 @@ data "honeycombio_query" "test" {
 
 func testStepsQueryValidationChecks_limit() []resource.TestStep {
 	var queryLimitFmt = `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   limit = %d
 }`
 	return []resource.TestStep{
@@ -222,7 +221,7 @@ data "honeycombio_query" "test" {
 var testStepsQueryValidationChecks_time = []resource.TestStep{
 	{
 		Config: `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   time_range = 7200
   start_time = 1577836800
   end_time   = 1577844000
@@ -232,7 +231,7 @@ data "honeycombio_query" "test" {
 	},
 	{
 		Config: `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   time_range  = 120
   granularity = 13
 }
@@ -241,7 +240,7 @@ data "honeycombio_query" "test" {
 	},
 	{
 		Config: `
-data "honeycombio_query" "test" {
+data "honeycombio_query_specification" "test" {
   time_range  = 60000
   granularity = 59
 }
@@ -259,15 +258,13 @@ func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {
 }
 
 func TestAccDataSourceHoneycombioQuery_filterOpInAndNotIn(t *testing.T) {
-	dataset := testAccDataset()
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(`
-data "honeycombio_query" "test" {
+				Config: `
+data "honeycombio_query_specification" "test" {
   calculation {
     op = "COUNT"
   }
@@ -283,14 +280,7 @@ data "honeycombio_query" "test" {
     value  = "fzz,bzz"
   }
 }
-
-resource "honeycombio_board" "test" {
-  name = "terraform-provider-honeycombio - Test honeycombio-query - filter ops in/not-in"
-  query {
-    dataset    = "%v"
-    query_json = data.honeycombio_query.test.json
-  }
-}`, dataset),
+`,
 			},
 		},
 	})
