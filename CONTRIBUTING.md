@@ -12,8 +12,6 @@ The rest of this document describes how to get started developing on this reposi
 
 Hashicorp has a lot of documentation on creating custom Terraform providers categorized under [Extending Terraform](https://www.terraform.io/docs/extend/index.html). This might help when getting started, but are not a pre-requisite to contribute. Feel free to just open an issue and we can guide you along the way.
 
-We use [go-honeycombio](https://github.com/kvrhdn/go-honeycombio) to call the various Honeycomb APIs. While this takes care of most implementation details, it can still be valuable to check out [the official documentation of the APIs](https://docs.honeycomb.io/api/). The provider can only do as much as the APIs allow.
-
 ### What's in progress and what's next?
 
 We maintain [an activity board](https://github.com/honeycombio/terraform-provider-honeycombio/projects/1) with all the work that is currently being worked on and/or considered. Hopefully this can give a sense of what is next to come. The board is intended to create overview across the project, it's not a strict plan of action.

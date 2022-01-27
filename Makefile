@@ -18,7 +18,7 @@ fmt:
 
 version = 99.0.0
 os_arch = $(shell go env GOOS)_$(shell go env GOARCH)
-provider_path = registry.terraform.io/kvrhdn/honeycombio/$(version)/$(os_arch)/
+provider_path = registry.terraform.io/honeycombio/honeycombio/$(version)/$(os_arch)/
 
 install_macos:
 	go build -o terraform-provider-honeycombio_$(version)
@@ -27,6 +27,6 @@ install_macos:
 	cp terraform-provider-honeycombio_$(version)  ~/Library/Application\ Support/io.terraform/plugins/$(provider_path)
 
 uninstall_macos:
-	rm -r ~/Library/Application\ Support/io.terraform/plugins/registry.terraform.io/kvrhdn
+	rm -r ~/Library/Application\ Support/io.terraform/plugins/registry.terraform.io/honeycombio
 
 .PHONY: build testacc install

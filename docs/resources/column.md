@@ -2,7 +2,7 @@
 
 Creates a column in a dataset.
 
--> **Note** Destroying or replacing this resource will not delete the previously created column. This is intentional to preserve the column and its data. The API supports deleting columns, so if this is required for your use case please open an issue in [kvrhdn/terraform-provider-honeycombio](https://github.com/kvrhdn/terraform-provider-honeycombio).
+-> **Note** Destroying or replacing this resource will not delete the previously created column. This is intentional to preserve the column and its data. The API supports deleting columns, so if this is required for your use case please open an issue in [honeycombio/terraform-provider-honeycombio](https://github.com/honeycombio/terraform-provider-honeycombio).
 
 ## Example Usage
 
