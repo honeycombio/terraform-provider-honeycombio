@@ -15,7 +15,7 @@ jobs:
         uses: kvrhdn/gha-buildevents@v1
         with:
           apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ env.HONEYCOMBIO_DATASET }}
+          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
           job-status: ${{ job.status }}
       - name: Checkout
         uses: actions/checkout@v2.4.0
