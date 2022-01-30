@@ -360,7 +360,7 @@ func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, e
 		filter.Value = vf
 		valueSet = true
 	}
-	vb, vbOk := d.GetOkExists(fmt.Sprintf("filter.%d.value_boolean", index))
+	vb, vbOk := d.GetOk(fmt.Sprintf("filter.%d.value_boolean", index))
 	if vbOk {
 		if valueSet {
 			return filter, fmt.Errorf(multipleValuesError)

@@ -229,15 +229,15 @@ data "honeycombio_query_specification" "test" {
 	return []resource.TestStep{
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, 0),
-			ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
 		},
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, -5),
-			ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
 		},
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, 1200),
-			ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
 		},
 	}
 }
