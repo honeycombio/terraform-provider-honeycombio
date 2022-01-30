@@ -1,8 +1,8 @@
 # Data Source: honeycombio_query_specification
 
-Construct a query that can be used in triggers and boards. For more information about the query specification, check out [Query Specification](https://docs.honeycomb.io/api/query-specification/).
+Generates a [Query Specificaiton](https://docs.honeycomb.io/api/query-specification/) in JSON format.
 
-The `json` attribute contains a serialized JSON representation which can be passed to the `query_json` field of [`honeycombio_trigger`](../resources/trigger.md) and [`honeycombio_board`](../resources/board.md).
+This is a data source which can be used to construct a JSON representation of a Honeycomb [Query Specification](https://docs.honeycomb.io/api/query-specification/). The `json` attribute contains a serialized JSON representation which can be passed to the `query_json` field of the [`honeycombio_query`](../resources/query.md) resource for use in boards and triggers.
 
 ## Example Usage
 
@@ -47,6 +47,7 @@ The following arguments are supported:
 * `filter_combination` - (Optional) How to combine multiple filters, either `AND` (default) or `OR`.
 * `breakdowns` - (Optional) A list of fields to group by.
 * `order` - (Optional) Zero or more configuration blocks (described below) describing how to order the query results. Each term must appear in either `calculation` or `breakdowns`.
+* `having` - (Optional) Zero or more filters used to restrict returned groups in the query result.
 * `limit` - (Optional)  The maximum number of query results, must be between 1 and 1000.
 * `time_range` - (Optional) The time range of the query in seconds, defaults to two hours.
 * `start_time` - (Optional) The absolute start time of the query in Unix Time (= seconds since epoch).
@@ -79,6 +80,15 @@ Each query configuration may have zero or more `order` blocks, which each accept
 * `op` - (Optional) The calculation operator to apply, see the supported list of calculation operators at [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators).
 * `column` - (Optional) Either a column present in `breakdown` or a column to `op` applies to.
 * `order` - (Optional) The sort direction, if set must be `ascending` or `descending`.
+
+Each query configuration may have zero or more `having` blocks, which each accept the following arguments.
+
+* `op` - The operator to apply to filter the query results. One of `=`, `!=`, `>`, `>=`, `<`, or `<=`.
+* `calculate_op` - The calculation operator to apply, supports all of the [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators) with the exception of `HEATMAP`.
+* `column` - The column to apply the `calculate_op` to, not needed with `COUNT`.
+* `value` - The value used with `op`. Currently assumed to be a number.
+
+~> **NOTE** A having term's `column`/`calculate_op` pair must have a corresponding `calculation`. There can be multiple `having` blocks for the same `column`/`calculate_op` pair.
 
 ## Attribute Reference
 

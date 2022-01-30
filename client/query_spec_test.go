@@ -25,6 +25,10 @@ func TestQuerySpec(t *testing.T) {
 				Op:     CalculationOpHeatmap,
 				Column: StringPtr("duration_ms"),
 			},
+			{
+				Op:     CalculationOpP99,
+				Column: StringPtr("duration_ms"),
+			},
 		},
 		Filters: []FilterSpec{
 			{
@@ -46,6 +50,14 @@ func TestQuerySpec(t *testing.T) {
 			{
 				Op:    CalculationOpPtr(CalculationOpCount),
 				Order: SortOrderPtr(SortOrderDesc),
+			},
+		},
+		Havings: []HavingSpec{
+			{
+				Column:      StringPtr("duration_ms"),
+				Op:          HavingOpPtr(HavingOpGreaterThan),
+				CalculateOp: CalculationOpPtr(CalculationOpP99),
+				Value:       1000.0,
 			},
 		},
 		Limit:       IntPtr(100),
@@ -151,5 +163,42 @@ func TestFilterOps(t *testing.T) {
 
 		_, err = c.Boards.Update(ctx, b)
 		assert.NoError(t, err, fmt.Sprintf("Failed to create board that contains filter with op \"%v\"", filterOp))
+	}
+}
+
+func TestHavingOps(t *testing.T) {
+	ctx := context.Background()
+	c := newTestClient(t)
+	dataset := testDataset(t)
+
+	b := &Board{
+		Name: "go-honeycombio: TestHavingOps",
+	}
+	b, err := c.Boards.Create(ctx, b)
+	assert.NoError(t, err)
+
+	defer c.Boards.Delete(ctx, b.ID)
+
+	for _, havingOp := range HavingOps() {
+		q := QuerySpec{
+			Calculations: []CalculationSpec{
+				{
+					Op:     CalculationOpP99,
+					Column: StringPtr("duration_ms"),
+				},
+			},
+			Havings: []HavingSpec{
+				{
+					Column:      StringPtr("duration_ms"),
+					Op:          &havingOp,
+					CalculateOp: CalculationOpPtr(CalculationOpP99),
+					Value:       1000,
+				},
+			},
+		}
+		b.Queries = []BoardQuery{{Dataset: dataset, Query: &q}}
+
+		_, err = c.Boards.Update(ctx, b)
+		assert.NoError(t, err, fmt.Sprintf("Failed to create board that contains having with op \"%v\"", havingOp))
 	}
 }

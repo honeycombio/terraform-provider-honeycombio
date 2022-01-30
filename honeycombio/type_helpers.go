@@ -57,6 +57,31 @@ func filterOpStrings() []string {
 	return out
 }
 
+func havingOpStrings() []string {
+	in := honeycombio.HavingOps()
+	out := make([]string, len(in))
+
+	for i := range in {
+		out[i] = string(in[i])
+	}
+
+	return out
+}
+
+func havingCalculateOpStrings() []string {
+	in := honeycombio.CalculationOps()
+	out := make([]string, len(in))
+
+	for i := range in {
+		// havings cannot use HEATMAP
+		if in[i] != honeycombio.CalculationOpHeatmap {
+			out[i] = string(in[i])
+		}
+	}
+
+	return out
+}
+
 func sortOrderStrings() []string {
 	in := honeycombio.SortOrders()
 	out := make([]string, len(in))
