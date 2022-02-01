@@ -3,6 +3,7 @@ package honeycombio
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -74,6 +75,34 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 							Type:        schema.TypeBool,
 							Description: "The value used for the filter when the column is a boolean. Mutually exclusive with `value` and the other `value_*` options",
 							Optional:    true,
+						},
+					},
+				},
+			},
+			"having": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"calculate_op": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice(havingCalculateOpStrings(), false),
+						},
+						"column": {
+							Type: schema.TypeString,
+							// not required for COUNT
+							Optional: true,
+						},
+						"op": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice(havingOpStrings(), false),
+						},
+						"value": {
+							// API currently assumes this is a number
+							Type:     schema.TypeFloat,
+							Required: true,
 						},
 					},
 				},
@@ -159,9 +188,30 @@ func dataSourceHoneycombioQuerySpecRead(ctx context.Context, d *schema.ResourceD
 		return diag.FromErr(err)
 	}
 
+	havings, err := extractHavings(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	// Ensure all havings have a matching calculate_op/column pair
+	for i, having := range havings {
+		found := false
+		for _, calc := range calculations {
+			if reflect.DeepEqual(having.Column, calc.Column) &&
+				*having.CalculateOp == calc.Op {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return diag.Errorf("having %d without matching column in query", i)
+		}
+	}
+
 	query := &honeycombio.QuerySpec{
 		Calculations:      calculations,
 		Filters:           filters,
+		Havings:           havings,
 		FilterCombination: honeycombio.FilterCombination(d.Get("filter_combination").(string)),
 		Breakdowns:        extractBreakdowns(d),
 		Orders:            extractOrders(d),
@@ -234,6 +284,44 @@ func extractFilters(d *schema.ResourceData) ([]honeycombio.FilterSpec, error) {
 	return filters, nil
 }
 
+func extractHavings(d *schema.ResourceData) ([]honeycombio.HavingSpec, error) {
+	havingSchemas := d.Get("having").([]interface{})
+	havings := make([]honeycombio.HavingSpec, len(havingSchemas))
+
+	for i := range havingSchemas {
+		having := &havings[i]
+
+		co, ok := d.GetOk(fmt.Sprintf("having.%d.calculate_op", i))
+		if ok {
+			having.CalculateOp = honeycombio.CalculationOpPtr(honeycombio.CalculationOp(co.(string)))
+		}
+
+		c, ok := d.GetOk(fmt.Sprintf("having.%d.column", i))
+		if ok {
+			having.Column = honeycombio.StringPtr(c.(string))
+		}
+
+		op, ok := d.GetOk(fmt.Sprintf("having.%d.op", i))
+		if ok {
+			having.Op = honeycombio.HavingOpPtr(honeycombio.HavingOp(op.(string)))
+		}
+
+		v, ok := d.GetOk(fmt.Sprintf("having.%d.value", i))
+		if ok {
+			having.Value = v
+		}
+
+		if *having.CalculateOp == honeycombio.CalculationOpCount && having.Column != nil {
+			return nil, fmt.Errorf("calculate_op %s should not have an accompanying column", *having.CalculateOp)
+		}
+		if *having.CalculateOp != honeycombio.CalculationOpCount && having.Column == nil {
+			return nil, fmt.Errorf("calculate_op %s requires a column", *having.CalculateOp)
+		}
+	}
+
+	return havings, nil
+}
+
 const multipleValuesError = "must choose one of 'value', 'value_string', 'value_integer', 'value_float', 'value_boolean'"
 
 func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, error) {
@@ -272,7 +360,7 @@ func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, e
 		filter.Value = vf
 		valueSet = true
 	}
-	vb, vbOk := d.GetOkExists(fmt.Sprintf("filter.%d.value_boolean", index))
+	vb, vbOk := d.GetOk(fmt.Sprintf("filter.%d.value_boolean", index))
 	if vbOk {
 		if valueSet {
 			return filter, fmt.Errorf(multipleValuesError)

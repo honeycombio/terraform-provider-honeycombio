@@ -58,7 +58,7 @@ func TestAccHoneycombioColumn_validationErrors(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccColumnConfigWithType(dataset, `String`),
-				ExpectError: regexp.MustCompile("expected type to be one of \\[string float integer boolean\\], got String"),
+				ExpectError: regexp.MustCompile(`expected type to be one of \[string float integer boolean\], got String`),
 			},
 		},
 	})

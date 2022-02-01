@@ -29,6 +29,10 @@ data "honeycombio_query_specification" "test" {
         op     = "AVG"
         column = "duration_ms"
     }
+    calculation {
+        op     = "P99"
+        column = "duration_ms"
+    }
 
     filter {
         column = "trace.parent_id"
@@ -56,6 +60,13 @@ data "honeycombio_query_specification" "test" {
         order  = "descending"
     }
 
+    having {
+        calculate_op = "P99"
+        column       = "duration_ms"
+        op           = ">"
+        value        = 1000
+    }
+
     limit 	    = 250
     time_range  = 7200
     start_time  = 1577836800
@@ -71,6 +82,10 @@ const expectedJSON string = `{
   "calculations": [
     {
       "op": "AVG",
+      "column": "duration_ms"
+    },
+    {
+      "op": "P99",
       "column": "duration_ms"
     }
   ],
@@ -103,6 +118,14 @@ const expectedJSON string = `{
       "order": "descending"
     }
   ],
+  "havings": [
+    {
+      "calculate_op": "P99",
+      "column": "duration_ms",
+      "op": "\u003e",
+      "value": 1000
+    }
+  ],
   "limit": 250,
   "time_range": 7200,
   "start_time": 1577836800,
@@ -118,6 +141,7 @@ func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
 			testStepsQueryValidationChecks_filter,
 			testStepsQueryValidationChecks_limit(),
 			testStepsQueryValidationChecks_time,
+			testStepsQueryValidationChecks_having,
 		),
 	})
 }
@@ -205,15 +229,15 @@ data "honeycombio_query_specification" "test" {
 	return []resource.TestStep{
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, 0),
-			ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
 		},
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, -5),
-			ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
 		},
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, 1200),
-			ExpectError: regexp.MustCompile("expected limit to be in the range \\(1 - 1000\\)"),
+			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
 		},
 	}
 }
@@ -246,6 +270,47 @@ data "honeycombio_query_specification" "test" {
 }
 `,
 		ExpectError: regexp.MustCompile("granularity can not be less than time_range/1000"),
+	},
+}
+
+var testStepsQueryValidationChecks_having = []resource.TestStep{
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  having {
+    calculate_op = "COUNT"
+    column       = "we-should-not-specify-a-column-with-COUNT"
+    op           = ">"
+    value        = 1
+  }
+}
+`,
+		ExpectError: regexp.MustCompile("calculate_op COUNT should not have an accompanying column"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  having {
+    calculate_op = "P99"
+    op           = ">="
+    value        = 1000
+  }
+}
+`,
+		ExpectError: regexp.MustCompile("calculate_op P99 requires a column"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  having {
+    calculate_op = "P95"
+    op           = ">"
+    column       = "duration_ms"
+    value        = "850"
+  }
+}
+`,
+		ExpectError: regexp.MustCompile("having 0 without matching column in query"),
 	},
 }
 

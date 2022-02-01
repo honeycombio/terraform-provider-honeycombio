@@ -26,6 +26,11 @@ type QuerySpec struct {
 	// results. Each term must appear in either the breakdowns field or the
 	// calculations field.
 	Orders []OrderSpec `json:"orders,omitempty"`
+	// A list of objects describing filters with which to restrict returned
+	// groups. Each column/calculate_op pair must appear in the calculations
+	// field. There can be multiple havings for the same column/calculate_op
+	// pair.
+	Havings []HavingSpec `json:"havings,omitempty"`
 	// The maximum number of query results, must be between 1 and 1000.
 	Limit *int `json:"limit,omitempty"`
 	// The time range of query in seconds. Defaults to two hours. If combined
@@ -191,4 +196,37 @@ const (
 // SortOrders returns an exhaustive list of all sort orders.
 func SortOrders() []SortOrder {
 	return []SortOrder{SortOrderAsc, SortOrderDesc}
+}
+
+// HavingSpec describes filters in which to restrict returned groups.
+type HavingSpec struct {
+	CalculateOp *CalculationOp `json:"calculate_op,omitempty"`
+	Column      *string        `json:"column,omitempty"`
+	Op          *HavingOp      `json:"op,omitempty"`
+	Value       interface{}    `json:"value,omitempty"`
+}
+
+// HavingOp represents the operator of a having clause
+type HavingOp string
+
+// Declaration of having operations
+const (
+	HavingOpEquals             HavingOp = "="
+	HavingOpNotEquals          HavingOp = "!="
+	HavingOpGreaterThan        HavingOp = ">"
+	HavingOpGreaterThanOrEqual HavingOp = ">="
+	HavingOpLessThan           HavingOp = "<"
+	HavingOpLessThanOrEqual    HavingOp = "<="
+)
+
+// HavingOps returns an exhaustive list of all having operations.
+func HavingOps() []HavingOp {
+	return []HavingOp{
+		HavingOpEquals,
+		HavingOpNotEquals,
+		HavingOpGreaterThan,
+		HavingOpGreaterThanOrEqual,
+		HavingOpLessThan,
+		HavingOpLessThanOrEqual,
+	}
 }

@@ -10,6 +10,11 @@ func CalculationOpPtr(v CalculationOp) *CalculationOp {
 	return &v
 }
 
+// HavingOpPtr returns a pointer to the given HavingOp.
+func HavingOpPtr(v HavingOp) *HavingOp {
+	return &v
+}
+
 // ColumnTypePtr returns a pointer to the given ColumnType.
 func ColumnTypePtr(v ColumnType) *ColumnType {
 	return &v
