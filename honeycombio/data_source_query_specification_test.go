@@ -291,6 +291,19 @@ data "honeycombio_query_specification" "test" {
 		Config: `
 data "honeycombio_query_specification" "test" {
   having {
+    calculate_op = "CONCURRENCY"
+    column       = "we-should-not-specify-a-column-with-CONCURRENCY"
+    op           = ">"
+    value        = 1
+  }
+}
+`,
+		ExpectError: regexp.MustCompile("calculate_op CONCURRENCY should not have an accompanying column"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  having {
     calculate_op = "P99"
     op           = ">="
     value        = 1000

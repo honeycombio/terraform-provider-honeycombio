@@ -59,7 +59,7 @@ The following arguments are supported:
 Each query configuration may have zero or more `calculation` blocks, which each accept the following arguments:
 
 * `op` - (Required) The operator to apply, see the supported list of calculation operators at [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators).
-* `column` - (Optional) The column to apply the operator to, not needed with `COUNT`.
+* `column` - (Optional) The column to apply the operator to, not needed with `COUNT` or `CONCURRENCY`.
 
 Each query configuration may have zero or more `filter` blocks, which each accept the following arguments:
 
@@ -85,7 +85,7 @@ Each query configuration may have zero or more `having` blocks, which each accep
 
 * `op` - The operator to apply to filter the query results. One of `=`, `!=`, `>`, `>=`, `<`, or `<=`.
 * `calculate_op` - The calculation operator to apply, supports all of the [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators) with the exception of `HEATMAP`.
-* `column` - The column to apply the `calculate_op` to, not needed with `COUNT`.
+* `column` - The column to apply the `calculate_op` to, not needed with `COUNT` or `CONCURRENCY`.
 * `value` - The value used with `op`. Currently assumed to be a number.
 
 ~> **NOTE** A having term's `column`/`calculate_op` pair must have a corresponding `calculation`. There can be multiple `having` blocks for the same `column`/`calculate_op` pair.
