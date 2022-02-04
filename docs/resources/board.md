@@ -53,7 +53,7 @@ resource "honeycombio_board" "board" {
       caption     = query.value
       query_style = "combo"
       dataset     = var.dataset
-      query_json  = data.honeycombio_query_specification.query[query.key].json
+      query_id    = honeycombio_query.query[query.key].id
     }
   }
 }

@@ -30,8 +30,8 @@ resource "honeycombio_trigger" "example" {
   name        = "Requests are slower than usuals"
   description = "Average duration of all requests for the last 10 minutes."
 
-  query_json = honeycombio_query.example.id
-  dataset    = var.dataset
+  query_id = honeycombio_query.example.id
+  dataset  = var.dataset
 
   frequency = 600 // in seconds, 10 minutes
 

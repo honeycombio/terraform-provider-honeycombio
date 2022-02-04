@@ -2,6 +2,8 @@
 
 Creates a query in a dataset.
 
+Queries can be used by triggers and boards, or be executed via the [Query Data API](https://docs.honeycomb.io/api/query-results/).
+
 -> **Note** Queries can only be created or read. Any changes will result in a new query object being created, and destroying it does nothing.
 
 ## Example Usage
@@ -25,7 +27,7 @@ data "honeycombio_query_specification" "test_query" {
 }
 
 resource "honeycombio_query" "test_query" {
-  dataset = "%s"
+  dataset    = "%s"
   query_json = data.honeycombio_query_specification.test_query.json
 }
 ```
