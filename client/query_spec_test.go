@@ -106,7 +106,7 @@ func TestCalcuationOps(t *testing.T) {
 
 	for _, calculationOp := range CalculationOps() {
 		column := StringPtr("duration_ms")
-		if calculationOp == CalculationOpCount {
+		if calculationOp.IsUnaryOp() {
 			column = nil
 		}
 

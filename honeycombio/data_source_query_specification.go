@@ -260,9 +260,9 @@ func extractCalculations(d *schema.ResourceData) ([]honeycombio.CalculationSpec,
 			calculations[i].Column = honeycombio.StringPtr(c.(string))
 		}
 
-		if calculation.Op == honeycombio.CalculationOpCount && calculation.Column != nil {
+		if calculation.Op.IsUnaryOp() && calculation.Column != nil {
 			return nil, fmt.Errorf("calculation op %s should not have an accompanying column", calculation.Op)
-		} else if calculation.Op != honeycombio.CalculationOpCount && calculation.Column == nil {
+		} else if !calculation.Op.IsUnaryOp() && calculation.Column == nil {
 			return nil, fmt.Errorf("calculation op %s is missing an accompanying column", calculation.Op)
 		}
 	}
@@ -311,10 +311,10 @@ func extractHavings(d *schema.ResourceData) ([]honeycombio.HavingSpec, error) {
 			having.Value = v
 		}
 
-		if *having.CalculateOp == honeycombio.CalculationOpCount && having.Column != nil {
+		if having.CalculateOp.IsUnaryOp() && having.Column != nil {
 			return nil, fmt.Errorf("calculate_op %s should not have an accompanying column", *having.CalculateOp)
 		}
-		if *having.CalculateOp != honeycombio.CalculationOpCount && having.Column == nil {
+		if !having.CalculateOp.IsUnaryOp() && having.Column == nil {
 			return nil, fmt.Errorf("calculate_op %s requires a column", *having.CalculateOp)
 		}
 	}
