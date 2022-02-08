@@ -47,7 +47,7 @@ data "honeycombio_query_specification" "test" {
   filter {
     column = "duration_ms"
     op     = ">"
-    value  = count.index 
+    value  = count.index
   }
 }
 
@@ -100,6 +100,11 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 			return fmt.Errorf("could not find created board: %w", err)
 		}
 
+		for i := range createdBoard.Queries {
+			// we don't track the QuerySpec, just the IDs
+			createdBoard.Queries[i].Query = nil
+		}
+
 		expectedBoard := &honeycombio.Board{
 			ID:          createdBoard.ID,
 			Name:        "Test board from terraform-provider-honeycombio",
@@ -112,22 +117,6 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					Dataset:           testAccDataset(),
 					QueryID:           createdBoard.Queries[0].QueryID,
 					QueryAnnotationID: createdBoard.Queries[0].QueryAnnotationID,
-					Query: &honeycombio.QuerySpec{
-						Calculations: []honeycombio.CalculationSpec{
-							{
-								Op:     honeycombio.CalculationOpAvg,
-								Column: honeycombio.StringPtr("duration_ms"),
-							},
-						},
-						Filters: []honeycombio.FilterSpec{
-							{
-								Column: "duration_ms",
-								Op:     ">",
-								Value:  "0",
-							},
-						},
-						TimeRange: honeycombio.IntPtr(7200),
-					},
 				},
 				{
 					Caption:           "test query 1",
@@ -135,22 +124,6 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 					Dataset:           testAccDataset(),
 					QueryID:           createdBoard.Queries[1].QueryID,
 					QueryAnnotationID: createdBoard.Queries[1].QueryAnnotationID,
-					Query: &honeycombio.QuerySpec{
-						Calculations: []honeycombio.CalculationSpec{
-							{
-								Op:     honeycombio.CalculationOpAvg,
-								Column: honeycombio.StringPtr("duration_ms"),
-							},
-						},
-						Filters: []honeycombio.FilterSpec{
-							{
-								Column: "duration_ms",
-								Op:     ">",
-								Value:  "1",
-							},
-						},
-						TimeRange: honeycombio.IntPtr(7200),
-					},
 				},
 			},
 		}

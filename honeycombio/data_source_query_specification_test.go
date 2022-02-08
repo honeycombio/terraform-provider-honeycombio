@@ -39,8 +39,13 @@ data "honeycombio_query_specification" "test" {
         op     = "does-not-exist"
     }
     filter {
+        column = "duration_ms"
+        op     = ">"
+        value  = 0
+    }
+    filter {
         column        = "duration_ms"
-        op            = ">"
+        op            = "<"
         value_integer = 100
     }
     filter {
@@ -97,6 +102,11 @@ const expectedJSON string = `{
     {
       "column": "duration_ms",
       "op": "\u003e",
+      "value": 0
+    },
+    {
+      "column": "duration_ms",
+      "op": "\u003c",
       "value": 100
     },
     {
@@ -346,6 +356,53 @@ data "honeycombio_query_specification" "test" {
   }
 }
 `,
+			},
+		},
+	})
+}
+
+func TestAccDataSourceHoneycombioQuery_zerovalue(t *testing.T) {
+	properZeroValueJSON := `{
+  "calculations": [
+    {
+      "op": "COUNT"
+    }
+  ],
+  "filters": [
+    {
+      "column": "duration_ms",
+      "op": "\u003e",
+      "value": 0
+    }
+  ],
+  "time_range": 7200
+}`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  filter {
+    column = "duration_ms"
+    op     = ">"
+    value  = 0
+  }
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.test.json
+}
+`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("query_json", properZeroValueJSON),
+				),
 			},
 		},
 	})

@@ -65,11 +65,11 @@ Each query configuration may have zero or more `filter` blocks, which each accep
 
 * `column` - (Required) The column to apply the filter to.
 * `op` - (Required) The operator to apply, see the supported list of filter operators at [Filter Operators](https://docs.honeycomb.io/api/query-specification/#filter-operators). Not all operators require a value.
-* `value_string` - (Optional) The value used for the filter when the column is a string. Mutually exclusive with `value` and the other `value_*` options.
-* `value_integer` - (Optional) The value used for the filter when the column is an integer. Mutually exclusive with `value` and the other `value_*` options.
-* `value_float` - (Optional) The value used for the filter when the column is a float. Mutually exclusive with `value` and the other `value_*` options.
-* `value_boolean` - (Optional) The value used for the filter when the column is a boolean. Mutually exclusive with `value` and the other `value_*` options.
-* `value` - (Optional) Deprecated: use the explicitly typed `value_string` instead. This variant will break queries when used with non-string columns. Mutually exclusive with the other `value_*` options.
+* `value` - (Optional) The value used for the filter. Not needed if op is `exists`, `not-exists`, `in` or `not-in`. Mutually exclusive with the other `value_*` options.
+* `value_string` - (Optional) Deprecated: use 'value' instead. The value used for the filter when the column is a string. Mutually exclusive with `value` and the other `value_*` options.
+* `value_integer` - (Optional) Deprecated: use 'value' instead. The value used for the filter when the column is an integer. Mutually exclusive with `value` and the other `value_*` options.
+* `value_float` - (Optional) Deprecated: use 'value' instead. The value used for the filter when the column is a float. Mutually exclusive with `value` and the other `value_*` options.
+* `value_boolean` - (Optional) Deprecated: use 'value' instead. The value used for the filter when the column is a boolean. Mutually exclusive with `value` and the other `value_*` options.
 
 -> **NOTE** The type of the filter value should match with the type of the column. To determine the type of a column visit the dataset settings page, all the columns and their type are listed under _Schema_. This provider will not be able to detect invalid combinations.
 

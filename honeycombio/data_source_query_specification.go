@@ -52,29 +52,32 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 						},
 						"value": {
 							Type:        schema.TypeString,
-							Description: "Deprecated: use the explicitly typed `value_string` instead. This variant will break queries when used with non-string columns. Mutually exclusive with the other `value_*` options.",
+							Description: "The value used for the filter. Not needed if op is `exists`, `not-exists`, `in` or `not-in`. Mutually exclusive with the other `value_*` options.",
 							Optional:    true,
-							Deprecated:  "Use of attribute `value` is discouraged and will break queries when used with non-string columns. The explicitly typed `value_*` variants are preferred instead.",
 						},
 						"value_string": {
 							Type:        schema.TypeString,
-							Description: "The value used for the filter when the column is a string. Mutually exclusive with `value` and the other `value_*` options",
+							Description: "Deprecated: use 'value' instead. The value used for the filter when the column is a string. Mutually exclusive with `value` and the other `value_*` options",
 							Optional:    true,
+							Deprecated:  "Use of attribute `value_string` is discouraged and will fail to plan if using the empty string. Use of `value` is encouraged.",
 						},
 						"value_integer": {
 							Type:        schema.TypeInt,
-							Description: "The value used for the filter when the column is an integer. Mutually exclusive with `value` and the other `value_*` options",
+							Description: "Deprecated: use 'value' instead. The value used for the filter when the column is an integer. Mutually exclusive with `value` and the other `value_*` options",
 							Optional:    true,
+							Deprecated:  "Use of attribute `value_integer` is discouraged and will fail to plan if using '0'. Use of `value` is encouraged.",
 						},
 						"value_float": {
 							Type:        schema.TypeFloat,
-							Description: "The value used for the filter when the column is a float. Mutually exclusive with `value` and the other `value_*` options",
+							Description: "Deprecated: use 'value' instead. The value used for the filter when the column is a float. Mutually exclusive with `value` and the other `value_*` options",
 							Optional:    true,
+							Deprecated:  "Use of attribute `value_float` is discouraged and will fail to plan if using '0'. Use of `value` is encouraged.",
 						},
 						"value_boolean": {
 							Type:        schema.TypeBool,
-							Description: "The value used for the filter when the column is a boolean. Mutually exclusive with `value` and the other `value_*` options",
+							Description: "Deprecated: use 'value' instead. The value used for the filter when the column is a boolean. Mutually exclusive with `value` and the other `value_*` options",
 							Optional:    true,
+							Deprecated:  "Use of attribute `value_boolean` is discouraged and will fail to plan if using 'false'. Use of `value` is encouraged.",
 						},
 					},
 				},
@@ -333,7 +336,7 @@ func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, e
 	valueSet := false
 	v, vOk := d.GetOk(fmt.Sprintf("filter.%d.value", index))
 	if vOk {
-		filter.Value = v
+		filter.Value = coerceValueToType(v.(string))
 		valueSet = true
 	}
 	vs, vsOk := d.GetOk(fmt.Sprintf("filter.%d.value_string", index))
