@@ -40,6 +40,11 @@ func TestQuerySpec(t *testing.T) {
 				Op:     FilterOpSmallerThan,
 				Value:  10000.0,
 			},
+			{
+				Column: "column_1",
+				Op:     FilterOpNotEquals,
+				Value:  "",
+			},
 		},
 		FilterCombination: FilterCombinationOr,
 		Breakdowns:        []string{"column_1", "column_2"},

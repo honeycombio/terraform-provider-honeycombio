@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -15,6 +14,7 @@ import (
 
 func TestAccHoneycombioQuery_update(t *testing.T) {
 	dataset := testAccDataset()
+	zeroDuration := 0
 	firstDuration := 20
 	secondDuration := 40
 
@@ -22,6 +22,12 @@ func TestAccHoneycombioQuery_update(t *testing.T) {
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
+			{
+				Config: testAccResourceQueryConfig(dataset, zeroDuration),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckQueryExists(t, dataset, "honeycombio_query.test", zeroDuration),
+				),
+			},
 			{
 				Config: testAccResourceQueryConfig(dataset, firstDuration),
 				Check: resource.ComposeTestCheckFunc(
@@ -85,7 +91,7 @@ func testAccCheckQueryExists(t *testing.T, dataset string, name string, duration
 				{
 					Column: "duration_ms",
 					Op:     ">",
-					Value:  strconv.Itoa(duration),
+					Value:  float64(duration),
 				},
 			},
 			TimeRange: honeycombio.IntPtr(7200),

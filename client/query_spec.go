@@ -124,7 +124,7 @@ type FilterSpec struct {
 	// depends on the operator:
 	//  - 'exists' and 'does-not-exist': value should be nil
 	//  - 'in' and 'not-in': value should be a []string
-	//  - all other ops: value should be a string
+	//  - all other ops: value could be a string, int, bool or float
 	Value interface{} `json:"value,omitempty"`
 }
 
