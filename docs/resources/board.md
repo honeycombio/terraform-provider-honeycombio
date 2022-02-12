@@ -5,19 +5,9 @@ Creates a board. For more information about boards, check out [Collaborate with 
 ## Example Usage
 
 ```hcl
-variable "dataset" {
-  type = string
-}
-
-locals {
-  percentiles = ["P50", "P75", "P90", "P95"]
-}
-
 data "honeycombio_query_specification" "query" {
-  for_each = toset(local.percentiles)
-
   calculation {
-    op     = local.percentiles[each.key]
+    op     = "P99"
     column = "duration_ms"
   }
 
@@ -26,35 +16,20 @@ data "honeycombio_query_specification" "query" {
     op     = "does-not-exist"
   }
 
-  filter {
-    column = "app.tenant"
-    op     = "="
-    value  = "ThatSpecialTenant"
-  }
+  breakdowns = ["app.tenant"]
 }
 
 resource "honeycombio_query" "query" {
-  for_each = toset(local.percentiles)
-
   dataset    = var.dataset
-  query_json = data.honeycombio_query_specification.query[each.key].json
+  query_json = data.honeycombio_query_specification.query.json
 }
 
 resource "honeycombio_board" "board" {
-  name        = "Request percentiles"
-  description = "${join(", ", local.percentiles)} of all requests for ThatSpecialTenant for the last 15 minutes."
-  style       = "list"
+  name        = "My Board"
 
-  //Use dynamic config blocks to generate a query for each of the percentiles we're interested in
-  dynamic "query" {
-    for_each = local.percentiles
-
-    content {
-      caption     = query.value
-      query_style = "combo"
-      dataset     = var.dataset
-      query_id    = honeycombio_query.query[query.key].id
-    }
+  query {
+    dataset  = var.dataset
+    query_id = honeycombio_query.query.id
   }
 }
 ```
