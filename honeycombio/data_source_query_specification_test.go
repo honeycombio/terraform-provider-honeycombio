@@ -62,7 +62,7 @@ data "honeycombio_query_specification" "test" {
     }
     order {
         column = "column_1"
-        order  = "descending"
+        order  = "ascending"
     }
 
     having {
@@ -124,8 +124,7 @@ const expectedJSON string = `{
       "column": "duration_ms"
     },
     {
-      "column": "column_1",
-      "order": "descending"
+      "column": "column_1"
     }
   ],
   "havings": [
