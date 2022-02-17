@@ -16,7 +16,7 @@ ENHANCEMENTS:
 
 BUGFIXES:
 
-* resource/honeycombio_trigger: `disabled` properly marshalled to allow disabling trhiggers (#91)
+* resource/honeycombio_trigger: `disabled` properly marshaled to allow disabling triggers (#91)
 * resource/honeycombio_query: Suppress equivalent `query_json` differences (#100)
 * documentation fixes (#94, #99)
 
