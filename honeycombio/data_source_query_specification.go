@@ -422,7 +422,14 @@ func extractOrders(d *schema.ResourceData) []honeycombio.OrderSpec {
 
 		so, ok := d.GetOk(fmt.Sprintf("order.%d.order", i))
 		if ok {
-			order.Order = honeycombio.SortOrderPtr(honeycombio.SortOrder(so.(string)))
+			ov := honeycombio.SortOrder(so.(string))
+			// ascending is the default, API doesn't return or require
+			// the field unless value is descending
+			//
+			// not sending to avoid constant plan diffs
+			if ov != honeycombio.SortOrderAsc {
+				order.Order = honeycombio.SortOrderPtr(ov)
+			}
 		}
 
 		// TODO: validation
