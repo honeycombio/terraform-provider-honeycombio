@@ -1,3 +1,9 @@
+# 0.3.1 (Mar 4, 2022)
+
+BUGFIXES:
+
+* client: error if creating a derived column with an alias that already exists (#124)
+
 # 0.3.0 (Feb 17, 2022)
 
 NOTES:
