@@ -30,6 +30,18 @@ func TestDerivedColumns(t *testing.T) {
 		assert.Equal(t, data, derivedColumn)
 	})
 
+	t.Run("Create_DuplicateErr", func(t *testing.T) {
+		data := &DerivedColumn{
+			Alias:       "derived_column_test",
+			Expression:  "LOG10($duration_ms)",
+			Description: "This is a derived column with the same name as an existing one",
+		}
+		_, err = c.DerivedColumns.Create(ctx, dataset, data)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "chosen alias is the same as an existing derived column")
+	})
+
 	t.Run("List", func(t *testing.T) {
 		derivedColumns, err := c.DerivedColumns.List(ctx, dataset)
 
