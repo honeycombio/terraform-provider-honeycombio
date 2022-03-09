@@ -1,3 +1,13 @@
+# 0.3.2 (Mar 9, 2022)
+
+BUGFIXES:
+
+* resource/honeycombio_trigger: workaround for misparsing a recipient's empty 'target' when using dynamic blocks (#132)
+
+ENHANCEMENTS:
+
+* provider can be started in debug mode with support for debuggers like delve (#129)
+
 # 0.3.1 (Mar 4, 2022)
 
 BUGFIXES:
