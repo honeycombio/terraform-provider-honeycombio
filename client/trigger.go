@@ -123,6 +123,25 @@ type TriggerRecipient struct {
 	Target string `json:"target,omitempty"`
 }
 
+// Custom JSON marhsal to work around https://github.com/honeycombio/terraform-provider-honeycombio/issues/123
+//
+// It seems the Plugin SDK may reuse the value of 'target' for another
+// member of the list if target is unset (null or empty string)
+func (tr *TriggerRecipient) MarshalJSON() ([]byte, error) {
+	// aliased type to avoid stack overflows due to recursion
+	type ARecipient TriggerRecipient
+
+	if tr.Type == TriggerRecipientTypePagerDuty {
+		r := &ARecipient{
+			ID:   tr.ID,
+			Type: tr.Type,
+		}
+		return json.Marshal(&struct{ *ARecipient }{ARecipient: (*ARecipient)(r)})
+	}
+
+	return json.Marshal(&struct{ *ARecipient }{ARecipient: (*ARecipient)(tr)})
+}
+
 // TriggerRecipientType holds all the possible trigger recipient types.
 type TriggerRecipientType string
 
