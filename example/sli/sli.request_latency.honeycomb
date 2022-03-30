@@ -1,0 +1,16 @@
+IF(
+	AND(
+		NOT(
+			EXISTS(
+				$trace.parent_id
+			)
+		),
+		EXISTS(
+			$duration_ms
+		)
+	),
+	LTE(
+		$duration_ms,
+		300
+	)
+)
