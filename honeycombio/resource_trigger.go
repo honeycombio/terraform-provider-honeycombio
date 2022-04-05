@@ -162,7 +162,11 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 
 	d.Set("frequency", t.Frequency)
 
-	err = d.Set("recipient", flattenTriggerRecipients(t.Recipients))
+	declaredRecipients, ok := d.Get("recipient").([]interface{})
+	if !ok {
+		return diag.Errorf("failed to parse recipients for Trigger %s", t.ID)
+	}
+	err = d.Set("recipient", flattenTriggerRecipients(matchRecipientsWithSchema(t.Recipients, declaredRecipients)))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -257,6 +261,47 @@ func flattenTriggerRecipients(rs []honeycombio.TriggerRecipient) []map[string]in
 			"type":   string(r.Type),
 			"target": r.Target,
 		}
+	}
+
+	return result
+}
+
+// Provides a stable order for Trigger recipients.
+//
+// This cannot currently be handled efficiently by a DiffSuppressFunc.
+// See: https://github.com/hashicorp/terraform-plugin-sdk/issues/477
+func matchRecipientsWithSchema(recipients []honeycombio.TriggerRecipient, declaredRecipients []interface{}) []honeycombio.TriggerRecipient {
+	result := make([]honeycombio.TriggerRecipient, len(declaredRecipients))
+
+	rMap := make(map[string]honeycombio.TriggerRecipient, len(declaredRecipients))
+	for _, recipient := range recipients {
+		rMap[recipient.ID] = recipient
+	}
+
+	for i, declaredRcpt := range declaredRecipients {
+		declaredRcpt := declaredRcpt.(map[string]interface{})
+
+		if declaredRcpt["id"] != "" {
+			// recipient declared by ID
+			if v, ok := rMap[declaredRcpt["id"].(string)]; ok {
+				result[i] = v
+				delete(rMap, v.ID)
+			}
+		} else {
+			for key, rcpt := range rMap {
+				if string(rcpt.Type) != declaredRcpt["type"] || rcpt.Target != declaredRcpt["target"] {
+					continue
+				}
+
+				result[i] = rcpt
+				delete(rMap, key)
+				break
+			}
+		}
+	}
+
+	for _, rcpt := range rMap {
+		result = append(result, rcpt)
 	}
 
 	return result
