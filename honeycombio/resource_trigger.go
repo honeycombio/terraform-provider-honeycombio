@@ -292,11 +292,13 @@ func matchRecipientsWithSchema(readRecipients []honeycombio.TriggerRecipient, de
 		} else {
 			// group result recipients by type
 			for key, rcpt := range rMap {
-				if string(rcpt.Type) == declaredRcpt["type"] {
-					result[i] = rcpt
-					delete(rMap, key)
-					break
+				if string(rcpt.Type) != declaredRcpt["type"] || rcpt.Target != declaredRcpt["target"] {
+					continue
 				}
+
+				result[i] = rcpt
+				delete(rMap, key)
+				break
 			}
 		}
 	}
