@@ -44,6 +44,8 @@ data "honeycombio_query_specification" "test" {
     column = "duration_ms"
   }
 
+  filter_combination = "AND"
+
   filter {
     column = "duration_ms"
     op     = ">"

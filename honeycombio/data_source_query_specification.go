@@ -111,9 +111,9 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 				},
 			},
 			"filter_combination": {
-				Type:     schema.TypeString,
-				Optional: true,
-				// Note: API assumes 'AND' if not provided
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "AND",
 				ValidateFunc: validation.StringInSlice([]string{"AND", "OR"}, false),
 			},
 			"breakdowns": {
@@ -211,11 +211,20 @@ func dataSourceHoneycombioQuerySpecRead(ctx context.Context, d *schema.ResourceD
 		}
 	}
 
+	// The API doesn't return filter_combination if it is 'AND' (the default)
+	var filterCombination honeycombio.FilterCombination
+	filterString := d.Get("filter_combination").(string)
+	if filterString != "" && filterString != "AND" {
+		// doing it this way to support possible different filter types in future
+		// and having one less place to update them
+		filterCombination = honeycombio.FilterCombination(filterString)
+	}
+
 	query := &honeycombio.QuerySpec{
 		Calculations:      calculations,
 		Filters:           filters,
 		Havings:           havings,
-		FilterCombination: honeycombio.FilterCombination(d.Get("filter_combination").(string)),
+		FilterCombination: filterCombination,
 		Breakdowns:        extractBreakdowns(d),
 		Orders:            extractOrders(d),
 		Limit:             extractOptionalInt(d, "limit"),

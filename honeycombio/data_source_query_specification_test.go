@@ -54,6 +54,8 @@ data "honeycombio_query_specification" "test" {
         value  = "ThatSpecialTenant"
     }
 
+    filter_combination = "OR"
+
     breakdowns = ["column_1"]
 
     order {
@@ -115,6 +117,7 @@ const expectedJSON string = `{
       "value": "ThatSpecialTenant"
     }
   ],
+  "filter_combination": "OR",
   "breakdowns": [
     "column_1"
   ],
