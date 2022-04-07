@@ -266,15 +266,17 @@ func flattenTriggerRecipients(rs []honeycombio.TriggerRecipient) []map[string]in
 	return result
 }
 
-// Provides a stable order for Trigger recipients.
+// Matches read recipients against those declared in HCL
+// and returns the Trigger recipients in a stable order
+// grouped by recipient type.
 //
 // This cannot currently be handled efficiently by a DiffSuppressFunc.
 // See: https://github.com/hashicorp/terraform-plugin-sdk/issues/477
-func matchRecipientsWithSchema(recipients []honeycombio.TriggerRecipient, declaredRecipients []interface{}) []honeycombio.TriggerRecipient {
+func matchRecipientsWithSchema(readRecipients []honeycombio.TriggerRecipient, declaredRecipients []interface{}) []honeycombio.TriggerRecipient {
 	result := make([]honeycombio.TriggerRecipient, len(declaredRecipients))
 
 	rMap := make(map[string]honeycombio.TriggerRecipient, len(declaredRecipients))
-	for _, recipient := range recipients {
+	for _, recipient := range readRecipients {
 		rMap[recipient.ID] = recipient
 	}
 
@@ -282,24 +284,24 @@ func matchRecipientsWithSchema(recipients []honeycombio.TriggerRecipient, declar
 		declaredRcpt := declaredRcpt.(map[string]interface{})
 
 		if declaredRcpt["id"] != "" {
-			// recipient declared by ID
 			if v, ok := rMap[declaredRcpt["id"].(string)]; ok {
+				// matched recipient declared by ID
 				result[i] = v
 				delete(rMap, v.ID)
 			}
 		} else {
+			// group result recipients by type
 			for key, rcpt := range rMap {
-				if string(rcpt.Type) != declaredRcpt["type"] || rcpt.Target != declaredRcpt["target"] {
-					continue
+				if string(rcpt.Type) == declaredRcpt["type"] {
+					result[i] = rcpt
+					delete(rMap, key)
+					break
 				}
-
-				result[i] = rcpt
-				delete(rMap, key)
-				break
 			}
 		}
 	}
 
+	// append unmatched read recipients to the result
 	for _, rcpt := range rMap {
 		result = append(result, rcpt)
 	}
