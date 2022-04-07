@@ -162,7 +162,11 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 
 	d.Set("frequency", t.Frequency)
 
-	err = d.Set("recipient", flattenTriggerRecipients(t.Recipients))
+	declaredRecipients, ok := d.Get("recipient").([]interface{})
+	if !ok {
+		return diag.Errorf("failed to parse recipients for Trigger %s", t.ID)
+	}
+	err = d.Set("recipient", flattenTriggerRecipients(matchRecipientsWithSchema(t.Recipients, declaredRecipients)))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -257,6 +261,56 @@ func flattenTriggerRecipients(rs []honeycombio.TriggerRecipient) []map[string]in
 			"type":   string(r.Type),
 			"target": r.Target,
 		}
+	}
+
+	return result
+}
+
+// Matches read recipients against those declared in HCL and returns
+// the Trigger recipients in a stable order grouped by recipient type.
+//
+// This cannot currently be handled efficiently by a DiffSuppressFunc.
+// See: https://github.com/hashicorp/terraform-plugin-sdk/issues/477
+func matchRecipientsWithSchema(readRecipients []honeycombio.TriggerRecipient, declaredRecipients []interface{}) []honeycombio.TriggerRecipient {
+	result := make([]honeycombio.TriggerRecipient, len(declaredRecipients))
+
+	rMap := make(map[string]honeycombio.TriggerRecipient, len(readRecipients))
+	for _, recipient := range readRecipients {
+		rMap[recipient.ID] = recipient
+	}
+
+	// Build up result, with each readRecipient in the same position as it
+	// appears in declaredRecipients, by looking at each declaredRecipient and
+	// finding its matching readRecipient (via rMap).
+	//
+	// If the declaredRecipient has an ID, this is easy: just look it up and
+	// put it in it's place. Otherwise, try to match it to a readRecipient with
+	// the same type and target. If we can't find it at all, it must be new, so
+	// put it at the end.
+	for i, declaredRcpt := range declaredRecipients {
+		declaredRcpt := declaredRcpt.(map[string]interface{})
+
+		if declaredRcpt["id"] != "" {
+			if v, ok := rMap[declaredRcpt["id"].(string)]; ok {
+				// matched recipient declared by ID
+				result[i] = v
+				delete(rMap, v.ID)
+			}
+		} else {
+			// group result recipients by type
+			for key, rcpt := range rMap {
+				if string(rcpt.Type) == declaredRcpt["type"] && rcpt.Target == declaredRcpt["target"] {
+					result[i] = rcpt
+					delete(rMap, key)
+					break
+				}
+			}
+		}
+	}
+
+	// append unmatched read recipients to the result
+	for _, rcpt := range rMap {
+		result = append(result, rcpt)
 	}
 
 	return result

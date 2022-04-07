@@ -105,6 +105,69 @@ func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
 	})
 }
 
+func TestAccHoneycombioTrigger_recipientOrderingNoDiff(t *testing.T) {
+	dataset := testAccDataset()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_trigger" "test" {
+  name = "Ensure mixed order recipients don't cause infinite diffs"
+
+  query_id = honeycombio_query.test.id
+  dataset  = "%s"
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  recipient {
+    type   = "slack"
+    target = "#test2"
+  }
+
+  recipient {
+    type   = "slack"
+    target = "#test"
+  }
+
+  recipient {
+    type   = "email"
+    target = "bob@example.com"
+  }
+
+  recipient {
+    type   = "email"
+    target = "alice@example.com"
+  }
+
+  recipient {
+    type   = "marker"
+    target = "trigger fired"
+  }
+}
+`, dataset, dataset),
+			},
+		},
+	})
+
+}
+
 func testAccTriggerConfigWithFrequency(dataset string, frequency int) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
