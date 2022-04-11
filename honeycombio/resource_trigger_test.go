@@ -211,10 +211,24 @@ resource "honeycombio_trigger" "test" {
 func testAccTriggerConfigWithCount(dataset string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
+  time_range = 1200
+
   calculation {
     op     = "COUNT"
   }
-  time_range = 1200
+
+  filter_combination = "AND"
+
+  filter {
+    column = "trace.parent_id"
+    op     = "does-not-exist"
+  }
+
+  filter {
+    column = "app.tenant"
+    op     = "="
+    value  = "ThatSpecialTenant"
+  }
 }
 
 resource "honeycombio_query" "test" {
