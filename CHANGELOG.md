@@ -1,3 +1,24 @@
+# 0.4.0 (Apr 13, 2022)
+
+NOTES:
+
+* A Trigger may need to be destroyed and recreated in order to stabalize the ordering of recipients.
+
+BUGFIXES:
+
+* resource/honeycombio_trigger: fix unstable recipient ordering causing infinite diffs (#142)
+* datasource/honeycombio_query_specfication: fix for `filter_combination` 'AND' causing infinite diffs (#144)
+
+ENHANCEMENTS:
+
+* docs: add SLI example (#138)
+* validation for Trigger and Board name and description lengths (#143)
+
+HOUSEKEEPING:
+
+* terraform-plugin-sdk upgraded from 2.10.1 to 2.13.0 (#135, #139)
+* testify upgraded from 1.7.0 to 1.7.1 (#137)
+
 # 0.3.2 (Mar 9, 2022)
 
 BUGFIXES:
