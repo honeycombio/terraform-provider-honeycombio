@@ -11,12 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: setup Honeycomb BuildEvents
-        uses: kvrhdn/gha-buildevents@v1
-        with:
-          apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
-          job-status: ${{ job.status }}
       - name: Checkout
         uses: actions/checkout@v3
       - name: Unshallow

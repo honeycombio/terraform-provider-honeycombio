@@ -10,12 +10,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: kvrhdn/gha-buildevents@v1
-        with:
-          apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
-          job-status: ${{ job.status }}
-
       - uses: actions/setup-go@v3
         with:
           go-version: ^1.17
@@ -48,12 +42,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: kvrhdn/gha-buildevents@v1
-        with:
-          apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
-          job-status: ${{ job.status }}
-
       - uses: actions/setup-go@v3
         with:
           go-version: ^1.17
