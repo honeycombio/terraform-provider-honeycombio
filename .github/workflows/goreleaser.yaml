@@ -11,12 +11,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: setup Honeycomb BuildEvents
-        uses: kvrhdn/gha-buildevents@v1
-        with:
-          apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
-          job-status: ${{ job.status }}
       - name: Checkout
         uses: actions/checkout@v3
       - name: Unshallow
@@ -24,7 +18,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.16
+          go-version: 1.17
       - name: Import GPG key
         id: import_gpg
         uses: hashicorp/ghaction-import-gpg@v2.1.0
