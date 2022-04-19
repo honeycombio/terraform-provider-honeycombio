@@ -69,6 +69,7 @@ type Client struct {
 	Markers          Markers
 	Queries          Queries
 	QueryAnnotations QueryAnnotations
+	QueryResults     QueryResults
 	Triggers         Triggers
 }
 
@@ -103,6 +104,7 @@ func NewClient(config *Config) (*Client, error) {
 	client.Markers = &markers{client: client}
 	client.Queries = &queries{client: client}
 	client.QueryAnnotations = &queryAnnotations{client: client}
+	client.QueryResults = &queryResults{client: client}
 	client.Triggers = &triggers{client: client}
 
 	return client, nil
