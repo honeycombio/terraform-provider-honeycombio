@@ -27,7 +27,7 @@ resource "honeycombio_query" "example" {
 }
 
 resource "honeycombio_trigger" "example" {
-  name        = "Requests are slower than usuals"
+  name        = "Requests are slower than usual"
   description = "Average duration of all requests for the last 10 minutes."
 
   query_id = honeycombio_query.example.id
