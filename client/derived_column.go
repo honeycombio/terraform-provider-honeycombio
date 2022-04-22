@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/url"
 )
 
 // DerivedColumns describe all the derived columns-related methods that the
@@ -48,8 +49,7 @@ type DerivedColumn struct {
 	// Alias of the derived column, this field is required and can not be
 	// updated.
 	Alias string `json:"alias"`
-	// Expression of the derived column, this field is required and can not be
-	// updated.
+	// Expression of the derived column, this field is required.
 	// This should be an expression following the Derived Column syntax, as
 	// described on https://docs.honeycomb.io/working-with-your-data/customizing-your-query/derived-columns/#derived-column-syntax
 	Expression string `json:"expression"`
@@ -59,7 +59,7 @@ type DerivedColumn struct {
 
 func (s *derivedColumns) List(ctx context.Context, dataset string) ([]DerivedColumn, error) {
 	var c []DerivedColumn
-	err := s.client.performRequest(ctx, "GET", "/1/derived_columns/"+urlEncodeDataset(dataset), nil, &c)
+	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s", urlEncodeDataset(dataset)), nil, &c)
 	return c, err
 }
 
@@ -71,13 +71,13 @@ func (s *derivedColumns) Get(ctx context.Context, dataset string, id string) (*D
 
 func (s *derivedColumns) GetByAlias(ctx context.Context, dataset string, alias string) (*DerivedColumn, error) {
 	var c DerivedColumn
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s?alias=%s", urlEncodeDataset(dataset), alias), nil, &c)
+	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s?alias=%s", urlEncodeDataset(dataset), url.QueryEscape(alias)), nil, &c)
 	return &c, err
 }
 
 func (s *derivedColumns) Create(ctx context.Context, dataset string, data *DerivedColumn) (*DerivedColumn, error) {
 	var d DerivedColumn
-	err := s.client.performRequest(ctx, "POST", "/1/derived_columns/"+urlEncodeDataset(dataset), data, &d)
+	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/derived_columns/%s", urlEncodeDataset(dataset)), data, &d)
 	return &d, err
 }
 
