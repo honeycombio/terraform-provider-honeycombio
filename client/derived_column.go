@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/url"
 )
 
 // DerivedColumns describe all the derived columns-related methods that the
@@ -71,7 +72,7 @@ func (s *derivedColumns) Get(ctx context.Context, dataset string, id string) (*D
 
 func (s *derivedColumns) GetByAlias(ctx context.Context, dataset string, alias string) (*DerivedColumn, error) {
 	var c DerivedColumn
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s?alias=%s", urlEncodeDataset(dataset), alias), nil, &c)
+	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s?alias=%s", urlEncodeDataset(dataset), url.QueryEscape(alias)), nil, &c)
 	return &c, err
 }
 

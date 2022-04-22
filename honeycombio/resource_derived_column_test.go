@@ -16,7 +16,7 @@ func TestAccHoneycombioDerivedColumn_basic(t *testing.T) {
 		IDRefreshName:     "honeycombio_derived_column.test",
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDerivedColumnConfig(dataset),
+				Config: testAccDerivedColumnConfig(dataset, "duration_ms_log10"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("honeycombio_derived_column.test", "alias", "duration_ms_log10"),
 					resource.TestCheckResourceAttr("honeycombio_derived_column.test", "expression", "LOG10($duration_ms)"),
@@ -31,15 +31,32 @@ func TestAccHoneycombioDerivedColumn_basic(t *testing.T) {
 			},
 		},
 	})
+
+	// validate 'pretty' alias'
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		IDRefreshName:     "honeycombio_derived_column.test",
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDerivedColumnConfig(dataset, "LOG(10) duration_ms"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_derived_column.test", "alias", "LOG(10) duration_ms"),
+					resource.TestCheckResourceAttr("honeycombio_derived_column.test", "expression", "LOG10($duration_ms)"),
+					resource.TestCheckResourceAttr("honeycombio_derived_column.test", "description", "LOG10 of duration_ms"),
+				),
+			},
+		},
+	})
 }
 
-func testAccDerivedColumnConfig(dataset string) string {
+func testAccDerivedColumnConfig(dataset, alias string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_derived_column" "test" {
-  alias       = "duration_ms_log10"
+  alias       = "%s"
   expression  = "LOG10($duration_ms)"
   description = "LOG10 of duration_ms"
 
   dataset = "%s"
-}`, dataset)
+}`, alias, dataset)
 }
