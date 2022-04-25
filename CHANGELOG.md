@@ -1,3 +1,26 @@
+# 0.5.0 (Apr 25, 2022)
+
+BUGFIXES:
+
+* docs: grammar fixes (#153, #152)
+* client: ensure Derived Column `alias` is properly URL escaped (#154)
+* resource/honeycombio_query_annotation: properly validate length for `name` at 80 characters (#155)
+
+ENHANCEMENTS:
+
+* resource/honeycombio_derived_column: validate length for `alias`, `expression`, and `description` (#154)
+* resource/honeycombio_board: validate length for `name`, `description`, and query `caption` (#155)
+* resource/honeycombio_column: validate length for `key_name`, and `description` (#155)
+* resource/honeycombio_dataset: validate length for `name` (#155)
+
+HOUSEKEEPING:
+
+* terraform-plugin-sdk upgraded from 2.13.0 to 2.14.0 (#149)
+* CI: remove unmaintained buildevents action (#150)
+* CI: bump Go version to 1.17 (#150)
+* CI: hashicorp/setup-terraform action upgraded from 1 to 2 (#157)
+* CI: codecov/codecov-action action upgraded from 3.0.0 to 2.1.0 (#156)
+
 # 0.4.0 (Apr 13, 2022)
 
 NOTES:
