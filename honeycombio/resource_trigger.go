@@ -45,6 +45,10 @@ func newTrigger() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"alert_type": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
 			"threshold": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -156,6 +160,7 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 	d.Set("description", t.Description)
 	d.Set("disabled", t.Disabled)
 	d.Set("query_id", t.QueryID)
+	d.Set("alert_type", t.AlertType)
 
 	err = d.Set("threshold", flattenTriggerThreshold(t.Threshold))
 	if err != nil {
@@ -213,6 +218,7 @@ func expandTrigger(d *schema.ResourceData) (*honeycombio.Trigger, error) {
 		Description: d.Get("description").(string),
 		Disabled:    d.Get("disabled").(bool),
 		QueryID:     d.Get("query_id").(string),
+		AlertType:   d.Get("alert_type").(string),
 		Threshold:   expandTriggerThreshold(d.Get("threshold").([]interface{})),
 		Frequency:   d.Get("frequency").(int),
 		Recipients:  expandTriggerRecipients(d.Get("recipient").([]interface{})),
