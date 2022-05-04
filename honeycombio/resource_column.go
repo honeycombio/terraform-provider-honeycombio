@@ -23,17 +23,19 @@ func newColumn() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"key_name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 255),
 			},
 			"hidden": {
 				Type:     schema.TypeBool,
 				Optional: true,
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringLenBetween(1, 255),
 			},
 			"type": {
 				Type:         schema.TypeString,

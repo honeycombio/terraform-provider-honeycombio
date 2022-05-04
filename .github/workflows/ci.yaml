@@ -10,17 +10,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: kvrhdn/gha-buildevents@v1
-        with:
-          apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
-          job-status: ${{ job.status }}
-
       - uses: actions/setup-go@v3
         with:
-          go-version: ^1.16
+          go-version: 1.17
 
-      - uses: hashicorp/setup-terraform@v1
+      - uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 0.14
           terraform_wrapper: false
@@ -39,7 +33,7 @@ jobs:
           ./scripts/setup-testsuite-dataset
           go test -v -coverprofile=coverage.txt -covermode=atomic ./...
 
-      - uses: codecov/codecov-action@v3.0.0
+      - uses: codecov/codecov-action@v3.1.0
         with:
           file: ./coverage.txt
 
@@ -48,15 +42,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: kvrhdn/gha-buildevents@v1
-        with:
-          apikey: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          dataset: ${{ secrets.HONEYCOMBIO_DATASET }}
-          job-status: ${{ job.status }}
-
       - uses: actions/setup-go@v3
         with:
-          go-version: ^1.16
+          go-version: 1.17
 
       - uses: actions/checkout@v3
 
