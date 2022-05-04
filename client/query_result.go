@@ -71,16 +71,20 @@ func (s *queryResults) Get(ctx context.Context, dataset string, q *QueryResult) 
 	resultUri := fmt.Sprintf("/1/query_results/%s/%s", urlEncodeDataset(dataset), q.ID)
 
 	ticker := time.NewTicker(QueryResultPollInterval)
-	for ; ; <-ticker.C {
-		// poll until complete or errored
-		if err = s.client.performRequest(ctx, "GET", resultUri, nil, &q); err != nil {
-			return err
-		}
-		if q.Complete {
-			break
+	for {
+		select {
+		case <-ticker.C:
+			// poll until complete or errored
+			if err = s.client.performRequest(ctx, "GET", resultUri, nil, &q); err != nil {
+				return err
+			}
+			if q.Complete {
+				return nil
+			}
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
-	return nil
 }
 
 func (s *queryResults) Create(ctx context.Context, dataset string, data *QueryResultRequest) (*QueryResult, error) {
