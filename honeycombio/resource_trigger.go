@@ -160,7 +160,7 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 	d.Set("description", t.Description)
 	d.Set("disabled", t.Disabled)
 	d.Set("query_id", t.QueryID)
-	d.Set("alert_type", t.AlertFrequency)
+	d.Set("alert_frequency", t.AlertFrequency)
 
 	err = d.Set("threshold", flattenTriggerThreshold(t.Threshold))
 	if err != nil {
