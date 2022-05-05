@@ -58,8 +58,8 @@ type Trigger struct {
 	// be greater than 4 times the frequency.
 	Query   *QuerySpec `json:"query,omitempty"`
 	QueryID string     `json:"query_id,omitempty"`
-	// Alert Type. contain types of trigger schedule to use
-	AlertType string `json:"alert_type,omitempty"`
+	// Alert Type. contain types of trigger schedule to use. This field is required
+	AlertFrequency string `json:"alert_frequency,omitempty"`
 	// Threshold. This fild is required.
 	Threshold *TriggerThreshold `json:"threshold"`
 	// Frequency describes how often the trigger should run. Frequency is an
@@ -96,6 +96,12 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 		TriggerThresholdOpLessThanOrEqual,
 	}
 }
+
+// Alert Frequency values - alert_on_change is default
+const (
+	AlertFrequencyOnChange string = "alert_on_change"
+	AlertFrequencyOnTrue   string = "alert_on_true"
+)
 
 // TriggerRecipient represents a recipient that will receive a notification
 // when the trigger fires.
@@ -176,15 +182,15 @@ func (t *Trigger) MarshalJSON() ([]byte, error) {
 		// this doesn't work in the general case, but this
 		// client is now purpose-built for the Terraform provider
 		a := &ATrigger{
-			ID:          t.ID,
-			Name:        t.Name,
-			Description: t.Description,
-			Disabled:    t.Disabled,
-			QueryID:     t.QueryID,
-			AlertType:   t.AlertType,
-			Threshold:   t.Threshold,
-			Frequency:   t.Frequency,
-			Recipients:  t.Recipients,
+			ID:             t.ID,
+			Name:           t.Name,
+			Description:    t.Description,
+			Disabled:       t.Disabled,
+			QueryID:        t.QueryID,
+			AlertFrequency: t.AlertFrequency,
+			Threshold:      t.Threshold,
+			Frequency:      t.Frequency,
+			Recipients:     t.Recipients,
 		}
 		return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(a)})
 	}
