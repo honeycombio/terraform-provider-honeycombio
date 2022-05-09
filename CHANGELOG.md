@@ -1,3 +1,13 @@
+# 0.6.0 (May 9, 2022)
+
+FEATURES:
+
+* *New Data Source*: `honeycombio_query_result` (#151)
+
+HOUSEKEEPING:
+
+* terraform-plugin-sdk upgraded from 2.14.0 to 2.15.0 (#161)
+
 # 0.5.0 (Apr 25, 2022)
 
 BUGFIXES:
