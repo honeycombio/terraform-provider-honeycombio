@@ -59,7 +59,7 @@ type Trigger struct {
 	Query   *QuerySpec `json:"query,omitempty"`
 	QueryID string     `json:"query_id,omitempty"`
 	// Alert Frequency. Describes scheduling behavior for triggers. By default alert type per change. This field is required
-	AlertFrequency string `json:"alert_frequency,omitempty"`
+	AlertType string `json:"alert_type,omitempty"`
 	// Threshold. This fild is required.
 	Threshold *TriggerThreshold `json:"threshold"`
 	// Frequency describes how often the trigger should run. Frequency is an
@@ -97,10 +97,18 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 	}
 }
 
-// Alert Frequency values - alert_on_change is default
+// Representation of the Triggers Alert Type.
+type TriggerAlertType struct {
+	Type TriggerAlertTypeValue `json:"alert_type"`
+}
+
+// TriggerAlertTypeValue, the current setting type for the trigger.
+type TriggerAlertTypeValue string
+
+// Allowed values for alert_type. | on_change is default
 const (
-	AlertFrequencyOnChange string = "alert_on_change"
-	AlertFrequencyOnTrue   string = "alert_on_true"
+	TriggerAlertTypeValueOnChange string = "on_change"
+	TriggerAlertTypeValueOnTrue   string = "on_true"
 )
 
 // TriggerRecipient represents a recipient that will receive a notification
@@ -182,15 +190,15 @@ func (t *Trigger) MarshalJSON() ([]byte, error) {
 		// this doesn't work in the general case, but this
 		// client is now purpose-built for the Terraform provider
 		a := &ATrigger{
-			ID:             t.ID,
-			Name:           t.Name,
-			Description:    t.Description,
-			Disabled:       t.Disabled,
-			QueryID:        t.QueryID,
-			AlertFrequency: t.AlertFrequency,
-			Threshold:      t.Threshold,
-			Frequency:      t.Frequency,
-			Recipients:     t.Recipients,
+			ID:          t.ID,
+			Name:        t.Name,
+			Description: t.Description,
+			Disabled:    t.Disabled,
+			QueryID:     t.QueryID,
+			AlertType:   t.AlertType,
+			Threshold:   t.Threshold,
+			Frequency:   t.Frequency,
+			Recipients:  t.Recipients,
 		}
 		return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(a)})
 	}

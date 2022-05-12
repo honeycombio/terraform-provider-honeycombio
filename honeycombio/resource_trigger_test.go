@@ -25,6 +25,8 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerBefore),
 					testAccCheckTriggerAttributes(&triggerBefore),
+					testAccCheckTriggerAlertType(&triggerBefore),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
 				),
 			},
@@ -32,6 +34,7 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 				Config: testAccTriggerConfigWithFrequency(dataset, 300),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerAfter),
+					testAccCheckTriggerAlertType(&triggerBefore),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "300"),
 				),
 			},
@@ -39,6 +42,7 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 				Config: testAccTriggerConfigWithCount(dataset),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerAfter),
+					testAccCheckTriggerAlertType(&triggerBefore),
 				),
 			},
 			{
@@ -77,6 +81,16 @@ func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFun
 
 		if t.Frequency != 900 {
 			return fmt.Errorf("bad frequency: %d", t.Frequency)
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckTriggerAlertType(t *honeycombio.Trigger) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if t.AlertType != honeycombio.TriggerAlertTypeValueOnChange && t.AlertType != honeycombio.TriggerAlertTypeValueOnTrue {
+			return fmt.Errorf("bad alert_type: %s - must be on_change or on_true", t.AlertType)
 		}
 
 		return nil
@@ -134,6 +148,10 @@ resource "honeycombio_trigger" "test" {
   threshold {
     op    = ">"
     value = 1000
+  }
+
+  alert_type {
+    type = "on_change"
   }
 
   recipient {
