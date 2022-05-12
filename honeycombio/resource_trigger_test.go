@@ -207,6 +207,9 @@ resource "honeycombio_trigger" "test" {
 
   query_id = honeycombio_query.test.id
 
+  alert_type {
+    type = "on_change"
+  }
   threshold {
     op    = ">"
     value = 100
