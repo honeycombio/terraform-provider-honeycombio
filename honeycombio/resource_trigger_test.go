@@ -150,9 +150,7 @@ resource "honeycombio_trigger" "test" {
     value = 1000
   }
 
-  alert_type {
-    type = "on_change"
-  }
+  alert_type = "on_change"
 
   recipient {
     type   = "slack"
@@ -207,9 +205,8 @@ resource "honeycombio_trigger" "test" {
 
   query_id = honeycombio_query.test.id
 
-  alert_type {
-    type = "on_change"
-  }
+  alert_type = "on_change"
+  
   threshold {
     op    = ">"
     value = 100
@@ -263,6 +260,8 @@ resource "honeycombio_trigger" "test" {
 
   query_id = honeycombio_query.test.id
 
+  alert_type = "on_change"
+
   threshold {
     op    = ">"
     value = 100
@@ -290,6 +289,8 @@ resource "honeycombio_trigger" "test" {
   dataset = "%s"
 
   query_id = honeycombio_query.test.id
+
+  alert_type = "on_change"
 
   threshold {
     op    = ">"
