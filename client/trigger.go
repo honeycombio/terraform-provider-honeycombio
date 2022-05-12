@@ -97,14 +97,6 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 	}
 }
 
-// Representation of the Triggers Alert Type.
-type TriggerAlertType struct {
-	Type TriggerAlertTypeValue `json:"alert_type"`
-}
-
-// TriggerAlertTypeValue, the current setting type for the trigger.
-type TriggerAlertTypeValue string
-
 // Allowed values for alert_type. | on_change is default
 const (
 	TriggerAlertTypeValueOnChange string = "on_change"

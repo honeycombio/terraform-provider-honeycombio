@@ -25,16 +25,15 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerBefore),
 					testAccCheckTriggerAttributes(&triggerBefore),
-					testAccCheckTriggerAlertType(&triggerBefore),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "alert_type", "on_change"),
 				),
 			},
 			{
 				Config: testAccTriggerConfigWithFrequency(dataset, 300),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerAfter),
-					testAccCheckTriggerAlertType(&triggerBefore),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "300"),
 				),
 			},
@@ -42,7 +41,6 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 				Config: testAccTriggerConfigWithCount(dataset),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerAfter),
-					testAccCheckTriggerAlertType(&triggerBefore),
 				),
 			},
 			{
@@ -81,6 +79,10 @@ func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFun
 
 		if t.Frequency != 900 {
 			return fmt.Errorf("bad frequency: %d", t.Frequency)
+		}
+
+		if t.AlertType != "on_change" {
+			return fmt.Errorf("bad AlertType: %s | should be on_change", t.AlertType)
 		}
 
 		return nil
@@ -224,6 +226,48 @@ resource "honeycombio_trigger" "test" {
     target = "bye@example.com"
   }
 }`, dataset, dataset, frequency)
+}
+
+func testAccTriggerConfigWithAlertType(dataset string, alertType string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+  time_range = 1200
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger from terraform-provider-honeycombio"
+  dataset = "%s"
+
+  query_id = honeycombio_query.test.id
+
+  alert_type = "%s"
+  
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = d
+
+  recipient {
+    type   = "email"
+    target = "hello@example.com"
+  }
+
+  recipient {
+    type   = "email"
+    target = "bye@example.com"
+  }
+}`, dataset, dataset, alertType)
 }
 
 func testAccTriggerConfigWithCount(dataset string) string {
