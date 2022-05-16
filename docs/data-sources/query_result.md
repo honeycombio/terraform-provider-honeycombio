@@ -16,14 +16,9 @@ data "honeycombio_query_specification" "example" {
   }
 }
 
-resource "honeycombio_query" "example" {
+data "honeycombio_query_result" "example" {
   dataset    = var.dataset
   query_json = data.honeycombio_query_specification.example.json
-}
-
-data "honeycombio_query_result" "example" {
-  dataset  = var.dataset
-  query_id = honeycombio_query.example.id
 }
 
 output "event_count" {
@@ -42,12 +37,13 @@ output "event_count" {
 The following arguments are supported:
 
 * `dataset` - (Required) The dataset this query is associated with.
-* `query_id` - (Required) The ID of the query that will be executed to obtain the result.
+* `query_json` - (Required) A JSON object describing the query according to the Query Specification. While the JSON can be constructed manually, it is easiest to use the honeycombio_query_specification data source.
 
 ## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
+* `query_id` - The ID of the Query created and executed to obtain the result.
 * `query_url` - The permalink to the executed query's results.
 * `query_image_url` - The permalink to the visualization of the executed query's results.
 * `results` - The results of the executed query. This will be a list of maps, with each map's keys set to the breakdowns and calculations of the query. Due to a limitation of the Terraform Plugin SDK, all values are transformed into strings.

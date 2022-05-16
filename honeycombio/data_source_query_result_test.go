@@ -40,8 +40,8 @@ resource "honeycombio_query" "test" {
 }
 
 data "honeycombio_query_result" "test" {
-  dataset  = "%s"
-  query_id = honeycombio_query.test.id
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
 }
 
 output "results" {

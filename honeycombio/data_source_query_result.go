@@ -2,11 +2,13 @@ package honeycombio
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/honeycombio/internal/verify"
 )
 
 func dataSourceHoneycombioQueryResult() *schema.Resource {
@@ -18,11 +20,17 @@ func dataSourceHoneycombioQueryResult() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"query_id": {
-				Type:     schema.TypeString,
-				Required: true,
+			"query_json": {
+				Type:             schema.TypeString,
+				Required:         true,
+				ValidateDiagFunc: validateQueryJSON(),
+				DiffSuppressFunc: verify.SuppressEquivJSONDiffs,
 			},
 			// outputs
+			"query_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"query_url": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -43,12 +51,20 @@ func dataSourceHoneycombioQueryResult() *schema.Resource {
 }
 
 func dataSourceHoneycombioQueryResultRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	var querySpec honeycombio.QuerySpec
 	client := meta.(*honeycombio.Client)
-
 	dataset := d.Get("dataset").(string)
-	queryID := d.Get("query_id").(string)
 
-	queryResult, err := client.QueryResults.Create(ctx, dataset, &honeycombio.QueryResultRequest{ID: queryID})
+	err := json.Unmarshal([]byte(d.Get("query_json").(string)), &querySpec)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	query, err := client.Queries.Create(ctx, dataset, &querySpec)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	queryResult, err := client.QueryResults.Create(ctx, dataset, &honeycombio.QueryResultRequest{ID: *query.ID})
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -71,6 +87,12 @@ func dataSourceHoneycombioQueryResultRead(ctx context.Context, d *schema.Resourc
 	}
 
 	d.SetId(queryResult.ID)
+	queryJSON, err := encodeQuery(query)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	d.Set("query_json", queryJSON)
+	d.Set("query_id", *query.ID)
 	d.Set("query_url", queryResult.Links.Url)
 	d.Set("graph_image_url", queryResult.Links.GraphUrl)
 	d.Set("results", results)
