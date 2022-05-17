@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -41,7 +40,7 @@ func TestBurnAlerts(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		data := &BurnAlert{
-			ExhaustionMinutes: int(24 * time.Hour),
+			ExhaustionMinutes: int(24 * 60), // 24 hours
 			SLO:               SLORef{ID: slo.ID},
 		}
 
@@ -73,7 +72,7 @@ func TestBurnAlerts(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
-		burnAlert.ExhaustionMinutes = int(4 * time.Hour)
+		burnAlert.ExhaustionMinutes = int(4 * 60) // 4 hours
 
 		result, err := c.BurnAlerts.Update(ctx, dataset, burnAlert)
 
