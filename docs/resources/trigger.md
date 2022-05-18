@@ -35,6 +35,8 @@ resource "honeycombio_trigger" "example" {
 
   frequency = 600 // in seconds, 10 minutes
 
+  alert_type = "on_change" // on_change is default, on_true can refers to the "Alert on True" checkbox in the UI
+
   threshold {
     op    = ">"
     value = 1000
@@ -60,6 +62,7 @@ The following arguments are supported:
 * `name` - (Required) Name of the trigger.
 * `dataset` - (Required) The dataset this trigger is associated with.
 * `query_id` - (Required) The ID of the Query that the Trigger will execute.
+* `alert_type` - (Required) The frequency for the alert to trigger. (on_change is our default behavior, on_true can be optionally selected)
 * `threshold` - (Required) A configuration block (described below) describing the threshold of the trigger.
 * `description` - (Optional) Description of the trigger.
 * `disabled` - (Optional) The state of the trigger. If true, the trigger will not be run. Defaults to false.
