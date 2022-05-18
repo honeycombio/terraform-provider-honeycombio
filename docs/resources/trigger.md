@@ -62,11 +62,11 @@ The following arguments are supported:
 * `name` - (Required) Name of the trigger.
 * `dataset` - (Required) The dataset this trigger is associated with.
 * `query_id` - (Required) The ID of the Query that the Trigger will execute.
-* `alert_type` - (Required) The frequency for the alert to trigger. (on_change is our default behavior, on_true can be optionally selected)
 * `threshold` - (Required) A configuration block (described below) describing the threshold of the trigger.
 * `description` - (Optional) Description of the trigger.
 * `disabled` - (Optional) The state of the trigger. If true, the trigger will not be run. Defaults to false.
 * `frequency` - (Optional) The interval (in seconds) in which to check the results of the query’s calculation against the threshold. Value must be divisible by 60 and between 60 and 86400 (between 1 minute and 1 day). Defaults to 900 (15 minutes).
+* `alert_type` - (Optional) The frequency for the alert to trigger. (on_change is the default behavior, on_true can also be selected)
 * `recipient` - (Optional) Zero or more configuration blocks (described below) with the recipients to notify when the trigger fires.
 
 -> **NOTE** The query used in a Trigger must follow a strict subset: a query must contain exactly one calcuation and may only contain `calculation`, `filter`, `filter_combination` and `breakdowns` fields. The query's duration cannot be more than four times the trigger's frequency.
