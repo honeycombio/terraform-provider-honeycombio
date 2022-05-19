@@ -58,7 +58,7 @@ type Trigger struct {
 	// be greater than 4 times the frequency.
 	Query   *QuerySpec `json:"query,omitempty"`
 	QueryID string     `json:"query_id,omitempty"`
-	// Alert Frequency. Describes scheduling behavior for triggers. By default alert type per change. This field is required
+	// Alert Type. Describes scheduling behavior for triggers.
 	AlertType string `json:"alert_type,omitempty"`
 	// Threshold. This fild is required.
 	Threshold *TriggerThreshold `json:"threshold"`

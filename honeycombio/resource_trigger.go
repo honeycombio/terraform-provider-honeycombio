@@ -46,9 +46,10 @@ func newTrigger() *schema.Resource {
 				Required: true,
 			},
 			"alert_type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "on_change",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "on_change",
+				ValidateFunc: validation.StringInSlice([]string{"on_change", "on_true"}, false),
 			},
 			"threshold": {
 				Type:     schema.TypeList,

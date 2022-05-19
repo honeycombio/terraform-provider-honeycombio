@@ -218,48 +218,6 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, dataset, frequency)
 }
 
-func testAccTriggerConfigWithAlertType(dataset string, alertType string) string {
-	return fmt.Sprintf(`
-data "honeycombio_query_specification" "test" {
-  calculation {
-    op     = "AVG"
-    column = "duration_ms"
-  }
-  time_range = 1200
-}
-
-resource "honeycombio_query" "test" {
-  dataset    = "%s"
-  query_json = data.honeycombio_query_specification.test.json
-}
-
-resource "honeycombio_trigger" "test" {
-  name    = "Test trigger from terraform-provider-honeycombio"
-  dataset = "%s"
-
-  query_id = honeycombio_query.test.id
-
-  alert_type = "%s"
-  
-  threshold {
-    op    = ">"
-    value = 100
-  }
-
-  frequency = d
-
-  recipient {
-    type   = "email"
-    target = "hello@example.com"
-  }
-
-  recipient {
-    type   = "email"
-    target = "bye@example.com"
-  }
-}`, dataset, dataset, alertType)
-}
-
 func testAccTriggerConfigWithCount(dataset string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
