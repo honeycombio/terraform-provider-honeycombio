@@ -134,3 +134,18 @@ func coerceValueToType(i string) interface{} {
 	// fallthrough to string
 	return i
 }
+
+// The SLO API uses 'Target Per Million' to avoid the problems with floats.
+// In the name of offering a nicer UX with percentages, we handle the conversion
+// back and fourth to allow things like 99.98 to be provided in the HCL and
+// handle the conversion to and from 999800
+
+// converts a floating point percentage to a 'Target Per Million' SLO value
+func floatToTPM(f float64) int {
+	return int(f * 10000)
+}
+
+// converts a SLO 'Target Per Million' value to a floating point percentage
+func tpmToFloat(t int) float64 {
+	return float64(t) / 10000
+}

@@ -51,12 +51,14 @@ func Provider() *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"honeycombio_board":            newBoard(),
+			"honeycombio_burn_alert":       newBurnAlert(),
 			"honeycombio_column":           newColumn(),
 			"honeycombio_dataset":          newDataset(),
 			"honeycombio_derived_column":   newDerivedColumn(),
 			"honeycombio_marker":           newMarker(),
 			"honeycombio_query":            newQuery(),
 			"honeycombio_query_annotation": newQueryAnnotation(),
+			"honeycombio_slo":              newSLO(),
 			"honeycombio_trigger":          newTrigger(),
 		},
 	}
