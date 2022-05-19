@@ -58,6 +58,8 @@ type Trigger struct {
 	// be greater than 4 times the frequency.
 	Query   *QuerySpec `json:"query,omitempty"`
 	QueryID string     `json:"query_id,omitempty"`
+	// Alert Type. Describes scheduling behavior for triggers.
+	AlertType string `json:"alert_type,omitempty"`
 	// Threshold. This fild is required.
 	Threshold *TriggerThreshold `json:"threshold"`
 	// Frequency describes how often the trigger should run. Frequency is an
@@ -94,6 +96,12 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 		TriggerThresholdOpLessThanOrEqual,
 	}
 }
+
+// Allowed values for alert_type. | on_change is default
+const (
+	TriggerAlertTypeValueOnChange string = "on_change"
+	TriggerAlertTypeValueOnTrue   string = "on_true"
+)
 
 // TriggerRecipient represents a recipient that will receive a notification
 // when the trigger fires.
@@ -179,6 +187,7 @@ func (t *Trigger) MarshalJSON() ([]byte, error) {
 			Description: t.Description,
 			Disabled:    t.Disabled,
 			QueryID:     t.QueryID,
+			AlertType:   t.AlertType,
 			Threshold:   t.Threshold,
 			Frequency:   t.Frequency,
 			Recipients:  t.Recipients,

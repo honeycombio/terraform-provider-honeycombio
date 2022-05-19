@@ -50,6 +50,7 @@ func TestTriggers(t *testing.T) {
 				Op:    TriggerThresholdOpGreaterThan,
 				Value: 10000,
 			},
+			AlertType: "on_change",
 			Recipients: []TriggerRecipient{
 				{
 					Type:   TriggerRecipientTypeEmail,
@@ -71,11 +72,15 @@ func TestTriggers(t *testing.T) {
 		// copy IDs before asserting equality
 		data.ID = trigger.ID
 		data.QueryID = trigger.QueryID
+		data.AlertType = trigger.AlertType
 		for i := range trigger.Recipients {
 			data.Recipients[i].ID = trigger.Recipients[i].ID
 		}
 		// set default time range
 		data.Query.TimeRange = IntPtr(300)
+
+		// set the default alert type
+		data.AlertType = TriggerAlertTypeValueOnChange
 
 		assert.Equal(t, data, trigger)
 	})
@@ -97,11 +102,14 @@ func TestTriggers(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		trigger.Description = "A new description"
 
+		// update the alert_type to on_true / this is a simple validation that this field works
+		trigger.AlertType = TriggerAlertTypeValueOnTrue
+
 		result, err := c.Triggers.Update(ctx, dataset, trigger)
 
 		// copy IDs before asserting equality
 		trigger.QueryID = result.QueryID
-
+		trigger.AlertType = result.AlertType
 		assert.NoError(t, err)
 		assert.Equal(t, trigger, result)
 	})
