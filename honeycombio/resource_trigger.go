@@ -47,7 +47,8 @@ func newTrigger() *schema.Resource {
 			},
 			"alert_type": {
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
+				Default:  "on_change",
 			},
 			"threshold": {
 				Type:     schema.TypeList,

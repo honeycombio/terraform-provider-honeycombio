@@ -89,16 +89,6 @@ func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFun
 	}
 }
 
-func testAccCheckTriggerAlertType(t *honeycombio.Trigger) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if t.AlertType != honeycombio.TriggerAlertTypeValueOnChange && t.AlertType != honeycombio.TriggerAlertTypeValueOnTrue {
-			return fmt.Errorf("bad alert_type: %s - must be on_change or on_true", t.AlertType)
-		}
-
-		return nil
-	}
-}
-
 // add a trigger recipient by ID to verify the diff is stable
 func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
 	dataset := testAccDataset()
