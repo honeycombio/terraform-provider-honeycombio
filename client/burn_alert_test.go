@@ -42,6 +42,12 @@ func TestBurnAlerts(t *testing.T) {
 		data := &BurnAlert{
 			ExhaustionMinutes: int(24 * 60), // 24 hours
 			SLO:               SLORef{ID: slo.ID},
+			Recipients: []Recipient{
+				{
+					Type:   "email",
+					Target: "alert@honeycomb.test",
+				},
+			},
 		}
 
 		burnAlert, err = c.BurnAlerts.Create(ctx, dataset, data)
@@ -54,14 +60,8 @@ func TestBurnAlerts(t *testing.T) {
 		data.ID = burnAlert.ID
 		data.CreatedAt = burnAlert.CreatedAt
 		data.UpdatedAt = burnAlert.UpdatedAt
+		data.Recipients[0].ID = burnAlert.Recipients[0].ID
 		assert.Equal(t, data, burnAlert)
-	})
-
-	t.Run("ListForSLO", func(t *testing.T) {
-		results, err := c.BurnAlerts.ListForSLO(ctx, dataset, slo.ID)
-
-		assert.NoError(t, err, "failed to list burn alerts for SLO")
-		assert.Contains(t, results, *burnAlert, "newly created BurnAlert not in list of SLO's burn alerts")
 	})
 
 	t.Run("Get", func(t *testing.T) {
@@ -80,6 +80,14 @@ func TestBurnAlerts(t *testing.T) {
 		// copy dynamic field before asserting equality
 		burnAlert.UpdatedAt = result.UpdatedAt
 		assert.Equal(t, burnAlert, result)
+	})
+
+	t.Run("ListForSLO", func(t *testing.T) {
+		results, err := c.BurnAlerts.ListForSLO(ctx, dataset, slo.ID)
+		burnAlert.Recipients = []Recipient{}
+		assert.NoError(t, err, "failed to list burn alerts for SLO")
+		assert.NotZero(t, len(results))
+		assert.Equal(t, burnAlert.ID, results[0].ID, "newly created BurnAlert not in list of SLO's burn alerts")
 	})
 
 	t.Run("Delete", func(t *testing.T) {
