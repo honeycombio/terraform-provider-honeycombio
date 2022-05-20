@@ -45,7 +45,7 @@ func TestBurnAlerts(t *testing.T) {
 			Recipients: []Recipient{
 				{
 					Type:   "email",
-					Target: "alert@honeycomb.test",
+					Target: "testalert@honeycomb.test",
 				},
 			},
 		}
@@ -68,6 +68,7 @@ func TestBurnAlerts(t *testing.T) {
 		getBA, err := c.BurnAlerts.Get(ctx, dataset, burnAlert.ID)
 
 		assert.NoError(t, err, "failed to get BurnAlert by ID")
+		// this test is flaky right now due to some weird recipient stuff in the api and should be fixed by the api
 		assert.Equal(t, burnAlert, getBA)
 	})
 
