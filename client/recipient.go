@@ -1,7 +1,6 @@
 package client
 
 // Recipients creates a Recipient definition for use by BurnAlerts and Triggers in the the Honeycomb API
-type Recipients interface{}
 type Recipient struct {
 	ID     string        `json:"id,omitempty"`
 	Type   RecipientType `json:"type,omitempty"`
