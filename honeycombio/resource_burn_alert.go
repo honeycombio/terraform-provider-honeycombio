@@ -49,20 +49,23 @@ func newBurnAlert() *schema.Resource {
 					// TODO can we validate either id or type+target is set?
 					Schema: map[string]*schema.Schema{
 						"id": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "The ID of an already existing recipient. Should not be used in combination with `type` and `target`.",
 						},
 						"type": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Computed:     true,
 							ValidateFunc: validation.StringInSlice(recipientTypeStrings(), false),
+							Description:  "The type of notification. Allowed types are `email`, `pagerduty`, `slack` and `webhook`. Should not be used in combination with `id`.",
 						},
 						"target": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "Target of the trigger recipient, this has another meaning depending on the type of recipient. Should not be used in combination with `id`.",
 						},
 					},
 				},
