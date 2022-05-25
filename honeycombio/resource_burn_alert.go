@@ -41,7 +41,32 @@ func newBurnAlert() *schema.Resource {
 				ForceNew:    true,
 				Description: "The dataset this Burn Alert is added to. This must be the same as the SLO's dataset.",
 			},
-			// TODO recipients
+			"recipient": {
+				Type:        schema.TypeList,
+				Required:    true,
+				Description: "A Recipient to notify when an alert fires",
+				Elem: &schema.Resource{
+					// TODO can we validate either id or type+target is set?
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"type": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.StringInSlice(recipientTypeStrings(), false),
+						},
+						"target": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -99,6 +124,15 @@ func resourceBurnAlertRead(ctx context.Context, d *schema.ResourceData, meta int
 	d.Set("exhaustion_minutes", b.ExhaustionMinutes)
 	d.Set("slo_id", b.SLO.ID)
 
+	declaredRecipients, ok := d.Get("recipient").([]interface{})
+	if !ok {
+		return diag.Errorf("failed to parse recipients for Burn Alert %s", b.ID)
+	}
+	err = d.Set("recipient", flattenRecipients(matchRecipientsWithSchema(b.Recipients, declaredRecipients)))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	return nil
 }
 
@@ -137,6 +171,7 @@ func expandBurnAlert(d *schema.ResourceData) (*honeycombio.BurnAlert, error) {
 		ID:                d.Id(),
 		ExhaustionMinutes: d.Get("exhaustion_minutes").(int),
 		SLO:               honeycombio.SLORef{ID: d.Get("slo_id").(string)},
+		Recipients:        expandRecipients(d.Get("recipient").([]interface{})),
 	}
 	return b, nil
 }

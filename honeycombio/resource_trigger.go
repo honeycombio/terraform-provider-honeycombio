@@ -168,7 +168,7 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 	if !ok {
 		return diag.Errorf("failed to parse recipients for Trigger %s", t.ID)
 	}
-	err = d.Set("recipient", flattenTriggerRecipients(matchRecipientsWithSchema(t.Recipients, declaredRecipients)))
+	err = d.Set("recipient", flattenTriggerRecipients(matchTriggerRecipientsWithSchema(t.Recipients, declaredRecipients)))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -273,7 +273,7 @@ func flattenTriggerRecipients(rs []honeycombio.TriggerRecipient) []map[string]in
 //
 // This cannot currently be handled efficiently by a DiffSuppressFunc.
 // See: https://github.com/hashicorp/terraform-plugin-sdk/issues/477
-func matchRecipientsWithSchema(readRecipients []honeycombio.TriggerRecipient, declaredRecipients []interface{}) []honeycombio.TriggerRecipient {
+func matchTriggerRecipientsWithSchema(readRecipients []honeycombio.TriggerRecipient, declaredRecipients []interface{}) []honeycombio.TriggerRecipient {
 	result := make([]honeycombio.TriggerRecipient, len(declaredRecipients))
 
 	rMap := make(map[string]honeycombio.TriggerRecipient, len(readRecipients))

@@ -48,6 +48,7 @@ func Provider() *schema.Provider {
 			"honeycombio_query_result":        dataSourceHoneycombioQueryResult(),
 			"honeycombio_query_specification": dataSourceHoneycombioQuerySpec(),
 			"honeycombio_trigger_recipient":   dataSourceHoneycombioSlackRecipient(),
+			"honeycombio_recipient":           dataSourceHoneycombioRecipient(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"honeycombio_board":            newBoard(),

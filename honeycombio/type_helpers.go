@@ -97,8 +97,20 @@ func sortOrderStrings() []string {
 	return out
 }
 
+// to be refactored out with honeycombio_trigger_recipient in favor of honeycombio_recipient
 func triggerRecipientTypeStrings() []string {
 	in := honeycombio.TriggerRecipientTypes()
+	out := make([]string, len(in))
+
+	for i := range in {
+		out[i] = string(in[i])
+	}
+
+	return out
+}
+
+func recipientTypeStrings() []string {
+	in := honeycombio.RecipientTypes()
 	out := make([]string, len(in))
 
 	for i := range in {
@@ -148,4 +160,84 @@ func floatToTPM(f float64) int {
 // converts a SLO 'Target Per Million' value to a floating point percentage
 func tpmToFloat(t int) float64 {
 	return float64(t) / 10000
+}
+
+func flattenRecipients(rs []honeycombio.Recipient) []map[string]interface{} {
+	result := make([]map[string]interface{}, len(rs))
+
+	for i, r := range rs {
+		result[i] = map[string]interface{}{
+			"id":     r.ID,
+			"type":   string(r.Type),
+			"target": r.Target,
+		}
+	}
+
+	return result
+}
+
+func expandRecipients(s []interface{}) []honeycombio.Recipient {
+	recipients := make([]honeycombio.Recipient, len(s))
+
+	for i, r := range s {
+		rMap := r.(map[string]interface{})
+
+		recipients[i] = honeycombio.Recipient{
+			ID:     rMap["id"].(string),
+			Type:   honeycombio.RecipientType(rMap["type"].(string)),
+			Target: rMap["target"].(string),
+		}
+	}
+
+	return recipients
+}
+
+// Matches read recipients against those declared in HCL and returns
+// the Trigger recipients in a stable order grouped by recipient type.
+//
+// This cannot currently be handled efficiently by a DiffSuppressFunc.
+// See: https://github.com/hashicorp/terraform-plugin-sdk/issues/477
+func matchRecipientsWithSchema(readRecipients []honeycombio.Recipient, declaredRecipients []interface{}) []honeycombio.Recipient {
+	result := make([]honeycombio.Recipient, len(declaredRecipients))
+
+	rMap := make(map[string]honeycombio.Recipient, len(readRecipients))
+	for _, recipient := range readRecipients {
+		rMap[recipient.ID] = recipient
+	}
+
+	// Build up result, with each readRecipient in the same position as it
+	// appears in declaredRecipients, by looking at each declaredRecipient and
+	// finding its matching readRecipient (via rMap).
+	//
+	// If the declaredRecipient has an ID, this is easy: just look it up and
+	// put it in it's place. Otherwise, try to match it to a readRecipient with
+	// the same type and target. If we can't find it at all, it must be new, so
+	// put it at the end.
+	for i, declaredRcpt := range declaredRecipients {
+		declaredRcpt := declaredRcpt.(map[string]interface{})
+
+		if declaredRcpt["id"] != "" {
+			if v, ok := rMap[declaredRcpt["id"].(string)]; ok {
+				// matched recipient declared by ID
+				result[i] = v
+				delete(rMap, v.ID)
+			}
+		} else {
+			// group result recipients by type
+			for key, rcpt := range rMap {
+				if string(rcpt.Type) == declaredRcpt["type"] && rcpt.Target == declaredRcpt["target"] {
+					result[i] = rcpt
+					delete(rMap, key)
+					break
+				}
+			}
+		}
+	}
+
+	// append unmatched read recipients to the result
+	for _, rcpt := range rMap {
+		result = append(result, rcpt)
+	}
+
+	return result
 }
