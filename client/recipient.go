@@ -16,8 +16,7 @@ const (
 	RecipientTypePagerDuty RecipientType = "pagerduty"
 	RecipientTypeSlack     RecipientType = "slack"
 	RecipientTypeWebhook   RecipientType = "webhook"
-	// TODO: add back in when API supports marker type
-	// RecipientTypeMarker    RecipientType = "marker"
+	RecipientTypeZenoss    RecipientType = "zenoss"
 )
 
 // RecipientTypes returns an exhaustive list of recipient types.
@@ -27,5 +26,6 @@ func RecipientTypes() []RecipientType {
 		RecipientTypePagerDuty,
 		RecipientTypeSlack,
 		RecipientTypeWebhook,
+		RecipientTypeZenoss,
 	}
 }
