@@ -26,6 +26,8 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 					testAccCheckTriggerExists(t, "honeycombio_trigger.test", &triggerBefore),
 					testAccCheckTriggerAttributes(&triggerBefore),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "alert_type", "on_change"),
 				),
 			},
 			{
@@ -77,6 +79,10 @@ func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFun
 
 		if t.Frequency != 900 {
 			return fmt.Errorf("bad frequency: %d", t.Frequency)
+		}
+
+		if t.AlertType != "on_change" {
+			return fmt.Errorf("bad AlertType: %s | should be on_change", t.AlertType)
 		}
 
 		return nil
@@ -136,6 +142,8 @@ resource "honeycombio_trigger" "test" {
     value = 1000
   }
 
+  alert_type = "on_change"
+
   recipient {
     type   = "slack"
     target = "#test2"
@@ -189,6 +197,8 @@ resource "honeycombio_trigger" "test" {
 
   query_id = honeycombio_query.test.id
 
+  alert_type = "on_change"
+  
   threshold {
     op    = ">"
     value = 100
@@ -242,6 +252,8 @@ resource "honeycombio_trigger" "test" {
 
   query_id = honeycombio_query.test.id
 
+  alert_type = "on_change"
+
   threshold {
     op    = ">"
     value = 100
@@ -269,6 +281,8 @@ resource "honeycombio_trigger" "test" {
   dataset = "%s"
 
   query_id = honeycombio_query.test.id
+
+  alert_type = "on_change"
 
   threshold {
     op    = ">"
