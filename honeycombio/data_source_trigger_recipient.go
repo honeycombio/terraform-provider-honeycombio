@@ -21,7 +21,7 @@ func dataSourceHoneycombioSlackRecipient() *schema.Resource {
 			"type": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(triggerRecipientTypeStrings(), false),
+				ValidateFunc: validation.StringInSlice(recipientTypeStrings("trigger"), false),
 			},
 			"target": {
 				Type:     schema.TypeString,
@@ -40,7 +40,7 @@ func dataSourceHoneycombioSlackRecipientRead(ctx context.Context, d *schema.Reso
 		return diag.FromErr(err)
 	}
 
-	searchType := honeycombio.TriggerRecipientType(d.Get("type").(string))
+	searchType := honeycombio.RecipientType(d.Get("type").(string))
 	searchTarget := d.Get("target").(string)
 
 	for _, t := range triggers {

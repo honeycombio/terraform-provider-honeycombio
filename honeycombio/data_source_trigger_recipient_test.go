@@ -12,8 +12,8 @@ import (
 func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
 	dataset := testAccDataset()
 
-	_, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.TriggerRecipient{
-		Type:   honeycombio.TriggerRecipientTypeEmail,
+	_, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.Recipient{
+		Type:   honeycombio.RecipientTypeEmail,
 		Target: "acctest@example.com",
 	})
 	defer deleteFn()

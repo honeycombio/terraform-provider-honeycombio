@@ -65,7 +65,7 @@ type Trigger struct {
 	// divisible by 60 and between 60 and 86400 (between 1 minute and 1 day).
 	Frequency int `json:"frequency,omitempty"`
 	// Recipients are notified when the trigger fires.
-	Recipients []TriggerRecipient `json:"recipients,omitempty"`
+	Recipients []Recipient `json:"recipients,omitempty"`
 }
 
 // TriggerThreshold represents the threshold of a trigger.
@@ -92,76 +92,6 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 		TriggerThresholdOpGreaterThanOrEqual,
 		TriggerThresholdOpLessThan,
 		TriggerThresholdOpLessThanOrEqual,
-	}
-}
-
-// TriggerRecipient represents a recipient that will receive a notification
-// when the trigger fires.
-//
-// API docs: https://docs.honeycomb.io/api/triggers/#specifying-recipients
-//
-// Notes
-//
-// Recipients of type Slack should be specified by their ID. It is not possible
-// to create a new recipient of type Slack using the API. Instead use the ID of
-// a recipient of type Slack that was manually added to another trigger.
-//
-// Recipients of type webhook can be added by their name. If a webhook with
-// this name does not exist yet (or if the name contains a typo), the Honeycomb
-// API will not complain about this but the webhook will not be valid.
-type TriggerRecipient struct {
-	// ID of the recipient.
-	ID string `json:"id,omitempty"`
-	// Type of the recipient.
-	Type TriggerRecipientType `json:"type"`
-	// Target of the trigger, this has another meaning depending on type:
-	// - email: an email address
-	// - marker: name of the marker
-	// - PagerDuty: N/A
-	// - Slack: name of a channel
-	// - Webhook: name of the webhook
-	Target string `json:"target,omitempty"`
-}
-
-// Custom JSON marhsal to work around https://github.com/honeycombio/terraform-provider-honeycombio/issues/123
-//
-// It seems the Plugin SDK may reuse the value of 'target' for another
-// member of the list if target is unset (null or empty string)
-func (tr *TriggerRecipient) MarshalJSON() ([]byte, error) {
-	// aliased type to avoid stack overflows due to recursion
-	type ARecipient TriggerRecipient
-
-	if tr.Type == TriggerRecipientTypePagerDuty {
-		r := &ARecipient{
-			ID:   tr.ID,
-			Type: tr.Type,
-		}
-		return json.Marshal(&struct{ *ARecipient }{ARecipient: (*ARecipient)(r)})
-	}
-
-	return json.Marshal(&struct{ *ARecipient }{ARecipient: (*ARecipient)(tr)})
-}
-
-// TriggerRecipientType holds all the possible trigger recipient types.
-type TriggerRecipientType string
-
-// Declaration of trigger recipient types
-const (
-	TriggerRecipientTypeEmail     TriggerRecipientType = "email"
-	TriggerRecipientTypeMarker    TriggerRecipientType = "marker"
-	TriggerRecipientTypePagerDuty TriggerRecipientType = "pagerduty"
-	TriggerRecipientTypeSlack     TriggerRecipientType = "slack"
-	TriggerRecipientTypeWebhook   TriggerRecipientType = "webhook"
-)
-
-// TriggerRecipientTypes returns an exhaustive list of trigger recipient types.
-func TriggerRecipientTypes() []TriggerRecipientType {
-	return []TriggerRecipientType{
-		TriggerRecipientTypeEmail,
-		TriggerRecipientTypeMarker,
-		TriggerRecipientTypePagerDuty,
-		TriggerRecipientTypeSlack,
-		TriggerRecipientTypeWebhook,
 	}
 }
 

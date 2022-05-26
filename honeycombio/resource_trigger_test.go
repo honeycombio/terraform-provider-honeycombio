@@ -87,8 +87,8 @@ func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFun
 func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
 	dataset := testAccDataset()
 
-	trigger, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.TriggerRecipient{
-		Type:   honeycombio.TriggerRecipientTypeEmail,
+	trigger, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.Recipient{
+		Type:   honeycombio.RecipientTypeEmail,
 		Target: "acctest@example.com",
 	})
 	defer deleteFn()
