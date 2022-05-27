@@ -4,6 +4,8 @@ Creates a board. For more information about boards, check out [Collaborate with 
 
 ## Example Usage
 
+### Simple Board
+
 ```hcl
 data "honeycombio_query_specification" "query" {
   calculation {
@@ -30,6 +32,60 @@ resource "honeycombio_board" "board" {
   query {
     dataset  = var.dataset
     query_id = honeycombio_query.query.id
+  }
+}
+```
+
+### Annotated Board
+
+```hcl
+data "honeycombio_query_specification" "latency_by_userid" {
+  time_range = 86400
+  breakdowns = ["app.user_id"]
+
+  calculation {
+    op     = "HEATMAP"
+    column = "duration_ms"
+  }
+
+  calculation {
+    op     = "P99"
+    column = "duration_ms"
+  }
+
+  filter {
+    column = "trace.parent_id"
+    op     = "does-not-exist"
+  }
+
+  order {
+    column = "duration_ms"
+    op     = "P99"
+    order  = "descending"
+  }
+}
+
+resource "honeycombio_query" "latency_by_userid" {
+  dataset    = var.dataset
+  query_json = data.honeycombio_query_specification.latency_by_userid.json
+}
+
+resource "honeycombio_query_annotation" "latency_by_userid" {
+  dataset     = var.dataset
+  query_id    = honeycombio_query.latency_by_userid.id
+  name        = "Latency by User"
+  description = "A breakdown of trace latency by User over the last 24 hours"
+}
+
+resource "honeycombio_board" "overview" {
+  name        = "Service Overview"
+  style       = "visual"
+
+  query {
+    dataset             = var.dataset
+    caption             = "Latency by User"
+    query_id            = honeycombio_query.latency_by_userid.id
+    query_annotation_id = honeycombio_query_annotation.latency_by_userid.id
   }
 }
 ```
