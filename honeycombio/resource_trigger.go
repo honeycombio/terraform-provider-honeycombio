@@ -94,7 +94,7 @@ func newTrigger() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Computed:     true,
-							ValidateFunc: validation.StringInSlice(recipientTypeStrings("trigger"), false),
+							ValidateFunc: validation.StringInSlice(recipientTypeStrings(honeycombio.TriggerRecipientTypes()), false),
 						},
 						"target": {
 							Type:     schema.TypeString,

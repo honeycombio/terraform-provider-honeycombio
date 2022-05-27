@@ -97,16 +97,8 @@ func sortOrderStrings() []string {
 	return out
 }
 
-func recipientTypeStrings(alertType string) []string {
-	var in []honeycombio.RecipientType
-	if alertType == "trigger" {
-		in = honeycombio.TriggerRecipientTypes()
-	}
-
-	if alertType == "burn_alert" {
-		in = honeycombio.BurnAlertRecipientTypes()
-	}
-
+func recipientTypeStrings(recipientTypes []honeycombio.RecipientType) []string {
+	in := recipientTypes
 	out := make([]string, len(in))
 
 	for i := range in {

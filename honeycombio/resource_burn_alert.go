@@ -58,7 +58,7 @@ func newBurnAlert() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							Computed:     true,
-							ValidateFunc: validation.StringInSlice(recipientTypeStrings("burn_alert"), false),
+							ValidateFunc: validation.StringInSlice(recipientTypeStrings(honeycombio.BurnAlertRecipientTypes()), false),
 							Description:  "The type of notification. Allowed types are `email`, `pagerduty`, `slack` and `webhook`. Should not be used in combination with `id`.",
 						},
 						"target": {
