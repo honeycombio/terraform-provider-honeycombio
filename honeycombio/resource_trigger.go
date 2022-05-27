@@ -149,11 +149,10 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 	dataset := d.Get("dataset").(string)
 
 	t, err := client.Triggers.Get(ctx, dataset, d.Id())
-	if err != nil {
-		if err == honeycombio.ErrNotFound {
-			d.SetId("")
-			return nil
-		}
+	if err == honeycombio.ErrNotFound {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 

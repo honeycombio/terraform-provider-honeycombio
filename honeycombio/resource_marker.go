@@ -63,11 +63,10 @@ func resourceMarkerRead(ctx context.Context, d *schema.ResourceData, meta interf
 	client := meta.(*honeycombio.Client)
 
 	marker, err := client.Markers.Get(ctx, d.Get("dataset").(string), d.Id())
-	if err != nil {
-		if err == honeycombio.ErrNotFound {
-			d.SetId("")
-			return nil
-		}
+	if err == honeycombio.ErrNotFound {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
