@@ -71,6 +71,8 @@ type Client struct {
 	QueryAnnotations QueryAnnotations
 	QueryResults     QueryResults
 	Triggers         Triggers
+	SLOs             SLOs
+	BurnAlerts       BurnAlerts
 }
 
 // NewClient creates a new Honeycomb API client.
@@ -106,6 +108,8 @@ func NewClient(config *Config) (*Client, error) {
 	client.QueryAnnotations = &queryAnnotations{client: client}
 	client.QueryResults = &queryResults{client: client}
 	client.Triggers = &triggers{client: client}
+	client.SLOs = &slos{client: client}
+	client.BurnAlerts = &burnalerts{client: client}
 
 	return client, nil
 }

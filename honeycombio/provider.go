@@ -48,15 +48,18 @@ func Provider() *schema.Provider {
 			"honeycombio_query_result":        dataSourceHoneycombioQueryResult(),
 			"honeycombio_query_specification": dataSourceHoneycombioQuerySpec(),
 			"honeycombio_trigger_recipient":   dataSourceHoneycombioSlackRecipient(),
+			"honeycombio_recipient":           dataSourceHoneycombioRecipient(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"honeycombio_board":            newBoard(),
+			"honeycombio_burn_alert":       newBurnAlert(),
 			"honeycombio_column":           newColumn(),
 			"honeycombio_dataset":          newDataset(),
 			"honeycombio_derived_column":   newDerivedColumn(),
 			"honeycombio_marker":           newMarker(),
 			"honeycombio_query":            newQuery(),
 			"honeycombio_query_annotation": newQueryAnnotation(),
+			"honeycombio_slo":              newSLO(),
 			"honeycombio_trigger":          newTrigger(),
 		},
 	}

@@ -50,14 +50,13 @@ func TestTriggers(t *testing.T) {
 				Op:    TriggerThresholdOpGreaterThan,
 				Value: 10000,
 			},
-			AlertType: "on_change",
-			Recipients: []TriggerRecipient{
+			Recipients: []Recipient{
 				{
-					Type:   TriggerRecipientTypeEmail,
+					Type:   RecipientTypeEmail,
 					Target: "hello@example.com",
 				},
 				{
-					Type:   TriggerRecipientTypeMarker,
+					Type:   RecipientTypeMarker,
 					Target: "This marker is created by a trigger",
 				},
 			},

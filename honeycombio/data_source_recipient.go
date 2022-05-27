@@ -9,9 +9,9 @@ import (
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-func dataSourceHoneycombioSlackRecipient() *schema.Resource {
+func dataSourceHoneycombioRecipient() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: dataSourceHoneycombioSlackRecipientRead,
+		ReadContext: dataSourceHoneycombioRecipientRead,
 
 		Schema: map[string]*schema.Schema{
 			"dataset": {
@@ -31,7 +31,7 @@ func dataSourceHoneycombioSlackRecipient() *schema.Resource {
 	}
 }
 
-func dataSourceHoneycombioSlackRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 	dataset := d.Get("dataset").(string)
 
