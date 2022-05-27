@@ -85,11 +85,10 @@ func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta
 	dataset := d.Get("dataset").(string)
 
 	derivedColumn, err := client.DerivedColumns.GetByAlias(ctx, dataset, d.Get("alias").(string))
-	if err != nil {
-		if err == honeycombio.ErrNotFound {
-			d.SetId("")
-			return nil
-		}
+	if err == honeycombio.ErrNotFound {
+		d.SetId("")
+		return nil
+	} else if err != nil {
 		return diag.FromErr(err)
 	}
 
