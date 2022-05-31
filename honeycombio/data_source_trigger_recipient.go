@@ -28,7 +28,7 @@ func dataSourceHoneycombioSlackRecipient() *schema.Resource {
 				Optional: true,
 			},
 		},
-		DeprecationMessage: "Use honeycombio_recipient data_source instead",
+		DeprecationMessage: "Use honeycombio_recipient data source instead",
 	}
 }
 
