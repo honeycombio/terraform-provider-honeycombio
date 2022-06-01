@@ -58,3 +58,11 @@ webhook   | name of the webhook
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - ID of the burn alert.
+
+## Import
+
+Burn Alerts can be imported using a combination of the dataset name and their ID, e.g.
+
+```
+$ terraform import honeycombio_burn_alert.my_alert my-dataset/bj9BwOb1uKz
+```
