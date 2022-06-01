@@ -1,8 +1,6 @@
-# Data Source: honeycombio_trigger_recipient
+# Data Source: honeycombio_recipient
 
-Search the triggers of a dataset for a trigger recipient. The ID of the existing trigger recipient can be used when adding trigger recipients to new triggers.
-
--> **Deprecated** Use honeycombio_recipient data source instead.
+Search the triggers or burn alerts of a dataset for a recipient. The ID of the existing recipient can be used when adding recipients to new triggers or burn alerts.
 
 ## Example Usage
 
@@ -11,8 +9,8 @@ variable "dataset" {
   type = string
 }
 
-# search for a trigger recipient of type "slack" and target "honeycomb-triggers" in the given dataset
-data "honeycombio_trigger_recipient" "slack" {
+# search for a recipient of type "slack" and target "honeycomb-triggers" in the given dataset
+data "honeycombio_recipient" "slack" {
   dataset = var.dataset
   type    = "slack"
   target  = "honeycomb-triggers"
@@ -43,7 +41,7 @@ resource "honeycombio_trigger" "example" {
 
   # add an already existing recipient
   recipient {
-    id = data.honeycombio_trigger_recipient.slack.id
+    id = data.honeycombio_recipient.slack.id
   }
 }
 ```
@@ -52,9 +50,9 @@ resource "honeycombio_trigger" "example" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) Search through all triggers linked to this dataset.
+* `dataset` - (Required) The dataset this recipient is associated with.
 * `type` - (Required) The type of recipient, allowed types are `email`, `marker`, `pagerduty`, `slack` and `webhook`.
-* `target` - (Optional) Target of the trigger, this has another meaning depending on the type of recipient (see the table below).
+* `target` - (Optional) Target of the trigger or burn alert, this has another meaning depending on the type of recipient (see the table below).
 
 Type      | Target
 ----------|-------------------------
@@ -68,4 +66,4 @@ webhook   | name of the webhook
 
 In addition to all arguments above, the following attributes are exported:
 
-* `id` - ID of the trigger recipient.
+* `id` - ID of the recipient.
