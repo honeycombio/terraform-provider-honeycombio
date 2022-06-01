@@ -36,9 +36,19 @@ The derived column used as the SLI must be in the same dataset as the SLO. Addit
 the column evaluation should consistently return nil, true, or false, as these are the only valid values for an SLI.
 * `target_percentage` - (Required) The percentage of qualified events that you expect to succeed during the `time_period`.
 * `time_period` - (Required) The time period, in days, over which your SLO will be evaluated.
-* 
+
 ## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - ID of the SLO.
+
+## Import
+
+SLOs can be imported using a combination of the dataset name and their ID, e.g.
+
+```
+$ terraform import honeycombio_slo.my_slo my-dataset/bj9BwOb1uKz
+```
+
+You can find the ID in the URL bar when visiting the SLO from the UI.
