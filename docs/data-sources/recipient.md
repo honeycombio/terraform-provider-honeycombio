@@ -50,7 +50,7 @@ resource "honeycombio_trigger" "example" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) Search through all triggers linked to this dataset.
+* `dataset` - (Required) The dataset this recipient is associated with.
 * `type` - (Required) The type of recipient, allowed types are `email`, `marker`, `pagerduty`, `slack` and `webhook`.
 * `target` - (Optional) Target of the trigger or burn alert, this has another meaning depending on the type of recipient (see the table below).
 
