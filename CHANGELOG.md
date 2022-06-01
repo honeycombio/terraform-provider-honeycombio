@@ -3,7 +3,7 @@
 NOTES:
 
 * `honeycombio_trigger_recipient` data source has been deprecated in favour of the more generic `honeycombio_recipient`.
-The depreciated data source will be removed in a future release.
+The deprecated data source will be removed in a future release.
 
 FEATURES:
 
