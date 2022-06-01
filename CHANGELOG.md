@@ -1,3 +1,29 @@
+# 0.7.0 (Jun 2, 2022)
+
+NOTES:
+
+* `honeycombio_trigger_recipient` data source has been depreciated in favour of the more generic `honeycombio_recipient`.
+The depreciated data source will be removed in a future release.
+
+FEATURES:
+
+* *New Resource*: `honeycombio_slo` (#166)
+* *New Resource*: `honeycombio_burn_alert` (#166)
+* *New Data Source*: `honeycombio_recipient` (#166)
+
+ENHANCEMENTS:
+
+* resource/honeycombio_trigger: add `alert_type` argument (#159)
+* docs: fixes and additional examples (#167, #169)
+
+BREAKING CHANGES:
+
+* `honeycombio_query_result` now takes the Query Specification JSON directly (#165)
+
+HOUSEKEEPING:
+
+* terraform-plugin-sdk upgraded from 2.15.0 to 2.16.0 (#164)
+
 # 0.6.0 (May 9, 2022)
 
 FEATURES:
