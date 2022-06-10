@@ -16,7 +16,7 @@ resource "honeycombio_derived_column" "request_latency_sli" {
 
 resource "honeycombio_slo" "slo" {
   name              = "Latency SLO"
-  description       = "example of an SLO
+  description       = "example of an SLO"
   dataset           = var.dataset
   sli               = honeycombio_derived_column.request_latency_sli.alias
   target_percentage = 99.9
