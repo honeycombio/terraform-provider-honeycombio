@@ -124,6 +124,8 @@ data "honeycombio_query_specification" "test" {
   calculation {
     op     = "COUNT"
   }
+
+  time_range = 1200
 }
 
 resource "honeycombio_query" "test" {
