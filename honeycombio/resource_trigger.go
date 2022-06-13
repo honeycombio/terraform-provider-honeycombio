@@ -79,6 +79,33 @@ func newTrigger() *schema.Resource {
 					validation.IntBetween(60, 86400),
 				),
 			},
+			"evaluation_schedule_type": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  honeycombio.TriggerEvaluationScheduleFrequency,
+
+				ValidateFunc: validation.StringInSlice([]string{honeycombio.TriggerEvaluationScheduleFrequency, honeycombio.TriggerEvaluationScheduleWindow}, false),
+			},
+			"evaluation_schedule": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"days_of_week": {
+							Type:     schema.TypeList,
+							Optional: true,
+						},
+						"start_time": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"end_time": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+					},
+				},
+			},
 			"recipient": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -170,6 +197,9 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 
 	d.Set("frequency", t.Frequency)
 
+	d.Set("evaluation_schedule_type", t.EvaluationScheduleType)
+	d.Set("evaluation_schedule", t.EvaluationSchedule)
+
 	declaredRecipients, ok := d.Get("recipient").([]interface{})
 	if !ok {
 		return diag.Errorf("failed to parse recipients for Trigger %s", t.ID)
@@ -214,15 +244,17 @@ func resourceTriggerDelete(ctx context.Context, d *schema.ResourceData, meta int
 
 func expandTrigger(d *schema.ResourceData) (*honeycombio.Trigger, error) {
 	trigger := &honeycombio.Trigger{
-		ID:          d.Id(),
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Disabled:    d.Get("disabled").(bool),
-		QueryID:     d.Get("query_id").(string),
-		AlertType:   d.Get("alert_type").(string),
-		Threshold:   expandTriggerThreshold(d.Get("threshold").([]interface{})),
-		Frequency:   d.Get("frequency").(int),
-		Recipients:  expandRecipients(d.Get("recipient").([]interface{})),
+		ID:                     d.Id(),
+		Name:                   d.Get("name").(string),
+		Description:            d.Get("description").(string),
+		Disabled:               d.Get("disabled").(bool),
+		QueryID:                d.Get("query_id").(string),
+		AlertType:              d.Get("alert_type").(string),
+		Threshold:              expandTriggerThreshold(d.Get("threshold").([]interface{})),
+		Frequency:              d.Get("frequency").(int),
+		EvaluationScheduleType: d.Get("evaluation_schedule_type").(string),
+		EvaluationSchedule:     d.Get("evaluation_schedule").(string),
+		Recipients:             expandRecipients(d.Get("recipient").([]interface{})),
 	}
 	return trigger, nil
 }

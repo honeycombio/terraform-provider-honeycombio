@@ -65,7 +65,9 @@ type Trigger struct {
 	// Frequency describes how often the trigger should run. Frequency is an
 	// interval in seconds, defaulting to 900 (15 minutes). Its value must be
 	// divisible by 60 and between 60 and 86400 (between 1 minute and 1 day).
-	Frequency int `json:"frequency,omitempty"`
+	Frequency              int    `json:"frequency,omitempty"`
+	EvaluationScheduleType string `json:"evaluation_schedule_type,omitempty"`
+	EvaluationSchedule     string `json:"evaluation_schedule,omitempty"`
 	// Recipients are notified when the trigger fires.
 	Recipients []Recipient `json:"recipients,omitempty"`
 }
@@ -103,6 +105,19 @@ const (
 	TriggerAlertTypeValueOnTrue   string = "on_true"
 )
 
+// Allowed values for evaluation_schedule. | frequency is default
+const (
+	TriggerEvaluationScheduleFrequency string = "evaluation_schedule_frequency"
+	TriggerEvaluationScheduleWindow    string = "evaluation_schedule_window"
+)
+
+// A Go typed schedule used to validate incoming external API calls
+type TriggerEvaluationSchedule struct {
+	StartTime  string `json:"start_time"`
+	EndTime    string `json:"end_time"`
+	DaysOfWeek []int  `json:"days_of_week"`
+}
+
 func (t *Trigger) MarshalJSON() ([]byte, error) {
 	// aliased type to avoid stack overflows due to recursion
 	type ATrigger Trigger
@@ -112,15 +127,17 @@ func (t *Trigger) MarshalJSON() ([]byte, error) {
 		// this doesn't work in the general case, but this
 		// client is now purpose-built for the Terraform provider
 		a := &ATrigger{
-			ID:          t.ID,
-			Name:        t.Name,
-			Description: t.Description,
-			Disabled:    t.Disabled,
-			QueryID:     t.QueryID,
-			AlertType:   t.AlertType,
-			Threshold:   t.Threshold,
-			Frequency:   t.Frequency,
-			Recipients:  t.Recipients,
+			ID:                     t.ID,
+			Name:                   t.Name,
+			Description:            t.Description,
+			Disabled:               t.Disabled,
+			QueryID:                t.QueryID,
+			AlertType:              t.AlertType,
+			Threshold:              t.Threshold,
+			Frequency:              t.Frequency,
+			EvaluationScheduleType: t.EvaluationScheduleType,
+			EvaluationSchedule:     t.EvaluationSchedule,
+			Recipients:             t.Recipients,
 		}
 		return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(a)})
 	}

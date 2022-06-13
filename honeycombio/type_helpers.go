@@ -1,7 +1,10 @@
 package honeycombio
 
 import (
+	"encoding/json"
+	"errors"
 	"strconv"
+	"time"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
@@ -119,6 +122,17 @@ func triggerThresholdOpStrings() []string {
 	return out
 }
 
+func ScheduleValidateTime(s string) (bool, error) {
+	const HourMinuteLayout = "15:04"
+	_, err := time.Parse(HourMinuteLayout, s)
+	if err != nil {
+		return false, errors.New("Unable to validate schedule time string")
+	}
+	return true, nil
+}
+
+//func triggerEvaluationScheduleString(evaluationSchedule []honeycombio.EvaluationScheduleType) []string
+
 func coerceValueToType(i string) interface{} {
 	// HCL really has three base types: bool, string, and number
 	// The Plugin SDK allows typing a schema field to Int or Float
@@ -148,6 +162,15 @@ func floatToTPM(f float64) int {
 // converts a SLO 'Target Per Million' value to a floating point percentage
 func tpmToFloat(t int) float64 {
 	return float64(t) / 10000
+}
+
+func ToAPISchedule(jsonSchedule string) (honeycombio.TriggerEvaluationSchedule, error) {
+	var externalSchedule honeycombio.TriggerEvaluationSchedule
+	err := json.Unmarshal([]byte(jsonSchedule), &externalSchedule)
+	if err != nil {
+		return externalSchedule, err
+	}
+	return externalSchedule, nil
 }
 
 func flattenRecipients(rs []honeycombio.Recipient) []map[string]interface{} {

@@ -28,6 +28,7 @@ func TestAccHoneycombioTrigger_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "alert_type", "on_change"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "evaluation_schedule_type", "evaluation_schedule_frequency"),
 				),
 			},
 			{
@@ -146,6 +147,8 @@ resource "honeycombio_trigger" "test" {
 
   alert_type = "on_change"
 
+  evaluation_schedule_type = "evaluation_schedule_frequency"
+
   recipient {
     type   = "slack"
     target = "#test2"
@@ -208,6 +211,8 @@ resource "honeycombio_trigger" "test" {
 
   frequency = %d
 
+  evaluation_schedule_type = "evaluation_schedule_frequency"
+
   recipient {
     type   = "email"
     target = "hello@example.com"
@@ -256,6 +261,8 @@ resource "honeycombio_trigger" "test" {
 
   alert_type = "on_change"
 
+  evaluation_schedule_type = "evaluation_schedule_frequency"
+
   threshold {
     op    = ">"
     value = 100
@@ -285,6 +292,8 @@ resource "honeycombio_trigger" "test" {
   query_id = honeycombio_query.test.id
 
   alert_type = "on_change"
+
+  evaluation_schedule_type = "evaluation_schedule_frequency"
 
   threshold {
     op    = ">"
