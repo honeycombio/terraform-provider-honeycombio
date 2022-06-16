@@ -50,6 +50,7 @@ func TestTriggers(t *testing.T) {
 				Op:    TriggerThresholdOpGreaterThan,
 				Value: 10000,
 			},
+			EvaluationScheduleType: "evaluation_schedule_frequency",
 			Recipients: []Recipient{
 				{
 					Type:   RecipientTypeEmail,
