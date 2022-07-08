@@ -67,7 +67,7 @@ type Trigger struct {
 	// divisible by 60 and between 60 and 86400 (between 1 minute and 1 day).
 	Frequency int `json:"frequency,omitempty"`
 	// Recipients are notified when the trigger fires.
-	Recipients []Recipient `json:"recipients,omitempty"`
+	Recipients []NotificationRecipient `json:"recipients,omitempty"`
 }
 
 // TriggerThreshold represents the threshold of a trigger.

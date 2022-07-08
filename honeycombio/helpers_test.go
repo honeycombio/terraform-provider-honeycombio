@@ -55,7 +55,7 @@ func testCheckOutputDoesNotContain(name, contains string) resource.TestCheckFunc
 	}
 }
 
-func createTriggerWithRecipient(t *testing.T, dataset string, recipient honeycombio.Recipient) (trigger *honeycombio.Trigger, deleteFn func()) {
+func createTriggerWithRecipient(t *testing.T, dataset string, recipient honeycombio.NotificationRecipient) (trigger *honeycombio.Trigger, deleteFn func()) {
 	ctx := context.Background()
 	c := testAccClient(t)
 
@@ -72,7 +72,7 @@ func createTriggerWithRecipient(t *testing.T, dataset string, recipient honeycom
 			Op:    honeycombio.TriggerThresholdOpGreaterThan,
 			Value: 100,
 		},
-		Recipients: []honeycombio.Recipient{recipient},
+		Recipients: []honeycombio.NotificationRecipient{recipient},
 	}
 	trigger, err := c.Triggers.Create(ctx, dataset, trigger)
 	if err != nil {
