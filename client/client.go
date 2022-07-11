@@ -73,6 +73,7 @@ type Client struct {
 	Triggers         Triggers
 	SLOs             SLOs
 	BurnAlerts       BurnAlerts
+	Recipients       Recipients
 }
 
 // NewClient creates a new Honeycomb API client.
@@ -110,6 +111,7 @@ func NewClient(config *Config) (*Client, error) {
 	client.Triggers = &triggers{client: client}
 	client.SLOs = &slos{client: client}
 	client.BurnAlerts = &burnalerts{client: client}
+	client.Recipients = &recipients{client: client}
 
 	return client, nil
 }

@@ -45,7 +45,7 @@ func TestBurnAlerts(t *testing.T) {
 			Recipients: []NotificationRecipient{
 				{
 					Type:   "email",
-					Target: "testalert@honeycomb.test",
+					Target: "testalert@example.com",
 				},
 			},
 		}
