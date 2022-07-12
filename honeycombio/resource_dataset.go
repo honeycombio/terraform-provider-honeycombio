@@ -23,9 +23,19 @@ func newDataset() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validation.StringLenBetween(1, 255),
 			},
+			"description": {
+				Type:         schema.TypeString,
+				ForceNew:     true,
+				ValidateFunc: validation.StringLenBetween(1, 255),
+			},
 			"slug": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"expand_json_depth": {
+				Type:         schema.TypeInt,
+				ForceNew:     true,
+				ValidateFunc: validation.IntBetween(0, 10),
 			},
 		},
 	}

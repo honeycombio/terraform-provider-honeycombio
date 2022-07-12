@@ -26,3 +26,4 @@ In addition to all arguments above, the following attributes are exported:
 
 * `description` - Longer description for datset.
 * `slug` - The slug of the dataset.
+* `expand_json_depth` - How many JSON levels to unfurl.
