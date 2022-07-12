@@ -23,6 +23,7 @@ func TestAccHoneycombioDataset_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset),
 					resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", testDataset),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "description", urlEncodeDataset(testDataset)),
 					resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", urlEncodeDataset(testDataset)),
 				),
 			},
@@ -53,6 +54,7 @@ func testAccCheckDatasetExists(t *testing.T, name, testDataset string) resource.
 		}
 
 		assert.Equal(t, testDataset, d.Name)
+		assert.Equal(t, testDataset, d.Description)
 		assert.Equal(t, urlEncodeDataset(testDataset), d.Slug)
 
 		return nil

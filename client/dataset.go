@@ -34,6 +34,7 @@ var _ Datasets = (*datasets)(nil)
 // API docs: https://docs.honeycomb.io/api/dataset
 type Dataset struct {
 	Name string `json:"name"`
+	Description string `json:"description"`
 	Slug string `json:"slug,omitempty"`
 }
 
