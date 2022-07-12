@@ -150,7 +150,7 @@ func tpmToFloat(t int) float64 {
 	return float64(t) / 10000
 }
 
-func flattenRecipients(rs []honeycombio.Recipient) []map[string]interface{} {
+func flattenRecipients(rs []honeycombio.NotificationRecipient) []map[string]interface{} {
 	result := make([]map[string]interface{}, len(rs))
 
 	for i, r := range rs {
@@ -164,13 +164,13 @@ func flattenRecipients(rs []honeycombio.Recipient) []map[string]interface{} {
 	return result
 }
 
-func expandRecipients(s []interface{}) []honeycombio.Recipient {
-	recipients := make([]honeycombio.Recipient, len(s))
+func expandRecipients(s []interface{}) []honeycombio.NotificationRecipient {
+	recipients := make([]honeycombio.NotificationRecipient, len(s))
 
 	for i, r := range s {
 		rMap := r.(map[string]interface{})
 
-		recipients[i] = honeycombio.Recipient{
+		recipients[i] = honeycombio.NotificationRecipient{
 			ID:     rMap["id"].(string),
 			Type:   honeycombio.RecipientType(rMap["type"].(string)),
 			Target: rMap["target"].(string),
@@ -185,10 +185,10 @@ func expandRecipients(s []interface{}) []honeycombio.Recipient {
 //
 // This cannot currently be handled efficiently by a DiffSuppressFunc.
 // See: https://github.com/hashicorp/terraform-plugin-sdk/issues/477
-func matchRecipientsWithSchema(readRecipients []honeycombio.Recipient, declaredRecipients []interface{}) []honeycombio.Recipient {
-	result := make([]honeycombio.Recipient, len(declaredRecipients))
+func matchRecipientsWithSchema(readRecipients []honeycombio.NotificationRecipient, declaredRecipients []interface{}) []honeycombio.NotificationRecipient {
+	result := make([]honeycombio.NotificationRecipient, len(declaredRecipients))
 
-	rMap := make(map[string]honeycombio.Recipient, len(readRecipients))
+	rMap := make(map[string]honeycombio.NotificationRecipient, len(readRecipients))
 	for _, recipient := range readRecipients {
 		rMap[recipient.ID] = recipient
 	}

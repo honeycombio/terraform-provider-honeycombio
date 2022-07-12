@@ -42,12 +42,12 @@ type SLORef struct {
 }
 
 type BurnAlert struct {
-	ID                string      `json:"id,omitempty"`
-	ExhaustionMinutes int         `json:"exhaustion_minutes"`
-	SLO               SLORef      `json:"slo"`
-	CreatedAt         time.Time   `json:"created_at,omitempty"`
-	UpdatedAt         time.Time   `json:"updated_at,omitempty"`
-	Recipients        []Recipient `json:"recipients,omitempty"`
+	ID                string                  `json:"id,omitempty"`
+	ExhaustionMinutes int                     `json:"exhaustion_minutes"`
+	SLO               SLORef                  `json:"slo"`
+	CreatedAt         time.Time               `json:"created_at,omitempty"`
+	UpdatedAt         time.Time               `json:"updated_at,omitempty"`
+	Recipients        []NotificationRecipient `json:"recipients,omitempty"`
 }
 
 func (s *burnalerts) ListForSLO(ctx context.Context, dataset string, sloId string) ([]BurnAlert, error) {

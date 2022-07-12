@@ -73,6 +73,7 @@ type Client struct {
 	Triggers         Triggers
 	SLOs             SLOs
 	BurnAlerts       BurnAlerts
+	Recipients       Recipients
 }
 
 // NewClient creates a new Honeycomb API client.
@@ -110,6 +111,7 @@ func NewClient(config *Config) (*Client, error) {
 	client.Triggers = &triggers{client: client}
 	client.SLOs = &slos{client: client}
 	client.BurnAlerts = &burnalerts{client: client}
+	client.Recipients = &recipients{client: client}
 
 	return client, nil
 }
@@ -177,7 +179,27 @@ func errorFromResponse(resp *http.Response) error {
 }
 
 type honeycombioError struct {
-	ErrorMessage string `json:"error"`
+	Status  int    `json:"status"`
+	Err     string `json:"error"`
+	Details []struct {
+		Code        string `json:"code"`
+		Description string `json:"description"`
+	} `json:"type_detail,omitempty"`
+}
+
+func (e *honeycombioError) Error() string {
+	if len(e.Details) > 0 {
+		var response string
+		for i, d := range e.Details {
+			response += d.Code + " - " + d.Description
+			if i > len(e.Details)-1 {
+				response += ", "
+			}
+		}
+		return response
+	}
+
+	return e.Err
 }
 
 func attemptToExtractHoneycombioError(bodyReader io.Reader) string {
@@ -189,11 +211,11 @@ func attemptToExtractHoneycombioError(bodyReader io.Reader) string {
 	var honeycombioErr honeycombioError
 
 	err = json.Unmarshal(body, &honeycombioErr)
-	if err != nil || honeycombioErr.ErrorMessage == "" {
+	if err != nil {
 		return string(body)
 	}
 
-	return honeycombioErr.ErrorMessage
+	return honeycombioErr.Error()
 }
 
 // urlEncodeDataset sanitizes the dataset name for when it is used as part of

@@ -42,10 +42,10 @@ func TestBurnAlerts(t *testing.T) {
 		data := &BurnAlert{
 			ExhaustionMinutes: int(24 * 60), // 24 hours
 			SLO:               SLORef{ID: slo.ID},
-			Recipients: []Recipient{
+			Recipients: []NotificationRecipient{
 				{
 					Type:   "email",
-					Target: "testalert@honeycomb.test",
+					Target: "testalert@example.com",
 				},
 			},
 		}
@@ -83,7 +83,7 @@ func TestBurnAlerts(t *testing.T) {
 
 	t.Run("ListForSLO", func(t *testing.T) {
 		results, err := c.BurnAlerts.ListForSLO(ctx, dataset, slo.ID)
-		burnAlert.Recipients = []Recipient{}
+		burnAlert.Recipients = []NotificationRecipient{}
 		assert.NoError(t, err, "failed to list burn alerts for SLO")
 		assert.NotZero(t, len(results))
 		assert.Equal(t, burnAlert.ID, results[0].ID, "newly created BurnAlert not in list of SLO's burn alerts")

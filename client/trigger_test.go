@@ -50,7 +50,7 @@ func TestTriggers(t *testing.T) {
 				Op:    TriggerThresholdOpGreaterThan,
 				Value: 10000,
 			},
-			Recipients: []Recipient{
+			Recipients: []NotificationRecipient{
 				{
 					Type:   RecipientTypeEmail,
 					Target: "hello@example.com",

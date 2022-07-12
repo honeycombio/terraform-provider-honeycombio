@@ -12,7 +12,7 @@ import (
 func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
 	dataset := testAccDataset()
 
-	_, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.Recipient{
+	_, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.NotificationRecipient{
 		Type:   honeycombio.RecipientTypeEmail,
 		Target: "acctest@example.com",
 	})
