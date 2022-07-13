@@ -174,7 +174,7 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 	if !ok {
 		return diag.Errorf("failed to parse recipients for Trigger %s", t.ID)
 	}
-	err = d.Set("recipient", flattenRecipients(matchRecipientsWithSchema(t.Recipients, declaredRecipients)))
+	err = d.Set("recipient", flattenNotificationRecipients(matchNotificationRecipientsWithSchema(t.Recipients, declaredRecipients)))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -222,7 +222,7 @@ func expandTrigger(d *schema.ResourceData) (*honeycombio.Trigger, error) {
 		AlertType:   d.Get("alert_type").(string),
 		Threshold:   expandTriggerThreshold(d.Get("threshold").([]interface{})),
 		Frequency:   d.Get("frequency").(int),
-		Recipients:  expandRecipients(d.Get("recipient").([]interface{})),
+		Recipients:  expandNotificationRecipients(d.Get("recipient").([]interface{})),
 	}
 	return trigger, nil
 }
