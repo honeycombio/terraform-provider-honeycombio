@@ -1,8 +1,10 @@
 package honeycombio
 
 import (
+	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
@@ -228,4 +230,19 @@ func matchNotificationRecipientsWithSchema(readRecipients []honeycombio.Notifica
 	}
 
 	return result
+}
+
+func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*honeycombio.Recipient, error) {
+	r := &honeycombio.Recipient{
+		ID:   d.Id(),
+		Type: t,
+	}
+
+	switch r.Type {
+	case honeycombio.RecipientTypeEmail:
+		r.Details.EmailAddress = d.Get("address").(string)
+	default:
+		return r, fmt.Errorf("unknown type %v", r.Type)
+	}
+	return r, nil
 }

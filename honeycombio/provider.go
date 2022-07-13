@@ -59,6 +59,7 @@ func Provider() *schema.Provider {
 			"honeycombio_marker":           newMarker(),
 			"honeycombio_query":            newQuery(),
 			"honeycombio_query_annotation": newQueryAnnotation(),
+			"honeycombio_email_recipient":  newEmailRecipient(),
 			"honeycombio_slo":              newSLO(),
 			"honeycombio_trigger":          newTrigger(),
 		},
