@@ -7,10 +7,10 @@
 
 A Terraform provider for Honeycomb.io.
 
-📄 Check out [the documentation](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs)  
-🏗️ Examples can be found in [example/](example/)  
-❓ Questions? Feel free to create a new issue or find us on the **Honeycomb Pollinators** Slack, channel [**#terraform-provider**](https://honeycombpollinators.slack.com/archives/C017T9FFT0D) (you can find a link to request an invite [here](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/))  
-🔧 Want to contribute? Check out [CONTRIBUTING.md](./CONTRIBUTING.md)  
+📄 Check out [the documentation](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs)
+🏗️ Examples can be found in [example/](example/)
+❓ Questions? Feel free to create a new issue or find us on the **Honeycomb Pollinators** Slack, channel [**#terraform-provider**](https://honeycombpollinators.slack.com/archives/C017T9FFT0D) (you can find a link to request an invite [here](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/))
+🔧 Want to contribute? Check out [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## Using the provider
 
@@ -27,7 +27,7 @@ terraform {
 }
 ```
 
-Set the API key used by Terraform setting the `HONEYCOMBIO_APIKEY` environment variable.
+Set the API key used by Terraform setting the `HONEYCOMB_API_KEY` environment variable.
 
 ## License
 

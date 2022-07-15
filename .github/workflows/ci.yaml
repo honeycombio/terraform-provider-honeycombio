@@ -26,7 +26,7 @@ jobs:
 
       - name: Test
         env:
-          HONEYCOMBIO_APIKEY: ${{ secrets.HONEYCOMBIO_APIKEY }}
+          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMBIO_APIKEY }}
           HONEYCOMBIO_DATASET: ${{ secrets.HONEYCOMBIO_DATASET }}
           TF_ACC: 1
         run: |

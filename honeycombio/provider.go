@@ -25,10 +25,13 @@ func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"api_key": {
-				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("HONEYCOMBIO_APIKEY", nil),
-				Sensitive:   true,
+				Type:     schema.TypeString,
+				Required: true,
+				// Tiering goes HONEYCOMB_API_KEY > HONEYCOMBIO_APIKEY > nil
+				DefaultFunc: schema.EnvDefaultFunc(
+					"HONEYCOMB_API_KEY", schema.EnvDefaultFunc(
+						"HONEYCOMBIO_APIKEY", nil)),
+				Sensitive: true,
 			},
 			"api_url": {
 				Type:     schema.TypeString,
