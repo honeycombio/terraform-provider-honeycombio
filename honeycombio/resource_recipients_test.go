@@ -51,7 +51,7 @@ resource "honeycombio_pagerduty_recipient" "test" {
 resource "honeycombio_webhook_recipient" "test" {
   name    = "custom-alert-router"
   secret  = "s0s3kr3t!"
-	url     = "https://my.url.corp.net"
+  url     = "https://my.url.corp.net"
 }
 `,
 				Check: resource.ComposeTestCheckFunc(
