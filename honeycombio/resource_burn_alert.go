@@ -130,7 +130,7 @@ func resourceBurnAlertRead(ctx context.Context, d *schema.ResourceData, meta int
 	if !ok {
 		return diag.Errorf("failed to parse recipients for Burn Alert %s", b.ID)
 	}
-	err = d.Set("recipient", flattenRecipients(matchRecipientsWithSchema(b.Recipients, declaredRecipients)))
+	err = d.Set("recipient", flattenNotificationRecipients(matchNotificationRecipientsWithSchema(b.Recipients, declaredRecipients)))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -173,7 +173,7 @@ func expandBurnAlert(d *schema.ResourceData) (*honeycombio.BurnAlert, error) {
 		ID:                d.Id(),
 		ExhaustionMinutes: d.Get("exhaustion_minutes").(int),
 		SLO:               honeycombio.SLORef{ID: d.Get("slo_id").(string)},
-		Recipients:        expandRecipients(d.Get("recipient").([]interface{})),
+		Recipients:        expandNotificationRecipients(d.Get("recipient").([]interface{})),
 	}
 	return b, nil
 }

@@ -1,8 +1,10 @@
 package honeycombio
 
 import (
+	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
@@ -150,7 +152,7 @@ func tpmToFloat(t int) float64 {
 	return float64(t) / 10000
 }
 
-func flattenRecipients(rs []honeycombio.NotificationRecipient) []map[string]interface{} {
+func flattenNotificationRecipients(rs []honeycombio.NotificationRecipient) []map[string]interface{} {
 	result := make([]map[string]interface{}, len(rs))
 
 	for i, r := range rs {
@@ -164,7 +166,7 @@ func flattenRecipients(rs []honeycombio.NotificationRecipient) []map[string]inte
 	return result
 }
 
-func expandRecipients(s []interface{}) []honeycombio.NotificationRecipient {
+func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRecipient {
 	recipients := make([]honeycombio.NotificationRecipient, len(s))
 
 	for i, r := range s {
@@ -185,7 +187,7 @@ func expandRecipients(s []interface{}) []honeycombio.NotificationRecipient {
 //
 // This cannot currently be handled efficiently by a DiffSuppressFunc.
 // See: https://github.com/hashicorp/terraform-plugin-sdk/issues/477
-func matchRecipientsWithSchema(readRecipients []honeycombio.NotificationRecipient, declaredRecipients []interface{}) []honeycombio.NotificationRecipient {
+func matchNotificationRecipientsWithSchema(readRecipients []honeycombio.NotificationRecipient, declaredRecipients []interface{}) []honeycombio.NotificationRecipient {
 	result := make([]honeycombio.NotificationRecipient, len(declaredRecipients))
 
 	rMap := make(map[string]honeycombio.NotificationRecipient, len(readRecipients))
@@ -228,4 +230,19 @@ func matchRecipientsWithSchema(readRecipients []honeycombio.NotificationRecipien
 	}
 
 	return result
+}
+
+func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*honeycombio.Recipient, error) {
+	r := &honeycombio.Recipient{
+		ID:   d.Id(),
+		Type: t,
+	}
+
+	switch r.Type {
+	case honeycombio.RecipientTypeEmail:
+		r.Details.EmailAddress = d.Get("address").(string)
+	default:
+		return r, fmt.Errorf("unknown type %v", r.Type)
+	}
+	return r, nil
 }
