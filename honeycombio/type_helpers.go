@@ -241,8 +241,17 @@ func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*hone
 	switch r.Type {
 	case honeycombio.RecipientTypeEmail:
 		r.Details.EmailAddress = d.Get("address").(string)
+	case honeycombio.RecipientTypePagerDuty:
+		r.Details.PDIntegrationKey = d.Get("integration_key").(string)
+		r.Details.PDIntegrationName = d.Get("integration_name").(string)
+	case honeycombio.RecipientTypeSlack:
+		r.Details.SlackChannel = d.Get("channel").(string)
+	case honeycombio.RecipientTypeWebhook:
+		r.Details.WebhookName = d.Get("name").(string)
+		r.Details.WebhookSecret = d.Get("secret").(string)
+		r.Details.WebhookURL = d.Get("url").(string)
 	default:
-		return r, fmt.Errorf("unknown type %v", r.Type)
+		return r, fmt.Errorf("unsupported recipient type %v", r.Type)
 	}
 	return r, nil
 }

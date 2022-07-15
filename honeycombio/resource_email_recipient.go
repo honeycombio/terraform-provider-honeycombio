@@ -19,7 +19,7 @@ func newEmailRecipient() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
-		Description: "Honeycomb Email Recipient allows you to define and manage an email recipient that will can be used by Triggers or BurnAlerts notifications.",
+		Description: "Honeycomb Email Recipient allows you to define and manage an Email recipient that can be used by Triggers or BurnAlerts notifications.",
 
 		Schema: map[string]*schema.Schema{
 			"address": {
