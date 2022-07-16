@@ -1,9 +1,11 @@
 package honeycombio
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
@@ -254,4 +256,79 @@ func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*hone
 		return r, fmt.Errorf("unsupported recipient type %v", r.Type)
 	}
 	return r, nil
+}
+
+func createRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
+	client := meta.(*honeycombio.Client)
+
+	r, err := expandRecipient(t, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	r, err = client.Recipients.Create(ctx, r)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(r.ID)
+	return readRecipient(ctx, d, meta, t)
+}
+
+func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
+	client := meta.(*honeycombio.Client)
+
+	r, err := client.Recipients.Get(ctx, d.Id())
+	if err == honeycombio.ErrNotFound {
+		d.SetId("")
+		return nil
+	} else if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(r.ID)
+	switch t {
+	case honeycombio.RecipientTypeEmail:
+		d.Set("address", r.Details.EmailAddress)
+	case honeycombio.RecipientTypePagerDuty:
+		d.Set("integration_key", r.Details.PDIntegrationKey)
+		d.Set("integration_name", r.Details.PDIntegrationName)
+	case honeycombio.RecipientTypeSlack:
+		d.Set("channel", r.Details.SlackChannel)
+	case honeycombio.RecipientTypeWebhook:
+		d.Set("name", r.Details.WebhookName)
+		d.Set("secret", r.Details.WebhookSecret)
+		d.Set("url", r.Details.WebhookURL)
+	default:
+		return diag.FromErr(fmt.Errorf("unsupported recipient type %v", t))
+	}
+
+	return nil
+}
+
+func updateRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
+	client := meta.(*honeycombio.Client)
+
+	r, err := expandRecipient(t, d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	r, err = client.Recipients.Update(ctx, r)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(r.ID)
+	return readRecipient(ctx, d, meta, t)
+}
+
+func deleteRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*honeycombio.Client)
+
+	err := client.Recipients.Delete(ctx, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }

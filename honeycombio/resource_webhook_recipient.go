@@ -43,64 +43,17 @@ func newWebhookRecipient() *schema.Resource {
 }
 
 func resourceWebhookRecipientCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	r, err := expandRecipient(honeycombio.RecipientTypeWebhook, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	r, err = client.Recipients.Create(ctx, r)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(r.ID)
-	return resourceWebhookRecipientRead(ctx, d, meta)
+	return createRecipient(ctx, d, meta, honeycombio.RecipientTypeWebhook)
 }
 
 func resourceWebhookRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	r, err := client.Recipients.Get(ctx, d.Id())
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
-	} else if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(r.ID)
-	d.Set("name", r.Details.WebhookName)
-	d.Set("secret", r.Details.WebhookSecret)
-	d.Set("url", r.Details.WebhookURL)
-
-	return nil
+	return readRecipient(ctx, d, meta, honeycombio.RecipientTypeWebhook)
 }
 
 func resourceWebhookRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	r, err := expandRecipient(honeycombio.RecipientTypeWebhook, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	r, err = client.Recipients.Update(ctx, r)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(r.ID)
-	return resourceWebhookRecipientRead(ctx, d, meta)
+	return updateRecipient(ctx, d, meta, honeycombio.RecipientTypeWebhook)
 }
 
 func resourceWebhookRecipientDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	err := client.Recipients.Delete(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return deleteRecipient(ctx, d, meta)
 }

@@ -33,62 +33,17 @@ func newSlackRecipient() *schema.Resource {
 }
 
 func resourceSlackRecipientCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	r, err := expandRecipient(honeycombio.RecipientTypeSlack, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	r, err = client.Recipients.Create(ctx, r)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(r.ID)
-	return resourceSlackRecipientRead(ctx, d, meta)
+	return createRecipient(ctx, d, meta, honeycombio.RecipientTypeSlack)
 }
 
 func resourceSlackRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	r, err := client.Recipients.Get(ctx, d.Id())
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
-	} else if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(r.ID)
-	d.Set("channel", r.Details.SlackChannel)
-
-	return nil
+	return readRecipient(ctx, d, meta, honeycombio.RecipientTypeSlack)
 }
 
 func resourceSlackRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	r, err := expandRecipient(honeycombio.RecipientTypeSlack, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	r, err = client.Recipients.Update(ctx, r)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(r.ID)
-	return resourceSlackRecipientRead(ctx, d, meta)
+	return updateRecipient(ctx, d, meta, honeycombio.RecipientTypeSlack)
 }
 
 func resourceSlackRecipientDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	err := client.Recipients.Delete(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return deleteRecipient(ctx, d, meta)
 }

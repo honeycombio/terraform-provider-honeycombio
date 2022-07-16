@@ -38,62 +38,17 @@ func newEmailRecipient() *schema.Resource {
 }
 
 func resourceEmailRecipientCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	r, err := expandRecipient(honeycombio.RecipientTypeEmail, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	r, err = client.Recipients.Create(ctx, r)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(r.ID)
-	return resourceEmailRecipientRead(ctx, d, meta)
+	return createRecipient(ctx, d, meta, honeycombio.RecipientTypeEmail)
 }
 
 func resourceEmailRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	r, err := client.Recipients.Get(ctx, d.Id())
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
-	} else if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(r.ID)
-	d.Set("address", r.Details.EmailAddress)
-
-	return nil
+	return readRecipient(ctx, d, meta, honeycombio.RecipientTypeEmail)
 }
 
 func resourceEmailRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	r, err := expandRecipient(honeycombio.RecipientTypeEmail, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	r, err = client.Recipients.Update(ctx, r)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	d.SetId(r.ID)
-	return resourceEmailRecipientRead(ctx, d, meta)
+	return updateRecipient(ctx, d, meta, honeycombio.RecipientTypeEmail)
 }
 
 func resourceEmailRecipientDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
-
-	err := client.Recipients.Delete(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return nil
+	return deleteRecipient(ctx, d, meta)
 }
