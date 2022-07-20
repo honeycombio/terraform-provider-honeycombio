@@ -33,7 +33,7 @@ If you want to match multiple recipients, use the 'honeycombio_recipients' data 
 			"type": {
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "The type of recipient.",
+				Description:  "The type of recipient, allowed types are `email`, `pagerduty`, `slack` and `webhook`.",
 				ValidateFunc: validation.StringInSlice([]string{"email", "pagerduty", "slack", "webhook"}, false),
 			},
 			"target": {
