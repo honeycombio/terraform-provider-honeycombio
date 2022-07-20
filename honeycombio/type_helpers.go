@@ -3,6 +3,7 @@ package honeycombio
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -331,4 +332,77 @@ func deleteRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 		return diag.FromErr(err)
 	}
 	return nil
+}
+
+func expandRecipientFilter(f []interface{}) *recipientFilter {
+	var value *string
+	var valRegexp *regexp.Regexp
+
+	filter := f[0].(map[string]interface{})
+	name := filter["name"].(string)
+	if v, ok := filter["value"].(string); ok && v != "" {
+		value = honeycombio.StringPtr(v)
+	}
+	if v, ok := filter["value_regex"].(string); ok && v != "" {
+		valRegexp = regexp.MustCompile(v)
+	}
+
+	switch name {
+	case "address":
+		return &recipientFilter{Type: honeycombio.RecipientTypeEmail, Value: value, ValueRegex: valRegexp}
+	case "channel":
+		return &recipientFilter{Type: honeycombio.RecipientTypeSlack, Value: value, ValueRegex: valRegexp}
+	case "integration_name":
+		return &recipientFilter{Type: honeycombio.RecipientTypePagerDuty, Value: value, ValueRegex: valRegexp}
+	case "name", "url":
+		return &recipientFilter{Type: honeycombio.RecipientTypeWebhook, Value: value, ValueRegex: valRegexp}
+	default:
+		return nil
+	}
+
+}
+
+// recipientFilter's help match one or more Recipients
+type recipientFilter struct {
+	Type       honeycombio.RecipientType
+	Value      *string
+	ValueRegex *regexp.Regexp
+}
+
+// IsMatch determine's if a given Recipient matches the filter
+func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
+	// nil filter fails open
+	if f == nil {
+		return true
+	}
+	// types don't match, no point in going further
+	if r.Type != f.Type {
+		return false
+	}
+
+	if f.ValueRegex != nil {
+		switch r.Type {
+		case honeycombio.RecipientTypeEmail:
+			return f.ValueRegex.MatchString(r.Details.EmailAddress)
+		case honeycombio.RecipientTypeSlack:
+			return f.ValueRegex.MatchString(r.Details.SlackChannel)
+		case honeycombio.RecipientTypePagerDuty:
+			return f.ValueRegex.MatchString(r.Details.PDIntegrationName)
+		case honeycombio.RecipientTypeWebhook:
+			return f.ValueRegex.MatchString(r.Details.WebhookName) || f.ValueRegex.MatchString(r.Details.WebhookURL)
+		}
+	} else if f.Value != nil {
+		switch r.Type {
+		case honeycombio.RecipientTypeEmail:
+			return (r.Details.EmailAddress == *f.Value)
+		case honeycombio.RecipientTypeSlack:
+			return (r.Details.SlackChannel == *f.Value)
+		case honeycombio.RecipientTypePagerDuty:
+			return (r.Details.PDIntegrationName == *f.Value)
+		case honeycombio.RecipientTypeWebhook:
+			return (r.Details.WebhookName == *f.Value) || (r.Details.WebhookURL == *f.Value)
+		}
+	}
+
+	return true
 }
