@@ -55,7 +55,7 @@ resource "honeycombio_trigger" "example" {
 The following arguments are supported:
 
 * `type` - (Required) The type of recipient, allowed types are `email`, `pagerduty`, `slack` and `webhook`.
-* `dataset` - (Optional) Deprecated: recpients are now a Team-level construct. Any provided value will being ignored.
+* `dataset` - (Optional) Deprecated: recpients are now a Team-level construct. Any provided value will be ignored.
 * `detail_filter` - (Optional) a block to further filter recipients as described below.
 * `target` - (Optional) Deprecated: use `detail_filter` instead. The target of the recipient, this has another meaning depending on the type of recipient (see the table below).
 

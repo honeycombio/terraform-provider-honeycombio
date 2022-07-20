@@ -28,7 +28,7 @@ If you want to match multiple recipients, use the 'honeycombio_recipients' data 
 				Type:        schema.TypeString,
 				Optional:    true,
 				Deprecated:  "Recpients are now a Team-level construct. The provided 'dataset' value is being ignored and should be removed.",
-				Description: "Deprecated: recpients are now a Team-level construct. Any provided 'dataset' value will being ignored.",
+				Description: "Deprecated: recpients are now a Team-level construct. Any provided 'dataset' value will be ignored.",
 			},
 			"type": {
 				Type:         schema.TypeString,
@@ -90,7 +90,7 @@ func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceD
 
 	var rcptFilter *recipientFilter
 	if v, ok := d.GetOk("target"); ok {
-		// deprecated attribute to be removed in future
+		// deprecated argument to be removed in future
 		target := v.(string)
 		rcptFilter = &recipientFilter{Type: matchType, Value: &target}
 	}
