@@ -1,19 +1,23 @@
 # Data Source: honeycombio_recipient
 
-Search the triggers or burn alerts of a dataset for a recipient. The ID of the existing recipient can be used when adding recipients to new triggers or burn alerts.
+`honeycombio_recipient` data source provides details about a specific recipient in the Team.
+
+The ID of an existing recipient can be used when adding recipients to triggers or burn alerts.
+
+-> **Note** Terraform will fail unless exactly one recipient is returned by the search. Ensure that your search is specific enough to return a single recipient ID only.
+If you want to match multiple recipients, use the `honeycombio_recipients` data source instead.
 
 ## Example Usage
 
 ```hcl
-variable "dataset" {
-  type = string
-}
-
-# search for a recipient of type "slack" and target "honeycomb-triggers" in the given dataset
+# search for a Slack recipient with channel name "honeycomb-triggers"
 data "honeycombio_recipient" "slack" {
-  dataset = var.dataset
   type    = "slack"
-  target  = "honeycomb-triggers"
+
+  filter_detail {
+    name  = "channel"
+    value = "honeycomb-triggers"
+  }
 }
 
 data "honeycombio_query_specification" "example" {
@@ -50,9 +54,10 @@ resource "honeycombio_trigger" "example" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset this recipient is associated with.
-* `type` - (Required) The type of recipient, allowed types are `email`, `marker`, `pagerduty`, `slack` and `webhook`.
-* `target` - (Optional) Target of the trigger or burn alert, this has another meaning depending on the type of recipient (see the table below).
+* `type` - (Required) The type of recipient, allowed types are `email`, `pagerduty`, `slack` and `webhook`.
+* `dataset` - (Optional) Deprecated: recpients are now a Team-level construct. Any provided value will be ignored.
+* `detail_filter` - (Optional) a block to further filter recipients as described below.
+* `target` - (Optional) Deprecated: use `detail_filter` instead. The target of the recipient, this has another meaning depending on the type of recipient (see the table below).
 
 Type      | Target
 ----------|-------------------------
@@ -62,8 +67,23 @@ pagerduty | _N/A_
 slack     | name of the channel
 webhook   | name of the webhook
 
+To further filter the recipient results, a `filter_detail` block can be provided which accepts the following arguments:
+
+* `name` - (Required) The name of the detail field to filter by. Allowed values are `address`, `channel`, `name`, `integration_name`, and `url`.
+* `value` - (Optional) The value of the detail field to match on.
+* `value_regex` - (Optional) A regular expression string to apply to the value of the detail field to match on.
+
+~> **Note** one of `value` or `value_regex` is required.
+
 ## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - ID of the recipient.
+* `address` - The email recipient's address -- if of type `email`.
+* `channel` - The Slack recipient's channel -- if of type `slack`.
+* `name` - The webhook recipient's name -- if of type `webhook`.
+* `secret` - (Sensitive) The webhook recipient's secret -- if of type `webhook`.
+* `url` - The webhook recipient's URL - if of type `webhook`.
+* `integration_key` - (Sensitive) The PagerDuty recipient's integration key -- if of type `pagerduty`.
+* `integration_name` - The PagerDuty recipient's inregration name -- if of type `pagerduty`.

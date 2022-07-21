@@ -57,6 +57,7 @@ func TestRecipientsEmail(t *testing.T) {
 
 		assert.NoError(t, err, "failed to update Recipient")
 		// copy dynamic field before asserting equality
+		rcpt.CreatedAt = result.CreatedAt
 		rcpt.UpdatedAt = result.UpdatedAt
 		assert.Equal(t, result, rcpt)
 	})
