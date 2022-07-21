@@ -28,11 +28,12 @@ func dataSourceHoneycombioRecipients() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"email", "pagerduty", "slack", "webhook"}, false),
 			},
 			"detail_filter": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				MinItems:    1,
-				MaxItems:    1,
-				Description: "Attributes to filter the recipients with.",
+				Type:         schema.TypeList,
+				Optional:     true,
+				MinItems:     1,
+				MaxItems:     1,
+				Description:  "Attributes to filter the recipients with. `type` must be set when providing a filter.",
+				RequiredWith: []string{"type"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
