@@ -84,9 +84,11 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccRecipientWithDeprecatedTarget("email", "acctest@example.org"),
+				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "address", "acctest@example.org"),
 			},
 			{
 				Config: testAccRecipientWithDeprecatedTarget("slack", "#acctest"),
+				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "channel", "#acctest"),
 			},
 			{
 				Config:      testAccRecipientWithDeprecatedTarget("email", "another@example.org"),
@@ -94,16 +96,30 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 			},
 			{
 				Config: testAccRecipientWithFilterValue("email", "address", "acctest2@example.org"),
+				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "address", "acctest2@example.org"),
 			},
 			{
 				Config:      testAccRecipientWithFilterValue("email", "address", "another@example.org"),
 				ExpectError: regexp.MustCompile("your recipient query returned no results."),
 			},
 			{
+				Config: testAccRecipientWithFilterValue("pagerduty", "integration_name", "My Important Service"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "integration_name", "My Important Service"),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "integration_key", "6f05176bf1c7a1adb6ee516521770ec4"),
+				),
+			},
+			{
 				Config: testAccRecipientWithFilterRegex("webhook", "url", ".*dev.corp.io"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "name", "My Notifications Hook"),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "secret", "s0s3kret!"),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", "https://my.webhook.dev.corp.io"),
+				),
 			},
 			{
 				Config: testAccRecipientWithFilterValue("slack", "channel", "#tmp-acctest"),
+				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "channel", "#tmp-acctest"),
 			},
 			{
 				Config:      testAccRecipientWithFilterRegex("email", "address", "^acctest*"),
@@ -119,7 +135,7 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 
 func testAccRecipientWithDeprecatedTarget(recipientType, target string) string {
 	return fmt.Sprintf(`
-data "honeycombio_recipient" "test_target" {
+data "honeycombio_recipient" "test" {
   type   = "%s"
   target = "%s"
 }
@@ -128,7 +144,7 @@ data "honeycombio_recipient" "test_target" {
 
 func testAccRecipientWithFilterValue(recipientType, filterName, filterValue string) string {
 	return fmt.Sprintf(`
-data "honeycombio_recipient" "test_filter_value" {
+data "honeycombio_recipient" "test" {
   type   = "%s"
 
   detail_filter {
@@ -141,7 +157,7 @@ data "honeycombio_recipient" "test_filter_value" {
 
 func testAccRecipientWithFilterRegex(recipientType, filterName, filterRegex string) string {
 	return fmt.Sprintf(`
-data "honeycombio_recipient" "test_filter_regex" {
+data "honeycombio_recipient" "test" {
   type   = "%s"
 
   detail_filter {

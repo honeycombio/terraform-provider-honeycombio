@@ -77,4 +77,13 @@ To further filter the recipient results, a `filter_detail` block can be provided
 
 ## Attribute Reference
 
+In addition to all arguments above, the following attributes are exported:
+
 * `id` - ID of the recipient.
+* `address` - The email recipient's address -- if of type `email`.
+* `channel` - The Slack recipient's channel -- if of type `slack`.
+* `name` - The webhook recipient's name -- if of type `webhook`.
+* `secret` - (Sensitive) The webhook recipient's secret -- if of type `webhook`.
+* `url` - The webhook recipient's URL - if of type `webhook`.
+* `integration_key` - (Sensitive) The PagerDuty recipient's integration key -- if of type `pagerduty`.
+* `integration_name` - The PagerDuty recipient's inregration name -- if of type `pagerduty`.

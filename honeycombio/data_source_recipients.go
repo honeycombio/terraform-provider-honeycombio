@@ -43,9 +43,8 @@ func dataSourceHoneycombioRecipients() *schema.Resource {
 							ValidateFunc: validation.StringInSlice([]string{"address", "channel", "name", "integration_name", "url"}, false),
 						},
 						"value": {
-							Type:     schema.TypeString,
-							Optional: true,
-
+							Type:          schema.TypeString,
+							Optional:      true,
 							Description:   "The value of the detail field to match on.",
 							ConflictsWith: []string{"detail_filter.0.value_regex"},
 							ValidateFunc:  validation.NoZeroValues,
@@ -63,6 +62,8 @@ func dataSourceHoneycombioRecipients() *schema.Resource {
 			"ids": {
 				Type:     schema.TypeList,
 				Computed: true,
+				Optional: false,
+				Required: false,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 		},
