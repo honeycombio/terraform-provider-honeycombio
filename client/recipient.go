@@ -77,7 +77,6 @@ const (
 	RecipientTypeSlack     RecipientType = "slack"
 	RecipientTypeWebhook   RecipientType = "webhook"
 	RecipientTypeMarker    RecipientType = "marker"
-	RecipientTypeZenoss    RecipientType = "zenoss"
 )
 
 // TriggerRecipientTypes returns a list of recipient types compatible with Triggers
@@ -87,7 +86,6 @@ func TriggerRecipientTypes() []RecipientType {
 		RecipientTypePagerDuty,
 		RecipientTypeSlack,
 		RecipientTypeWebhook,
-		RecipientTypeZenoss,
 		RecipientTypeMarker,
 	}
 }
@@ -99,7 +97,6 @@ func BurnAlertRecipientTypes() []RecipientType {
 		RecipientTypePagerDuty,
 		RecipientTypeSlack,
 		RecipientTypeWebhook,
-		RecipientTypeZenoss,
 	}
 }
 
