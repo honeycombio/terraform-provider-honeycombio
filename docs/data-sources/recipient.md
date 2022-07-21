@@ -4,7 +4,7 @@
 
 The ID of an existing recipient can be used when adding recipients to triggers or burn alerts.
 
--> **Note** If more or less than a single match is returned by the search, Terraform will fail. Ensure that your search is specific enough to return a single recipient ID only.
+-> **Note** Terraform will fail unless exactly one recipient is returned by the search. Ensure that your search is specific enough to return a single recipient ID only.
 If you want to match multiple recipients, use the `honeycombio_recipients` data source instead.
 
 ## Example Usage
