@@ -21,3 +21,11 @@ The following arguments are supported:
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of the recipient.
+
+## Import
+
+Slack Recipients can be imported by their ID, e.g.
+
+```
+$ terraform import honeycombio_slack_recipient.my_recipient nx2zsegA0dZ
+```
