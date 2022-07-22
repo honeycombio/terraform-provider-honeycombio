@@ -67,6 +67,21 @@ func newBurnAlert() *schema.Resource {
 							Computed:    true,
 							Description: "Target of the recipient, this has another meaning depending on the type of recipient. Should not be used in combination with `id`.",
 						},
+						"notification_details": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MinItems: 1,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"pagerduty_severity": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: validation.StringInSlice([]string{"info", "warning", "error", "critical"}, false),
+									},
+								},
+							},
+						},
 					},
 				},
 			},

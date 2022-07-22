@@ -89,7 +89,6 @@ func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFun
 	}
 }
 
-// add a trigger recipient by ID to verify the diff is stable
 func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
 	dataset := testAccDataset()
 
@@ -99,6 +98,7 @@ func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
 	})
 	defer deleteFn()
 
+	// add a trigger recipient by ID to verify the diff is stable
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
@@ -106,6 +106,56 @@ func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccTriggerConfigWithRecipientID(dataset, trigger.Recipients[0].ID),
+			},
+		},
+	})
+
+	// test PD Recipient with Severity
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+  time_range = 1800
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+    query_json = data.honeycombio_query_specification.test.json
+  }
+
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "09c9d4cacd68933151a1ef1048b67dd5"
+  integration_name = "acctest"
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger with PD Severity Recipient"
+  dataset = "%s"
+
+  query_id = honeycombio_query.test.id
+
+  alert_type = "on_change"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "info"
+    }
+  }
+}`, dataset, dataset),
 			},
 		},
 	})

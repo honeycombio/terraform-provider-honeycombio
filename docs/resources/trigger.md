@@ -4,6 +4,8 @@ Creates a trigger. For more information about triggers, check out [Alert with Tr
 
 ## Example Usage
 
+### Basic Example
+
 ```hcl
 variable "dataset" {
   type = string
@@ -55,6 +57,62 @@ resource "honeycombio_trigger" "example" {
 }
 ```
 
+### Example with PagerDuty Recipient and Severity
+```
+variable "dataset" {
+  type = string
+}
+
+data "honeycombio_recipient" "pd-prod" {
+  type = "pagerduty"
+
+  detail_filter {
+    name  = "integration_name"
+    value = "Prod On-Call"
+  }
+}
+
+data "honeycombio_query_specification" "example" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  filter {
+    column = "trace.parent_id"
+    op     = "does-not-exist"
+  }
+}
+
+resource "honeycombio_query" "example" {
+  dataset    = var.dataset
+  query_json = data.honeycombio_query_specification.example.json
+}
+
+resource "honeycombio_trigger" "example" {
+  name        = "Requests are slower than usual"
+  description = "Average duration of all requests for the last 10 minutes."
+
+  query_id = honeycombio_query.example.id
+  dataset  = var.dataset
+
+  frequency = 600 // in seconds, 10 minutes
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  recipient {
+    id = data.honeycombio_recipient.pd-prod.id
+
+    notification_details {
+      pagerduty_severity = "info"
+    }
+  }
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -76,11 +134,12 @@ Each trigger configuration must contain exactly one `threshold` block, which acc
 * `op` - (Required) The operator to apply, allowed threshold operators are `>`, `>=`, `<`, and `<=`.
 * `value` - (Required) The value to be used with the operator.
 
-Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments. A trigger recipient block can either refer to an existing recipient (a recipient that is already present in another trigger) or a new recipient. When specifying an existing recipient, only `id` may be set. If you pass in a recipient without its ID and only include the type and target, Honeycomb will make a best effort to match to an existing recipient. To retrieve the ID of an existing recipient, refer to the [`honeycombio_trigger_recipient`](../data-sources/trigger_recipient.md) data source.
+Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments. A trigger recipient block can either refer to an existing recipient (a recipient that is already present in another trigger) or a new recipient. When specifying an existing recipient, only `id` may be set. If you pass in a recipient without its ID and only include the type and target, Honeycomb will make a best effort to match to an existing recipient. To retrieve the ID of an existing recipient, refer to the [`honeycombio_recipient`](../data-sources/recipient.md) data source.
 
 * `type` - (Optional) The type of the trigger recipient, allowed types are `email`, `marker`, `pagerduty`, `slack` and `webhook`. Should not be used in combination with `id`.
 * `target` - (Optional) Target of the trigger recipient, this has another meaning depending on the type of recipient (see the table below). Should not be used in combination with `id`.
 * `id` - (Optional) The ID of an already existing recipient. Should not be used in combination with `type` and `target`.
+* `notification_details` - (Optional) a block of additional details to send along with the notification. The only supported option currently is `pagerduty_severity` which can be set to one of `info`, `warn`, `error`, or `critical` and must be used in combination with a PagerDuty recipient.
 
 Type      | Target
 ----------|-------------------------

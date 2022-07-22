@@ -4,6 +4,8 @@ Creates a burn alert. For more information about burn alerts, check out [Define 
 
 ## Example Usage
 
+### Basic Example
+
 ```hcl
 variable "dataset" {
   type = string
@@ -31,6 +33,41 @@ resource "honeycombio_burn_alert" "example_alert" {
 }
 ```
 
+### Example with PagerDuty Recipient and Severity
+```hcl
+variable "dataset" {
+  type = string
+}
+
+variable "slo_id" {
+  type = string
+}
+
+data "honeycombio_recipient" "pd-prod" {
+  type = "pagerduty"
+
+  detail_filter {
+    name  = "integration_name"
+    value = "Prod On-Call"
+  }
+}
+
+resource "honeycombio_burn_alert" "example_alert" {
+  dataset            = var.dataset
+  slo_id             = var.slo_id
+  exhaustion_minutes = 60
+
+  recipient {
+    id = data.honeycombio_recipient.pd-prod.id
+
+    notification_details {
+      pagerduty_severity = "critical"
+    }
+  }
+}
+```
+
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -45,6 +82,7 @@ Each burn alert configuration may have one or more `recipient` blocks, which eac
 * `type` - (Optional) The type of the recipient, allowed types are `email`, `pagerduty`, `slack` and `webhook`. Should not be used in combination with `id`.
 * `target` - (Optional) Target of the recipient, this has another meaning depending on the type of recipient (see the table below). Should not be used in combination with `id`.
 * `id` - (Optional) The ID of an already existing recipient. Should not be used in combination with `type` and `target`.
+* `notification_details` - (Optional) a block of additional details to send along with the notification. The only supported option currently is `pagerduty_severity` which can be set to one of `info`, `warn`, `error`, or `critical` and must be used in combination with a PagerDuty recipient.
 
 Type      | Target
 ----------|-------------------------

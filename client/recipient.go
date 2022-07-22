@@ -46,9 +46,10 @@ type Recipient struct {
 
 // NotificationRecipient represents a recipient embedded in a Trigger or Burn Alert
 type NotificationRecipient struct {
-	ID     string        `json:"id,omitempty"`
-	Type   RecipientType `json:"type,omitempty"`
-	Target string        `json:"target,omitempty"`
+	ID      string                        `json:"id,omitempty"`
+	Type    RecipientType                 `json:"type"`
+	Details *NotificationRecipientDetails `json:"details,omitempty"`
+	Target  string                        `json:"target,omitempty"`
 }
 
 type RecipientDetails struct {
@@ -67,6 +68,10 @@ type RecipientDetails struct {
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
 
+type NotificationRecipientDetails struct {
+	PDSeverity PagerDutySeverity `json:"pagerduty_severity,omitempty"`
+}
+
 // RecipientType holds all the possible recipient types.
 type RecipientType string
 
@@ -77,6 +82,16 @@ const (
 	RecipientTypeSlack     RecipientType = "slack"
 	RecipientTypeWebhook   RecipientType = "webhook"
 	RecipientTypeMarker    RecipientType = "marker"
+)
+
+// PagerDutySeverity holds all the possible PD Severity types
+type PagerDutySeverity string
+
+const (
+	PDSeverityCRITICAL PagerDutySeverity = "critical"
+	PDSeverityERROR    PagerDutySeverity = "error"
+	PDSeverityWARNING  PagerDutySeverity = "warning"
+	PDSeverityINFO     PagerDutySeverity = "info"
 )
 
 // TriggerRecipientTypes returns a list of recipient types compatible with Triggers

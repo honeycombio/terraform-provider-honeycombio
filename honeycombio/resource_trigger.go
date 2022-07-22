@@ -101,6 +101,21 @@ func newTrigger() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
+						"notification_details": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MinItems: 1,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"pagerduty_severity": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: validation.StringInSlice([]string{"info", "warning", "error", "critical"}, false),
+									},
+								},
+							},
+						},
 					},
 				},
 			},
