@@ -164,6 +164,15 @@ func flattenNotificationRecipients(rs []honeycombio.NotificationRecipient) []map
 			"type":   string(r.Type),
 			"target": r.Target,
 		}
+		if r.Details != nil {
+			// notification details have been provided
+			details := make([]map[string]interface{}, 1)
+			details[0] = map[string]interface{}{}
+			if r.Details.PDSeverity != "" {
+				details[0]["pagerduty_severity"] = string(r.Details.PDSeverity)
+			}
+			result[i]["notification_details"] = details
+		}
 	}
 
 	return result
@@ -179,6 +188,15 @@ func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRec
 			ID:     rMap["id"].(string),
 			Type:   honeycombio.RecipientType(rMap["type"].(string)),
 			Target: rMap["target"].(string),
+		}
+		if v, ok := rMap["notification_details"].([]interface{}); ok && len(v) > 0 {
+			// notification details have been provided
+			details := v[0].(map[string]interface{})
+			if s, ok := details["pagerduty_severity"]; ok {
+				recipients[i].Details = &honeycombio.NotificationRecipientDetails{
+					PDSeverity: honeycombio.PagerDutySeverity(s.(string)),
+				}
+			}
 		}
 	}
 
