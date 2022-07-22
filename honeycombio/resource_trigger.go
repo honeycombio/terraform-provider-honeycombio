@@ -109,8 +109,9 @@ func newTrigger() *schema.Resource {
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"pagerduty_severity": {
-										Type:         schema.TypeString,
-										Optional:     true,
+										Type: schema.TypeString,
+										// technically optional, but as its the only value supported for the moment we may as well require it
+										Required:     true,
 										ValidateFunc: validation.StringInSlice([]string{"info", "warning", "error", "critical"}, false),
 									},
 								},
