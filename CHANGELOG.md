@@ -25,7 +25,7 @@ ENHANCEMENTS:
 
 BUGFIXES:
 
-* docs: syntax and correctness updates (#176)
+* docs: syntax and correctness updates (#176, #180)
 * resource/honeycombio_trigger - correct Trigger query test schema (#177)
 
 HOUSEKEEPING:
