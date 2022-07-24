@@ -25,7 +25,7 @@ var providerVersion = "dev"
 func deprecatedEnvCheck() schema.SchemaDefaultFunc {
 	if _, ok := os.LookupEnv("HONEYCOMBIO_APIKEY"); ok {
 		ctx := context.Background()
-		tflog.Warn(ctx, "HONEYCOMBIO_APIKEY is being depcrated, please use HONEYCOMB_API_KEY instead")
+		tflog.Warn(ctx, "HONEYCOMBIO_APIKEY has been deprecated, please use HONEYCOMB_API_KEY instead")
 	}
 	return schema.EnvDefaultFunc("HONEYCOMBIO_APIKEY", nil)
 }
