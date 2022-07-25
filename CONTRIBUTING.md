@@ -52,7 +52,7 @@ For macOS, I've added the `install_macos` target in [`Makefile`](Makefile). Othe
 
 ### Enabling log output
 
-To print logs (including full dumps of requests and their responses), you have to set `TF_LOG` to at least `debug` and enable `HONEYCOMBIO_DEBUG` when running Terraform:
+To print logs (including full dumps of requests and their responses), you have to set `TF_LOG` to at least `debug` when running Terraform:
 
 ```sh
 TF_LOG=debug HONEYCOMBIO_DEBUG=true terraform apply
@@ -61,7 +61,7 @@ TF_LOG=debug HONEYCOMBIO_DEBUG=true terraform apply
 A handy one-liner to simultaneously write the output to a file:
 
 ```sh
-TF_LOG=debug HONEYCOMBIO_DEBUG=true terraform apply 2>&1 | tee output.log
+TF_LOG=debug terraform apply 2>&1 | tee output.log
 ```
 
 For more information, see [Debugging Terraform](https://www.terraform.io/docs/internals/debugging.html).
