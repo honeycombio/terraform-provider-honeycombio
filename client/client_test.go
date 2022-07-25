@@ -15,9 +15,9 @@ func init() {
 }
 
 func newTestClient(t *testing.T) *Client {
-	apiKey, ok := os.LookupEnv("HONEYCOMBIO_APIKEY")
+	apiKey, ok := os.LookupEnv("HONEYCOMB_API_KEY")
 	if !ok {
-		t.Fatal("expected environment variable HONEYCOMBIO_APIKEY")
+		t.Fatal("expected environment variable HONEYCOMB_API_KEY")
 	}
 	_, debug := os.LookupEnv("DEBUG")
 

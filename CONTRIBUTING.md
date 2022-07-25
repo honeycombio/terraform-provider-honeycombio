@@ -33,7 +33,7 @@ Next, **initialize the dataset**. The helper script [setup-testsuite-dataset](sc
 Finally, **run the acceptance tests** by passing the API key and dataset as environment variables:
 
 ```sh
-HONEYCOMBIO_APIKEY=<your API key> HONEYCOMBIO_DATASET=<dataset> make testacc
+HONEYCOMB_API_KEY=<your API key> HONEYCOMBIO_DATASET=<dataset> make testacc
 ```
 
 ### Using a locally built version of the provider
@@ -85,7 +85,7 @@ If you fork the repository, you can also run the tests on GitHub Actions (for fr
 
 To properly setup the GitHub Actions, add the following secrets:
 
-- `HONEYCOMBIO_APIKEY`: an API key for Honeycombio
+- `HONEYCOMB_API_KEY`: an API key for Honeycombio
 - `HONEYCOMBIO_DATASET`: name of the test dataset
 
 ## Release procedure

@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
@@ -21,14 +22,25 @@ func init() {
 // overwritten during the release process.
 var providerVersion = "dev"
 
+func deprecatedEnvCheck() schema.SchemaDefaultFunc {
+	if _, ok := os.LookupEnv("HONEYCOMBIO_APIKEY"); ok {
+		ctx := context.Background()
+		tflog.Warn(ctx, "HONEYCOMBIO_APIKEY has been deprecated, please use HONEYCOMB_API_KEY instead")
+	}
+	return schema.EnvDefaultFunc("HONEYCOMBIO_APIKEY", nil)
+}
+
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"api_key": {
-				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("HONEYCOMBIO_APIKEY", nil),
-				Sensitive:   true,
+				Type:     schema.TypeString,
+				Required: true,
+				// Tiering goes HONEYCOMB_API_KEY > HONEYCOMBIO_APIKEY > nil
+				DefaultFunc: schema.EnvDefaultFunc(
+					"HONEYCOMB_API_KEY",
+					deprecatedEnvCheck()),
+				Sensitive: true,
 			},
 			"api_url": {
 				Type:     schema.TypeString,
