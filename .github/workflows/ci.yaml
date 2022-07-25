@@ -26,8 +26,8 @@ jobs:
 
       - name: Test
         env:
-          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          HONEYCOMBIO_DATASET: ${{ secrets.HONEYCOMBIO_DATASET }}
+          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+          HONEYCOMB_DATASET: testacc
           TF_ACC: 1
         run: |
           ./scripts/setup-testsuite-dataset

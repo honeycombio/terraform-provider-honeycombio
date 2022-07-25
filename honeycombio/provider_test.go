@@ -19,8 +19,8 @@ func testAccPreCheck(t *testing.T) func() {
 		if _, ok := os.LookupEnv("HONEYCOMB_API_KEY"); !ok {
 			t.Fatalf("environment variable HONEYCOMB_API_KEY must be set to run acceptance tests")
 		}
-		if _, ok := os.LookupEnv("HONEYCOMBIO_DATASET"); !ok {
-			t.Fatalf("environment variable HONEYCOMBIO_DATASET must be set to run acceptance tests")
+		if _, ok := os.LookupEnv("HONEYCOMB_DATASET"); !ok {
+			t.Fatalf("environment variable HONEYCOMB_DATASET must be set to run acceptance tests")
 		}
 	}
 }
@@ -43,5 +43,5 @@ func testAccClient(t *testing.T) *honeycombio.Client {
 }
 
 func testAccDataset() string {
-	return os.Getenv("HONEYCOMBIO_DATASET")
+	return os.Getenv("HONEYCOMB_DATASET")
 }
