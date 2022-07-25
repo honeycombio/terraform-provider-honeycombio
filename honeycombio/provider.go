@@ -2,12 +2,11 @@ package honeycombio
 
 import (
 	"context"
-	"log"
 	"os"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
@@ -47,11 +46,12 @@ func Provider() *schema.Provider {
 				Optional: true,
 			},
 			"debug": {
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
 				DefaultFunc: func() (interface{}, error) {
-					b, _ := strconv.ParseBool(os.Getenv("HONEYCOMBIO_DEBUG"))
-					return b, nil
+					// use provider environment's configured log level
+					return logging.IsDebugOrHigher(), nil
 				},
 			},
 		},
@@ -92,9 +92,6 @@ func Provider() *schema.Provider {
 		if err != nil {
 			return nil, diag.FromErr(err)
 		}
-
-		log.Printf("Configured honeycombio client with debug = %t", config.Debug)
-		log.Printf("To log requests and responses, set environment variable HONEYCOMBIO_DEBUG to true")
 
 		return c, nil
 	}

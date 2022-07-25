@@ -1,52 +1,93 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
-  pull_request:
+    paths-ignore:
+      - README.md
+      - CHANGELOG.md
+      - CONTRIBUTING.md
+  schedule:
+    # run CI nightly at 00:11UTC
+    - cron: '11 0 * * *'
 
 jobs:
-  ci:
-    name: CI
+  build:
+    name: Build
     runs-on: ubuntu-latest
-
+    timeout-minutes: 5
     steps:
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.17
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - uses: hashicorp/setup-terraform@v2
+      - name: Setup Go
+        uses: actions/setup-go@v3
         with:
-          terraform_version: 0.14
-          terraform_wrapper: false
-
-      - uses: actions/checkout@v3
+          go-version-file: 'go.mod'
+          cache: true
 
       - name: Build
         run: go build -v .
 
-      - name: Test
-        env:
-          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMBIO_APIKEY }}
-          HONEYCOMBIO_DATASET: ${{ secrets.HONEYCOMBIO_DATASET }}
-          TF_ACC: 1
-        run: |
-          ./scripts/setup-testsuite-dataset
-          go test -v -coverprofile=coverage.txt -covermode=atomic ./...
+  test:
+    name: Test
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
 
-      - uses: codecov/codecov-action@v3.1.0
-        with:
-          file: ./coverage.txt
+    - name: Setup Go
+      uses: actions/setup-go@v3
+      with:
+        go-version-file: 'go.mod'
+        cache: true
+
+    - name: Setup test environment
+      env:
+        HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+        HONEYCOMB_DATASET: testacc
+      run: ./scripts/setup-testsuite-dataset
+
+    - name: Run client acceptance tests
+      timeout-minutes: 10
+      env:
+        HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+        HONEYCOMB_DATASET: testacc
+      run: go test -v -coverprofile=client-coverage.txt -covermode=atomic ./client/...
+
+    - uses: hashicorp/setup-terraform@v2
+      with:
+        # TODO: update to a TF version matrix test once testsuite won't generate conflicting resources
+        terraform_version: 0.14
+        terraform_wrapper: false
+
+    - name: Run TF acceptance tests
+      timeout-minutes: 10
+      env:
+        HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+        HONEYCOMB_DATASET: testacc
+        TF_ACC: 1
+      run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./honeycombio/...
+
+    - name: Generate Coverage Report
+      uses: codecov/codecov-action@v3.1.0
+      with:
+        files: ./client-coverage.txt, ./tf-coverage.txt
 
   fmt:
     name: Formatting
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/setup-go@v3
-        with:
-          go-version: 1.17
+      - name: Checkout
+        uses: actions/checkout@v3
 
-      - uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: 'go.mod'
+          cache: true
 
       - name: Check formatting
         run: |

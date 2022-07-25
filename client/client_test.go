@@ -34,9 +34,9 @@ func newTestClient(t *testing.T) *Client {
 }
 
 func testDataset(t *testing.T) string {
-	dataset, ok := os.LookupEnv("HONEYCOMBIO_DATASET")
+	dataset, ok := os.LookupEnv("HONEYCOMB_DATASET")
 	if !ok {
-		t.Fatalf("expected environment variable HONEYCOMBIO_DATASET")
+		t.Fatalf("expected environment variable HONEYCOMB_DATASET")
 	}
 
 	return dataset

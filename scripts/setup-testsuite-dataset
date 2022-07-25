@@ -25,7 +25,7 @@ dataset_exists() {
   local name="$1"
 
   curl -sf -H "x-honeycomb-team: $HONEYCOMB_API_KEY" \
-    -X GET "${DATASETS_API}/${HONEYCOMBIO_DATASET}" >/dev/null
+    -X GET "${DATASETS_API}/${HONEYCOMB_DATASET}" >/dev/null
 }
 
 create_dataset_if_missing () {
@@ -48,7 +48,7 @@ column_exists () {
   local name="$1"
 
   curl -sf -H "x-honeycomb-team: $HONEYCOMB_API_KEY" \
-    -X GET "${COLUMNS_API}/${HONEYCOMBIO_DATASET}?key_name=${name}" >/dev/null
+    -X GET "${COLUMNS_API}/${HONEYCOMB_DATASET}?key_name=${name}" >/dev/null
 }
 
 create_column_if_missing () {
@@ -57,14 +57,14 @@ create_column_if_missing () {
 
   if ! column_exists "$name"; then
     curl -sf -H "x-honeycomb-team: $HONEYCOMB_API_KEY" \
-      -X POST "${COLUMNS_API}/${HONEYCOMBIO_DATASET}" \
+      -X POST "${COLUMNS_API}/${HONEYCOMB_DATASET}" \
       -d '{"key_name": "'"$name"'", "type": "'"$type"'"}' >/dev/null
     status_code=$?
     if [[ $status_code -ne 0 ]]; then
       log "error creating column \"$name\""
     fi
 
-    log "created column \"$name\" in \"${HONEYCOMBIO_DATASET}\""
+    log "created column \"$name\" in \"${HONEYCOMB_DATASET}\""
   fi
 }
 
@@ -73,12 +73,12 @@ if [ -z "${HONEYCOMB_API_KEY+x}" ]; then
   exit 255
 fi
 
-if [ -z "${HONEYCOMBIO_DATASET+x}" ]; then
-  echo "HONEYCOMBIO_DATASET is not set"
+if [ -z "${HONEYCOMB_DATASET+x}" ]; then
+  echo "HONEYCOMB_DATASET is not set"
   exit 255
 fi
 
-if ! create_dataset_if_missing "${HONEYCOMBIO_DATASET}"; then
+if ! create_dataset_if_missing "${HONEYCOMB_DATASET}"; then
   exit 255
 fi
 
