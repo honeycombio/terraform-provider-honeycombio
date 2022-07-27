@@ -33,7 +33,7 @@ type Config struct {
 func defaultConfig() *Config {
 	return &Config{
 		APIKey:    "",
-		APIUrl:    "http://localhost:8081/",
+		APIUrl:    "https://api.honeycomb.io",
 		UserAgent: "go-honeycombio",
 		Debug:     false,
 	}
