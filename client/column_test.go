@@ -28,7 +28,15 @@ func TestColumns(t *testing.T) {
 		assert.NoError(t, err)
 
 		data.ID = column.ID
+		assert.NotNil(t, column.LastWrittenAt, "last written at is empty")
+		assert.NotNil(t, column.CreatedAt, "created at is empty")
+		assert.NotNil(t, column.UpdatedAt, "updated at is empty")
+		// copy dynamic fields before asserting equality
+		data.LastWrittenAt = column.LastWrittenAt
+		data.CreatedAt = column.CreatedAt
+		data.UpdatedAt = column.UpdatedAt
 		assert.Equal(t, data, column)
+
 	})
 
 	t.Run("List", func(t *testing.T) {

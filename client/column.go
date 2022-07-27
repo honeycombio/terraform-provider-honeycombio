@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 // Columns describe all the columns-related methods that the Honeycomb API
@@ -56,6 +57,11 @@ type Column struct {
 	Description string `json:"description,omitempty"`
 	// Optional, defaults to string.
 	Type *ColumnType `json:"type,omitempty"`
+
+	// Read only
+	LastWrittenAt time.Time `json:"last_written,omitempty"`
+	CreatedAt     time.Time `json:"created_at,omitempty"`
+	UpdatedAt     time.Time `json:"updated_at,omitempty"`
 }
 
 // ColumnType determines the type of column.
