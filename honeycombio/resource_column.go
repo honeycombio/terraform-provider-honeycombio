@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -128,13 +127,10 @@ func resourceColumnUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 func readColumn(d *schema.ResourceData) *honeycombio.Column {
 	return &honeycombio.Column{
-		ID:            d.Id(),
-		KeyName:       d.Get("key_name").(string),
-		Hidden:        honeycombio.BoolPtr(d.Get("hidden").(bool)),
-		Description:   d.Get("description").(string),
-		Type:          honeycombio.ColumnTypePtr(honeycombio.ColumnType(d.Get("type").(string))),
-		LastWrittenAt: d.Get("last_written").(time.Time),
-		CreatedAt:     d.Get("created_at").(time.Time),
-		UpdatedAt:     d.Get("updated_at").(time.Time),
+		ID:          d.Id(),
+		KeyName:     d.Get("key_name").(string),
+		Hidden:      honeycombio.BoolPtr(d.Get("hidden").(bool)),
+		Description: d.Get("description").(string),
+		Type:        honeycombio.ColumnTypePtr(honeycombio.ColumnType(d.Get("type").(string))),
 	}
 }
