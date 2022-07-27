@@ -74,7 +74,13 @@ func TestColumns(t *testing.T) {
 		assert.NoError(t, err)
 
 		data.ID = column.ID
-		assert.Equal(t, data, column)
+		assert.NotNil(t, column.LastWrittenAt, "last written at is empty")
+		assert.NotNil(t, column.CreatedAt, "created at is empty")
+		assert.NotNil(t, column.UpdatedAt, "updated at is empty")
+		// copy dynamic fields before asserting equality
+		data.LastWrittenAt = column.LastWrittenAt
+		data.CreatedAt = column.CreatedAt
+		data.UpdatedAt = column.UpdatedAt
 	})
 
 	t.Run("Delete", func(t *testing.T) {
