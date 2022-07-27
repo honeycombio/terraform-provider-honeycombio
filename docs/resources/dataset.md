@@ -11,6 +11,7 @@ Creates a dataset.
 ```hcl
 resource "honeycombio_dataset" "my_dataset" {
   name = "My dataset"
+  description = "buzzing with data"
 }
 ```
 
@@ -18,12 +19,12 @@ resource "honeycombio_dataset" "my_dataset" {
 
 The following arguments are supported:
 
-* `name` - (Required) The name of the dataset.
+-   `name` - (Required) The name of the dataset.
+-   `description` - Longer description for datset.
+-   `expand_json_depth` - How many JSON levels to unfurl.
 
 ## Attribute Reference
 
 In addition to all arguments above, the following attributes are exported:
 
-* `description` - Longer description for datset.
-* `slug` - The slug of the dataset.
-* `expand_json_depth` - How many JSON levels to unfurl.
+-   `slug` - The slug of the dataset.

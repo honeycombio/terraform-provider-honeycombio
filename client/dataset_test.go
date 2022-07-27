@@ -12,10 +12,14 @@ func TestDatasets(t *testing.T) {
 
 	c := newTestClient(t)
 	datasetName := testDataset(t)
+	description := "new honeycomb dataset"
+	expandJSONDepth := 0
 
 	currentDataset := &Dataset{
-		Name: datasetName,
-		Slug: urlEncodeDataset(datasetName),
+		Name:            datasetName,
+		Description:     &description,
+		Slug:            urlEncodeDataset(datasetName),
+		ExpandJSONDepth: &expandJSONDepth,
 	}
 
 	t.Run("List", func(t *testing.T) {
@@ -40,7 +44,9 @@ func TestDatasets(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		createDataset := &Dataset{
-			Name: datasetName,
+			Name:            datasetName,
+			Description:     currentDataset.Description,
+			ExpandJSONDepth: currentDataset.ExpandJSONDepth,
 		}
 		d, err := c.Datasets.Create(ctx, createDataset)
 

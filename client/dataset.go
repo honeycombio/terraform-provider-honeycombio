@@ -33,10 +33,10 @@ var _ Datasets = (*datasets)(nil)
 //
 // API docs: https://docs.honeycomb.io/api/dataset
 type Dataset struct {
-	Name string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Slug string `json:"slug,omitempty"`
-	ExpandJSONDepth int `json:"expand_json_depth,omitempty"`
+	Name            string  `json:"name"`
+	Description     *string `json:"description"`
+	Slug            string  `json:"slug"`
+	ExpandJSONDepth *int    `json:"expand_json_depth"`
 }
 
 func (s datasets) List(ctx context.Context) ([]Dataset, error) {
