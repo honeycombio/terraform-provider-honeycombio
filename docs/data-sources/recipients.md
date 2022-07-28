@@ -28,7 +28,7 @@ The following arguments are supported:
 * `type` - (Optional) The type of recipient, allowed types are `email`, `pagerduty`, `slack` and `webhook`.
 * `detail_filter` - (Optional) a block to further filter recipients as described below. `type` must be set when providing a filter.
 
-To further filter the recipient results, a `filter_detail` block can be provided which accepts the following arguments:
+To further filter the recipient results, a `detail_filter` block can be provided which accepts the following arguments:
 
 * `name` - (Required) The name of the detail field to filter by. Allowed values are `address`, `channel`, `name`, `integration_name`, and `url`.
 * `value` - (Optional) The value of the detail field to match on.

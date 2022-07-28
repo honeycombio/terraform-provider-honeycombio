@@ -14,7 +14,7 @@ If you want to match multiple recipients, use the `honeycombio_recipients` data 
 data "honeycombio_recipient" "slack" {
   type    = "slack"
 
-  filter_detail {
+  detail_filter {
     name  = "channel"
     value = "honeycomb-triggers"
   }
@@ -67,7 +67,7 @@ pagerduty | _N/A_
 slack     | name of the channel
 webhook   | name of the webhook
 
-To further filter the recipient results, a `filter_detail` block can be provided which accepts the following arguments:
+To further filter the recipient results, a `detail_filter` block can be provided which accepts the following arguments:
 
 * `name` - (Required) The name of the detail field to filter by. Allowed values are `address`, `channel`, `name`, `integration_name`, and `url`.
 * `value` - (Optional) The value of the detail field to match on.
