@@ -19,6 +19,10 @@ type Datasets interface {
 	// Create a new dataset. Only name should be set when creating a dataset,
 	// all other fields are ignored.
 	Create(ctx context.Context, dataset *Dataset) (*Dataset, error)
+
+	// Update an existing dataset. Missing (optional) fields will set to their
+	// respective defaults and not the currently existing values.
+	Update(ctx context.Context, dataset *Dataset) (*Dataset, error)
 }
 
 // datasets implements Datasets.
@@ -34,9 +38,14 @@ var _ Datasets = (*datasets)(nil)
 // API docs: https://docs.honeycomb.io/api/dataset
 type Dataset struct {
 	Name            string  `json:"name"`
-	Description     *string `json:"description"`
+	Description     *string `json:"description,omitempty"`
 	Slug            string  `json:"slug"`
-	ExpandJSONDepth *int    `json:"expand_json_depth"`
+	ExpandJSONDepth *int    `json:"expand_json_depth,omitempty"`
+}
+
+type DatasetCreateArgs struct {
+	Description     string
+	ExpandJSONDepth int
 }
 
 func (s datasets) List(ctx context.Context) ([]Dataset, error) {
@@ -52,6 +61,12 @@ func (s datasets) Get(ctx context.Context, slug string) (*Dataset, error) {
 }
 
 func (s datasets) Create(ctx context.Context, data *Dataset) (*Dataset, error) {
+	var dataset Dataset
+	err := s.client.performRequest(ctx, "POST", "/1/datasets", data, &dataset)
+	return &dataset, err
+}
+
+func (s datasets) Update(ctx context.Context, data *Dataset) (*Dataset, error) {
 	var dataset Dataset
 	err := s.client.performRequest(ctx, "POST", "/1/datasets", data, &dataset)
 	return &dataset, err

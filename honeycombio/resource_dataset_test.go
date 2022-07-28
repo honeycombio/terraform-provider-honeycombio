@@ -8,24 +8,30 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAccHoneycombioDataset_basic(t *testing.T) {
-	testDataset := testAccDataset()
+
+	createArgs := honeycombio.DatasetCreateArgs{
+		Description:     "buzzing with data",
+		ExpandJSONDepth: 3,
+	}
+	testDataset := testAccDatasetWithArgs(createArgs)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDatasetConfig(testDataset),
+				Config: testAccDatasetConfig(testDataset.Name),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", testDataset),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "description", urlEncodeDataset(testDataset)),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", urlEncodeDataset(testDataset)),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "expand_json_depth", urlEncodeDataset(testDataset)),
+					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset.Name),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", testDataset.Name),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "description", *testDataset.Description),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", urlEncodeDataset(testDataset.Slug)),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "expand_json_depth", fmt.Sprintf("%d", *testDataset.ExpandJSONDepth)),
 				),
 			},
 		},
