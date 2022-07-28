@@ -55,7 +55,7 @@ func testCheckOutputDoesNotContain(name, contains string) resource.TestCheckFunc
 	}
 }
 
-func createTriggerWithRecipient(t *testing.T, dataset string, recipient honeycombio.Recipient) (trigger *honeycombio.Trigger, deleteFn func()) {
+func createTriggerWithRecipient(t *testing.T, dataset string, recipient honeycombio.NotificationRecipient) (trigger *honeycombio.Trigger, deleteFn func()) {
 	ctx := context.Background()
 	c := testAccClient(t)
 
@@ -72,7 +72,7 @@ func createTriggerWithRecipient(t *testing.T, dataset string, recipient honeycom
 			Op:    honeycombio.TriggerThresholdOpGreaterThan,
 			Value: 100,
 		},
-		Recipients: []honeycombio.Recipient{recipient},
+		Recipients: []honeycombio.NotificationRecipient{recipient},
 	}
 	trigger, err := c.Triggers.Create(ctx, dataset, trigger)
 	if err != nil {
@@ -84,5 +84,22 @@ func createTriggerWithRecipient(t *testing.T, dataset string, recipient honeycom
 		if err != nil {
 			t.Error(err)
 		}
+	}
+}
+
+func testAccCheckRecipientExists(t *testing.T, resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resourceState, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", resourceName)
+		}
+
+		client := testAccClient(t)
+		_, err := client.Recipients.Get(context.Background(), resourceState.Primary.ID)
+		if err != nil {
+			return fmt.Errorf("could not find created Recipient: %w", err)
+		}
+
+		return nil
 	}
 }

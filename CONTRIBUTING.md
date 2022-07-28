@@ -33,7 +33,7 @@ Next, **initialize the dataset**. The helper script [setup-testsuite-dataset](sc
 Finally, **run the acceptance tests** by passing the API key and dataset as environment variables:
 
 ```sh
-HONEYCOMBIO_APIKEY=<your API key> HONEYCOMBIO_DATASET=<dataset> make testacc
+HONEYCOMB_API_KEY=<your API key> HONEYCOMB_DATASET=<dataset> make testacc
 ```
 
 ### Using a locally built version of the provider
@@ -52,7 +52,7 @@ For macOS, I've added the `install_macos` target in [`Makefile`](Makefile). Othe
 
 ### Enabling log output
 
-To print logs (including full dumps of requests and their responses), you have to set `TF_LOG` to at least `debug` and enable `HONEYCOMBIO_DEBUG` when running Terraform:
+To print logs (including full dumps of requests and their responses), you have to set `TF_LOG` to at least `debug` when running Terraform:
 
 ```sh
 TF_LOG=debug HONEYCOMBIO_DEBUG=true terraform apply
@@ -61,7 +61,7 @@ TF_LOG=debug HONEYCOMBIO_DEBUG=true terraform apply
 A handy one-liner to simultaneously write the output to a file:
 
 ```sh
-TF_LOG=debug HONEYCOMBIO_DEBUG=true terraform apply 2>&1 | tee output.log
+TF_LOG=debug terraform apply 2>&1 | tee output.log
 ```
 
 For more information, see [Debugging Terraform](https://www.terraform.io/docs/internals/debugging.html).
@@ -85,8 +85,8 @@ If you fork the repository, you can also run the tests on GitHub Actions (for fr
 
 To properly setup the GitHub Actions, add the following secrets:
 
-- `HONEYCOMBIO_APIKEY`: an API key for Honeycombio
-- `HONEYCOMBIO_DATASET`: name of the test dataset
+- `HONEYCOMB_API_KEY`: an API key for Honeycombio
+- `HONEYCOMB_DATASET`: name of the test dataset
 
 ## Release procedure
 

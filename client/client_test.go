@@ -15,9 +15,9 @@ func init() {
 }
 
 func newTestClient(t *testing.T) *Client {
-	apiKey, ok := os.LookupEnv("HONEYCOMBIO_APIKEY")
+	apiKey, ok := os.LookupEnv("HONEYCOMB_API_KEY")
 	if !ok {
-		t.Fatal("expected environment variable HONEYCOMBIO_APIKEY")
+		t.Fatal("expected environment variable HONEYCOMB_API_KEY")
 	}
 	_, debug := os.LookupEnv("DEBUG")
 
@@ -34,9 +34,9 @@ func newTestClient(t *testing.T) *Client {
 }
 
 func testDataset(t *testing.T) string {
-	dataset, ok := os.LookupEnv("HONEYCOMBIO_DATASET")
+	dataset, ok := os.LookupEnv("HONEYCOMB_DATASET")
 	if !ok {
-		t.Fatalf("expected environment variable HONEYCOMBIO_DATASET")
+		t.Fatalf("expected environment variable HONEYCOMB_DATASET")
 	}
 
 	return dataset

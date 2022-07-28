@@ -14,14 +14,14 @@ terraform {
   required_providers {
     honeycombio = {
       source  = "honeycombio/honeycombio"
-      version = "~> 0.7.0"
+      version = "~> 0.8.0"
     }
   }
 }
 
 # Configure the Honeycomb provider
 provider "honeycombio" {
-  # You can set the API key with the environment variable HONEYCOMBIO_APIKEY
+  # You can set the API key with the environment variable HONEYCOMB_API_KEY
 }
 
 variable "dataset" {
@@ -40,14 +40,16 @@ resource "honeycombio_marker" "hello" {
 
 The Honeycomb provider requires an API key to communicate with the Honeycomb API. API keys and their permissions can be managed in _Team settings_.
 
-The key can be set with the `api_key` argument or via the `HONEYCOMBIO_APIKEY` environment variable.
+The key can be set with the `api_key` argument or via the `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variable.
 
-~> **Note** Hard-coding API keys in any Terraform configuration is not recommended. Consider using the `HONEYCOMBIO_APIKEY` environment variable.
+`HONEYCOMB_API_KEY` environment variable will take priority over the `HONEYCOMBIO_APIKEY` environment variable.
+
+~> **Note** Hard-coding API keys in any Terraform configuration is not recommended. Consider using the one of the  environment variable options.
 
 ## Argument Reference
 
 Arguments accepted by this provider include:
 
-* `api_key` - (Required) The Honeycomb API key to use. It can also be set using the `HONEYCOMBIO_APIKEY` environment variable.
+* `api_key` - (Required) The Honeycomb API key to use. It can also be set using `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variables.
 * `api_url` - (Optional) Override the url of the Honeycomb.io API. Defaults to `https://api.honeycomb.io`.
 * `debug` - (Optional) Enable to log additional debug information. To view the logs, set `TF_LOG` to at least debug.

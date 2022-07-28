@@ -63,7 +63,6 @@ resource "honeycombio_burn_alert" "test" {
 	})
 }
 
-// add a recipient by ID to verify the diff is stable
 func TestAccHoneycombioBurnAlert_RecipientById(t *testing.T) {
 	ctx := context.Background()
 	c := testAccClient(t)
@@ -89,29 +88,59 @@ func TestAccHoneycombioBurnAlert_RecipientById(t *testing.T) {
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
-	trigger, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.Recipient{
-		Type:   honeycombio.RecipientTypeEmail,
-		Target: "acctest@example.com",
-	})
-	defer deleteFn()
-
+	// add a recipient by ID to verify the diff is stable
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
-				resource "honeycombio_burn_alert" "test" {
-				  dataset            = "%s"
-				  slo_id             = "%s"
-				  exhaustion_minutes = 240 # 4 hours
-				
-				  recipient {
-					id   = "%s"
-				  }
-				
-				}
-				`, dataset, slo.ID, trigger.Recipients[0].ID),
+resource "honeycombio_email_recipient" "test" {
+  address = "ba-acctest@example.com"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  dataset            = "%s"
+  slo_id             = "%s"
+  exhaustion_minutes = 240 # 4 hours
+
+  recipient {
+    id = honeycombio_email_recipient.test.id
+  }
+}
+`, dataset, slo.ID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBurnAlertExists(t, dataset, "honeycombio_burn_alert.test"),
+				),
+			},
+		},
+	})
+
+	// test PD Recipient with Severity
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "09c9d4cacd68933151a1ef1048b67dd5"
+  integration_name = "BA acctest"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  dataset            = "%s"
+  slo_id             = "%s"
+  exhaustion_minutes = 0 # budget burnt
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "critical"
+    }
+  }
+}`, dataset, slo.ID),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBurnAlertExists(t, dataset, "honeycombio_burn_alert.test"),
 				),

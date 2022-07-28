@@ -67,6 +67,22 @@ func newBurnAlert() *schema.Resource {
 							Computed:    true,
 							Description: "Target of the recipient, this has another meaning depending on the type of recipient. Should not be used in combination with `id`.",
 						},
+						"notification_details": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MinItems: 1,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"pagerduty_severity": {
+										Type: schema.TypeString,
+										// technically optional, but as its the only value supported for the moment we may as well require it
+										Required:     true,
+										ValidateFunc: validation.StringInSlice([]string{"info", "warning", "error", "critical"}, false),
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -130,7 +146,7 @@ func resourceBurnAlertRead(ctx context.Context, d *schema.ResourceData, meta int
 	if !ok {
 		return diag.Errorf("failed to parse recipients for Burn Alert %s", b.ID)
 	}
-	err = d.Set("recipient", flattenRecipients(matchRecipientsWithSchema(b.Recipients, declaredRecipients)))
+	err = d.Set("recipient", flattenNotificationRecipients(matchNotificationRecipientsWithSchema(b.Recipients, declaredRecipients)))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -173,7 +189,7 @@ func expandBurnAlert(d *schema.ResourceData) (*honeycombio.BurnAlert, error) {
 		ID:                d.Id(),
 		ExhaustionMinutes: d.Get("exhaustion_minutes").(int),
 		SLO:               honeycombio.SLORef{ID: d.Get("slo_id").(string)},
-		Recipients:        expandRecipients(d.Get("recipient").([]interface{})),
+		Recipients:        expandNotificationRecipients(d.Get("recipient").([]interface{})),
 	}
 	return b, nil
 }

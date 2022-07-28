@@ -101,6 +101,22 @@ func newTrigger() *schema.Resource {
 							Optional: true,
 							Computed: true,
 						},
+						"notification_details": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MinItems: 1,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"pagerduty_severity": {
+										Type: schema.TypeString,
+										// technically optional, but as its the only value supported for the moment we may as well require it
+										Required:     true,
+										ValidateFunc: validation.StringInSlice([]string{"info", "warning", "error", "critical"}, false),
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -174,7 +190,7 @@ func resourceTriggerRead(ctx context.Context, d *schema.ResourceData, meta inter
 	if !ok {
 		return diag.Errorf("failed to parse recipients for Trigger %s", t.ID)
 	}
-	err = d.Set("recipient", flattenRecipients(matchRecipientsWithSchema(t.Recipients, declaredRecipients)))
+	err = d.Set("recipient", flattenNotificationRecipients(matchNotificationRecipientsWithSchema(t.Recipients, declaredRecipients)))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -222,7 +238,7 @@ func expandTrigger(d *schema.ResourceData) (*honeycombio.Trigger, error) {
 		AlertType:   d.Get("alert_type").(string),
 		Threshold:   expandTriggerThreshold(d.Get("threshold").([]interface{})),
 		Frequency:   d.Get("frequency").(int),
-		Recipients:  expandRecipients(d.Get("recipient").([]interface{})),
+		Recipients:  expandNotificationRecipients(d.Get("recipient").([]interface{})),
 	}
 	return trigger, nil
 }

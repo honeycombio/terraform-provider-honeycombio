@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -46,6 +47,24 @@ func newColumn() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+			},
+			"created_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Required: false,
+				Optional: false,
+			},
+			"updated_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Required: false,
+				Optional: false,
+			},
+			"last_written_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Required: false,
+				Optional: false,
 			},
 		},
 	}
@@ -107,6 +126,9 @@ func resourceColumnRead(ctx context.Context, d *schema.ResourceData, meta interf
 	d.Set("hidden", column.Hidden)
 	d.Set("description", column.Description)
 	d.Set("type", column.Type)
+	d.Set("created_at", column.CreatedAt.UTC().Format(time.RFC3339))
+	d.Set("updated_at", column.CreatedAt.UTC().Format(time.RFC3339))
+	d.Set("last_written_at", column.CreatedAt.UTC().Format(time.RFC3339))
 	return nil
 }
 

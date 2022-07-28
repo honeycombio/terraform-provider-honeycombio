@@ -8,3 +8,5 @@
 terraform-provider-honeycombio*
 
 coverage.txt
+
+.idea

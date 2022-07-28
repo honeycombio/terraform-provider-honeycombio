@@ -50,11 +50,7 @@ func TestTriggers(t *testing.T) {
 				Op:    TriggerThresholdOpGreaterThan,
 				Value: 10000,
 			},
-			Recipients: []Recipient{
-				{
-					Type:   RecipientTypeEmail,
-					Target: "hello@example.com",
-				},
+			Recipients: []NotificationRecipient{
 				{
 					Type:   RecipientTypeMarker,
 					Target: "This marker is created by a trigger",
@@ -72,9 +68,7 @@ func TestTriggers(t *testing.T) {
 		data.ID = trigger.ID
 		data.QueryID = trigger.QueryID
 		data.AlertType = trigger.AlertType
-		for i := range trigger.Recipients {
-			data.Recipients[i].ID = trigger.Recipients[i].ID
-		}
+		data.Recipients[0].ID = trigger.Recipients[0].ID
 		// set default time range
 		data.Query.TimeRange = IntPtr(300)
 

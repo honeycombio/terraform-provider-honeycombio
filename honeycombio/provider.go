@@ -2,11 +2,11 @@ package honeycombio
 
 import (
 	"context"
-	"log"
 	"os"
-	"strconv"
 
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
@@ -21,25 +21,37 @@ func init() {
 // overwritten during the release process.
 var providerVersion = "dev"
 
+func deprecatedEnvCheck() schema.SchemaDefaultFunc {
+	if _, ok := os.LookupEnv("HONEYCOMBIO_APIKEY"); ok {
+		ctx := context.Background()
+		tflog.Warn(ctx, "HONEYCOMBIO_APIKEY has been deprecated, please use HONEYCOMB_API_KEY instead")
+	}
+	return schema.EnvDefaultFunc("HONEYCOMBIO_APIKEY", nil)
+}
+
 func Provider() *schema.Provider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"api_key": {
-				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("HONEYCOMBIO_APIKEY", nil),
-				Sensitive:   true,
+				Type:     schema.TypeString,
+				Required: true,
+				// Tiering goes HONEYCOMB_API_KEY > HONEYCOMBIO_APIKEY > nil
+				DefaultFunc: schema.EnvDefaultFunc(
+					"HONEYCOMB_API_KEY",
+					deprecatedEnvCheck()),
+				Sensitive: true,
 			},
 			"api_url": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
 			"debug": {
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
 				DefaultFunc: func() (interface{}, error) {
-					b, _ := strconv.ParseBool(os.Getenv("HONEYCOMBIO_DEBUG"))
-					return b, nil
+					// use provider environment's configured log level
+					return logging.IsDebugOrHigher(), nil
 				},
 			},
 		},
@@ -49,18 +61,23 @@ func Provider() *schema.Provider {
 			"honeycombio_query_specification": dataSourceHoneycombioQuerySpec(),
 			"honeycombio_trigger_recipient":   dataSourceHoneycombioSlackRecipient(),
 			"honeycombio_recipient":           dataSourceHoneycombioRecipient(),
+			"honeycombio_recipients":          dataSourceHoneycombioRecipients(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"honeycombio_board":            newBoard(),
-			"honeycombio_burn_alert":       newBurnAlert(),
-			"honeycombio_column":           newColumn(),
-			"honeycombio_dataset":          newDataset(),
-			"honeycombio_derived_column":   newDerivedColumn(),
-			"honeycombio_marker":           newMarker(),
-			"honeycombio_query":            newQuery(),
-			"honeycombio_query_annotation": newQueryAnnotation(),
-			"honeycombio_slo":              newSLO(),
-			"honeycombio_trigger":          newTrigger(),
+			"honeycombio_board":               newBoard(),
+			"honeycombio_burn_alert":          newBurnAlert(),
+			"honeycombio_column":              newColumn(),
+			"honeycombio_dataset":             newDataset(),
+			"honeycombio_derived_column":      newDerivedColumn(),
+			"honeycombio_marker":              newMarker(),
+			"honeycombio_query":               newQuery(),
+			"honeycombio_query_annotation":    newQueryAnnotation(),
+			"honeycombio_email_recipient":     newEmailRecipient(),
+			"honeycombio_pagerduty_recipient": newPDRecipient(),
+			"honeycombio_slack_recipient":     newSlackRecipient(),
+			"honeycombio_webhook_recipient":   newWebhookRecipient(),
+			"honeycombio_slo":                 newSLO(),
+			"honeycombio_trigger":             newTrigger(),
 		},
 	}
 
@@ -75,9 +92,6 @@ func Provider() *schema.Provider {
 		if err != nil {
 			return nil, diag.FromErr(err)
 		}
-
-		log.Printf("Configured honeycombio client with debug = %t", config.Debug)
-		log.Printf("To log requests and responses, set environment variable HONEYCOMBIO_DEBUG to true")
 
 		return c, nil
 	}

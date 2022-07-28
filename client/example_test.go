@@ -8,7 +8,7 @@ import (
 
 // This example shows how to configure and use a client to list all boards.
 func Example() {
-	apiKey, _ := os.LookupEnv("HONEYCOMBIO_APIKEY")
+	apiKey, _ := os.LookupEnv("HONEYCOMB_API_KEY")
 
 	config := &Config{
 		APIKey: apiKey,

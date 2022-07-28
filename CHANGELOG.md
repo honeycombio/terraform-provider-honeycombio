@@ -1,3 +1,39 @@
+# 0.8.0 (July 22, 2022)
+
+NOTES:
+
+* client: support for `zenoss` recipient type removed (#190)
+  * this was never available at the Terraform resource level
+* `honeycombio_recipient` will now fail if your query returns more than one recipient. Before it just picked the first one returned by the API.
+
+FEATURES:
+
+* *New Resource*: `honeycombio_email_recipient` (#186)
+* *New Resource*: `honeycombio_pagerduty_recipient` (#188)
+* *New Resource*: `honeycombio_slack_recipient` (#188)
+* *New Resource*: `honeycombio_webhook_recipient` (#188)
+* *New Data Source*: `honeycombio_recipients` (#188)
+
+ENHANCEMENTS:
+
+* client: error details from the API are now displayed in Terraform errors (#184)
+* datasource/honeycombio_recipient: - now uses the [Recpients API](https://docs.honeycomb.io/api/recipients/) and can filter recipient types with an optional `detail_filter` (#188)
+  * `dataset` is now ignored and marked as a deprecated argument
+  * `target` contines to work but is now deprecated
+  * `detail_filter` improves the experience of selecting the _correct_ PagerDuty recipient you are looking for.
+* resource/honeycombio_trigger and resource/honeycombio_burn_alert - notification severity can now be specified when a Trigger or a Burn Alert fires (#191)
+
+BUGFIXES:
+
+* docs: syntax and correctness updates (#176, #180)
+* resource/honeycombio_trigger - correct Trigger query test schema (#177)
+
+HOUSEKEEPING:
+
+* terraform-plugin-sdk upgraded from 2.16.0 to 2.19.0 (#175, #183, #189)
+* testify upgraded from 1.7.1 to 1.8.0 (#178, #181, #182)
+* CI: goreleaser-action bumped from 2.9.1 to 3.0.0 (#168)
+
 # 0.7.0 (Jun 2, 2022)
 
 NOTES:
