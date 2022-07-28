@@ -13,7 +13,7 @@ func newDataset() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceDatasetCreate,
 		ReadContext:   resourceDatasetRead,
-		UpdateContext: nil,
+		UpdateContext: resourceDatasetUpdate,
 		DeleteContext: schema.NoopContext,
 
 		Schema: map[string]*schema.Schema{
@@ -83,4 +83,23 @@ func resourceDatasetRead(ctx context.Context, d *schema.ResourceData, meta inter
 	d.Set("expand_json_depth", dataset.ExpandJSONDepth)
 	d.Set("slug", dataset.Slug)
 	return nil
+}
+
+func resourceDatasetUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*honeycombio.Client)
+
+	description := d.Get("description").(string)
+	expandJSONDepth := d.Get("expand_json_depth").(int)
+	data := &honeycombio.Dataset{
+		Name:            d.Get("name").(string),
+		Description:     &description,
+		ExpandJSONDepth: &expandJSONDepth,
+	}
+	dataset, err := client.Datasets.Create(ctx, data)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(dataset.Slug)
+	return resourceDatasetRead(ctx, d, meta)
 }

@@ -53,4 +53,18 @@ func TestDatasets(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, currentDataset, d)
 	})
+
+	t.Run("Update", func(t *testing.T) {
+		description := "brand new description"
+		expandJSONDepth := 3
+		updateDataset := &Dataset{
+			Name:            datasetName,
+			Description:     &description,
+			ExpandJSONDepth: &expandJSONDepth,
+		}
+		d, err := c.Datasets.Update(ctx, updateDataset)
+
+		assert.NoError(t, err)
+		assert.Equal(t, currentDataset, d)
+	})
 }
