@@ -38,11 +38,50 @@ func TestAccHoneycombioDataset_basic(t *testing.T) {
 	})
 }
 
+func TestAccHoneycombioDataset_createArgs(t *testing.T) {
+
+	datasetName := testAccDataset()
+
+	createArgs := honeycombio.DatasetCreateArgs{
+		Name:            datasetName,
+		Description:     "",
+		ExpandJSONDepth: 0,
+	}
+
+	testDataset := testAccDatasetWithArgs(createArgs)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDatasetConfigWithCreateArgs(testDataset),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDatasetExists(t, "honeycombio_dataset.test2", testDataset.Name),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test2", "name", testDataset.Name),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test2", "description", *testDataset.Description),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test2", "slug", urlEncodeDataset(testDataset.Slug)),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test2", "expand_json_depth", fmt.Sprintf("%d", *testDataset.ExpandJSONDepth)),
+				),
+			},
+		},
+	})
+}
+
 func testAccDatasetConfig(dataset string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_dataset" "test" {
   name = "%s"
 }`, dataset)
+}
+
+func testAccDatasetConfigWithCreateArgs(dataset honeycombio.Dataset) string {
+	return fmt.Sprintf(`
+resource "honeycombio_dataset" "test_with_args" {
+  name = "%s"
+  description = "%s"
+  expand_json_depth = "%d"
+}`, dataset.Name, *dataset.Description, dataset.ExpandJSONDepth)
 }
 
 // testAccCheckDatasetExists queries the API to verify the Dataset exists and

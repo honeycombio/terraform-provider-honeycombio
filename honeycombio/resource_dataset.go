@@ -29,7 +29,7 @@ func newDataset() *schema.Resource {
 				Required:     false,
 				Optional:     true,
 				ForceNew:     false,
-				ValidateFunc: validation.StringLenBetween(1, 1023),
+				ValidateFunc: validation.StringLenBetween(0, 1024),
 			},
 			"slug": {
 				Type:     schema.TypeString,
