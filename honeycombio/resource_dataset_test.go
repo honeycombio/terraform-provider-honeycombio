@@ -14,7 +14,9 @@ import (
 
 func TestAccHoneycombioDataset_basic(t *testing.T) {
 
-	testDataset := testAccDataset()
+	testDatasetName := testAccDataset()
+	testDataset := honeycombio.Dataset{}
+	testDataset.Name = testDatasetName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
@@ -23,9 +25,9 @@ func TestAccHoneycombioDataset_basic(t *testing.T) {
 			{
 				Config: testAccDatasetConfig(testDataset),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", testDataset),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", urlEncodeDataset(testDataset)),
+					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset.Name),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", testDataset.Name),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", urlEncodeDataset(testDataset.Name)),
 				),
 			},
 		},
@@ -62,11 +64,11 @@ func TestAccHoneycombioDataset_createArgs(t *testing.T) {
 	})
 }
 
-func testAccDatasetConfig(dataset string) string {
+func testAccDatasetConfig(dataset honeycombio.Dataset) string {
 	return fmt.Sprintf(`
 resource "honeycombio_dataset" "test" {
   name = "%s"
-}`, dataset)
+}`, dataset.Name)
 }
 
 func testAccDatasetConfigWithCreateArgs(dataset honeycombio.Dataset) string {
