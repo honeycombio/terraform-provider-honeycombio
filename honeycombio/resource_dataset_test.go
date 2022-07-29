@@ -14,24 +14,18 @@ import (
 
 func TestAccHoneycombioDataset_basic(t *testing.T) {
 
-	createArgs := honeycombio.DatasetCreateArgs{
-		Description:     "buzzing with data",
-		ExpandJSONDepth: 3,
-	}
-	testDataset := testAccDatasetWithArgs(createArgs)
+	testDataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDatasetConfig(testDataset.Name),
+				Config: testAccDatasetConfig(testDataset),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset.Name),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", testDataset.Name),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "description", *testDataset.Description),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", urlEncodeDataset(testDataset.Slug)),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "expand_json_depth", fmt.Sprintf("%d", *testDataset.ExpandJSONDepth)),
+					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", testDataset),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", urlEncodeDataset(testDataset)),
 				),
 			},
 		},

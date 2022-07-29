@@ -39,12 +39,11 @@ var _ Datasets = (*datasets)(nil)
 type Dataset struct {
 	Name            string  `json:"name"`
 	Description     *string `json:"description,omitempty"`
-	Slug            string  `json:"slug"`
+	Slug            string  `json:"slug, omitempty"`
 	ExpandJSONDepth *int    `json:"expand_json_depth,omitempty"`
 }
 
 type DatasetCreateArgs struct {
-	Name            string
 	Description     string
 	ExpandJSONDepth int
 }
