@@ -12,14 +12,14 @@ func TestDatasets(t *testing.T) {
 
 	c := newTestClient(t)
 	datasetName := testDataset(t)
-	description := "new honeycomb dataset"
-	expandJSONDepth := 0
+	datasetDescription := ""
+	datasetExpandJSONDepth := 0
 
 	currentDataset := &Dataset{
 		Name:            datasetName,
-		Description:     &description,
+		Description:     &datasetDescription,
 		Slug:            urlEncodeDataset(datasetName),
-		ExpandJSONDepth: &expandJSONDepth,
+		ExpandJSONDepth: &datasetExpandJSONDepth,
 	}
 
 	t.Run("List", func(t *testing.T) {
@@ -44,9 +44,7 @@ func TestDatasets(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		createDataset := &Dataset{
-			Name:            datasetName,
-			Description:     currentDataset.Description,
-			ExpandJSONDepth: currentDataset.ExpandJSONDepth,
+			Name: datasetName,
 		}
 		d, err := c.Datasets.Create(ctx, createDataset)
 
@@ -55,12 +53,10 @@ func TestDatasets(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
-		description := "brand new description"
-		expandJSONDepth := 3
 		updateDataset := &Dataset{
 			Name:            datasetName,
-			Description:     &description,
-			ExpandJSONDepth: &expandJSONDepth,
+			Description:     &datasetDescription,
+			ExpandJSONDepth: &datasetExpandJSONDepth,
 		}
 		d, err := c.Datasets.Update(ctx, updateDataset)
 
