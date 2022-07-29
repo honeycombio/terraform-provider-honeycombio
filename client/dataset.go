@@ -44,6 +44,7 @@ type Dataset struct {
 }
 
 type DatasetCreateArgs struct {
+	Name            string
 	Description     string
 	ExpandJSONDepth int
 }

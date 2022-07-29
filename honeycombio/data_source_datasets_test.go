@@ -10,7 +10,40 @@ import (
 )
 
 func TestAccDataSourceHoneycombioDataset_basic(t *testing.T) {
+	dataset := testAccDataset()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccDataSourceDatasetConfig(nil),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckOutputContains("names", dataset),
+				),
+			},
+			{
+				Config: testAccDataSourceDatasetConfig([]string{"starts_with = \"" + string(dataset[0:2]) + "\""}),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckOutputContains("names", dataset),
+				),
+			},
+			{
+				Config: testAccDataSourceDatasetConfig([]string{"starts_with = \"foo\""}),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckOutputDoesNotContain("names", dataset),
+				),
+			},
+		},
+	})
+}
+
+func TestAccDataSourceHoneycombioDataset_createArgs(t *testing.T) {
+
+	datasetName := testAccDataset()
+
 	createArgs := honeycombio.DatasetCreateArgs{
+		Name:            datasetName,
 		Description:     "",
 		ExpandJSONDepth: 0,
 	}
@@ -28,7 +61,7 @@ func TestAccDataSourceHoneycombioDataset_basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDataSourceDatasetConfig([]string{"starts_with = \"" + string(dataset.Name[0:2]) + "\""}),
+				Config: testAccDataSourceDatasetConfig([]string{"starts_with = \"" + dataset.Name[0:2] + "\""}),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckOutputContains("names", dataset.Name),
 				),

@@ -48,7 +48,7 @@ func testAccDataset() string {
 
 func testAccDatasetWithArgs(createArgs honeycombio.DatasetCreateArgs) honeycombio.Dataset {
 	dataset := honeycombio.Dataset{
-		Name:            os.Getenv("HONEYCOMBIO_DATASET"),
+		Name:            createArgs.Name,
 		Description:     &createArgs.Description,
 		ExpandJSONDepth: &createArgs.ExpandJSONDepth,
 	}
