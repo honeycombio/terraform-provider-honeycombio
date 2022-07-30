@@ -15,8 +15,9 @@ import (
 func TestAccHoneycombioDataset_basic(t *testing.T) {
 
 	testDatasetName := testAccDataset()
-	testDataset := honeycombio.Dataset{}
-	testDataset.Name = testDatasetName
+	testDataset := honeycombio.Dataset{
+		Name: testDatasetName,
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
@@ -25,7 +26,7 @@ func TestAccHoneycombioDataset_basic(t *testing.T) {
 			{
 				Config: testAccDatasetConfig(testDataset),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset.Name),
+					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset),
 					resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", testDataset.Name),
 					resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", urlEncodeDataset(testDataset.Name)),
 				),
@@ -53,11 +54,11 @@ func TestAccHoneycombioDataset_createArgs(t *testing.T) {
 			{
 				Config: testAccDatasetConfigWithCreateArgs(testDataset),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDatasetExists(t, "honeycombio_dataset.test2", testDataset.Name),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test2", "name", testDataset.Name),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test2", "description", *testDataset.Description),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test2", "slug", urlEncodeDataset(testDataset.Slug)),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test2", "expand_json_depth", fmt.Sprintf("%d", *testDataset.ExpandJSONDepth)),
+					testAccCheckDatasetExists(t, "honeycombio_dataset.test_with_args", testDataset),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test_with_args", "name", testDataset.Name),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test_with_args", "description", *testDataset.Description),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test_with_args", "slug", urlEncodeDataset(testDataset.Name)),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test_with_args", "expand_json_depth", "0"),
 				),
 			},
 		},
@@ -77,12 +78,12 @@ resource "honeycombio_dataset" "test_with_args" {
   name = "%s"
   description = "%s"
   expand_json_depth = "%d"
-}`, dataset.Name, *dataset.Description, dataset.ExpandJSONDepth)
+}`, dataset.Name, *dataset.Description, *dataset.ExpandJSONDepth)
 }
 
 // testAccCheckDatasetExists queries the API to verify the Dataset exists and
 // matches with the Terraform state.
-func testAccCheckDatasetExists(t *testing.T, name, testDataset string) resource.TestCheckFunc {
+func testAccCheckDatasetExists(t *testing.T, name string, testDataset honeycombio.Dataset) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -95,10 +96,8 @@ func testAccCheckDatasetExists(t *testing.T, name, testDataset string) resource.
 			return fmt.Errorf("could not retrieve dataset: %w", err)
 		}
 
-		assert.Equal(t, testDataset, d.Name)
-		assert.Equal(t, testDataset, d.Description)
-		assert.Equal(t, urlEncodeDataset(testDataset), d.Slug)
-		assert.Equal(t, testDataset, d.ExpandJSONDepth)
+		assert.Equal(t, testDataset.Name, d.Name)
+		assert.Equal(t, urlEncodeDataset(d.Name), d.Slug)
 
 		return nil
 	}
