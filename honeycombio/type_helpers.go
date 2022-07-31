@@ -156,9 +156,9 @@ func tpmToFloat(t int) float64 {
 }
 
 func flattenNotificationRecipients(rs []honeycombio.NotificationRecipient) []map[string]interface{} {
-	result := make([]map[string]interface{}, len(rs))
+	result := []map[string]interface{}{}
 
-	for i, r := range rs {
+	for _, r := range rs {
 		rcpt := map[string]interface{}{
 			"id":     r.ID,
 			"type":   string(r.Type),
@@ -173,16 +173,16 @@ func flattenNotificationRecipients(rs []honeycombio.NotificationRecipient) []map
 			}
 			rcpt["notification_details"] = details
 		}
-		result[i] = rcpt
+		result = append(result, rcpt)
 	}
 
 	return result
 }
 
 func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRecipient {
-	recipients := make([]honeycombio.NotificationRecipient, len(s))
+	recipients := []honeycombio.NotificationRecipient{}
 
-	for i, r := range s {
+	for _, r := range s {
 		rMap := r.(map[string]interface{})
 
 		rcpt := honeycombio.NotificationRecipient{
@@ -206,7 +206,7 @@ func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRec
 				}
 			}
 		}
-		recipients[i] = rcpt
+		recipients = append(recipients, rcpt)
 	}
 
 	return recipients
@@ -218,7 +218,7 @@ func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRec
 // This cannot currently be handled efficiently by a DiffSuppressFunc.
 // See: https://github.com/hashicorp/terraform-plugin-sdk/issues/477
 func matchNotificationRecipientsWithSchema(readRecipients []honeycombio.NotificationRecipient, declaredRecipients []interface{}) []honeycombio.NotificationRecipient {
-	result := make([]honeycombio.NotificationRecipient, len(declaredRecipients))
+	result := []honeycombio.NotificationRecipient{}
 
 	rMap := make(map[string]honeycombio.NotificationRecipient, len(readRecipients))
 	for _, recipient := range readRecipients {
@@ -233,20 +233,20 @@ func matchNotificationRecipientsWithSchema(readRecipients []honeycombio.Notifica
 	// put it in it's place. Otherwise, try to match it to a readRecipient with
 	// the same type and target. If we can't find it at all, it must be new, so
 	// put it at the end.
-	for i, declaredRcpt := range declaredRecipients {
+	for _, declaredRcpt := range declaredRecipients {
 		declaredRcpt := declaredRcpt.(map[string]interface{})
 
 		if declaredRcpt["id"] != "" {
 			if v, ok := rMap[declaredRcpt["id"].(string)]; ok {
 				// matched recipient declared by ID
-				result[i] = v
+				result = append(result, v)
 				delete(rMap, v.ID)
 			}
 		} else {
 			// group result recipients by type
 			for key, rcpt := range rMap {
 				if string(rcpt.Type) == declaredRcpt["type"] && rcpt.Target == declaredRcpt["target"] {
-					result[i] = rcpt
+					result = append(result, rcpt)
 					delete(rMap, key)
 					break
 				}
