@@ -159,7 +159,7 @@ func flattenNotificationRecipients(rs []honeycombio.NotificationRecipient) []map
 	result := make([]map[string]interface{}, len(rs))
 
 	for i, r := range rs {
-		result[i] = map[string]interface{}{
+		rcpt := map[string]interface{}{
 			"id":     r.ID,
 			"type":   string(r.Type),
 			"target": r.Target,
@@ -171,8 +171,9 @@ func flattenNotificationRecipients(rs []honeycombio.NotificationRecipient) []map
 			if r.Details.PDSeverity != "" {
 				details[0]["pagerduty_severity"] = string(r.Details.PDSeverity)
 			}
-			result[i]["notification_details"] = details
+			rcpt["notification_details"] = details
 		}
+		result[i] = rcpt
 	}
 
 	return result
@@ -184,7 +185,7 @@ func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRec
 	for i, r := range s {
 		rMap := r.(map[string]interface{})
 
-		recipients[i] = honeycombio.NotificationRecipient{
+		rcpt := honeycombio.NotificationRecipient{
 			ID:     rMap["id"].(string),
 			Type:   honeycombio.RecipientType(rMap["type"].(string)),
 			Target: rMap["target"].(string),
@@ -193,11 +194,19 @@ func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRec
 			// notification details have been provided
 			details := v[0].(map[string]interface{})
 			if s, ok := details["pagerduty_severity"]; ok {
-				recipients[i].Details = &honeycombio.NotificationRecipientDetails{
+				rcpt.Details = &honeycombio.NotificationRecipientDetails{
 					PDSeverity: honeycombio.PagerDutySeverity(s.(string)),
 				}
 			}
+		} else {
+			// set default notification details
+			if rcpt.Type == honeycombio.RecipientTypePagerDuty {
+				rcpt.Details = &honeycombio.NotificationRecipientDetails{
+					PDSeverity: honeycombio.PDSeverityCRITICAL,
+				}
+			}
 		}
+		recipients[i] = rcpt
 	}
 
 	return recipients

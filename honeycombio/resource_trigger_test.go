@@ -117,6 +117,56 @@ func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
+		data "honeycombio_query_specification" "test" {
+		  calculation {
+		    op     = "AVG"
+		    column = "duration_ms"
+		  }
+		  time_range = 1800
+		}
+
+		resource "honeycombio_query" "test" {
+		  dataset    = "%s"
+		    query_json = data.honeycombio_query_specification.test.json
+		  }
+
+		resource "honeycombio_pagerduty_recipient" "test" {
+		  integration_key  = "09c9d4cacd68933151a1ef1048b67dd5"
+		  integration_name = "acctest"
+		}
+
+		resource "honeycombio_trigger" "test" {
+		  name    = "Test trigger with PD Severity Recipient"
+		  dataset = "%s"
+
+		  query_id = honeycombio_query.test.id
+
+		  alert_type = "on_change"
+
+		  threshold {
+		    op    = ">"
+		    value = 100
+		  }
+
+		  recipient {
+		    id = honeycombio_pagerduty_recipient.test.id
+
+		    notification_details {
+		      pagerduty_severity = "info"
+		    }
+		  }
+		}`, dataset, dataset),
+			},
+		},
+	})
+
+	// test PD Recipient with no specified severity
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
   calculation {
     op     = "AVG"
@@ -136,12 +186,10 @@ resource "honeycombio_pagerduty_recipient" "test" {
 }
 
 resource "honeycombio_trigger" "test" {
-  name    = "Test trigger with PD Severity Recipient"
+  name    = "Test trigger with PD default Severity"
   dataset = "%s"
 
   query_id = honeycombio_query.test.id
-
-  alert_type = "on_change"
 
   threshold {
     op    = ">"
@@ -150,10 +198,7 @@ resource "honeycombio_trigger" "test" {
 
   recipient {
     id = honeycombio_pagerduty_recipient.test.id
-
-    notification_details {
-      pagerduty_severity = "info"
-    }
+    // default severity is critical
   }
 }`, dataset, dataset),
 			},
