@@ -12,15 +12,22 @@ func TestDatasets(t *testing.T) {
 
 	c := newTestClient(t)
 	datasetName := testDataset(t)
-	datasetDescription := ""
-	datasetExpandJSONDepth := 0
+	updatedDescription := "buzzing with data"
+	updatedExpandJSONDepth := 3
 
 	currentDataset := &Dataset{
 		Name:            datasetName,
-		Description:     &datasetDescription,
+		Description:     &updatedDescription,
 		Slug:            urlEncodeDataset(datasetName),
-		ExpandJSONDepth: &datasetExpandJSONDepth,
+		ExpandJSONDepth: &updatedExpandJSONDepth,
 	}
+
+	// create a new dataset with the parameters above
+	t.Run("Create", func(t *testing.T) {
+		d, err := c.Datasets.Create(ctx, currentDataset)
+		assert.NoError(t, err)
+		assert.Equal(t, *currentDataset, *d)
+	})
 
 	t.Run("List", func(t *testing.T) {
 		d, err := c.Datasets.List(ctx)
@@ -55,12 +62,14 @@ func TestDatasets(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		updateDataset := &Dataset{
 			Name:            datasetName,
-			Description:     &datasetDescription,
-			ExpandJSONDepth: &datasetExpandJSONDepth,
+			Description:     &updatedDescription,
+			ExpandJSONDepth: &updatedExpandJSONDepth,
 		}
 		d, err := c.Datasets.Update(ctx, updateDataset)
 
 		assert.NoError(t, err)
 		assert.Equal(t, currentDataset, d)
+		assert.Equal(t, currentDataset.Description, updatedDescription)
+		assert.Equal(t, currentDataset.ExpandJSONDepth, updatedExpandJSONDepth)
 	})
 }

@@ -43,12 +43,6 @@ type Dataset struct {
 	ExpandJSONDepth *int    `json:"expand_json_depth,omitempty"`
 }
 
-type DatasetCreateArgs struct {
-	Name            string
-	Description     string
-	ExpandJSONDepth int
-}
-
 func (s datasets) List(ctx context.Context) ([]Dataset, error) {
 	var datasets []Dataset
 	err := s.client.performRequest(ctx, "GET", "/1/datasets", nil, &datasets)

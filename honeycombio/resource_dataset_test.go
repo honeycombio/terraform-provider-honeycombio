@@ -15,6 +15,7 @@ import (
 func TestAccHoneycombioDataset_basic(t *testing.T) {
 
 	testDatasetName := testAccDataset()
+
 	testDataset := honeycombio.Dataset{
 		Name: testDatasetName,
 	}
@@ -28,37 +29,9 @@ func TestAccHoneycombioDataset_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset),
 					resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", testDataset.Name),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "description", *testDataset.Description),
 					resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", urlEncodeDataset(testDataset.Name)),
-				),
-			},
-		},
-	})
-}
-
-func TestAccHoneycombioDataset_createArgs(t *testing.T) {
-
-	datasetName := testAccDataset()
-
-	createArgs := honeycombio.DatasetCreateArgs{
-		Name:            datasetName,
-		Description:     "",
-		ExpandJSONDepth: 0,
-	}
-
-	testDataset := testAccDatasetWithArgs(createArgs)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccDatasetConfigWithCreateArgs(testDataset),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDatasetExists(t, "honeycombio_dataset.test_with_args", testDataset),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test_with_args", "name", testDataset.Name),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test_with_args", "description", *testDataset.Description),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test_with_args", "slug", urlEncodeDataset(testDataset.Name)),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test_with_args", "expand_json_depth", "0"),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "expand_json_depth", fmt.Sprintf("%d", *testDataset.ExpandJSONDepth)),
 				),
 			},
 		},
@@ -68,13 +41,6 @@ func TestAccHoneycombioDataset_createArgs(t *testing.T) {
 func testAccDatasetConfig(dataset honeycombio.Dataset) string {
 	return fmt.Sprintf(`
 resource "honeycombio_dataset" "test" {
-  name = "%s"
-}`, dataset.Name)
-}
-
-func testAccDatasetConfigWithCreateArgs(dataset honeycombio.Dataset) string {
-	return fmt.Sprintf(`
-resource "honeycombio_dataset" "test_with_args" {
   name = "%s"
   description = "%s"
   expand_json_depth = "%d"

@@ -45,12 +45,3 @@ func testAccClient(t *testing.T) *honeycombio.Client {
 func testAccDataset() string {
 	return os.Getenv("HONEYCOMB_DATASET")
 }
-
-func testAccDatasetWithArgs(createArgs honeycombio.DatasetCreateArgs) honeycombio.Dataset {
-	dataset := honeycombio.Dataset{
-		Name:            createArgs.Name,
-		Description:     &createArgs.Description,
-		ExpandJSONDepth: &createArgs.ExpandJSONDepth,
-	}
-	return dataset
-}

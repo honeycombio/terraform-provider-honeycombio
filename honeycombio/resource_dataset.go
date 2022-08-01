@@ -25,8 +25,6 @@ func newDataset() *schema.Resource {
 			},
 			"description": {
 				Type:         schema.TypeString,
-				Computed:     false,
-				Required:     false,
 				Optional:     true,
 				ForceNew:     false,
 				ValidateFunc: validation.StringLenBetween(0, 1024),
@@ -37,8 +35,6 @@ func newDataset() *schema.Resource {
 			},
 			"expand_json_depth": {
 				Type:         schema.TypeInt,
-				Computed:     false,
-				Required:     false,
 				Optional:     true,
 				ForceNew:     false,
 				ValidateFunc: validation.IntBetween(0, 10),
@@ -50,10 +46,11 @@ func newDataset() *schema.Resource {
 func resourceDatasetCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
+	name := d.Get("name").(string)
 	description := d.Get("description").(string)
 	expandJSONDepth := d.Get("expand_json_depth").(int)
 	data := &honeycombio.Dataset{
-		Name:            d.Get("name").(string),
+		Name:            name,
 		Description:     &description,
 		ExpandJSONDepth: &expandJSONDepth,
 	}
@@ -88,14 +85,15 @@ func resourceDatasetRead(ctx context.Context, d *schema.ResourceData, meta inter
 func resourceDatasetUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
+	name := d.Get("name").(string)
 	description := d.Get("description").(string)
 	expandJSONDepth := d.Get("expand_json_depth").(int)
 	data := &honeycombio.Dataset{
-		Name:            d.Get("name").(string),
+		Name:            name,
 		Description:     &description,
 		ExpandJSONDepth: &expandJSONDepth,
 	}
-	dataset, err := client.Datasets.Create(ctx, data)
+	dataset, err := client.Datasets.Update(ctx, data)
 	if err != nil {
 		return diag.FromErr(err)
 	}
