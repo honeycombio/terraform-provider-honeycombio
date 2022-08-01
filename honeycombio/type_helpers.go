@@ -211,6 +211,9 @@ func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRec
 // This cannot currently be handled efficiently by a DiffSuppressFunc.
 // See: https://github.com/hashicorp/terraform-plugin-sdk/issues/477
 func matchNotificationRecipientsWithSchema(readRecipients []honeycombio.NotificationRecipient, declaredRecipients []interface{}) []honeycombio.NotificationRecipient {
+	// purposefully not using `make` here as we want to append into the slice
+	// and avoid the case where we're allowing an 'empty' recipient to be
+	// persisted to state
 	result := []honeycombio.NotificationRecipient{}
 
 	rMap := make(map[string]honeycombio.NotificationRecipient, len(readRecipients))
