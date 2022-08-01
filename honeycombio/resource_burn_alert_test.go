@@ -135,7 +135,7 @@ resource "honeycombio_burn_alert" "test" {
 
   recipient {
     id = honeycombio_pagerduty_recipient.test.id
-    // default value is critical
+    // default severity is critical
   }
 }`, dataset, slo.ID),
 				Check: resource.ComposeTestCheckFunc(

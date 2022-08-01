@@ -156,9 +156,9 @@ func tpmToFloat(t int) float64 {
 }
 
 func flattenNotificationRecipients(rs []honeycombio.NotificationRecipient) []map[string]interface{} {
-	result := []map[string]interface{}{}
+	result := make([]map[string]interface{}, len(rs))
 
-	for _, r := range rs {
+	for i, r := range rs {
 		rcpt := map[string]interface{}{
 			"id":     r.ID,
 			"type":   string(r.Type),
@@ -173,16 +173,16 @@ func flattenNotificationRecipients(rs []honeycombio.NotificationRecipient) []map
 			}
 			rcpt["notification_details"] = details
 		}
-		result = append(result, rcpt)
+		result[i] = rcpt
 	}
 
 	return result
 }
 
 func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRecipient {
-	recipients := []honeycombio.NotificationRecipient{}
+	recipients := make([]honeycombio.NotificationRecipient, len(s))
 
-	for _, r := range s {
+	for i, r := range s {
 		rMap := r.(map[string]interface{})
 
 		rcpt := honeycombio.NotificationRecipient{
@@ -198,15 +198,8 @@ func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRec
 					PDSeverity: honeycombio.PagerDutySeverity(s.(string)),
 				}
 			}
-		} else {
-			// set default notification details
-			if rcpt.Type == honeycombio.RecipientTypePagerDuty {
-				rcpt.Details = &honeycombio.NotificationRecipientDetails{
-					PDSeverity: honeycombio.PDSeverityCRITICAL,
-				}
-			}
 		}
-		recipients = append(recipients, rcpt)
+		recipients[i] = rcpt
 	}
 
 	return recipients
