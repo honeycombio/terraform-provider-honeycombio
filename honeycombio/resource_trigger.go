@@ -104,6 +104,9 @@ func newTrigger() *schema.Resource {
 						"notification_details": {
 							Type:     schema.TypeList,
 							Optional: true,
+							// value may be set to defaults for a given type
+							//  e.g. PagerDuty type recipients have a `pagerduty_severity` of `critical`
+							Computed: true,
 							MinItems: 1,
 							MaxItems: 1,
 							Elem: &schema.Resource{

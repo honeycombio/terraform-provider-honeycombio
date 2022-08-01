@@ -159,7 +159,7 @@ func flattenNotificationRecipients(rs []honeycombio.NotificationRecipient) []map
 	result := make([]map[string]interface{}, len(rs))
 
 	for i, r := range rs {
-		result[i] = map[string]interface{}{
+		rcpt := map[string]interface{}{
 			"id":     r.ID,
 			"type":   string(r.Type),
 			"target": r.Target,
@@ -171,8 +171,9 @@ func flattenNotificationRecipients(rs []honeycombio.NotificationRecipient) []map
 			if r.Details.PDSeverity != "" {
 				details[0]["pagerduty_severity"] = string(r.Details.PDSeverity)
 			}
-			result[i]["notification_details"] = details
+			rcpt["notification_details"] = details
 		}
+		result[i] = rcpt
 	}
 
 	return result
@@ -184,7 +185,7 @@ func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRec
 	for i, r := range s {
 		rMap := r.(map[string]interface{})
 
-		recipients[i] = honeycombio.NotificationRecipient{
+		rcpt := honeycombio.NotificationRecipient{
 			ID:     rMap["id"].(string),
 			Type:   honeycombio.RecipientType(rMap["type"].(string)),
 			Target: rMap["target"].(string),
@@ -193,11 +194,12 @@ func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRec
 			// notification details have been provided
 			details := v[0].(map[string]interface{})
 			if s, ok := details["pagerduty_severity"]; ok {
-				recipients[i].Details = &honeycombio.NotificationRecipientDetails{
+				rcpt.Details = &honeycombio.NotificationRecipientDetails{
 					PDSeverity: honeycombio.PagerDutySeverity(s.(string)),
 				}
 			}
 		}
+		recipients[i] = rcpt
 	}
 
 	return recipients
@@ -209,7 +211,7 @@ func expandNotificationRecipients(s []interface{}) []honeycombio.NotificationRec
 // This cannot currently be handled efficiently by a DiffSuppressFunc.
 // See: https://github.com/hashicorp/terraform-plugin-sdk/issues/477
 func matchNotificationRecipientsWithSchema(readRecipients []honeycombio.NotificationRecipient, declaredRecipients []interface{}) []honeycombio.NotificationRecipient {
-	result := make([]honeycombio.NotificationRecipient, len(declaredRecipients))
+	result := make([]honeycombio.NotificationRecipient, 0)
 
 	rMap := make(map[string]honeycombio.NotificationRecipient, len(readRecipients))
 	for _, recipient := range readRecipients {
@@ -224,20 +226,20 @@ func matchNotificationRecipientsWithSchema(readRecipients []honeycombio.Notifica
 	// put it in it's place. Otherwise, try to match it to a readRecipient with
 	// the same type and target. If we can't find it at all, it must be new, so
 	// put it at the end.
-	for i, declaredRcpt := range declaredRecipients {
+	for _, declaredRcpt := range declaredRecipients {
 		declaredRcpt := declaredRcpt.(map[string]interface{})
 
 		if declaredRcpt["id"] != "" {
 			if v, ok := rMap[declaredRcpt["id"].(string)]; ok {
 				// matched recipient declared by ID
-				result[i] = v
+				result = append(result, v)
 				delete(rMap, v.ID)
 			}
 		} else {
 			// group result recipients by type
 			for key, rcpt := range rMap {
 				if string(rcpt.Type) == declaredRcpt["type"] && rcpt.Target == declaredRcpt["target"] {
-					result[i] = rcpt
+					result = append(result, rcpt)
 					delete(rMap, key)
 					break
 				}
