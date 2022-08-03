@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -26,6 +27,18 @@ func newDataset() *schema.Resource {
 			"slug": {
 				Type:     schema.TypeString,
 				Computed: true,
+			},
+			"created_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Required: false,
+				Optional: false,
+			},
+			"last_written_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Required: false,
+				Optional: false,
 			},
 		},
 	}
@@ -60,5 +73,7 @@ func resourceDatasetRead(ctx context.Context, d *schema.ResourceData, meta inter
 	d.SetId(dataset.Slug)
 	d.Set("name", dataset.Name)
 	d.Set("slug", dataset.Slug)
+	d.Set("created_at", dataset.CreatedAt.UTC().Format(time.RFC3339))
+	d.Set("last_written_at", dataset.CreatedAt.UTC().Format(time.RFC3339))
 	return nil
 }
