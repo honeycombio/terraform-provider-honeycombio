@@ -53,8 +53,9 @@ func newBoard() *schema.Resource {
 							ValidateFunc: validation.StringInSlice(boardQueryStyleStrings(), false),
 						},
 						"dataset": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:       schema.TypeString,
+							Optional:   true,
+							Deprecated: "Board Queries no longer require the dataset as they rely on the provided Query ID's dataset instead. This value is being ignored.",
 						},
 						"query_id": {
 							Type:     schema.TypeString,
@@ -110,7 +111,6 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		queries[i] = map[string]interface{}{
 			"caption":             q.Caption,
 			"query_style":         q.QueryStyle,
-			"dataset":             q.Dataset,
 			"query_id":            q.QueryID,
 			"query_annotation_id": q.QueryAnnotationID,
 		}
@@ -158,7 +158,6 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 		queries = append(queries, honeycombio.BoardQuery{
 			Caption:           m["caption"].(string),
 			QueryStyle:        honeycombio.BoardQueryStyle(m["query_style"].(string)),
-			Dataset:           m["dataset"].(string),
 			QueryID:           m["query_id"].(string),
 			QueryAnnotationID: m["query_annotation_id"].(string),
 		})

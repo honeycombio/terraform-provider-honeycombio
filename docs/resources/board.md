@@ -82,7 +82,6 @@ resource "honeycombio_board" "overview" {
   style       = "visual"
 
   query {
-    dataset             = var.dataset
     caption             = "Latency by User"
     query_id            = honeycombio_query.latency_by_userid.id
     query_annotation_id = honeycombio_query_annotation.latency_by_userid.id
@@ -103,7 +102,7 @@ Each board configuration may have zero or more `query` blocks, which accepts the
 
 * `query_id` - (Required) The ID of the Query to run.
 * `query_annotation_id` - (Optional) The ID of the Query Annotation to associate with this query.
-* `dataset` - (Required) The dataset this query is associated with.
+* `dataset` - (Deprecated) The dataset this query is associated with.
 * `caption` - (Optional) A description of the query that will be displayed on the board. Supports markdown.
 * `query_style` - (Optional) How the query should be displayed within the board, either `graph` (the default), `table` or `combo`.
 

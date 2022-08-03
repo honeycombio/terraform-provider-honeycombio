@@ -71,11 +71,8 @@ type BoardQuery struct {
 	Caption string `json:"caption,omitempty"`
 	// Defaults to graph.
 	QueryStyle BoardQueryStyle `json:"query_style,omitempty"`
-	// This field is required.
-	Dataset string `json:"dataset"`
-	// Either QueryID or Query is required.
-	QueryID string     `json:"query_id,omitempty"`
-	Query   *QuerySpec `json:"query,omitempty"`
+	// QueryID is required
+	QueryID string `json:"query_id,omitempty"`
 	// Optional
 	QueryAnnotationID string `json:"query_annotation_id,omitempty"`
 }

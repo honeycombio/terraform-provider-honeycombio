@@ -75,18 +75,16 @@ resource "honeycombio_board" "test" {
 
   query {
     caption             = "test query 0"
-    dataset             = "%s"
     query_id            = honeycombio_query.test[0].id
     query_annotation_id = honeycombio_query_annotation.test[0].id
   }
   query {
     caption             = "test query 1"
     query_style         = "combo"
-    dataset             = "%s"
     query_id            = honeycombio_query.test[1].id
     query_annotation_id = honeycombio_query_annotation.test[1].id
   }
-}`, dataset, dataset, dataset, dataset)
+}`, dataset, dataset)
 }
 
 func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
@@ -102,11 +100,6 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 			return fmt.Errorf("could not find created board: %w", err)
 		}
 
-		for i := range createdBoard.Queries {
-			// we don't track the QuerySpec, just the IDs
-			createdBoard.Queries[i].Query = nil
-		}
-
 		expectedBoard := &honeycombio.Board{
 			ID:          createdBoard.ID,
 			Name:        "Test board from terraform-provider-honeycombio",
@@ -116,14 +109,12 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 				{
 					Caption:           "test query 0",
 					QueryStyle:        honeycombio.BoardQueryStyleGraph,
-					Dataset:           testAccDataset(),
 					QueryID:           createdBoard.Queries[0].QueryID,
 					QueryAnnotationID: createdBoard.Queries[0].QueryAnnotationID,
 				},
 				{
 					Caption:           "test query 1",
 					QueryStyle:        honeycombio.BoardQueryStyleCombo,
-					Dataset:           testAccDataset(),
 					QueryID:           createdBoard.Queries[1].QueryID,
 					QueryAnnotationID: createdBoard.Queries[1].QueryAnnotationID,
 				},
