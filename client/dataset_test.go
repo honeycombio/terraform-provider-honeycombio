@@ -16,10 +16,8 @@ func TestDatasets(t *testing.T) {
 	updatedExpandJSONDepth := 3
 
 	currentDataset := &Dataset{
-		Name:            datasetName,
-		Description:     &updatedDescription,
-		Slug:            urlEncodeDataset(datasetName),
-		ExpandJSONDepth: &updatedExpandJSONDepth,
+		Name: datasetName,
+		Slug: urlEncodeDataset(datasetName),
 	}
 
 	// create a new dataset with the parameters above
@@ -62,13 +60,13 @@ func TestDatasets(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		updateDataset := &Dataset{
 			Name:            datasetName,
-			Description:     &updatedDescription,
-			ExpandJSONDepth: &updatedExpandJSONDepth,
+			Description:     updatedDescription,
+			ExpandJSONDepth: updatedExpandJSONDepth,
 		}
 		d, err := c.Datasets.Update(ctx, updateDataset)
 
 		assert.NoError(t, err)
-		assert.Equal(t, currentDataset, d)
+		assert.Equal(t, *updateDataset, *d)
 		assert.Equal(t, currentDataset.Description, updatedDescription)
 		assert.Equal(t, currentDataset.ExpandJSONDepth, updatedExpandJSONDepth)
 	})

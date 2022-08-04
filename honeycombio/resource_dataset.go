@@ -51,8 +51,8 @@ func resourceDatasetCreate(ctx context.Context, d *schema.ResourceData, meta int
 	expandJSONDepth := d.Get("expand_json_depth").(int)
 	data := &honeycombio.Dataset{
 		Name:            name,
-		Description:     &description,
-		ExpandJSONDepth: &expandJSONDepth,
+		Description:     description,
+		ExpandJSONDepth: expandJSONDepth,
 	}
 	dataset, err := client.Datasets.Create(ctx, data)
 	if err != nil {
@@ -90,8 +90,8 @@ func resourceDatasetUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	expandJSONDepth := d.Get("expand_json_depth").(int)
 	data := &honeycombio.Dataset{
 		Name:            name,
-		Description:     &description,
-		ExpandJSONDepth: &expandJSONDepth,
+		Description:     description,
+		ExpandJSONDepth: expandJSONDepth,
 	}
 	dataset, err := client.Datasets.Update(ctx, data)
 	if err != nil {
