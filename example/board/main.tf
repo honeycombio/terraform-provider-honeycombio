@@ -41,7 +41,6 @@ resource "honeycombio_board" "board" {
 
   query {
     caption  = "Latency"
-    dataset  = var.dataset
     query_id = honeycombio_query.query.id
   }
 }

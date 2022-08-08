@@ -53,8 +53,10 @@ func newBoard() *schema.Resource {
 							ValidateFunc: validation.StringInSlice(boardQueryStyleStrings(), false),
 						},
 						"dataset": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:       schema.TypeString,
+							Optional:   true,
+							Computed:   true,
+							Deprecated: "Board Queries no longer require the dataset as they rely on the provided Query ID's dataset.",
 						},
 						"query_id": {
 							Type:     schema.TypeString,
