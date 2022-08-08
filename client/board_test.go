@@ -38,6 +38,7 @@ func TestBoards(t *testing.T) {
 				{
 					Caption:    "A sample query",
 					QueryStyle: BoardQueryStyleCombo,
+					Dataset:    dataset,
 					QueryID:    *query.ID,
 				},
 			},

@@ -71,6 +71,8 @@ type BoardQuery struct {
 	Caption string `json:"caption,omitempty"`
 	// Defaults to graph.
 	QueryStyle BoardQueryStyle `json:"query_style,omitempty"`
+	// Dataset is no longer required
+	Dataset string `json:"dataset,omitempty"`
 	// QueryID is required
 	QueryID string `json:"query_id,omitempty"`
 	// Optional
