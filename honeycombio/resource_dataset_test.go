@@ -29,9 +29,9 @@ func TestAccHoneycombioDataset_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDatasetExists(t, "honeycombio_dataset.test", testDataset),
 					resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", testDataset.Name),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "description", *testDataset.Description),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "description", testDataset.Description),
 					resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", urlEncodeDataset(testDataset.Name)),
-					resource.TestCheckResourceAttr("honeycombio_dataset.test", "expand_json_depth", fmt.Sprintf("%d", *testDataset.ExpandJSONDepth)),
+					resource.TestCheckResourceAttr("honeycombio_dataset.test", "expand_json_depth", fmt.Sprintf("%d", testDataset.ExpandJSONDepth)),
 				),
 			},
 		},
@@ -44,7 +44,7 @@ resource "honeycombio_dataset" "test" {
   name = "%s"
   description = "%s"
   expand_json_depth = "%d"
-}`, dataset.Name, *dataset.Description, *dataset.ExpandJSONDepth)
+}`, dataset.Name, dataset.Description, dataset.ExpandJSONDepth)
 }
 
 // testAccCheckDatasetExists queries the API to verify the Dataset exists and

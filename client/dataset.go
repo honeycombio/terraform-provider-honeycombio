@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"time"
 )
 
 // Datasets describes all the dataset-related methods that the Honeycomb API
@@ -41,6 +42,9 @@ type Dataset struct {
 	Description     string `json:"description,omitempty"`
 	Slug            string `json:"slug,omitempty"`
 	ExpandJSONDepth int    `json:"expand_json_depth,omitempty"`
+	// Read only
+	LastWrittenAt time.Time `json:"last_written_at,omitempty"`
+	CreatedAt     time.Time `json:"created_at,omitempty"`
 }
 
 func (s datasets) List(ctx context.Context) ([]Dataset, error) {

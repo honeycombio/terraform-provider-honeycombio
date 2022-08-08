@@ -31,6 +31,16 @@ func TestDatasets(t *testing.T) {
 		d, err := c.Datasets.List(ctx)
 
 		assert.NoError(t, err)
+
+		for _, dataset := range d {
+			assert.NotNil(t, dataset.LastWrittenAt, "last written at is empty")
+			assert.NotNil(t, dataset.CreatedAt, "created at is empty")
+			// copy dynamic fields before asserting - will be skipped if expected dataset not found
+			if dataset.Name == currentDataset.Name {
+				currentDataset.LastWrittenAt = dataset.LastWrittenAt
+				currentDataset.CreatedAt = dataset.CreatedAt
+			}
+		}
 		assert.Contains(t, d, *currentDataset, "could not find current dataset with List")
 	})
 
@@ -38,6 +48,13 @@ func TestDatasets(t *testing.T) {
 		d, err := c.Datasets.Get(ctx, currentDataset.Slug)
 
 		assert.NoError(t, err)
+
+		assert.NotNil(t, d.LastWrittenAt, "last written at is empty")
+		assert.NotNil(t, d.CreatedAt, "created at is empty")
+		// copy dynamic fields before asserting equality
+		d.LastWrittenAt = currentDataset.LastWrittenAt
+		d.CreatedAt = currentDataset.CreatedAt
+
 		assert.Equal(t, *currentDataset, *d)
 	})
 
@@ -54,6 +71,13 @@ func TestDatasets(t *testing.T) {
 		d, err := c.Datasets.Create(ctx, createDataset)
 
 		assert.NoError(t, err)
+
+		assert.NotNil(t, d.LastWrittenAt, "last written at is empty")
+		assert.NotNil(t, d.CreatedAt, "created at is empty")
+		// copy dynamic fields before asserting equality
+		d.LastWrittenAt = currentDataset.LastWrittenAt
+		d.CreatedAt = currentDataset.CreatedAt
+
 		assert.Equal(t, currentDataset, d)
 	})
 

@@ -72,6 +72,9 @@ func newBurnAlert() *schema.Resource {
 							Optional: true,
 							MinItems: 1,
 							MaxItems: 1,
+							// value may be set to defaults for a given type
+							//  e.g. PagerDuty type recipients have a `pagerduty_severity` of `critical`
+							Computed: true,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"pagerduty_severity": {

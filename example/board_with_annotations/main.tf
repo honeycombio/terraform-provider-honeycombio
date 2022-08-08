@@ -59,7 +59,6 @@ See the [wiki](https://wiki.company.internal.tld) for more information.
 EOT
 
   query {
-    dataset             = var.dataset
     caption             = "Latency by User"
     query_id            = honeycombio_query.latency_by_userid.id
     query_annotation_id = honeycombio_query_annotation.latency_by_userid.id

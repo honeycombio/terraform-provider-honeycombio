@@ -82,11 +82,10 @@ resource "honeycombio_board" "test" {
   query {
     caption             = "test query 1"
     query_style         = "combo"
-    dataset             = "%s"
     query_id            = honeycombio_query.test[1].id
     query_annotation_id = honeycombio_query_annotation.test[1].id
   }
-}`, dataset, dataset, dataset, dataset)
+}`, dataset, dataset, dataset)
 }
 
 func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
@@ -100,11 +99,6 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 		createdBoard, err := client.Boards.Get(context.Background(), resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not find created board: %w", err)
-		}
-
-		for i := range createdBoard.Queries {
-			// we don't track the QuerySpec, just the IDs
-			createdBoard.Queries[i].Query = nil
 		}
 
 		expectedBoard := &honeycombio.Board{
