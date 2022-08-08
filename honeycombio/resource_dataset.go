@@ -36,7 +36,6 @@ func newDataset() *schema.Resource {
 			"expand_json_depth": {
 				Type:         schema.TypeInt,
 				Optional:     true,
-				ForceNew:     false,
 				ValidateFunc: validation.IntBetween(0, 10),
 			},
 			"created_at": {
