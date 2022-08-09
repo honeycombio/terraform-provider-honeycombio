@@ -1,3 +1,31 @@
+# 0.9.0 (Aug 10, 2022)
+
+NOTES:
+
+* `honeycombio_board` no longer requires specifying `dataset` for each `query` object. `dataset` has been marked deprecated.
+
+FEATURES:
+
+* the provider's configuration now respects the more standard `HONEYCOMB_API_KEY` in addition to `HONEYCOMBIO_APIKEY` (#187, #208)
+
+ENHANCEMENTS:
+
+* resource/honeycombio_dataset: support for `description` and `expand_json_depth` arguments (#185)
+* resource/honeycombio_dataset: addition of `created_at` and `last_wrriten_at` attributes (#204)
+* resource/honeycombio_column: addition of `created_at`, `last_written_at`, and `updated_at` attributes (#198)
+* resource/honeycombio_board: environment-wide queries are now supported. `dataset` is no longer required as part of the board `query` definition and has been marked deprecated. (#203)
+
+BUGFIXES:
+
+* docs: typos and corrections (#199, #206)
+* resource/honeycombio_trigger: fix recipients ordering and potential infinite diff for pagerduty recipients (#202)
+
+HOUSEKEEPING:
+
+* CI: workflow improvements and scheduled nightly 'smoketest' runs (#195)
+* terraform-plugin-sdk upgraded from 2.19.0 to 2.20.0 (#201)
+* Go upgraded from 1.17.11 to 1.17.13 (#207)
+
 # 0.8.0 (July 22, 2022)
 
 NOTES:
