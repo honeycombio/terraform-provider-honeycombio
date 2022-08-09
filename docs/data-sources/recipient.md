@@ -16,7 +16,7 @@ data "honeycombio_recipient" "slack" {
 
   detail_filter {
     name  = "channel"
-    value = "honeycomb-triggers"
+    value = "#honeycomb-triggers"
   }
 }
 
