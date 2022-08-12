@@ -85,6 +85,10 @@ resource "honeycombio_board" "overview" {
     caption             = "Latency by User"
     query_id            = honeycombio_query.latency_by_userid.id
     query_annotation_id = honeycombio_query_annotation.latency_by_userid.id
+
+    graph_settings {
+      utc_xaxis = true
+    }
   }
 }
 ```
@@ -105,6 +109,16 @@ Each board configuration may have zero or more `query` blocks, which accepts the
 * `query_annotation_id` - (Optional) The ID of the Query Annotation to associate with this query.
 * `dataset` - (Deprecated) The dataset this query is associated with.
 * `caption` - (Optional) A description of the query that will be displayed on the board. Supports markdown.
+* `graph_settings` - (Optional) A map of boolean toggles to manages the settings for this query's graph on the board.
+If a value is unspecified, it is assumed to be false.
+Currently supported toggles are:
+  * `hide_markers`
+  * `log_scale`
+  * `omit_missing_values`
+  * `stacked_graphs`
+  * `utc_xaxis`
+
+  See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-settings/) in the documentation for more information on any individual setting.
 * `query_style` - (Optional) How the query should be displayed within the board, either `graph` (the default), `table` or `combo`.
 
 ## Attribute Reference

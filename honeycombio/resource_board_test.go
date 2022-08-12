@@ -27,6 +27,7 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.#", "2"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.caption", "test query 0"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.dataset", dataset),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.graph_settings.0.utc_xaxis", "true"),
 					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.0.query_id", "honeycombio_query.test.0", "id"),
 					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.0.query_annotation_id", "honeycombio_query_annotation.test.0", "id"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.1.caption", "test query 1"),
@@ -66,6 +67,10 @@ resource "honeycombio_board" "test" {
 
   query {
     query_id = honeycombio_query.test.id
+
+    graph_settings {
+      log_scale = true
+    }
   }
 }
 `, dataset),
@@ -142,6 +147,10 @@ resource "honeycombio_board" "test" {
     dataset             = "%s"
     query_id            = honeycombio_query.test[0].id
     query_annotation_id = honeycombio_query_annotation.test[0].id
+
+    graph_settings {
+      utc_xaxis = true
+    }
   }
   query {
     caption             = "test query 1"

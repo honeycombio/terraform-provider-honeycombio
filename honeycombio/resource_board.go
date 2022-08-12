@@ -59,6 +59,49 @@ func newBoard() *schema.Resource {
 							Computed:     true,
 							ValidateFunc: validation.StringInSlice(boardQueryStyleStrings(), false),
 						},
+						"graph_settings": {
+							Type:     schema.TypeList,
+							MinItems: 1,
+							MaxItems: 1,
+							Computed: true,
+							Optional: true,
+							Description: `Manages the settings for this query's graph on the board.
+See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-settings/) in the documentation for more information.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"log_scale": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Optional:    true,
+										Description: "Set the graph's Y axis to Log scale.",
+									},
+									"omit_missing_values": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Optional:    true,
+										Description: "Enable interpolatation between datapoints when the interveneing time buckets have no matching events.",
+									},
+									"hide_markers": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Optional:    true,
+										Description: "Disable the overlay of Markers on the graph.",
+									},
+									"stacked_graphs": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Optional:    true,
+										Description: "Enable the display of groups as stacked colored area under their line graphs.",
+									},
+									"utc_xaxis": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Optional:    true,
+										Description: "Set the graph's X axis to UTC.",
+									},
+								},
+							},
+						},
 						"dataset": {
 							Type:       schema.TypeString,
 							Optional:   true,
@@ -121,6 +164,7 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 			"caption":             q.Caption,
 			"query_style":         q.QueryStyle,
 			"dataset":             q.Dataset,
+			"graph_settings":      flattenBoardQueryGraphSettings(q.GraphSettings),
 			"query_id":            q.QueryID,
 			"query_annotation_id": q.QueryAnnotationID,
 		}
@@ -159,15 +203,24 @@ func resourceBoardDelete(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
+	var err error
 	var queries []honeycombio.BoardQuery
 
 	qs := d.Get("query").([]interface{})
 	for _, q := range qs {
 		m := q.(map[string]interface{})
 
+		var graphSettings honeycombio.BoardGraphSettings
+		if v, ok := m["graph_settings"]; ok {
+			graphSettings, err = expandBoardQueryGraphSettings(v)
+			if err != nil {
+				return nil, err
+			}
+		}
 		queries = append(queries, honeycombio.BoardQuery{
 			Caption:           m["caption"].(string),
 			QueryStyle:        honeycombio.BoardQueryStyle(m["query_style"].(string)),
+			GraphSettings:     graphSettings,
 			Dataset:           m["dataset"].(string),
 			QueryID:           m["query_id"].(string),
 			QueryAnnotationID: m["query_annotation_id"].(string),
@@ -187,4 +240,48 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 		return nil, errors.New("list style boards cannot specify a column layout")
 	}
 	return board, nil
+}
+
+func expandBoardQueryGraphSettings(gs interface{}) (honeycombio.BoardGraphSettings, error) {
+	graphSettings := honeycombio.BoardGraphSettings{}
+	raw := gs.([]interface{})
+	if len(raw) == 0 {
+		return graphSettings, nil
+	}
+	if len(raw) > 1 {
+		return graphSettings, errors.New("got more than one set of graph settings?")
+	}
+	s := raw[0].(map[string]interface{})
+
+	if v, ok := s["log_scale"].(bool); ok && v {
+		graphSettings.UseLogScale = true
+	}
+	if v, ok := s["omit_missing_values"].(bool); ok && v {
+		graphSettings.OmitMissingValues = true
+	}
+	if v, ok := s["hide_markers"].(bool); ok && v {
+		graphSettings.HideMarkers = true
+	}
+	if v, ok := s["stacked_graphs"].(bool); ok && v {
+		graphSettings.UseStackedGraphs = true
+	}
+	if v, ok := s["utc_xaxis"].(bool); ok && v {
+		graphSettings.UseUTCXAxis = true
+	}
+
+	return graphSettings, nil
+}
+
+func flattenBoardQueryGraphSettings(gs honeycombio.BoardGraphSettings) []map[string]interface{} {
+	result := make([]map[string]interface{}, 0)
+
+	result = append(result, map[string]interface{}{
+		"hide_markers":        gs.HideMarkers,
+		"log_scale":           gs.UseLogScale,
+		"omit_missing_values": gs.OmitMissingValues,
+		"stacked_graphs":      gs.UseStackedGraphs,
+		"utc_xaxis":           gs.UseUTCXAxis,
+	})
+
+	return result
 }
