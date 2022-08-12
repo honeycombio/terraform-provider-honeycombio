@@ -37,10 +37,11 @@ func TestBoards(t *testing.T) {
 			ColumnLayout: BoardColumnStyleSingle,
 			Queries: []BoardQuery{
 				{
-					Caption:    "A sample query",
-					QueryStyle: BoardQueryStyleCombo,
-					Dataset:    dataset,
-					QueryID:    *query.ID,
+					Caption:       "A sample query",
+					QueryStyle:    BoardQueryStyleCombo,
+					Dataset:       dataset,
+					QueryID:       *query.ID,
+					GraphSettings: BoardGraphSettings{OmitMissingValues: true, UseUTCXAxis: true},
 				},
 			},
 		}
@@ -82,9 +83,10 @@ func TestBoards(t *testing.T) {
 		assert.NoError(t, err)
 		b.ColumnLayout = BoardColumnStyleMulti
 		b.Queries = append(b.Queries, BoardQuery{
-			Caption:    "A second query",
-			QueryStyle: BoardQueryStyleGraph,
-			QueryID:    *newQuery.ID,
+			Caption:       "A second query",
+			QueryStyle:    BoardQueryStyleGraph,
+			QueryID:       *newQuery.ID,
+			GraphSettings: BoardGraphSettings{UseUTCXAxis: true},
 		})
 
 		result, err := c.Boards.Update(ctx, b)

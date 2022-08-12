@@ -89,6 +89,8 @@ type BoardQuery struct {
 	QueryID string `json:"query_id,omitempty"`
 	// Optional
 	QueryAnnotationID string `json:"query_annotation_id,omitempty"`
+	// Optional
+	GraphSettings BoardGraphSettings `json:"graph_settings"`
 }
 
 // BoardQueryStyle determines how a query should be displayed on the board.
@@ -100,6 +102,15 @@ const (
 	BoardQueryStyleTable BoardQueryStyle = "table"
 	BoardQueryStyleCombo BoardQueryStyle = "combo"
 )
+
+// BoardGraphSettings represents the display settings for an individual graph in a board.
+type BoardGraphSettings struct {
+	OmitMissingValues bool `json:"omit_missing_values,omitempty"`
+	UseStackedGraphs  bool `json:"stacked_graphs,omitempty"`
+	UseLogScale       bool `json:"log_scale,omitempty"`
+	UseUTCXAxis       bool `json:"utc_xaxis,omitempty"`
+	HideMarkers       bool `json:"hide_markers,omitempty"`
+}
 
 // BoardQueryStyles returns an exhaustive list of board query styles.
 func BoardQueryStyles() []BoardQueryStyle {

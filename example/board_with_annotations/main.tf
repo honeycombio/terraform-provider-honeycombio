@@ -63,5 +63,10 @@ EOT
     query_id            = honeycombio_query.latency_by_userid.id
     query_annotation_id = honeycombio_query_annotation.latency_by_userid.id
     query_style         = "graph"
+
+    graph_settings {
+      utc_xaxis    = true
+      hide_markers = true
+    }
   }
 }
