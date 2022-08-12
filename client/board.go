@@ -74,7 +74,7 @@ func BoardStyles() []BoardStyle {
 type BoardColumnStyle string
 
 const (
-	BoardColumnStyletMulti BoardColumnStyle = "multi"
+	BoardColumnStyleMulti  BoardColumnStyle = "multi"
 	BoardColumnStyleSingle BoardColumnStyle = "single"
 )
 

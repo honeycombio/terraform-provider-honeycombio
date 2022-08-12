@@ -80,6 +80,7 @@ func TestBoards(t *testing.T) {
 			TimeRange: IntPtr(7200), // 2 hours
 		})
 		assert.NoError(t, err)
+		b.ColumnLayout = BoardColumnStyleMulti
 		b.Queries = append(b.Queries, BoardQuery{
 			Caption:    "A second query",
 			QueryStyle: BoardQueryStyleGraph,
