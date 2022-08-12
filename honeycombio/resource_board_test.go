@@ -2,14 +2,12 @@ package honeycombio
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAccHoneycombioBoard_basic(t *testing.T) {
@@ -23,12 +21,78 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 				Config: testAccBoardConfig(dataset),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBoardExists(t, "honeycombio_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "name", "Test board from terraform-provider-honeycombio"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "style", "list"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "description", ""),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "query.#", "2"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.caption", "test query 0"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.dataset", dataset),
+					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.0.query_id", "honeycombio_query.test.0", "id"),
+					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.0.query_annotation_id", "honeycombio_query_annotation.test.0", "id"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "query.1.caption", "test query 1"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "query.1.dataset", dataset),
+					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.1.query_id", "honeycombio_query.test.1", "id"),
+					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.1.query_annotation_id", "honeycombio_query_annotation.test.1", "id"),
 				),
 			},
 			{
 				ResourceName:      "honeycombio_board.test",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+		},
+	})
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_board" "test" {
+  name          = "simple board"
+  style         = "visual"
+  column_layout = "single"
+
+  query {
+    query_id = honeycombio_query.test.id
+  }
+}
+`, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "name", "simple board"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "style", "visual"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "column_layout", "single"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "query.#", "1"),
+					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.0.query_id", "honeycombio_query.test", "id"),
+				),
+			},
+		},
+	})
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "honeycombio_board" "test" {
+  name          = "error board"
+  style         = "list"
+  column_layout = "multi"
+}
+`,
+				ExpectError: regexp.MustCompile(`list style boards cannot specify a column layout`),
 			},
 		},
 	})
@@ -96,37 +160,9 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 		}
 
 		client := testAccClient(t)
-		createdBoard, err := client.Boards.Get(context.Background(), resourceState.Primary.ID)
+		_, err := client.Boards.Get(context.Background(), resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not find created board: %w", err)
-		}
-
-		expectedBoard := &honeycombio.Board{
-			ID:          createdBoard.ID,
-			Name:        "Test board from terraform-provider-honeycombio",
-			Description: "",
-			Style:       honeycombio.BoardStyleList,
-			Queries: []honeycombio.BoardQuery{
-				{
-					Caption:           "test query 0",
-					QueryStyle:        honeycombio.BoardQueryStyleGraph,
-					Dataset:           testAccDataset(),
-					QueryID:           createdBoard.Queries[0].QueryID,
-					QueryAnnotationID: createdBoard.Queries[0].QueryAnnotationID,
-				},
-				{
-					Caption:           "test query 1",
-					QueryStyle:        honeycombio.BoardQueryStyleCombo,
-					Dataset:           testAccDataset(),
-					QueryID:           createdBoard.Queries[1].QueryID,
-					QueryAnnotationID: createdBoard.Queries[1].QueryAnnotationID,
-				},
-			},
-		}
-
-		ok = assert.Equal(t, expectedBoard, createdBoard)
-		if !ok {
-			return errors.New("created board did not match expected board")
 		}
 		return nil
 	}

@@ -95,6 +95,7 @@ The following arguments are supported:
 
 * `name` - (Required) Name of the board.
 * `description` - (Optional) Description of the board. Supports markdown.
+* `column_layout` - (Optional) the number of columns to layout on the board, either `multi` (the default) or `single`. Only `visual` style boards (see below) have a column layout.
 * `style` - (Optional) How the board should be displayed in the UI, either `list` (the default) or `visual`.
 * `query` - (Optional) Zero or more configurations blocks (described below) with the queries of the board.
 
