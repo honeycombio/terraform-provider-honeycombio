@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -29,6 +30,12 @@ func newBoard() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(1, 1023),
+			},
+			"column_layout": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"multi", "single"}, false),
 			},
 			"style": {
 				Type:         schema.TypeString,
@@ -105,6 +112,7 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	d.Set("name", b.Name)
 	d.Set("description", b.Description)
 	d.Set("style", b.Style)
+	d.Set("column_layout", b.ColumnLayout)
 
 	queries := make([]map[string]interface{}, len(b.Queries))
 
@@ -167,11 +175,16 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 	}
 
 	board := &honeycombio.Board{
-		ID:          d.Id(),
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Style:       honeycombio.BoardStyle(d.Get("style").(string)),
-		Queries:     queries,
+		ID:           d.Id(),
+		Name:         d.Get("name").(string),
+		Description:  d.Get("description").(string),
+		Style:        honeycombio.BoardStyle(d.Get("style").(string)),
+		ColumnLayout: honeycombio.BoardColumnStyle(d.Get("column_layout").(string)),
+		Queries:      queries,
+	}
+
+	if board.Style == honeycombio.BoardStyleList && board.ColumnLayout != "" {
+		return nil, errors.New("list style boards cannot specify a column layout")
 	}
 	return board, nil
 }

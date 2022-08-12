@@ -31,9 +31,10 @@ func TestBoards(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		data := &Board{
-			Name:        fmt.Sprintf("Test Board, created at %v", time.Now()),
-			Description: "A board with some queries",
-			Style:       BoardStyleVisual,
+			Name:         fmt.Sprintf("Test Board, created at %v", time.Now()),
+			Description:  "A board with some queries",
+			Style:        BoardStyleVisual,
+			ColumnLayout: BoardColumnStyleSingle,
 			Queries: []BoardQuery{
 				{
 					Caption:    "A sample query",
@@ -79,6 +80,7 @@ func TestBoards(t *testing.T) {
 			TimeRange: IntPtr(7200), // 2 hours
 		})
 		assert.NoError(t, err)
+		b.ColumnLayout = BoardColumnStyleMulti
 		b.Queries = append(b.Queries, BoardQuery{
 			Caption:    "A second query",
 			QueryStyle: BoardQueryStyleGraph,

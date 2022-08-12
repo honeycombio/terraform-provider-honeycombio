@@ -46,6 +46,11 @@ type Board struct {
 	Name string `json:"name"`
 	// Description of the board.
 	Description string `json:"description,omitempty"`
+	// The number of columns to be layed out when displaying the board.
+	// Defaults to "multi".
+	//
+	// n.b. 'list' style boards cannot specify a column layout
+	ColumnLayout BoardColumnStyle `json:"column_layout,omitempty"`
 	// How the board should be displayed in the UI, defaults to "list".
 	Style BoardStyle `json:"style,omitempty"`
 	// A list of queries displayed on the board, in order of appearance.
@@ -65,6 +70,13 @@ const (
 func BoardStyles() []BoardStyle {
 	return []BoardStyle{BoardStyleList, BoardStyleVisual}
 }
+
+type BoardColumnStyle string
+
+const (
+	BoardColumnStyleMulti  BoardColumnStyle = "multi"
+	BoardColumnStyleSingle BoardColumnStyle = "single"
+)
 
 // BoardQuery represents a query that is part of a board.
 type BoardQuery struct {
