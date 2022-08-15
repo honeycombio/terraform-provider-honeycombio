@@ -24,6 +24,7 @@ func newPDRecipient() *schema.Resource {
 			"integration_key": {
 				Type:         schema.TypeString,
 				Required:     true,
+				Sensitive:    true,
 				Description:  "The key of the PagerDuty Integration to send the notification to",
 				ValidateFunc: validation.StringLenBetween(32, 32),
 			},
