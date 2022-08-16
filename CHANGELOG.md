@@ -1,3 +1,19 @@
+# 0.10.0 (Aug 16, 2022)
+
+ENHANCEMENTS:
+
+* resource/honeycombio_board: support for `column_layout` (single vs multi) (#210)
+* resource/honeycombio_board: board queries' graph settings (Omit Missing Values, Use UTC X-Axis, et cetera) are now configurable via the optional `graph_settings` block (#211)
+
+BUGFIXES:
+
+* resource/honeycombio_pagerduty_recipient: `integration_key` is now marked "sensitive" (#213)
+
+HOUSEKEEPING:
+
+* Go upgraded from 1.17.13 to 1.18.5 (#215)
+* terraform-plugin-sdk upgraded from 2.20.0 to 2.21.0 (#214)
+
 # 0.9.0 (Aug 10, 2022)
 
 NOTES:
@@ -11,7 +27,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * resource/honeycombio_dataset: support for `description` and `expand_json_depth` arguments (#185)
-* resource/honeycombio_dataset: addition of `created_at` and `last_wrriten_at` attributes (#204)
+* resource/honeycombio_dataset: addition of `created_at` and `last_written_at` attributes (#204)
 * resource/honeycombio_column: addition of `created_at`, `last_written_at`, and `updated_at` attributes (#198)
 * resource/honeycombio_board: environment-wide queries are now supported. `dataset` is no longer required as part of the board `query` definition and has been marked deprecated. (#203)
 
