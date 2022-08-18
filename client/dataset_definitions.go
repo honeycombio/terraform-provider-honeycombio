@@ -13,19 +13,17 @@ type DatasetDefinitions interface {
 	// List all datasetDefinitions present in this dataset.
 	List(ctx context.Context, dataset string) ([]DatasetDefinition, error)
 
-	// Get a datasetDefinition by its dataset name. Returns ErrNotFound if there is no dataset
-	GetAll(ctx context.Context, dataset string) (*DatasetDefinition, error)
-
 	// Get a specific definition by its name for a specific dataset name. Returns ErrNotFound if there is no dataset
-	GetByDefinition(ctx context.Context, dataset string, definition string) (*DatasetDefinition, error)
+	Get(ctx context.Context, dataset string, definitionName string) (*DatasetDefinition, error)
 
-	// Create a new dataset. Only name should be set when creating a dataset,
-	// all other fields are ignored.
-	Create(ctx context.Context, dataset string, definition *DatasetDefinition) (*DatasetDefinition, error)
+	// Create a new datasetd definition from the data passed in.
+	Create(ctx context.Context, dataset string, definitionName string, data *DatasetDefinition) (*DatasetDefinition, error)
 
-	// Update an existing dataset. Missing (optional) fields will set to their
-	// respective defaults and not the currently existing values.
-	Update(ctx context.Context, dataset string, definition *DatasetDefinition) (*DatasetDefinition, error)
+	// Update an existing dataset definition.
+	Update(ctx context.Context, dataset string, definitionName string, definition *DatasetDefinition) (*DatasetDefinition, error)
+
+	// Delete specific definition for an existing dataset.
+	Delete(ctx context.Context, dataset string, definitionName string) error
 }
 
 type DefinitionColumn struct {
@@ -33,13 +31,13 @@ type DefinitionColumn struct {
 	ID   *string `json:"id"`
 }
 
+// Compile-time proof of interface implementation by type datasets.
+var _ DatasetDefinitions = (*datasetDefinitions)(nil)
+
 // datasetDefinitions implements DatasetDefinitions.
 type datasetDefinitions struct {
 	client *Client
 }
-
-// Compile-time proof of interface implementation by type datasets.
-var _ DatasetDefinitions = (*datasetDefinitions)(nil)
 
 // DatasetDefinition represents a Honeycomb dataset metadata.
 //
@@ -64,34 +62,28 @@ type DatasetDefinition struct {
 
 func (s *datasetDefinitions) List(ctx context.Context, dataset string) ([]DatasetDefinition, error) {
 	var ds []DatasetDefinition
-	err := s.client.performRequest(ctx, "GET", "/1/datasets/"+urlEncodeDataset(dataset), nil, &ds)
+	err := s.client.performRequest(ctx, "GET", "/1/dataset_definitions/"+urlEncodeDataset(dataset), nil, &ds)
 	return ds, err
 }
 
-func (s *datasetDefinitions) GetAll(ctx context.Context, dataset string) (*DatasetDefinition, error) {
+func (s *datasetDefinitions) Get(ctx context.Context, dataset string, definitionName string) (*DatasetDefinition, error) {
 	var ds DatasetDefinition
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), nil, &ds)
+	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/dataset_definitions/%s/%s", urlEncodeDataset(dataset), definitionName), nil, &ds)
 	return &ds, err
 }
 
-func (s *datasetDefinitions) GetByDefinition(ctx context.Context, dataset string, definition string) (*DatasetDefinition, error) {
+func (s *datasetDefinitions) Create(ctx context.Context, dataset string, definitionName string, data *DatasetDefinition) (*DatasetDefinition, error) {
 	var ds DatasetDefinition
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/dataset_definitions/%s/%s", urlEncodeDataset(dataset), definition), nil, &ds)
+	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/dataset_definitions/%s/%s", urlEncodeDataset(dataset), definitionName), data, &ds)
 	return &ds, err
 }
 
-func (s *datasetDefinitions) Create(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
+func (s *datasetDefinitions) Update(ctx context.Context, dataset string, definitionName string, data *DatasetDefinition) (*DatasetDefinition, error) {
 	var ds DatasetDefinition
-	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/datasets/%s", urlEncodeDataset(dataset)), data, &ds)
+	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/dataset_definitions/%s/%s", urlEncodeDataset(dataset), definitionName), data, &ds)
 	return &ds, err
 }
 
-func (s *datasetDefinitions) Update(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
-	var ds DatasetDefinition
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/datasets/%s/%s", urlEncodeDataset(dataset), data.ID), data, &ds)
-	return &ds, err
-}
-
-func (s *datasetDefinitions) Delete(ctx context.Context, dataset string, id string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/datasets/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
+func (s *datasetDefinitions) Delete(ctx context.Context, dataset string, definitionName string) error {
+	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/dataset_definitions/%s/%s", urlEncodeDataset(dataset), definitionName), nil, nil)
 }
