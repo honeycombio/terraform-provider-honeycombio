@@ -11,12 +11,14 @@ func TestDatasetDefinitions(t *testing.T) {
 	ctx := context.Background()
 
 	name := "dataset definition test"
-	dcName := &DefinitionColumn{
+	definition := "error" // sets the default behvior for error datatset definition
+	definitionColumn := &DefinitionColumn{
 		Name: &name,
+		ID:   &definition,
 	}
 
 	datasetDefinition := &DatasetDefinition{
-		Name: *dcName,
+		Name: *definitionColumn,
 	}
 
 	var err error
@@ -40,24 +42,28 @@ func TestDatasetDefinitions(t *testing.T) {
 	})
 
 	t.Run("Create", func(t *testing.T) {
-		dd, err = c.DatasetDefinitions.Create(ctx, dataset, datasetDefinition)
+		result, err := c.DatasetDefinitions.Create(ctx, dataset, *definitionColumn.Name, datasetDefinition)
 
 		assert.NoError(t, err)
-
-		data.ID = dd.ID
-		assert.Equal(t, data, datasetDefinition)
+		assert.Equal(t, result, datasetDefinition)
 	})
 
 	t.Run("Update", func(t *testing.T) {
-		datasetDefinition.Name = "new def name"
+		updatedName := "actual error definition"
+		updatedDefinition := "error"
 
-		// get DefinitionColumn.Name in [valid definitions]
+		definitionColumn := &DefinitionColumn{
+			Name: &updatedName,
+			ID:   &updatedDefinition,
+		}
 
-		// extract, definition/value to be update for that definition
+		datasetDefinition := &DatasetDefinition{
+			Name: *definitionColumn,
+		}
 
-		result, err := c.DatasetDefinitions.Update(ctx, dataset, definition, value)
-
-		assert.NoError(result, err)
+		result, err := c.DatasetDefinitions.Update(ctx, dataset, *definitionColumn.Name, datasetDefinition)
+		assert.NoError(t, err)
+		assert.Equal(t, result, datasetDefinition)
 	})
 
 	t.Run("Delete", func(t *testing.T) {

@@ -31,7 +31,7 @@ type DefinitionColumn struct {
 	ID   *string `json:"id"`
 }
 
-// Compile-time proof of interface implementation by type datasets.
+// Compile-time proof of interface implementation by type datasets definiitions.
 var _ DatasetDefinitions = (*datasetDefinitions)(nil)
 
 // datasetDefinitions implements DatasetDefinitions.
