@@ -48,24 +48,6 @@ func TestDatasetDefinitions(t *testing.T) {
 		assert.Equal(t, result, datasetDefinition)
 	})
 
-	t.Run("Update", func(t *testing.T) {
-		updatedName := "actual error definition"
-		updatedDefinition := "error"
-
-		definitionColumn := &DefinitionColumn{
-			Name: &updatedName,
-			ID:   &updatedDefinition,
-		}
-
-		datasetDefinition := &DatasetDefinition{
-			Name: *definitionColumn,
-		}
-
-		result, err := c.DatasetDefinitions.Update(ctx, dataset, *definitionColumn.Name, datasetDefinition)
-		assert.NoError(t, err)
-		assert.Equal(t, result, datasetDefinition)
-	})
-
 	t.Run("Delete", func(t *testing.T) {
 		err = c.DerivedColumns.Delete(ctx, dataset, *datasetDefinition.Name.Name)
 
