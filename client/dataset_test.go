@@ -12,8 +12,6 @@ func TestDatasets(t *testing.T) {
 
 	c := newTestClient(t)
 	datasetName := testDataset(t)
-	updatedDescription := "buzzing with data"
-	updatedExpandJSONDepth := 3
 
 	currentDataset := &Dataset{
 		Name: datasetName,
@@ -86,31 +84,5 @@ func TestDatasets(t *testing.T) {
 		d.CreatedAt = currentDataset.CreatedAt
 
 		assert.Equal(t, currentDataset, d)
-	})
-
-	t.Run("Update", func(t *testing.T) {
-		updateDataset := &Dataset{
-			Name:            datasetName,
-			Slug:            urlEncodeDataset(datasetName),
-			Description:     updatedDescription,
-			ExpandJSONDepth: updatedExpandJSONDepth,
-		}
-		d, err := c.Datasets.Update(ctx, updateDataset)
-
-		assert.NoError(t, err)
-
-		assert.NotNil(t, d.LastWrittenAt, "last written at is empty")
-		assert.NotNil(t, d.CreatedAt, "created at is empty")
-		// copy dynamic fields before asserting - will be skipped if expected dataset not found
-		if currentDataset.Name == updateDataset.Name {
-			currentDataset.Description = updateDataset.Description
-			currentDataset.ExpandJSONDepth = updateDataset.ExpandJSONDepth
-			currentDataset.LastWrittenAt = updateDataset.LastWrittenAt
-			currentDataset.CreatedAt = updateDataset.CreatedAt
-		}
-
-		assert.Equal(t, *updateDataset, *currentDataset)
-		//assert.Equal(t, currentDataset.Description, updatedDescription)
-		//assert.Equal(t, currentDataset.ExpandJSONDepth, updatedExpandJSONDepth)
 	})
 }
