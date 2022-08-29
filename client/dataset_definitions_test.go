@@ -42,8 +42,26 @@ func TestDatasetDefinitions(t *testing.T) {
 	})
 
 	t.Run("Create", func(t *testing.T) {
-		result, err := c.DatasetDefinitions.Create(ctx, dataset, *definitionColumn.Name, datasetDefinition)
+		result, err := c.DatasetDefinitions.Create(ctx, dataset, datasetDefinition)
 
+		assert.NoError(t, err)
+		assert.Equal(t, result, datasetDefinition)
+	})
+
+	t.Run("Update", func(t *testing.T) {
+		updatedName := "actual error definition"
+		updatedDefinition := "error"
+
+		definitionColumn := &DefinitionColumn{
+			Name: &updatedName,
+			ID:   &updatedDefinition,
+		}
+
+		datasetDefinition := &DatasetDefinition{
+			Name: *definitionColumn,
+		}
+
+		result, err := c.DatasetDefinitions.Update(ctx, dataset, datasetDefinition)
 		assert.NoError(t, err)
 		assert.Equal(t, result, datasetDefinition)
 	})

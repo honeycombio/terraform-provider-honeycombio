@@ -17,7 +17,10 @@ type DatasetDefinitions interface {
 	Get(ctx context.Context, dataset string, definitionName string) (*DatasetDefinition, error)
 
 	// Create a new datasetd definition from the data passed in.
-	Create(ctx context.Context, dataset string, definitionName string, data *DatasetDefinition) (*DatasetDefinition, error)
+	Create(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
+
+	// Update specific dataset definition value
+	Update(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
 
 	// Delete specific definition for an existing dataset.
 	Delete(ctx context.Context, dataset string, definitionName string) error
@@ -69,9 +72,17 @@ func (s *datasetDefinitions) Get(ctx context.Context, dataset string, definition
 	return &ds, err
 }
 
-func (s *datasetDefinitions) Create(ctx context.Context, dataset string, definitionName string, data *DatasetDefinition) (*DatasetDefinition, error) {
+func (s *datasetDefinitions) Create(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
 	var ds DatasetDefinition
-	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/dataset_definitions/%s/%s", urlEncodeDataset(dataset), definitionName), data, &ds)
+	dsName := data.Name
+	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/dataset_definitions/%s/%v", urlEncodeDataset(dataset), dsName), data, &ds)
+	return &ds, err
+}
+
+func (s *datasetDefinitions) Update(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
+	var ds DatasetDefinition
+	dsName := data.Name
+	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s/%v", urlEncodeDataset(dataset), dsName), data, &ds)
 	return &ds, err
 }
 
