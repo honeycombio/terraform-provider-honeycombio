@@ -26,11 +26,6 @@ type DatasetDefinitions interface {
 	Delete(ctx context.Context, dataset string, definitionName string) error
 }
 
-type DefinitionColumn struct {
-	Name *string `json:"name"`
-	ID   *string `json:"id"`
-}
-
 // Compile-time proof of interface implementation by type datasets definiitions.
 var _ DatasetDefinitions = (*datasetDefinitions)(nil)
 
@@ -41,22 +36,29 @@ type datasetDefinitions struct {
 
 // DatasetDefinition represents a Honeycomb dataset metadata.
 //
-// API docs: https://docs.honeycomb.io/api/dataset_definitions // WIP
+type DefinitionColumn struct {
+	ID         *string `json:"id"`
+	Name       *string `json:"name"`
+	ColumnType *string `json:"column_type"`
+}
+
+// DatasetDefinition represents a Honeycomb dataset metadata.
+// API docs: https://docs.honeycomb.io/api/dataset-definitions/
 type DatasetDefinition struct {
 	// Read only
-	DurationMs     DefinitionColumn `json:"duration_ms"`
-	Error          DefinitionColumn `json:"error"`
-	Name           DefinitionColumn `json:"name"`
-	ParentID       DefinitionColumn `json:"parent_id"`
-	Route          DefinitionColumn `json:"route"`
-	ServiceName    DefinitionColumn `json:"service_name"`
 	SpanID         DefinitionColumn `json:"span_id"`
-	SpanType       DefinitionColumn `json:"span_kind"` // Note span_kind vs span_type
-	AnnotationType DefinitionColumn `json:"annotation_type"`
-	LinkTraceID    DefinitionColumn `json:"link_trace_id"`
-	LinkSpanID     DefinitionColumn `json:"link_span_id"`
-	Status         DefinitionColumn `json:"status"`
 	TraceID        DefinitionColumn `json:"trace_id"`
+	ParentID       DefinitionColumn `json:"parent_id"`
+	Name           DefinitionColumn `json:"name"`
+	ServiceName    DefinitionColumn `json:"service_name"`
+	DurationMs     DefinitionColumn `json:"duration_ms"`
+	SpanKind       DefinitionColumn `json:"span_kind"` // Note span_kind vs span_type
+	AnnotationType DefinitionColumn `json:"annotation_type"`
+	LinkSpanID     DefinitionColumn `json:"link_span_id"`
+	LinkTraceID    DefinitionColumn `json:"link_trace_id"`
+	Error          DefinitionColumn `json:"error"`
+	Status         DefinitionColumn `json:"status"`
+	Route          DefinitionColumn `json:"route"`
 	User           DefinitionColumn `json:"user"`
 }
 
