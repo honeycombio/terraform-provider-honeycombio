@@ -2,31 +2,39 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
+// update, validate and clear a dataset definition
 func TestDatasetDefinitions(t *testing.T) {
 	ctx := context.Background()
 
-	name := "dataset definition test"
-	definition := "error" // sets the default behvior for error datatset definition
-	definitionColumn := &DefinitionColumn{
-		Name: &name,
-		ID:   &definition,
+	definitionName := "trace_id"
+	//defintionValue := "datasetDef1"
+
+	// Get the name/type of the Dataset Definition
+	datasetDefinitionColumn := &DefinitionColumn{
+		Name: &definitionName,
 	}
 
-	datasetDefinition := &DatasetDefinition{
-		Name: *definitionColumn,
-	}
+	// Empty Definition to popluate after validation later
+	datasetDefinition := &DatasetDefinition{}
 
-	var err error
+	// validate it is an allowed field
+	if ValidateDatasetDefinition(*datasetDefinitionColumn.Name) {
+		// extract the Name Value and convert into proper DatasetDefintion value
+		// for now hardcode TraceID - as this is the value we will initiall test
+		datasetDefinition.TraceID = datasetDefinitionColumn
+	} else {
+		fmt.Printf("test - definition is invalid")
+	}
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	// Terraform Test Cases
 	t.Run("List", func(t *testing.T) {
 		result, err := c.DatasetDefinitions.List(ctx, dataset)
 
@@ -34,41 +42,21 @@ func TestDatasetDefinitions(t *testing.T) {
 		assert.Contains(t, result, *datasetDefinition, "could not find newly created definition with List")
 	})
 
-	t.Run("Get", func(t *testing.T) {
-		result, err := c.DatasetDefinitions.Get(ctx, dataset, definition)
-
-		assert.NoError(t, err)
-		assert.Equal(t, *datasetDefinition, *result)
-	})
-
-	t.Run("Create", func(t *testing.T) {
-		result, err := c.DatasetDefinitions.Create(ctx, dataset, datasetDefinition)
-
-		assert.NoError(t, err)
-		assert.Equal(t, result, datasetDefinition)
-	})
-
 	t.Run("Update", func(t *testing.T) {
 		updatedName := "actual error definition"
-		updatedDefinition := "error"
+		//updatedDefinition := "error"
 
 		definitionColumn := &DefinitionColumn{
 			Name: &updatedName,
-			ID:   &updatedDefinition,
 		}
 
+		// hardcode trace ID for now
 		datasetDefinition := &DatasetDefinition{
-			Name: *definitionColumn,
+			TraceID: definitionColumn,
 		}
 
 		result, err := c.DatasetDefinitions.Update(ctx, dataset, datasetDefinition)
 		assert.NoError(t, err)
 		assert.Equal(t, result, datasetDefinition)
-	})
-
-	t.Run("Delete", func(t *testing.T) {
-		err = c.DerivedColumns.Delete(ctx, dataset, *datasetDefinition.Name.Name)
-
-		assert.NoError(t, err)
 	})
 }

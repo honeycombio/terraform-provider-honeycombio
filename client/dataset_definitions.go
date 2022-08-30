@@ -10,20 +10,11 @@ import (
 //
 // API docs: https://docs.honeycomb.io/api/datasets/
 type DatasetDefinitions interface {
-	// List all datasetDefinitions present in this dataset.
+	// Get All Dataset Definitions for a Dataset
 	List(ctx context.Context, dataset string) ([]DatasetDefinition, error)
 
-	// Get a specific definition by its name for a specific dataset name. Returns ErrNotFound if there is no dataset
-	Get(ctx context.Context, dataset string, definitionName string) (*DatasetDefinition, error)
-
-	// Create a new datasetd definition from the data passed in.
-	Create(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
-
-	// Update specific dataset definition value
+	// Get All Dataset Definitions
 	Update(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
-
-	// Delete specific definition for an existing dataset.
-	Delete(ctx context.Context, dataset string, definitionName string) error
 }
 
 // Compile-time proof of interface implementation by type datasets definiitions.
@@ -35,59 +26,66 @@ type datasetDefinitions struct {
 }
 
 // DatasetDefinition represents a Honeycomb dataset metadata.
-//
 type DefinitionColumn struct {
-	ID         *string `json:"id"`
 	Name       *string `json:"name"`
-	ColumnType *string `json:"column_type"`
+	ColumnType *string `json:"column_type,omitempty"`
 }
 
 // DatasetDefinition represents a Honeycomb dataset metadata.
 // API docs: https://docs.honeycomb.io/api/dataset-definitions/
 type DatasetDefinition struct {
-	// Read only
-	SpanID         DefinitionColumn `json:"span_id"`
-	TraceID        DefinitionColumn `json:"trace_id"`
-	ParentID       DefinitionColumn `json:"parent_id"`
-	Name           DefinitionColumn `json:"name"`
-	ServiceName    DefinitionColumn `json:"service_name"`
-	DurationMs     DefinitionColumn `json:"duration_ms"`
-	SpanKind       DefinitionColumn `json:"span_kind"` // Note span_kind vs span_type
-	AnnotationType DefinitionColumn `json:"annotation_type"`
-	LinkSpanID     DefinitionColumn `json:"link_span_id"`
-	LinkTraceID    DefinitionColumn `json:"link_trace_id"`
-	Error          DefinitionColumn `json:"error"`
-	Status         DefinitionColumn `json:"status"`
-	Route          DefinitionColumn `json:"route"`
-	User           DefinitionColumn `json:"user"`
+	DurationMs     *DefinitionColumn `json:"duration_ms"`
+	Error          *DefinitionColumn `json:"error"`
+	Name           *DefinitionColumn `json:"name"`
+	ParentID       *DefinitionColumn `json:"parent_id"`
+	Route          *DefinitionColumn `json:"route"`
+	ServiceName    *DefinitionColumn `json:"service_name"`
+	SpanID         *DefinitionColumn `json:"span_id"`
+	SpanType       *DefinitionColumn `json:"span_kind"` // Note span_kind vs span_type
+	AnnotationType *DefinitionColumn `json:"annotation_type"`
+	LinkTraceID    *DefinitionColumn `json:"link_trace_id"`
+	LinkSpanID     *DefinitionColumn `json:"link_span_id"`
+	Status         *DefinitionColumn `json:"status"`
+	TraceID        *DefinitionColumn `json:"trace_id"`
+	User           *DefinitionColumn `json:"user"`
 }
 
+// Required by Terraform Provider Client
 func (s *datasetDefinitions) List(ctx context.Context, dataset string) ([]DatasetDefinition, error) {
-	var ds []DatasetDefinition
-	err := s.client.performRequest(ctx, "GET", "/1/dataset_definitions/"+urlEncodeDataset(dataset), nil, &ds)
-	return ds, err
-}
-
-func (s *datasetDefinitions) Get(ctx context.Context, dataset string, definitionName string) (*DatasetDefinition, error) {
-	var ds DatasetDefinition
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/dataset_definitions/%s/%s", urlEncodeDataset(dataset), definitionName), nil, &ds)
-	return &ds, err
-}
-
-func (s *datasetDefinitions) Create(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
-	var ds DatasetDefinition
-	dsName := data.Name
-	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/dataset_definitions/%s/%v", urlEncodeDataset(dataset), dsName), data, &ds)
-	return &ds, err
+	var definitions []DatasetDefinition
+	err := s.client.performRequest(ctx, "GET", "/1/dataset_definitions/"+urlEncodeDataset(dataset), nil, &definitions)
+	return definitions, err
 }
 
 func (s *datasetDefinitions) Update(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
-	var ds DatasetDefinition
-	dsName := data.Name
-	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s/%v", urlEncodeDataset(dataset), dsName), data, &ds)
-	return &ds, err
+	var definition DatasetDefinition
+	err := s.client.performRequest(ctx, "PATCH", "/1/dataset_definitions/"+urlEncodeDataset(dataset), nil, &definition)
+	return &definition, err
 }
 
-func (s *datasetDefinitions) Delete(ctx context.Context, dataset string, definitionName string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/dataset_definitions/%s/%s", urlEncodeDataset(dataset), definitionName), nil, nil)
+// Custom Dataset Definitions Logic
+var ValidDatasetDefinitions map[string]bool = map[string]bool{
+	"duration_ms":     true,
+	"error":           true,
+	"name":            true,
+	"parent_id":       true,
+	"route":           true,
+	"service_name":    true,
+	"span_id":         true,
+	"span_kind":       true,
+	"annotation_type": true,
+	"link_trace_id":   true,
+	"link_span_id":    true,
+	"status":          true,
+	"trace_id":        true,
+	"user":            true,
+}
+
+func ValidateDatasetDefinition(definition string) bool {
+	if ValidDatasetDefinitions[definition] {
+		return true
+	} else {
+		fmt.Printf("definition \"%s\" is not valid.", definition)
+		return false
+	}
 }
