@@ -37,11 +37,9 @@ func TestDatasetDefinitions(t *testing.T) {
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	// get the Dataset Definitions and check that Trace ID is empty
 	t.Run("List", func(t *testing.T) {
 		result, err := c.DatasetDefinitions.List(ctx, dataset)
 		assert.NoError(t, err)
-		assert.Equal(t, "", result.TraceID.Name)
 		assert.Equal(t, "column", result.TraceID.ColumnType)
 	})
 
