@@ -19,7 +19,6 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
-		IDRefreshName:     "honeycombio_dataset_definition.test",
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDatasetDefinitionWithTraceID(dataset, "trace.trace_id"),
