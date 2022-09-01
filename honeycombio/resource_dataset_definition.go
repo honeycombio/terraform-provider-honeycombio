@@ -30,9 +30,10 @@ func newDatasetDefinition() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:         schema.TypeString,
-							Required:     true,
-							ValidateFunc: validation.StringInSlice(ValidDatasetDefinitions(), false),
+							Type:     schema.TypeString,
+							Required: true,
+							//ValidateFunc: validation.StringInSlice(ValidDatasetDefinitions(), false),
+							ValidateFunc: validation.StringLenBetween(0, 255),
 						},
 						"column_type": {
 							Type:         schema.TypeString,
