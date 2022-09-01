@@ -24,20 +24,20 @@ func newDatasetDefinition() *schema.Resource {
 			},
 			"trace_id": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				MinItems: 1,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 							//ValidateFunc: validation.StringInSlice(ValidDatasetDefinitions(), false),
 							ValidateFunc: validation.StringLenBetween(0, 255),
 						},
 						"column_type": {
 							Type:         schema.TypeString,
-							Required:     false,
+							Optional:     true,
 							ValidateFunc: validation.StringInSlice(ValidDatasetDefinitionsColumnTypes(), false),
 						},
 					},
