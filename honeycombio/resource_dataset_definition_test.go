@@ -38,12 +38,6 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 					testAccCheckDatasetDefinitionAttributes(&definitionAfter),
 				),
 			},
-			{
-				ResourceName:        "honeycombio_dataset_definition.test",
-				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
-				ImportState:         true,
-				ImportStateVerify:   true,
-			},
 		},
 	})
 }
