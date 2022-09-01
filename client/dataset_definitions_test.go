@@ -37,19 +37,23 @@ func TestDatasetDefinitions(t *testing.T) {
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	t.Run("List", func(t *testing.T) {
-		result, err := c.DatasetDefinitions.List(ctx, dataset)
-		assert.NoError(t, err)
-
-		for _, v := range result {
-			assert.Contains(t, v, datasetDefinition, "could not find newly created definition with List")
-		}
-	})
-
+	// set the Trace ID definition
 	t.Run("Update", func(t *testing.T) {
 		result, err := c.DatasetDefinitions.Update(ctx, dataset, &datasetDefinition)
 		assert.NoError(t, err)
+		assert.Equal(t, result.TraceID.Name, "trace.trace_id")
+		assert.Equal(t, result.TraceID.ColumnType, "column")
+	})
+
+	// get the Dataset Definitions and check validate
+	t.Run("List", func(t *testing.T) {
+		result, err := c.DatasetDefinitions.List(ctx, dataset)
+		assert.NoError(t, err)
+		assert.Contains(t, result, datasetDefinition, "could not find newly updated definition with List")
 		assert.Equal(t, result, datasetDefinition)
-		assert.Equal(t, result.TraceID, "trace.trace_id")
+
+		//for _, v := range result {
+		//	assert.Contains(t, v, datasetDefinition, "could not find newly created definition with List")
+		//}
 	})
 }
