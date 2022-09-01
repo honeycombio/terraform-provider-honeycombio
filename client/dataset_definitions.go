@@ -11,7 +11,7 @@ import (
 // API docs: https://docs.honeycomb.io/api/datasets/
 type DatasetDefinitions interface {
 	// Get All Dataset Definitions for a Dataset
-	List(ctx context.Context, dataset string) ([]DatasetDefinition, error)
+	List(ctx context.Context, dataset string) (*DatasetDefinition, error)
 
 	// Get All Dataset Definitions
 	Update(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
@@ -51,10 +51,10 @@ type DatasetDefinition struct {
 }
 
 // Required by Terraform Provider Client
-func (s *datasetDefinitions) List(ctx context.Context, dataset string) ([]DatasetDefinition, error) {
-	var definitions []DatasetDefinition
-	err := s.client.performRequest(ctx, "GET", "/1/dataset_definitions/"+urlEncodeDataset(dataset), nil, &definitions)
-	return definitions, err
+func (s *datasetDefinitions) List(ctx context.Context, dataset string) (*DatasetDefinition, error) {
+	var definition DatasetDefinition
+	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), nil, &definition)
+	return &definition, err
 }
 
 func (s *datasetDefinitions) Update(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {

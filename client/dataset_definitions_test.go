@@ -53,10 +53,9 @@ func TestDatasetDefinitions(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		result, err := c.DatasetDefinitions.List(ctx, dataset)
 		assert.NoError(t, err)
-
-		for _, v := range result {
-			assert.Equal(t, "trace.trace_id", v.TraceID.Name)
-			assert.Equal(t, "column", v.TraceID.ColumnType)
-		}
+		assert.Equal(t, "trace.trace_id", result.TraceID.Name)
+		assert.Equal(t, "column", result.TraceID.ColumnType)
+		assert.Equal(t, "", result.Error.Name)
+		assert.Equal(t, "", result.Error.ColumnType)
 	})
 }
