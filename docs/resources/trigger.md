@@ -123,11 +123,12 @@ The following arguments are supported:
 * `threshold` - (Required) A configuration block (described below) describing the threshold of the trigger.
 * `description` - (Optional) Description of the trigger.
 * `disabled` - (Optional) The state of the trigger. If true, the trigger will not be run. Defaults to false.
-* `frequency` - (Optional) The interval (in seconds) in which to check the results of the query’s calculation against the threshold. Value must be divisible by 60 and between 60 and 86400 (between 1 minute and 1 day). Defaults to 900 (15 minutes).
+* `frequency` - (Optional) The interval (in seconds) in which to check the results of the query’s calculation against the threshold. This value must be divisible by 60, between 60 and 86400 (between 1 minute and 1 day), and not be more than 4 times the query's duration. Defaults to 900 (15 minutes).
 * `alert_type` - (Optional) The frequency for the alert to trigger. (`on_change` is the default behavior, `on_true` can also be selected)
 * `recipient` - (Optional) Zero or more configuration blocks (described below) with the recipients to notify when the trigger fires.
 
--> **NOTE** The query used in a Trigger must follow a strict subset: a query must contain exactly one calcuation and may only contain `calculation`, `filter`, `filter_combination` and `breakdowns` fields. The query's duration cannot be more than four times the trigger's frequency.
+-> **NOTE** The query used in a Trigger must follow a strict subset: the query must contain *exactly one* calcuation and may only contain `calculation`, `filter`, `filter_combination` and `breakdowns` fields.
+The query's duration (`time_range` in the specification) cannot be more than four times the trigger frequency. For example: if using the default query `time_range` of 7200 the lowest `frequency` for a trigger is `1800`.
 
 Each trigger configuration must contain exactly one `threshold` block, which accepts the following arguments:
 
