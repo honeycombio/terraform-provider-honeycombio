@@ -35,12 +35,12 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "dataset", dataset),
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "trace_id", dataset),
-					testAccCheckDatasetDefinitionExists(t, "honeycombio_trigger.test", &definitionAfter),
+					testAccCheckDatasetDefinitionExists(t, "honeycombio_dataset_definition.test", &definitionAfter),
 					testAccCheckDatasetDefinitionAttributes(&definitionAfter),
 				),
 			},
 			{
-				ResourceName:        "honeycombio_trigger.test",
+				ResourceName:        "honeycombio_dataset_definition.test",
 				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
 				ImportState:         true,
 				ImportStateVerify:   true,
@@ -59,7 +59,7 @@ func testAccCheckDatasetDefinitionExists(t *testing.T, name string, dd *honeycom
 		client := testAccClient(t)
 		createdDatasetDefinition, err := client.DatasetDefinitions.List(context.Background(), resourceState.Primary.Attributes["dataset"])
 		if err != nil {
-			return fmt.Errorf("could not find created trigger: %w", err)
+			return fmt.Errorf("could not find created definition: %w", err)
 		}
 
 		*dd = *createdDatasetDefinition
