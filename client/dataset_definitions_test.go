@@ -25,15 +25,6 @@ func TestDatasetDefinitions(t *testing.T) {
 		TraceID: traceIDValue,
 	}
 
-	// validate it is an allowed field
-	// extract the Name Value and convert into proper DatasetDefintion value
-	// for now hardcode TraceID - as this is the value we will initiall test
-	//if ValidateDatasetDefinition(datasetDefinition.TraceID.Name) {
-	//	datasetDefinition.TraceID = datasetDefinitionColumn
-	//} else {
-	//	fmt.Printf("test - definition is invalid")
-	//}
-
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
@@ -53,5 +44,11 @@ func TestDatasetDefinitions(t *testing.T) {
 		// check Error unset field is still empty
 		assert.Equal(t, "", result.Error.Name)
 		assert.Equal(t, "", result.Error.ColumnType)
+
+		// reset to empty
+		datasetDefinition.TraceID.Name = ""
+		result, err = c.DatasetDefinitions.Update(ctx, dataset, &datasetDefinition)
+		assert.Equal(t, "", result.TraceID.Name)
+		assert.Equal(t, "column", result.TraceID.ColumnType)
 	})
 }

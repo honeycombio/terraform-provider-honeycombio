@@ -426,3 +426,26 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 
 	return true
 }
+
+// Custom Dataset Definitions Logic
+func ValidDatasetDefinitions() []string {
+	return []string{"duration_ms",
+		"error",
+		"name",
+		"parent_id",
+		"route",
+		"service_name",
+		"span_id",
+		"span_kind",
+		"annotation_type",
+		"link_trace_id",
+		"link_span_id",
+		"status",
+		"trace_id",
+		"user"}
+}
+
+func ValidDatasetDefinitionsColumnTypes() []string {
+	return []string{"column",
+		"derived_column"}
+}
