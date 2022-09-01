@@ -128,7 +128,7 @@ The following arguments are supported:
 * `recipient` - (Optional) Zero or more configuration blocks (described below) with the recipients to notify when the trigger fires.
 
 -> **NOTE** The query used in a Trigger must follow a strict subset: the query must contain *exactly one* calcuation and may only contain `calculation`, `filter`, `filter_combination` and `breakdowns` fields.
-The query's duration (`time_range` in the specification) cannot be more than four times the trigger frequency. For example: if using the default query `time_range` of 7200 the lowest `frequency` for a trigger is `1800`.
+The query's duration (`time_range` in the specification) cannot be more than four times the trigger frequency. For example: if using the default query `time_range` of `7200` the lowest `frequency` for a trigger is `1800`.
 
 Each trigger configuration must contain exactly one `threshold` block, which accepts the following arguments:
 
