@@ -11,7 +11,7 @@ import (
 
 func newDatasetDefinition() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: schema.NoopContext,
+		CreateContext: resourceDatasetDefinitionCreate,
 		ReadContext:   resourceDatasetDefinitionRead,
 		UpdateContext: resourceDatasetDefinitionUpdate,
 		DeleteContext: schema.NoopContext,
@@ -30,9 +30,8 @@ func newDatasetDefinition() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							//ValidateFunc: validation.StringInSlice(ValidDatasetDefinitions(), false),
+							Type:         schema.TypeString,
+							Optional:     true,
 							ValidateFunc: validation.StringLenBetween(0, 255),
 						},
 						"column_type": {
@@ -48,8 +47,14 @@ func newDatasetDefinition() *schema.Resource {
 }
 
 func resourceDatasetDefinitionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	//client := meta.(*honeycombio.Client)
+
 	dataset := d.Get("dataset").(string)
+
+	//dd, err = client.DatasetDefinitions.Create(ctx, dataset, dd)
+
 	d.SetId(dataset)
+
 	return resourceDatasetDefinitionRead(ctx, d, meta)
 }
 
@@ -65,7 +70,9 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	d.Set("trace_id", dd.TraceID)
+	d.SetId(dataset)
+
+	d.Set("trace_id", flattenDefinitionColumn(&dd.TraceID))
 
 	return nil
 }
@@ -91,7 +98,8 @@ func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData
 func expandDatasetDefinition(d *schema.ResourceData) (*honeycombio.DatasetDefinition, error) {
 	// expand into individual definition columns
 	traceID := honeycombio.DefinitionColumn{
-		Name: d.Get("trace_id").(string),
+		Name:       d.Get("trace_id").(string),
+		ColumnType: d.Get("column_type").(string),
 	}
 
 	// expand into Honeycomb Dataset Definition struct
@@ -100,4 +108,21 @@ func expandDatasetDefinition(d *schema.ResourceData) (*honeycombio.DatasetDefini
 	}
 
 	return datasetDefinition, nil
+}
+
+func flattenDefinitionColumn(dc *honeycombio.DefinitionColumn) []map[string]interface{} {
+	return []map[string]interface{}{
+		{
+			"name":        dc.Name,
+			"column_type": dc.ColumnType,
+		},
+	}
+}
+
+func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]interface{} {
+	return []map[string]interface{}{
+		{
+			"trace_id": flattenDefinitionColumn(&dd.TraceID),
+		},
+	}
 }

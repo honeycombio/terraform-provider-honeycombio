@@ -10,6 +10,9 @@ import (
 //
 // API docs: https://docs.honeycomb.io/api/datasets/
 type DatasetDefinitions interface {
+	// Same behavior as Update - needs to be invoked once to specifiy resource ID
+	Create(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
+
 	// Get All Dataset Definitions for a Dataset
 	List(ctx context.Context, dataset string) (*DatasetDefinition, error)
 
@@ -51,6 +54,12 @@ type DatasetDefinition struct {
 }
 
 // Required by Terraform Provider Client
+func (s *datasetDefinitions) Create(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
+	var definition DatasetDefinition
+	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), data, &definition)
+	return &definition, err
+}
+
 func (s *datasetDefinitions) List(ctx context.Context, dataset string) (*DatasetDefinition, error) {
 	var definition DatasetDefinition
 	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), nil, &definition)
@@ -61,31 +70,4 @@ func (s *datasetDefinitions) Update(ctx context.Context, dataset string, data *D
 	var definition DatasetDefinition
 	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), data, &definition)
 	return &definition, err
-}
-
-// Custom Dataset Definitions Logic
-var ValidDatasetDefinitions map[string]bool = map[string]bool{
-	"duration_ms":     true,
-	"error":           true,
-	"name":            true,
-	"parent_id":       true,
-	"route":           true,
-	"service_name":    true,
-	"span_id":         true,
-	"span_kind":       true,
-	"annotation_type": true,
-	"link_trace_id":   true,
-	"link_span_id":    true,
-	"status":          true,
-	"trace_id":        true,
-	"user":            true,
-}
-
-func ValidateDatasetDefinition(definition string) bool {
-	if ValidDatasetDefinitions[definition] {
-		return true
-	} else {
-		fmt.Printf("definition \"%s\" is not valid.", definition)
-		return false
-	}
 }
