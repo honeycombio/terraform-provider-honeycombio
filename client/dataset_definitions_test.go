@@ -43,17 +43,20 @@ func TestDatasetDefinitions(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "trace.trace_id", result.TraceID.Name)
 		assert.Equal(t, "column", result.TraceID.ColumnType)
-		assert.Equal(t, datasetDefinition, result)
+
+		// check Error unset field is still empty
+		assert.Equal(t, "", result.Error.Name)
+		assert.Equal(t, "", result.Error.ColumnType)
 	})
 
 	// get the Dataset Definitions and check validate
 	t.Run("List", func(t *testing.T) {
 		result, err := c.DatasetDefinitions.List(ctx, dataset)
 		assert.NoError(t, err)
-		assert.Contains(t, datasetDefinition, result, "could not find newly updated definition with List")
 
-		//for _, v := range result {
-		//	assert.Contains(t, v, datasetDefinition, "could not find newly created definition with List")
-		//}
+		for _, v := range result {
+			assert.Equal(t, "trace.trace_id", v.TraceID.Name)
+			assert.Equal(t, "column", v.TraceID.ColumnType)
+		}
 	})
 }
