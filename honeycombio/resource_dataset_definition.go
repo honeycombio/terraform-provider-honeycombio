@@ -47,6 +47,12 @@ func newDatasetDefinition() *schema.Resource {
 	}
 }
 
+func resourceDatasetDefinitionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	dataset := d.Get("dataset").(string)
+	d.SetId(dataset)
+	return resourceDatasetDefinitionRead(ctx, d, meta)
+}
+
 func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
@@ -79,7 +85,7 @@ func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
-	return resourceDatasetRead(ctx, d, meta)
+	return resourceDatasetDefinitionRead(ctx, d, meta)
 }
 
 func expandDatasetDefinition(d *schema.ResourceData) (*honeycombio.DatasetDefinition, error) {
