@@ -37,6 +37,14 @@ func TestDatasetDefinitions(t *testing.T) {
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
+	// get the Dataset Definitions and check that Trace ID is empty
+	t.Run("List", func(t *testing.T) {
+		result, err := c.DatasetDefinitions.List(ctx, dataset)
+		assert.NoError(t, err)
+		assert.Equal(t, "", result.TraceID.Name)
+		assert.Equal(t, "column", result.TraceID.ColumnType)
+	})
+
 	// set the Trace ID definition
 	t.Run("Update", func(t *testing.T) {
 		result, err := c.DatasetDefinitions.Update(ctx, dataset, &datasetDefinition)
@@ -45,16 +53,6 @@ func TestDatasetDefinitions(t *testing.T) {
 		assert.Equal(t, "column", result.TraceID.ColumnType)
 
 		// check Error unset field is still empty
-		assert.Equal(t, "", result.Error.Name)
-		assert.Equal(t, "", result.Error.ColumnType)
-	})
-
-	// get the Dataset Definitions and check validate
-	t.Run("List", func(t *testing.T) {
-		result, err := c.DatasetDefinitions.List(ctx, dataset)
-		assert.NoError(t, err)
-		assert.Equal(t, "trace.trace_id", result.TraceID.Name)
-		assert.Equal(t, "column", result.TraceID.ColumnType)
 		assert.Equal(t, "", result.Error.Name)
 		assert.Equal(t, "", result.Error.ColumnType)
 	})
