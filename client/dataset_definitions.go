@@ -27,27 +27,27 @@ type datasetDefinitions struct {
 
 // DatasetDefinition represents a Honeycomb dataset metadata.
 type DefinitionColumn struct {
-	Name       *string `json:"name"`
-	ColumnType *string `json:"column_type,omitempty"`
+	Name       string `json:"name"`
+	ColumnType string `json:"column_type,omitempty"`
 }
 
 // DatasetDefinition represents a Honeycomb dataset metadata.
 // API docs: https://docs.honeycomb.io/api/dataset-definitions/
 type DatasetDefinition struct {
-	DurationMs     *DefinitionColumn `json:"duration_ms"`
-	Error          *DefinitionColumn `json:"error"`
-	Name           *DefinitionColumn `json:"name"`
-	ParentID       *DefinitionColumn `json:"parent_id"`
-	Route          *DefinitionColumn `json:"route"`
-	ServiceName    *DefinitionColumn `json:"service_name"`
-	SpanID         *DefinitionColumn `json:"span_id"`
-	SpanType       *DefinitionColumn `json:"span_kind"` // Note span_kind vs span_type
-	AnnotationType *DefinitionColumn `json:"annotation_type"`
-	LinkTraceID    *DefinitionColumn `json:"link_trace_id"`
-	LinkSpanID     *DefinitionColumn `json:"link_span_id"`
-	Status         *DefinitionColumn `json:"status"`
-	TraceID        *DefinitionColumn `json:"trace_id"`
-	User           *DefinitionColumn `json:"user"`
+	DurationMs     DefinitionColumn `json:"duration_ms"`
+	Error          DefinitionColumn `json:"error"`
+	Name           DefinitionColumn `json:"name"`
+	ParentID       DefinitionColumn `json:"parent_id"`
+	Route          DefinitionColumn `json:"route"`
+	ServiceName    DefinitionColumn `json:"service_name"`
+	SpanID         DefinitionColumn `json:"span_id"`
+	SpanType       DefinitionColumn `json:"span_kind"` // Note span_kind vs span_type
+	AnnotationType DefinitionColumn `json:"annotation_type"`
+	LinkTraceID    DefinitionColumn `json:"link_trace_id"`
+	LinkSpanID     DefinitionColumn `json:"link_span_id"`
+	Status         DefinitionColumn `json:"status"`
+	TraceID        DefinitionColumn `json:"trace_id"`
+	User           DefinitionColumn `json:"user"`
 }
 
 // Required by Terraform Provider Client
