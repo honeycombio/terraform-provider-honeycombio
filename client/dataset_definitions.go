@@ -59,7 +59,7 @@ func (s *datasetDefinitions) List(ctx context.Context, dataset string) ([]Datase
 
 func (s *datasetDefinitions) Update(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
 	var definition DatasetDefinition
-	err := s.client.performRequest(ctx, "PATCH", "/1/dataset_definitions/"+urlEncodeDataset(dataset), nil, &definition)
+	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), data, &definition)
 	return &definition, err
 }
 
