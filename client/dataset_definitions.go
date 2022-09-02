@@ -11,7 +11,7 @@ import (
 // API docs: https://docs.honeycomb.io/api/datasets/
 type DatasetDefinitions interface {
 	// Same behavior as Update - needs to be invoked once to specifiy resource ID
-	Create(ctx context.Context, dataset string) (*DatasetDefinition, error)
+	Create(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
 
 	// Get All Dataset Definitions for a Dataset
 	Get(ctx context.Context, dataset string) (*DatasetDefinition, error)
@@ -20,7 +20,7 @@ type DatasetDefinitions interface {
 	Update(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
 
 	// Get All Dataset Definitions
-	Delete(ctx context.Context, dataset string) (*DatasetDefinition, error)
+	Delete(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
 }
 
 // Compile-time proof of interface implementation by type datasets definiitions.
@@ -56,10 +56,10 @@ type DatasetDefinition struct {
 	User           DefinitionColumn `json:"user"`
 }
 
-func (s *datasetDefinitions) Create(ctx context.Context, dataset string) (*DatasetDefinition, error) {
-	data := &DatasetDefinition{}
-	definition, err := s.Update(ctx, dataset, data)
-	return definition, err
+func (s *datasetDefinitions) Create(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
+	var definition DatasetDefinition
+	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), data, &definition)
+	return &definition, err
 }
 
 func (s *datasetDefinitions) Get(ctx context.Context, dataset string) (*DatasetDefinition, error) {
@@ -74,9 +74,8 @@ func (s *datasetDefinitions) Update(ctx context.Context, dataset string, data *D
 	return &definition, err
 }
 
-func (s *datasetDefinitions) Delete(ctx context.Context, dataset string) (*DatasetDefinition, error) {
-	// patch value to specific empty string ""
-	data := &DatasetDefinition{}
-	definition, err := s.Update(ctx, dataset, data)
-	return definition, err
+func (s *datasetDefinitions) Delete(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
+	var definition DatasetDefinition
+	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), data, &definition)
+	return &definition, err
 }
