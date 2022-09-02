@@ -25,7 +25,7 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 				Config: testAccDatasetDefinition(dataset, "trace_id", "trace.hc_terraform"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "dataset", dataset),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "", "trace_id"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "trace_id"),
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "trace.hc_terraform"),
 					//Config: testAccDatasetDefinitionThree(dataset, "trace_id", "trace.hc_terraform", "error", "error.hc_terraform", "status", "status.hc_terraform"),
 					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.name", "error"),

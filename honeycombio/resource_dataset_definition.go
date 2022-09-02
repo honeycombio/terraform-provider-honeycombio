@@ -65,7 +65,13 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	d.Set("field", flattenDatasetDefinition(dd))
+	flattendDatasetDefinition := flattenDatasetDefinition(dd)
+
+	// where
+	for _, f := range flattendDatasetDefinition {
+		d.Set("field", f)
+	}
+
 	d.SetId(dataset)
 	return nil
 }
@@ -88,7 +94,7 @@ func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData
 
 // Convert to Terraform Format
 func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]interface{} {
-	result := make([]map[string]interface{}, 1)
+	result := make([]map[string]interface{}, 0)
 
 	// for each field allowed unpack the values and set
 
@@ -106,10 +112,10 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 		})
 	}
 
-	if dd.DurationMs.Name != "" {
+	if dd.Name.Name != "" {
 		result = append(result, map[string]interface{}{
 			"name":  "name",
-			"value": dd.DurationMs.Name,
+			"value": dd.Name.Name,
 		})
 	}
 
