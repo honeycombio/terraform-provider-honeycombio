@@ -15,16 +15,23 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 
 	dataset := testAccDataset()
 
+	// set multiple definitions in a single HCL block
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDatasetDefinitionWithTraceID(dataset, "trace.trace_id"),
+				Config: testAccDatasetDefinition(dataset, "trace_id", "trace.hc_terraform"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "dataset", dataset),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "trace_id.0.name", "trace.trace_id"),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "trace_id.0.column_type", "column"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "", "trace_id"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "trace.hc_terraform"),
+					//Config: testAccDatasetDefinitionThree(dataset, "trace_id", "trace.hc_terraform", "error", "error.hc_terraform", "status", "status.hc_terraform"),
+					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.name", "error"),
+					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.value", "error.hc_terraform"),
+					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.2.name", "status"),
+					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.2.value", "status.hc_terraform"),
 					testAccCheckDatasetDefinitionExists(t, "honeycombio_dataset_definition.test", &definitionBefore),
 					testAccCheckDatasetDefinitionAttributes(&definitionBefore),
 				),
@@ -41,7 +48,7 @@ func testAccCheckDatasetDefinitionExists(t *testing.T, name string, dd *honeycom
 		}
 
 		client := testAccClient(t)
-		createdDatasetDefinition, err := client.DatasetDefinitions.List(context.Background(), resourceState.Primary.Attributes["dataset"])
+		createdDatasetDefinition, err := client.DatasetDefinitions.Get(context.Background(), resourceState.Primary.Attributes["dataset"])
 		if err != nil {
 			return fmt.Errorf("could not find created definition: %w", err)
 		}
@@ -65,14 +72,36 @@ func testAccCheckDatasetDefinitionAttributes(dd *honeycombio.DatasetDefinition) 
 	}
 }
 
-func testAccDatasetDefinitionWithTraceID(dataset string, definitionValue string) string {
+func testAccDatasetDefinition(dataset string, dName0 string, dValue0 string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_dataset_definition" "test" {
   dataset    = "%s"
   
-  trace_id {
+  field {
 	name = "%s"
-	column_type = "%s"
+	value = "%s"
   }
-}`, dataset, definitionValue, "column")
+}`, dataset, dName0, dValue0)
+}
+
+func testAccDatasetDefinitionThree(dataset string, dName0 string, dValue0 string, dName1 string, dValue1 string, dName2 string, dValue2 string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_dataset_definition" "test" {
+  dataset    = "%s"
+  
+  field {
+	name = "%s"
+	value = "%s"
+  }
+
+  field {
+	name = "%s"
+	value = "%s"
+  }
+
+  field {
+	name = "%s"
+	value = "%s"
+  }
+}`, dataset, dName0, dValue0, dName1, dValue1, dName2, dValue2)
 }

@@ -28,8 +28,8 @@ func TestDatasetDefinitions(t *testing.T) {
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	t.Run("List", func(t *testing.T) {
-		result, err := c.DatasetDefinitions.List(ctx, dataset)
+	t.Run("Get", func(t *testing.T) {
+		result, err := c.DatasetDefinitions.Get(ctx, dataset)
 		assert.NoError(t, err)
 		assert.Equal(t, "column", result.TraceID.ColumnType)
 	})
