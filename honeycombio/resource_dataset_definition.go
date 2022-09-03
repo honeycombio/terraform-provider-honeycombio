@@ -14,7 +14,7 @@ func newDatasetDefinition() *schema.Resource {
 		CreateContext: resourceDatasetDefinitionCreate,
 		ReadContext:   resourceDatasetDefinitionRead,
 		UpdateContext: resourceDatasetDefinitionUpdate,
-		DeleteContext: schema.NoopContext,
+		DeleteContext: resourceDatasetDefinitionDelete,
 
 		Schema: map[string]*schema.Schema{
 			"dataset": {
@@ -23,7 +23,7 @@ func newDatasetDefinition() *schema.Resource {
 				ForceNew: true,
 			},
 			"field": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				MinItems: 1,
 				Elem: &schema.Resource{
@@ -46,13 +46,14 @@ func newDatasetDefinition() *schema.Resource {
 }
 
 func resourceDatasetDefinitionCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	dataset := d.Get("dataset").(string)
-	// check that data is empty
-	//dd, err = client.DatasetDefinitions.Create(ctx, dataset, dd)
-	d.SetId(dataset)
+	d.SetId(d.Get("dataset").(string))
+	// _if_ someone wants to pass a datasetDefinition object in for create - should we support that? It would
+	// simply be an update
 	return resourceDatasetDefinitionRead(ctx, d, meta)
 }
 
+// resourceDatasetDefinitionRead pulls the dataset defintion settings from Honeycomb and sets the Terraform state
+// to match
 func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
@@ -66,8 +67,10 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	flattendDatasetDefinition := flattenDatasetDefinition(dd)
-	d.Set("field", flattendDatasetDefinition)
-
+	err = d.Set("field", flattendDatasetDefinition)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	d.SetId(dataset)
 	return nil
 }
@@ -76,7 +79,23 @@ func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
-	field := d.Get("field").([]interface{}) // list of definition fields
+	field := d.Get("field").(*schema.Set) // list of definition fields
+
+	dd := expandDatasetDefinition(field)
+
+	dd, err := client.DatasetDefinitions.Update(ctx, dataset, dd)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	return resourceDatasetDefinitionRead(ctx, d, meta)
+}
+
+func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*honeycombio.Client)
+
+	dataset := d.Get("dataset").(string)
+	field := d.Get("field").(*schema.Set) // list of definition fields
 
 	dd := expandDatasetDefinition(field)
 
@@ -196,10 +215,10 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 }
 
 // Convert from Terraform to API Schema
-func expandDatasetDefinition(s []interface{}) *honeycombio.DatasetDefinition {
+func expandDatasetDefinition(s *schema.Set) *honeycombio.DatasetDefinition {
 	definition := honeycombio.DatasetDefinition{}
 
-	for _, r := range s {
+	for _, r := range s.List() {
 		rMap := r.(map[string]interface{})
 
 		if rMap["name"].(string) == "duration_ms" {
@@ -208,23 +227,23 @@ func expandDatasetDefinition(s []interface{}) *honeycombio.DatasetDefinition {
 			definition.Error.Name = rMap["value"].(string)
 		} else if rMap["name"].(string) == "name" {
 			definition.Name.Name = rMap["value"].(string)
-		} else if rMap["name"].(string) == "name" {
-			definition.ParentID.Name = rMap["value"].(string)
 		} else if rMap["name"].(string) == "parent_id" {
-			definition.Route.Name = rMap["value"].(string)
+			definition.ParentID.Name = rMap["value"].(string)
 		} else if rMap["name"].(string) == "route" {
-			definition.ServiceName.Name = rMap["value"].(string)
+			definition.Route.Name = rMap["value"].(string)
 		} else if rMap["name"].(string) == "service_name" {
-			definition.SpanID.Name = rMap["value"].(string)
+			definition.ServiceName.Name = rMap["value"].(string)
 		} else if rMap["name"].(string) == "span_id" {
-			definition.SpanType.Name = rMap["value"].(string)
+			definition.SpanID.Name = rMap["value"].(string)
 		} else if rMap["name"].(string) == "span_kind" {
-			definition.AnnotationType.Name = rMap["value"].(string)
+			definition.SpanType.Name = rMap["value"].(string)
 		} else if rMap["name"].(string) == "annotation_type" {
-			definition.LinkTraceID.Name = rMap["value"].(string)
+			definition.AnnotationType.Name = rMap["value"].(string)
 		} else if rMap["name"].(string) == "link_trace_id" {
-			definition.LinkSpanID.Name = rMap["value"].(string)
+			definition.LinkTraceID.Name = rMap["value"].(string)
 		} else if rMap["name"].(string) == "link_span_id" {
+			definition.LinkSpanID.Name = rMap["value"].(string)
+		} else if rMap["name"].(string) == "status" {
 			definition.Status.Name = rMap["value"].(string)
 		} else if rMap["name"].(string) == "trace_id" {
 			definition.TraceID.Name = rMap["value"].(string)

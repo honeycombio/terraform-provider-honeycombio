@@ -11,9 +11,9 @@ import (
 )
 
 func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
-	var definitionBefore honeycombio.DatasetDefinition
+	var definitionBefore, definitionAfter honeycombio.DatasetDefinition
 
-	dataset := testAccDataset()
+	// dataset := testAccDataset()
 
 	// set multiple definitions in a single HCL block
 
@@ -22,28 +22,147 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				//Config: testAccDatasetDefinition(dataset, "duration_ms", "trace.trace_id"),
-				Config: testAccDatasetDefinition(dataset, "name", "honeycomb"),
+				// initial setup
+				Config: `
+				resource "honeycombio_dataset_definition" "test" {
+				dataset    = "testacc"
+				
+				field {
+					name = "duration_ms"
+					value = "duration_ms"
+				}
+
+				field {
+					name = "name"
+					value = "name"
+				}
+
+				field {
+					name = "parent_id"
+					value = "trace.parent_id"
+				}
+
+				field {
+					name = "service_name"
+					value = "service_name"
+				}
+
+				field {
+					name = "trace_id"
+					value = "trace.trace_id"
+				}
+
+				field {
+					name = "span_id"
+					value = "trace.span_id"
+				}
+					}`,
+
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "dataset", dataset),
+					//
+					testAccCheckDatasetDefinitionExistsInHoneycomb(t, "honeycombio_dataset_definition.test", &definitionBefore),
+					testAccCheckDatasetDefinitionAttributes(&definitionBefore),
+
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "duration_ms"),
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "duration_ms"),
-					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.2.name", "name"),
-					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.2.value", "honeycomb"),
-					//Config: testAccDatasetDefinitionThree(dataset, "trace_id", "trace.hc_terraform", "error", "error.hc_terraform", "status", "status.hc_terraform"),
-					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.name", "error"),
-					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.value", "error.hc_terraform"),
-					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.2.name", "status"),
-					//resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.2.value", "status.hc_terraform"),
-					testAccCheckDatasetDefinitionExists(t, "honeycombio_dataset_definition.test", &definitionBefore),
+				),
+			},
+			{
+				// change the name field
+				Config: `
+				resource "honeycombio_dataset_definition" "test" {
+				dataset    = "testacc"
+
+				field {
+					name = "duration_ms"
+					value = "duration_ms"
+				}
+
+				field {
+					name = "name"
+					value = "job.status"
+				}
+
+				field {
+					name = "parent_id"
+					value = "trace.parent_id"
+				}
+
+				field {
+					name = "service_name"
+					value = "service_name"
+				}
+
+				field {
+					name = "trace_id"
+					value = "trace.trace_id"
+				}
+
+				field {
+					name = "span_id"
+					value = "trace.span_id"
+				}
+					}`,
+
+				Check: resource.ComposeTestCheckFunc(
+					//
+					testAccCheckDatasetDefinitionExistsInHoneycomb(t, "honeycombio_dataset_definition.test", &definitionAfter),
+					testAccCheckDatasetDefinitionAttributes(&definitionAfter),
+
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "duration_ms"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "duration_ms"),
+				),
+			},
+			{ // reset the name field to its original values
+				Config: `
+				resource "honeycombio_dataset_definition" "test" {
+				dataset    = "testacc"
+				
+				field {
+					name = "duration_ms"
+					value = "duration_ms"
+				}
+
+				field {
+					name = "name"
+					value = "name"
+				}
+
+				field {
+					name = "parent_id"
+					value = "trace.parent_id"
+				}
+
+				field {
+					name = "service_name"
+					value = "service_name"
+				}
+
+				field {
+					name = "trace_id"
+					value = "trace.trace_id"
+				}
+
+				field {
+					name = "span_id"
+					value = "trace.span_id"
+				}
+					}`,
+
+				Check: resource.ComposeTestCheckFunc(
+					//
+					testAccCheckDatasetDefinitionExistsInHoneycomb(t, "honeycombio_dataset_definition.test", &definitionBefore),
 					testAccCheckDatasetDefinitionAttributes(&definitionBefore),
+
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "duration_ms"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "duration_ms"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckDatasetDefinitionExists(t *testing.T, name string, dd *honeycombio.DatasetDefinition) resource.TestCheckFunc {
+func testAccCheckDatasetDefinitionExistsInHoneycomb(t *testing.T, name string, dd *honeycombio.DatasetDefinition) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
