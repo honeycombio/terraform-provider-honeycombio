@@ -111,7 +111,7 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 
 				field {
 					name = "name"
-					value = ""
+					value = "name"
 				}
 
 				field {
