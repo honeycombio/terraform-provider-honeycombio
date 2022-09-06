@@ -1,18 +1,12 @@
 package honeycombio
 
 import (
-	"context"
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
-	var definitionBefore, definitionAfter honeycombio.DatasetDefinition
-
 	// dataset := testAccDataset()
 
 	// set multiple definitions in a single HCL block
@@ -59,10 +53,6 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 					}`,
 
 				Check: resource.ComposeTestCheckFunc(
-					//
-					testAccCheckDatasetDefinitionExistsInHoneycomb(t, "honeycombio_dataset_definition.test", &definitionBefore),
-					testAccCheckDatasetDefinitionAttributes(&definitionBefore),
-
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "duration_ms"),
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "duration_ms"),
 				),
@@ -105,12 +95,8 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 					}`,
 
 				Check: resource.ComposeTestCheckFunc(
-					//
-					testAccCheckDatasetDefinitionExistsInHoneycomb(t, "honeycombio_dataset_definition.test", &definitionAfter),
-					testAccCheckDatasetDefinitionAttributes(&definitionAfter),
-
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "duration_ms"),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "duration_ms"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.name", "name"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.value", "job.status"),
 				),
 			},
 			{ // reset the name field to its original values
@@ -125,7 +111,7 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 
 				field {
 					name = "name"
-					value = "name"
+					value = ""
 				}
 
 				field {
@@ -150,80 +136,10 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 					}`,
 
 				Check: resource.ComposeTestCheckFunc(
-					//
-					testAccCheckDatasetDefinitionExistsInHoneycomb(t, "honeycombio_dataset_definition.test", &definitionBefore),
-					testAccCheckDatasetDefinitionAttributes(&definitionBefore),
-
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "duration_ms"),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "duration_ms"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.name", "name"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.value", "name"),
 				),
 			},
 		},
 	})
-}
-
-func testAccCheckDatasetDefinitionExistsInHoneycomb(t *testing.T, name string, dd *honeycombio.DatasetDefinition) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		resourceState, ok := s.RootModule().Resources[name]
-		if !ok {
-			return fmt.Errorf("not found: %s", name)
-		}
-
-		client := testAccClient(t)
-		createdDatasetDefinition, err := client.DatasetDefinitions.Get(context.Background(), resourceState.Primary.Attributes["dataset"])
-		if err != nil {
-			return fmt.Errorf("could not find created definition: %w", err)
-		}
-
-		*dd = *createdDatasetDefinition
-		return nil
-	}
-}
-
-func testAccCheckDatasetDefinitionAttributes(dd *honeycombio.DatasetDefinition) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		if dd.TraceID.Name != "trace.trace_id" {
-			return fmt.Errorf("bad name: %s", dd.TraceID.Name)
-		}
-
-		if dd.TraceID.ColumnType != "column" {
-			return fmt.Errorf("bad column_type: %s", dd.TraceID.Name)
-		}
-
-		return nil
-	}
-}
-
-func testAccDatasetDefinition(dataset string, dName0 string, dValue0 string) string {
-	return fmt.Sprintf(`
-resource "honeycombio_dataset_definition" "test" {
-  dataset    = "%s"
-  
-  field {
-	name = "%s"
-	value = "%s"
-  }
-}`, dataset, dName0, dValue0)
-}
-
-func testAccDatasetDefinitionThree(dataset string, dName0 string, dValue0 string, dName1 string, dValue1 string, dName2 string, dValue2 string) string {
-	return fmt.Sprintf(`
-resource "honeycombio_dataset_definition" "test" {
-  dataset    = "%s"
-  
-  field {
-	name = "%s"
-	value = "%s"
-  }
-
-  field {
-	name = "%s"
-	value = "%s"
-  }
-
-  field {
-	name = "%s"
-	value = "%s"
-  }
-}`, dataset, dName0, dValue0, dName1, dValue1, dName2, dValue2)
 }
