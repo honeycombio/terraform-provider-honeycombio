@@ -445,7 +445,134 @@ func ValidDatasetDefinitions() []string {
 		"user"}
 }
 
+func checkIfInList(list []string, str string) bool {
+	for _, s := range list {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
 func ValidDatasetDefinitionsColumnTypes() []string {
 	return []string{"column",
 		"derived_column"}
 }
+
+// Checks if the value is a valid default, return true if it is
+func CheckDatasetDefinitionError(value string) bool {
+	defaults := []string{"error"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionDurationMs(value string) bool {
+	defaults := []string{"duration_ms", "durationMs", "request_processing_time"}
+
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionName(value string) bool {
+	defaults := []string{"name"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionParentID(value string) bool {
+	defaults := []string{"trace.parent_id", "parentId"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionRoute(value string) bool {
+	defaults := []string{"route"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionServiceName(value string) bool {
+	defaults := []string{"service_name", "serviceName", "service.name"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionSpanID(value string) bool {
+	defaults := []string{"id"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionSpanType(value string) bool {
+	defaults := []string{"meta.span_type"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionAnnotationType(value string) bool {
+	defaults := []string{"meta.annotation_type"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionLinkTraceID(value string) bool {
+	defaults := []string{"trace.link.trace_id"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionLinkSpanID(value string) bool {
+	defaults := []string{"trace.link.span_id", "trace.span_id"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionStatus(value string) bool {
+	defaults := []string{"http.status_code", "elb_status_code", "response.status_code"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionTraceID(value string) bool {
+	defaults := []string{"http.status_code", "trace.trace_id", "traceId"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+func CheckDatasetDefinitionUser(value string) bool {
+	defaults := []string{"user.id", "user.email", "request.user.id", "request.user.username"}
+	if checkIfInList(defaults, value) {
+		return true
+	}
+	return false
+}
+
+// sort these as defaults in the above
+//ROW(2, 1, 'request_path'),
+//ROW(6, 4, 'elb'),
