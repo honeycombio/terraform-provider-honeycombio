@@ -494,7 +494,7 @@ func CheckDatasetDefinitionParentID(value string) bool {
 }
 
 func CheckDatasetDefinitionRoute(value string) bool {
-	defaults := []string{"route"}
+	defaults := []string{"route", "request_path"}
 	if checkIfInList(defaults, value) {
 		return true
 	}
@@ -572,7 +572,3 @@ func CheckDatasetDefinitionUser(value string) bool {
 	}
 	return false
 }
-
-// sort these as defaults in the above
-//ROW(2, 1, 'request_path'),
-//ROW(6, 4, 'elb'),

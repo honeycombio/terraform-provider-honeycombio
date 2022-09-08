@@ -26,6 +26,7 @@ func newDatasetDefinition() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				MinItems: 1,
+				Computed: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -98,16 +99,14 @@ func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
-	field := d.Get("field").(*schema.Set) // list of definition fields
 
-	dd := expandDatasetDefinition(field)
-
-	dd, err := client.DatasetDefinitions.Update(ctx, dataset, dd)
+	err := client.DatasetDefinitions.Delete(ctx, dataset)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	return resourceDatasetDefinitionRead(ctx, d, meta)
+	d.SetId("")
+	return nil
 }
 
 // Convert to Terraform Format
@@ -115,161 +114,103 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 	result := make([]map[string]interface{}, 0)
 
 	// for each field allowed unpack the values and set
-
 	if dd.DurationMs.Name != "" {
-		if CheckDatasetDefinitionDurationMs(dd.DurationMs.Name) {
-			// this matches a default value
-		} else {
-			result = append(result, map[string]interface{}{
-				"name":  "duration_ms",
-				"value": dd.DurationMs.Name,
-			})
-		}
+		result = append(result, map[string]interface{}{
+			"name":  "duration_ms",
+			"value": dd.DurationMs.Name,
+		})
 	}
 
 	if dd.Error.Name != "" {
-		if CheckDatasetDefinitionError(dd.Error.Name) {
-			// this matches a default value
-		} else {
-			result = append(result, map[string]interface{}{
-				"name":  "error",
-				"value": dd.Error.Name,
-			})
-		}
+		result = append(result, map[string]interface{}{
+			"name":  "error",
+			"value": dd.Error.Name,
+		})
 
 	}
 
 	if dd.Name.Name != "" {
-		if CheckDatasetDefinitionName(dd.Name.Name) {
-			// this matches a default value
-		} else {
-			result = append(result, map[string]interface{}{
-				"name":  "name",
-				"value": dd.Name.Name,
-			})
-		}
+		result = append(result, map[string]interface{}{
+			"name":  "name",
+			"value": dd.Name.Name,
+		})
+	}
 
-		if dd.ParentID.Name != "" {
-			if CheckDatasetDefinitionParentID(dd.ParentID.Name) {
-				// this matches a default value
-			} else {
-				result = append(result, map[string]interface{}{
-					"name":  "parent_id",
-					"value": dd.ParentID.Name,
-				})
-			}
-		}
+	if dd.ParentID.Name != "" {
+		result = append(result, map[string]interface{}{
+			"name":  "parent_id",
+			"value": dd.ParentID.Name,
+		})
+	}
 
-		if dd.Route.Name != "" {
-			if CheckDatasetDefinitionRoute(dd.Route.Name) {
-				// this matches a default value
-			} else {
-				result = append(result, map[string]interface{}{
-					"name":  "route",
-					"value": dd.Route.Name,
-				})
-			}
-		}
+	if dd.Route.Name != "" {
+		result = append(result, map[string]interface{}{
+			"name":  "route",
+			"value": dd.Route.Name,
+		})
+	}
 
-		if dd.ServiceName.Name != "" {
-			if CheckDatasetDefinitionServiceName(dd.ServiceName.Name) {
-				// this matches a default value
-			} else {
+	if dd.ServiceName.Name != "" {
+		result = append(result, map[string]interface{}{
+			"name":  "service_name",
+			"value": dd.ServiceName.Name,
+		})
+	}
 
-				result = append(result, map[string]interface{}{
-					"name":  "service_name",
-					"value": dd.ServiceName.Name,
-				})
-			}
-		}
+	if dd.SpanID.Name != "" {
+		result = append(result, map[string]interface{}{
+			"name":  "span_id",
+			"value": dd.SpanID.Name,
+		})
+	}
 
-		if dd.SpanID.Name != "" {
-			if CheckDatasetDefinitionSpanID(dd.SpanID.Name) {
-				// this matches a default value
-			} else {
-				result = append(result, map[string]interface{}{
-					"name":  "span_id",
-					"value": dd.SpanID.Name,
-				})
-			}
-		}
+	if dd.SpanType.Name != "" {
+		result = append(result, map[string]interface{}{
+			"name":  "span_kind",
+			"value": dd.SpanType.Name,
+		})
+	}
 
-		if dd.SpanType.Name != "" {
-			if CheckDatasetDefinitionSpanType(dd.SpanType.Name) {
-				// this matches a default value
-			} else {
-				result = append(result, map[string]interface{}{
-					"name":  "span_kind",
-					"value": dd.SpanType.Name,
-				})
-			}
-		}
+	if dd.AnnotationType.Name != "" {
+		result = append(result, map[string]interface{}{
+			"name":  "annotation_type",
+			"value": dd.AnnotationType.Name,
+		})
+	}
 
-		if dd.AnnotationType.Name != "" {
-			if CheckDatasetDefinitionAnnotationType(dd.AnnotationType.Name) {
-				// this matches a default value
-			} else {
-				result = append(result, map[string]interface{}{
-					"name":  "annotation_type",
-					"value": dd.AnnotationType.Name,
-				})
-			}
-		}
+	if dd.LinkTraceID.Name != "" {
+		result = append(result, map[string]interface{}{
+			"name":  "link_trace_id",
+			"value": dd.LinkTraceID.Name,
+		})
+	}
 
-		if dd.LinkTraceID.Name != "" {
-			if CheckDatasetDefinitionLinkTraceID(dd.LinkTraceID.Name) {
-				// this matches a default value
-			} else {
-				result = append(result, map[string]interface{}{
-					"name":  "link_trace_id",
-					"value": dd.LinkTraceID.Name,
-				})
-			}
-		}
-
-		if dd.LinkSpanID.Name != "" {
-			if CheckDatasetDefinitionLinkSpanID(dd.LinkTraceID.Name) {
-				// this matches a default value
-			} else {
-				result = append(result, map[string]interface{}{
-					"name":  "link_span_id",
-					"value": dd.LinkSpanID.Name,
-				})
-			}
-		}
+	if dd.LinkSpanID.Name != "" {
+		result = append(result, map[string]interface{}{
+			"name":  "link_span_id",
+			"value": dd.LinkSpanID.Name,
+		})
 	}
 
 	if dd.Status.Name != "" {
-		if CheckDatasetDefinitionStatus(dd.Status.Name) {
-			// this matches a default value
-		} else {
-			result = append(result, map[string]interface{}{
-				"name":  "status",
-				"value": dd.Status.Name,
-			})
-		}
+		result = append(result, map[string]interface{}{
+			"name":  "status",
+			"value": dd.Status.Name,
+		})
 	}
 
 	if dd.TraceID.Name != "" {
-		if CheckDatasetDefinitionTraceID(dd.TraceID.Name) {
-			// this matches a default value
-		} else {
-			result = append(result, map[string]interface{}{
-				"name":  "trace_id",
-				"value": dd.TraceID.Name,
-			})
-		}
+		result = append(result, map[string]interface{}{
+			"name":  "trace_id",
+			"value": dd.TraceID.Name,
+		})
 	}
 
 	if dd.User.Name != "" {
-		if CheckDatasetDefinitionUser(dd.User.Name) {
-			// this matches a default value
-		} else {
-			result = append(result, map[string]interface{}{
-				"name":  "user",
-				"value": dd.User.Name,
-			})
-		}
+		result = append(result, map[string]interface{}{
+			"name":  "user",
+			"value": dd.User.Name,
+		})
 	}
 
 	return result

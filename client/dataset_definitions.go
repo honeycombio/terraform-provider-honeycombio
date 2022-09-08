@@ -20,7 +20,7 @@ type DatasetDefinitions interface {
 	Update(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
 
 	// Get All Dataset Definitions
-	Delete(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error)
+	Delete(ctx context.Context, dataset string) error
 }
 
 // Compile-time proof of interface implementation by type datasets definiitions.
@@ -74,8 +74,30 @@ func (s *datasetDefinitions) Update(ctx context.Context, dataset string, data *D
 	return &definition, err
 }
 
-func (s *datasetDefinitions) Delete(ctx context.Context, dataset string, data *DatasetDefinition) (*DatasetDefinition, error) {
-	var definition DatasetDefinition
-	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), data, &definition)
-	return &definition, err
+func (s *datasetDefinitions) Delete(ctx context.Context, dataset string) error {
+	// in struct set values to ""
+	definition := DatasetDefinition{
+		DurationMs:     DefinitionColumn{Name: ""},
+		Error:          DefinitionColumn{Name: ""},
+		Name:           DefinitionColumn{Name: ""},
+		ParentID:       DefinitionColumn{Name: ""},
+		Route:          DefinitionColumn{Name: ""},
+		ServiceName:    DefinitionColumn{Name: ""},
+		SpanID:         DefinitionColumn{Name: ""},
+		SpanType:       DefinitionColumn{Name: ""},
+		AnnotationType: DefinitionColumn{Name: ""},
+		LinkTraceID:    DefinitionColumn{Name: ""},
+		LinkSpanID:     DefinitionColumn{Name: ""},
+		Status:         DefinitionColumn{Name: ""},
+		TraceID:        DefinitionColumn{Name: ""},
+		User:           DefinitionColumn{Name: ""},
+	}
+
+	// validate an empty definition against HCL
+	//if !CheckDatasetDefinitionError(dd.Error.Name) {
+	if definition.DurationMs.Name == "" {
+		// valid
+	}
+
+	return nil
 }
