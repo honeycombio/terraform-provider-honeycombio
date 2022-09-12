@@ -459,6 +459,15 @@ func ValidDatasetDefinitionsColumnTypes() []string {
 		"derived_column"}
 }
 
+// Checks if the definition is supported by Honeycomb
+func CheckValidDatasetDefiniition(value string) bool {
+	validDefinitions := ValidDatasetDefinitions()
+	if checkIfInList(validDefinitions, value) {
+		return true
+	}
+	return false
+}
+
 // Checks if the value is a valid default, return true if it is
 func CheckDatasetDefinitionError(value string) bool {
 	defaults := []string{"error"}

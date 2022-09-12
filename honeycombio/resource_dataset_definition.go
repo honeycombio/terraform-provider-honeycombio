@@ -100,13 +100,37 @@ func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData
 
 	dataset := d.Get("dataset").(string)
 
-	err := client.DatasetDefinitions.Delete(ctx, dataset)
+	emptyDatasetDefinition := &honeycombio.DatasetDefinition{
+		DurationMs:     honeycombio.DefinitionColumn{Name: ""},
+		Error:          honeycombio.DefinitionColumn{Name: ""},
+		Name:           honeycombio.DefinitionColumn{Name: ""},
+		ParentID:       honeycombio.DefinitionColumn{Name: ""},
+		Route:          honeycombio.DefinitionColumn{Name: ""},
+		ServiceName:    honeycombio.DefinitionColumn{Name: ""},
+		SpanID:         honeycombio.DefinitionColumn{Name: ""},
+		SpanType:       honeycombio.DefinitionColumn{Name: ""},
+		AnnotationType: honeycombio.DefinitionColumn{Name: ""},
+		LinkTraceID:    honeycombio.DefinitionColumn{Name: ""},
+		LinkSpanID:     honeycombio.DefinitionColumn{Name: ""},
+		Status:         honeycombio.DefinitionColumn{Name: ""},
+		TraceID:        honeycombio.DefinitionColumn{Name: ""},
+		User:           honeycombio.DefinitionColumn{Name: ""},
+	}
+
+	// set each definition to blank:
+	flattenedDatasetDefinition := flattenDatasetDefinition(emptyDatasetDefinition)
+	err := d.Set("field", flattenedDatasetDefinition)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	err = client.DatasetDefinitions.Delete(ctx, dataset)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
 	d.SetId("")
-	return nil
+	return resourceDatasetDefinitionRead(ctx, d, meta)
 }
 
 // Convert to Terraform Format
