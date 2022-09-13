@@ -231,7 +231,7 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 				
 				field {
 					name = "duration_ms"
-					value = "gt50_duration_ms"
+					value = "duration_ms"
 				}
 
 				field {

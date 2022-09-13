@@ -59,7 +59,7 @@ func TestDatasetDefinitions(t *testing.T) {
 		assert.Equal(t, "", result.Error.ColumnType)
 	})
 
-	// remove trace ID
+	// Provider cleanup
 	t.Run("Delete", func(t *testing.T) {
 		err := c.DatasetDefinitions.Delete(ctx, dataset)
 		assert.NoError(t, err)
