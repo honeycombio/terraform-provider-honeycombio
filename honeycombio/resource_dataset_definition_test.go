@@ -52,6 +52,7 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 				}
 					}`,
 
+				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "duration_ms"),
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "duration_ms"),
