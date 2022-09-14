@@ -83,7 +83,7 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 
 func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
-
+	fmt.Println("Update")
 	dataset := d.Get("dataset").(string)
 	field := d.Get("field").(*schema.Set) // list of definition fields
 
@@ -117,14 +117,14 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 	result := make([]map[string]interface{}, 0)
 
 	// for each field allowed unpack the values and set
-	if dd.DurationMs.Name != "" {
+	if dd.DurationMs.Name != "" && !CheckDatasetDefinitionDurationMs(dd.DurationMs.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "duration_ms",
 			"value": dd.DurationMs.Name,
 		})
 	}
 
-	if dd.Error.Name != "" {
+	if dd.Error.Name != "" && !CheckDatasetDefinitionError(dd.Error.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "error",
 			"value": dd.Error.Name,
@@ -132,42 +132,42 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 
 	}
 
-	if dd.Name.Name != "" && !isDefaultField(dd, "name") {
+	if dd.Name.Name != "" && !CheckDatasetDefinitionName(dd.Name.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "name",
 			"value": dd.Name.Name,
 		})
 	}
 
-	if dd.ParentID.Name != "" {
+	if dd.ParentID.Name != "" && !CheckDatasetDefinitionParentID(dd.ParentID.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "parent_id",
 			"value": dd.ParentID.Name,
 		})
 	}
 
-	if dd.Route.Name != "" {
+	if dd.Route.Name != "" && !CheckDatasetDefinitionName(dd.Name.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "route",
 			"value": dd.Route.Name,
 		})
 	}
 
-	if dd.ServiceName.Name != "" {
+	if dd.ServiceName.Name != "" && !CheckDatasetDefinitionServiceName(dd.ServiceName.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "service_name",
 			"value": dd.ServiceName.Name,
 		})
 	}
 
-	if dd.SpanID.Name != "" {
+	if dd.SpanID.Name != "" && !CheckDatasetDefinitionSpanID(dd.SpanID.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "span_id",
 			"value": dd.SpanID.Name,
 		})
 	}
 
-	if dd.SpanType.Name != "" {
+	if dd.SpanType.Name != "" && !CheckDatasetDefinitionSpanType(dd.SpanType.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "span_kind",
 			"value": dd.SpanType.Name,
@@ -181,35 +181,35 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 		})
 	}
 
-	if dd.LinkTraceID.Name != "" {
+	if dd.LinkTraceID.Name != "" && !CheckDatasetDefinitionLinkTraceID(dd.LinkTraceID.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "link_trace_id",
 			"value": dd.LinkTraceID.Name,
 		})
 	}
 
-	if dd.LinkSpanID.Name != "" {
+	if dd.LinkSpanID.Name != "" && !CheckDatasetDefinitionLinkSpanID(dd.LinkSpanID.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "link_span_id",
 			"value": dd.LinkSpanID.Name,
 		})
 	}
 
-	if dd.Status.Name != "" {
+	if dd.Status.Name != "" && !CheckDatasetDefinitionStatus(dd.Status.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "status",
 			"value": dd.Status.Name,
 		})
 	}
 
-	if dd.TraceID.Name != "" {
+	if dd.TraceID.Name != "" && !CheckDatasetDefinitionTraceID(dd.TraceID.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "trace_id",
 			"value": dd.TraceID.Name,
 		})
 	}
 
-	if dd.User.Name != "" {
+	if dd.User.Name != "" && !CheckDatasetDefinitionUser(dd.User.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "user",
 			"value": dd.User.Name,
@@ -224,58 +224,7 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 
 // Convert from Terraform to API Schema
 func expandDatasetDefinition(s *schema.Set) *honeycombio.DatasetDefinition {
-	fmt.Println("\n\nexpandDatasetDefinition")
 	definition := honeycombio.DatasetDefinition{}
-
-	// defs := make(map[string]interface{})
-
-	// if len(s.List()) < 6 {
-	// 	fmt.Println("Less than 6 fields defined")
-	// 	// whichb field is missing?
-
-	// 	defs["duration_ms"] = ""
-	// 	defs["error"] = ""
-	// 	defs["name"] = ""
-	// 	defs["parent_id"] = ""
-	// 	defs["service_name"] = ""
-	// 	defs["span_id"] = ""
-	// 	defs["trace_id"] = ""
-	// 	defs["user"] = ""
-
-	// 	for _, r := range s.List() {
-	// 		rMap := r.(map[string]interface{})
-
-	// 		if rMap["name"].(string) == "duration_ms" {
-	// 			definition.DurationMs.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "error" {
-	// 			definition.Error.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "name" {
-	// 			definition.Name.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "parent_id" {
-	// 			definition.ParentID.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "route" {
-	// 			definition.Route.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "service_name" {
-	// 			definition.ServiceName.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "span_id" {
-	// 			definition.SpanID.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "span_kind" {
-	// 			definition.SpanType.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "annotation_type" {
-	// 			definition.AnnotationType.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "link_trace_id" {
-	// 			definition.LinkTraceID.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "link_span_id" {
-	// 			definition.LinkSpanID.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "status" {
-	// 			definition.Status.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "trace_id" {
-	// 			definition.TraceID.Name = rMap["value"].(string)
-	// 		} else if rMap["name"].(string) == "user" {
-	// 			definition.User.Name = rMap["value"].(string)
-	// 		}
-	// 	}
-	// }
 
 	for _, r := range s.List() {
 		rMap := r.(map[string]interface{})
@@ -312,13 +261,4 @@ func expandDatasetDefinition(s *schema.Set) *honeycombio.DatasetDefinition {
 	}
 	fmt.Printf("definition: %v\n", definition)
 	return &definition
-}
-
-func isDefaultField(dd *honeycombio.DatasetDefinition, field string) bool {
-	if field == "name" {
-		if dd.Name.Name == "name" {
-			return true
-		}
-	}
-	return false
 }

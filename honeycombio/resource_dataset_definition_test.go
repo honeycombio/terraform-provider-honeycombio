@@ -15,161 +15,84 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				// initial setup
+				// initial setup, don't set anything, all default values
 				Config: `
 				resource "honeycombio_dataset_definition" "test" {
 				dataset    = "testacc"
 				
-				field {
-					name = "duration_ms"
-					value = "duration_ms"
-				}
-
-				field {
-					name = "parent_id"
-					value = "trace.parent_id"
-				}
-
-				field {
-					name = "service_name"
-					value = "service_name"
-				}
-
-				field {
-					name = "trace_id"
-					value = "trace.trace_id"
-				}
-
-				field {
-					name = "span_id"
-					value = "trace.span_id"
-				}
 					}`,
-
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "duration_ms"),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "duration_ms"),
-				),
 			},
 			{
-				// update the name field
+				// update the name field to a non-default value
 				Config: `
 				resource "honeycombio_dataset_definition" "test" {
 				dataset    = "testacc"
-
-				field {
-					name = "duration_ms"
-					value = "duration_ms"
-				}
 
 				field {
 					name = "name"
 					value = "job.status"
 				}
-
-				field {
-					name = "parent_id"
-					value = "trace.parent_id"
-				}
-
-				field {
-					name = "service_name"
-					value = "service_name"
-				}
-
-				field {
-					name = "trace_id"
-					value = "trace.trace_id"
-				}
-
-				field {
-					name = "span_id"
-					value = "trace.span_id"
-				}
 					}`,
-
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.name", "name"),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.value", "job.status"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "name"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "job.status"),
 				),
 			},
 			{ // reset the name field to its original values
+				// To do this, we remove the name field clause from the HCL block altogether
+				// but that doesn't call Update then and so the field never gets updated
 				Config: `
 				resource "honeycombio_dataset_definition" "test" {
 				dataset    = "testacc"
 
-				field {
-					name = "duration_ms"
-					value = "duration_ms"
-				}
-
-				field {
-					name = "parent_id"
-					value = "trace.parent_id"
-				}
-
-				field {
-					name = "service_name"
-					value = "service_name"
-				}
-
-				field {
-					name = "trace_id"
-					value = "trace.trace_id"
-				}
-
-				field {
-					name = "span_id"
-					value = "trace.span_id"
-				}
 					}`,
 
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.name", "parent_id"),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.1.value", "trace.parent_id"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "name"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", ""),
 				),
 			},
-			// { // update duration ms field to existing derived column
-			// 	Config: `
-			// 		resource "honeycombio_dataset_definition" "test" {
-			// 		dataset    = "testacc"
+			{ // update duration ms field to existing derived column
+				Config: `
+					resource "honeycombio_dataset_definition" "test" {
+					dataset    = "testacc"
 
-			// 		field {
-			// 			name = "name"
-			// 			value = "name"
-			// 		}
+					field {
+						name = "name"
+						value = "name"
+					}
 
-			// 		field {
-			// 			name = "duration_ms"
-			// 			value = "gt50_duration_ms"
-			// 		}
+					field {
+						name = "duration_ms"
+						value = "gt50_duration_ms"
+					}
 
-			// 		field {
-			// 			name = "parent_id"
-			// 			value = "trace.parent_id"
-			// 		}
+					field {
+						name = "parent_id"
+						value = "trace.parent_id"
+					}
 
-			// 		field {
-			// 			name = "service_name"
-			// 			value = "service_name"
-			// 		}
+					field {
+						name = "service_name"
+						value = "service_name"
+					}
 
-			// 		field {
-			// 			name = "trace_id"
-			// 			value = "trace.trace_id"
-			// 		}
+					field {
+						name = "trace_id"
+						value = "trace.trace_id"
+					}
 
-			// 		field {
-			// 			name = "span_id"
-			// 			value = "trace.span_id"
-			// 		}
-			// 			}`,
+					field {
+						name = "span_id"
+						value = "trace.span_id"
+					}
+						}`,
 
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "duration_ms"),
-			// 		resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "gt50_duration_ms"),
-			// 	),
-			// },
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "duration_ms"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "gt50_duration_ms"),
+				),
+			},
 			{ // delete the name field - test 5
 				Config: `
 				resource "honeycombio_dataset_definition" "test" {
