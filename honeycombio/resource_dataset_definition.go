@@ -2,7 +2,9 @@ package honeycombio
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -111,6 +113,7 @@ func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData
 
 // Convert to Terraform Format
 func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]interface{} {
+	fmt.Println("\n\nflattenDatasetDefinition")
 	result := make([]map[string]interface{}, 0)
 
 	// for each field allowed unpack the values and set
@@ -129,7 +132,7 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 
 	}
 
-	if dd.Name.Name != "" {
+	if dd.Name.Name != "" && !isDefaultField(dd, "name") {
 		result = append(result, map[string]interface{}{
 			"name":  "name",
 			"value": dd.Name.Name,
@@ -213,12 +216,66 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 		})
 	}
 
+	for _, m := range result {
+		spew.Dump("m: %v\n", m)
+	}
 	return result
 }
 
 // Convert from Terraform to API Schema
 func expandDatasetDefinition(s *schema.Set) *honeycombio.DatasetDefinition {
+	fmt.Println("\n\nexpandDatasetDefinition")
 	definition := honeycombio.DatasetDefinition{}
+
+	// defs := make(map[string]interface{})
+
+	// if len(s.List()) < 6 {
+	// 	fmt.Println("Less than 6 fields defined")
+	// 	// whichb field is missing?
+
+	// 	defs["duration_ms"] = ""
+	// 	defs["error"] = ""
+	// 	defs["name"] = ""
+	// 	defs["parent_id"] = ""
+	// 	defs["service_name"] = ""
+	// 	defs["span_id"] = ""
+	// 	defs["trace_id"] = ""
+	// 	defs["user"] = ""
+
+	// 	for _, r := range s.List() {
+	// 		rMap := r.(map[string]interface{})
+
+	// 		if rMap["name"].(string) == "duration_ms" {
+	// 			definition.DurationMs.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "error" {
+	// 			definition.Error.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "name" {
+	// 			definition.Name.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "parent_id" {
+	// 			definition.ParentID.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "route" {
+	// 			definition.Route.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "service_name" {
+	// 			definition.ServiceName.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "span_id" {
+	// 			definition.SpanID.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "span_kind" {
+	// 			definition.SpanType.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "annotation_type" {
+	// 			definition.AnnotationType.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "link_trace_id" {
+	// 			definition.LinkTraceID.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "link_span_id" {
+	// 			definition.LinkSpanID.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "status" {
+	// 			definition.Status.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "trace_id" {
+	// 			definition.TraceID.Name = rMap["value"].(string)
+	// 		} else if rMap["name"].(string) == "user" {
+	// 			definition.User.Name = rMap["value"].(string)
+	// 		}
+	// 	}
+	// }
 
 	for _, r := range s.List() {
 		rMap := r.(map[string]interface{})
@@ -253,5 +310,15 @@ func expandDatasetDefinition(s *schema.Set) *honeycombio.DatasetDefinition {
 			definition.User.Name = rMap["value"].(string)
 		}
 	}
+	fmt.Printf("definition: %v\n", definition)
 	return &definition
+}
+
+func isDefaultField(dd *honeycombio.DatasetDefinition, field string) bool {
+	if field == "name" {
+		if dd.Name.Name == "name" {
+			return true
+		}
+	}
+	return false
 }
