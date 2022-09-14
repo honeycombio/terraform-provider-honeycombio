@@ -98,6 +98,8 @@ func (s *datasetDefinitions) Delete(ctx context.Context, dataset string) error {
 	if definition.DurationMs.Name == "" {
 		// valid
 	}
+	var dd DatasetDefinition
+	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), definition, &dd)
 
-	return nil
+	return err
 }
