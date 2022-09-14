@@ -151,6 +151,8 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 				  	}
 																  
 				}`,
+				// test will call destroy after this step which
+				// invokes Delete which resets everything back to default values
 			},
 		},
 	})
