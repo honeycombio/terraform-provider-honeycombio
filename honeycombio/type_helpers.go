@@ -519,7 +519,7 @@ func CheckDatasetDefinitionServiceName(value string) bool {
 }
 
 func CheckDatasetDefinitionSpanID(value string) bool {
-	defaults := []string{"id"}
+	defaults := []string{"id", "trace.span_id"}
 	if checkIfInList(defaults, value) {
 		return true
 	}

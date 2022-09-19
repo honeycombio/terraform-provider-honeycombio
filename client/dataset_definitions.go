@@ -75,6 +75,26 @@ func (s *datasetDefinitions) Update(ctx context.Context, dataset string, data *D
 }
 
 func (s *datasetDefinitions) Delete(ctx context.Context, dataset string) error {
-	// clean up provider interal (automagic by the provider SDK)
-	return nil
+	// "Deleting dataset definitions" means set all values to ""
+	definition := DatasetDefinition{
+		DurationMs:     DefinitionColumn{Name: ""},
+		Error:          DefinitionColumn{Name: ""},
+		Name:           DefinitionColumn{Name: ""},
+		ParentID:       DefinitionColumn{Name: ""},
+		Route:          DefinitionColumn{Name: ""},
+		ServiceName:    DefinitionColumn{Name: ""},
+		SpanID:         DefinitionColumn{Name: ""},
+		SpanType:       DefinitionColumn{Name: ""},
+		AnnotationType: DefinitionColumn{Name: ""},
+		LinkTraceID:    DefinitionColumn{Name: ""},
+		LinkSpanID:     DefinitionColumn{Name: ""},
+		Status:         DefinitionColumn{Name: ""},
+		TraceID:        DefinitionColumn{Name: ""},
+		User:           DefinitionColumn{Name: ""},
+	}
+
+	var dd DatasetDefinition
+	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), definition, &dd)
+
+	return err
 }

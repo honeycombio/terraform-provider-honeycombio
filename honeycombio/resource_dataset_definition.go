@@ -81,7 +81,6 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 
 func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
-
 	dataset := d.Get("dataset").(string)
 	field := d.Get("field").(*schema.Set) // list of definition fields
 
@@ -138,14 +137,14 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 	result := make([]map[string]interface{}, 0)
 
 	// for each field allowed unpack the values and set
-	if dd.DurationMs.Name != "" {
+	if dd.DurationMs.Name != "" && !CheckDatasetDefinitionDurationMs(dd.DurationMs.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "duration_ms",
 			"value": dd.DurationMs.Name,
 		})
 	}
 
-	if dd.Error.Name != "" {
+	if dd.Error.Name != "" && !CheckDatasetDefinitionError(dd.Error.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "error",
 			"value": dd.Error.Name,
@@ -153,42 +152,42 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 
 	}
 
-	if dd.Name.Name != "" {
+	if dd.Name.Name != "" && !CheckDatasetDefinitionName(dd.Name.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "name",
 			"value": dd.Name.Name,
 		})
 	}
 
-	if dd.ParentID.Name != "" {
+	if dd.ParentID.Name != "" && !CheckDatasetDefinitionParentID(dd.ParentID.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "parent_id",
 			"value": dd.ParentID.Name,
 		})
 	}
 
-	if dd.Route.Name != "" {
+	if dd.Route.Name != "" && !CheckDatasetDefinitionName(dd.Name.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "route",
 			"value": dd.Route.Name,
 		})
 	}
 
-	if dd.ServiceName.Name != "" {
+	if dd.ServiceName.Name != "" && !CheckDatasetDefinitionServiceName(dd.ServiceName.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "service_name",
 			"value": dd.ServiceName.Name,
 		})
 	}
 
-	if dd.SpanID.Name != "" {
+	if dd.SpanID.Name != "" && !CheckDatasetDefinitionSpanID(dd.SpanID.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "span_id",
 			"value": dd.SpanID.Name,
 		})
 	}
 
-	if dd.SpanType.Name != "" {
+	if dd.SpanType.Name != "" && !CheckDatasetDefinitionSpanType(dd.SpanType.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "span_kind",
 			"value": dd.SpanType.Name,
@@ -202,35 +201,35 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 		})
 	}
 
-	if dd.LinkTraceID.Name != "" {
+	if dd.LinkTraceID.Name != "" && !CheckDatasetDefinitionLinkTraceID(dd.LinkTraceID.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "link_trace_id",
 			"value": dd.LinkTraceID.Name,
 		})
 	}
 
-	if dd.LinkSpanID.Name != "" {
+	if dd.LinkSpanID.Name != "" && !CheckDatasetDefinitionLinkSpanID(dd.LinkSpanID.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "link_span_id",
 			"value": dd.LinkSpanID.Name,
 		})
 	}
 
-	if dd.Status.Name != "" {
+	if dd.Status.Name != "" && !CheckDatasetDefinitionStatus(dd.Status.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "status",
 			"value": dd.Status.Name,
 		})
 	}
 
-	if dd.TraceID.Name != "" {
+	if dd.TraceID.Name != "" && !CheckDatasetDefinitionTraceID(dd.TraceID.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "trace_id",
 			"value": dd.TraceID.Name,
 		})
 	}
 
-	if dd.User.Name != "" {
+	if dd.User.Name != "" && !CheckDatasetDefinitionUser(dd.User.Name) {
 		result = append(result, map[string]interface{}{
 			"name":  "user",
 			"value": dd.User.Name,
