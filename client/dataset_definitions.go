@@ -75,7 +75,7 @@ func (s *datasetDefinitions) Update(ctx context.Context, dataset string, data *D
 }
 
 func (s *datasetDefinitions) Delete(ctx context.Context, dataset string) error {
-	// in struct set values to ""
+	// "Deleting dataset definitions" means set all values to ""
 	definition := DatasetDefinition{
 		DurationMs:     DefinitionColumn{Name: ""},
 		Error:          DefinitionColumn{Name: ""},
@@ -93,11 +93,6 @@ func (s *datasetDefinitions) Delete(ctx context.Context, dataset string) error {
 		User:           DefinitionColumn{Name: ""},
 	}
 
-	// validate an empty definition against HCL
-	//if !CheckDatasetDefinitionError(dd.Error.Name) {
-	if definition.DurationMs.Name == "" {
-		// valid
-	}
 	var dd DatasetDefinition
 	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), definition, &dd)
 

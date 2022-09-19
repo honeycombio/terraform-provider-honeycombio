@@ -7,8 +7,6 @@ import (
 )
 
 func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
-	// dataset := testAccDataset()
-
 	// set multiple definitions in a single HCL block
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),

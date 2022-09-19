@@ -2,9 +2,7 @@ package honeycombio
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -83,7 +81,6 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 
 func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
-	fmt.Println("Update")
 	dataset := d.Get("dataset").(string)
 	field := d.Get("field").(*schema.Set) // list of definition fields
 
@@ -113,7 +110,6 @@ func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData
 
 // Convert to Terraform Format
 func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]interface{} {
-	fmt.Println("\n\nflattenDatasetDefinition")
 	result := make([]map[string]interface{}, 0)
 
 	// for each field allowed unpack the values and set
@@ -216,9 +212,6 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 		})
 	}
 
-	for _, m := range result {
-		spew.Dump("m: %v\n", m)
-	}
 	return result
 }
 
@@ -259,6 +252,5 @@ func expandDatasetDefinition(s *schema.Set) *honeycombio.DatasetDefinition {
 			definition.User.Name = rMap["value"].(string)
 		}
 	}
-	fmt.Printf("definition: %v\n", definition)
 	return &definition
 }
