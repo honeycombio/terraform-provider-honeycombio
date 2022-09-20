@@ -72,7 +72,7 @@ jobs:
       run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./honeycombio/...
 
     - name: Generate Coverage Report
-      uses: codecov/codecov-action@v3.1.0
+      uses: codecov/codecov-action@v3.1.1
 
   fmt:
     name: Formatting
