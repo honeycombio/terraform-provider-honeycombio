@@ -8,25 +8,20 @@ import (
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-func newMarkerType() *schema.Resource {
+func newMarkerSetting() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceMarkerTypeCreate,
-		ReadContext:   resourceMarkerTypeRead,
+		CreateContext: resourceMarkerSettingCreate,
+		ReadContext:   resourceMarkerSettingRead,
 		UpdateContext: nil,
 		DeleteContext: schema.NoopContext,
 
 		Schema: map[string]*schema.Schema{
-			"message": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-			},
 			"type": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"url": {
+			"color": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
@@ -40,28 +35,29 @@ func newMarkerType() *schema.Resource {
 	}
 }
 
-func resourceMarkerTypeCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
 
-	data := &honeycombio.MarkerType{
+	data := &honeycombio.MarkerSetting{
 		Type:  d.Get("type").(string),
 		Color: d.Get("color").(string),
 	}
-	MarkerType, err := client.MarkerTypes.Create(ctx, dataset, data)
+	MarkerSetting, err := client.MarkerSettings.Create(ctx, dataset, data)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.SetId(MarkerType.ID)
-	return resourceMarkerTypeRead(ctx, d, meta)
+	d.Set("type", MarkerSetting.Type)
+	d.Set("color", MarkerSetting.Color)
+	return resourceMarkerSettingRead(ctx, d, meta)
 }
 
-func resourceMarkerTypeRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
-	MarkerType, err := client.MarkerTypes.List(ctx, d.Get("dataset").(string))
+	markerSetting, err := client.MarkerSettings.Get(ctx, d.Get("dataset").(string), d.Id())
 	if err == honeycombio.ErrNotFound {
 		d.SetId("")
 		return nil
@@ -69,6 +65,7 @@ func resourceMarkerTypeRead(ctx context.Context, d *schema.ResourceData, meta in
 		return diag.FromErr(err)
 	}
 
-	d.Set("type", append(MarkerType))
+	d.Set("type", markerSetting.Type)
+	d.Set("color", markerSetting.Color)
 	return nil
 }

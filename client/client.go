@@ -67,7 +67,7 @@ type Client struct {
 	Datasets         Datasets
 	DerivedColumns   DerivedColumns
 	Markers          Markers
-	MarkerTypes      MarkerTypes
+	MarkerSettings   MarkerSettings
 	Queries          Queries
 	QueryAnnotations QueryAnnotations
 	QueryResults     QueryResults
@@ -106,7 +106,7 @@ func NewClient(config *Config) (*Client, error) {
 	client.Datasets = &datasets{client: client}
 	client.DerivedColumns = &derivedColumns{client: client}
 	client.Markers = &markers{client: client}
-	client.MarkerTypes = &markerTypes{client: client}
+	client.MarkerSettings = &markerSettings{client: client}
 	client.Queries = &queries{client: client}
 	client.QueryAnnotations = &queryAnnotations{client: client}
 	client.QueryResults = &queryResults{client: client}
