@@ -14,11 +14,11 @@ type MarkerSettings interface {
 	// List all marker settings present in this dataset.
 	List(ctx context.Context, dataset string) ([]MarkerSetting, error)
 
-	// Get a marker type by its ID. Returns ErrNotFound if there is no marker with
+	// Get a marker setting by its ID. Returns ErrNotFound if there is no marker setting with
 	// the given ID in this dataset.
 	//
 	// This method calls List internally since there is no API available to
-	// directly get a single marker.
+	// directly get a single marker setting.
 	Get(ctx context.Context, dataset string, id string) (*MarkerSetting, error)
 
 	// Create a new marker setting in this dataset.
@@ -43,19 +43,18 @@ var _ MarkerSettings = (*markerSettings)(nil)
 //
 // API docs: https://docs.honeycomb.io/api/marker-settings/
 type MarkerSetting struct {
-	// Unique identifier of a marker type setting. This field is set by the API.
+	// Unique identifier of a marker setting. This field is set by the API.
 	ID string `json:"id,omitempty"`
 
-	// Type is a required marker type setting identifier, eg 'deploy'.
+	// Type is a required marker setting identifier, eg 'deploy'.
 	Type string `json:"type,omitempty"`
 
-	// Color of the marker type setting. Colors are configured per dataset and can be set
-	// per type of marker.
+	// Color of the marker setting. Colors are configured per dataset and can be set per type of marker.
 	Color string `json:"color,omitempty"`
 
-	// Time the marker type was created. This field is set by the API.
+	// Time the marker setting was created. This field is set by the API.
 	CreatedAt *time.Time `json:"created_at,omitempty"`
-	// Time the marker type was last modified. This field is set by the API.
+	// Time the marker setting was last modified. This field is set by the API.
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
 
