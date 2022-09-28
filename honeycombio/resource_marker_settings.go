@@ -44,13 +44,14 @@ func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, me
 		Type:  d.Get("type").(string),
 		Color: d.Get("color").(string),
 	}
-	MarkerSetting, err := client.MarkerSettings.Create(ctx, dataset, data)
+	markerSetting, err := client.MarkerSettings.Create(ctx, dataset, data)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	d.Set("type", MarkerSetting.Type)
-	d.Set("color", MarkerSetting.Color)
+	d.SetId(markerSetting.ID)
+	d.Set("type", markerSetting.Type)
+	d.Set("color", markerSetting.Color)
 	return resourceMarkerSettingRead(ctx, d, meta)
 }
 
@@ -65,7 +66,40 @@ func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta
 		return diag.FromErr(err)
 	}
 
+	d.SetId(markerSetting.ID)
 	d.Set("type", markerSetting.Type)
 	d.Set("color", markerSetting.Color)
+	return nil
+}
+
+func resourceMarkerSettingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*honeycombio.Client)
+
+	dataset := d.Get("dataset").(string)
+	markerType := d.Get("type").(string)
+	color := d.Get("color").(string)
+
+	data := &honeycombio.MarkerSetting{
+		Type:  markerType,
+		Color: color,
+	}
+	markerSetting, err := client.MarkerSettings.Update(ctx, dataset, data)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	d.SetId(markerSetting.ID)
+	return resourceMarkerSettingRead(ctx, d, meta)
+}
+
+func resourceMarkerSettingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*honeycombio.Client)
+
+	dataset := d.Get("dataset").(string)
+
+	err := client.MarkerSettings.Delete(ctx, dataset, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	return nil
 }

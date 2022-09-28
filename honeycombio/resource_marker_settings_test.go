@@ -22,7 +22,7 @@ func TestAccHoneycombioMarkerSetting_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMarkerSettingExists(t, "honeycombio_marker_setting.test"),
 					resource.TestCheckResourceAttr("honeycombio_marker_setting.test", "color", "#7b1fa2"),
-					resource.TestCheckResourceAttr("honeycombio_marker_setting.test", "type", "deploys"),
+					resource.TestCheckResourceAttr("honeycombio_marker_setting.test", "type", "test"),
 					resource.TestCheckResourceAttr("honeycombio_marker_setting.test", "dataset", dataset),
 				),
 			},
@@ -34,7 +34,7 @@ func testAccMarkerSettingConfig(dataset string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_marker_setting" "test" {
   color = "#7b1fa2"
-  type    = "deploys"
+  type    = "test"
   dataset = "%s"
 }`, dataset)
 }
@@ -54,7 +54,7 @@ func testAccCheckMarkerSettingExists(t *testing.T, name string) resource.TestChe
 			return fmt.Errorf("could not retrieve marker settings: %w", err)
 		}
 
-		assert.Equal(t, "deploys", m.Type)
+		assert.Equal(t, "test", m.Type)
 
 		return nil
 	}
