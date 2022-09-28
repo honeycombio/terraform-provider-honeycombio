@@ -87,7 +87,7 @@ func (s *markerSettings) Create(ctx context.Context, dataset string, data *Marke
 
 func (s *markerSettings) Update(ctx context.Context, dataset string, data *MarkerSetting) (*MarkerSetting, error) {
 	var m MarkerSetting
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/marker_settings/%s/%s", urlEncodeDataset(dataset), data), data, &m)
+	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/marker_settings/%s/%s", urlEncodeDataset(dataset), data.ID), data, &m)
 	return &m, err
 }
 
