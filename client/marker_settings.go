@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// markerSettings describes all the markerType-related methods that the Honeycomb API
+// MarkerSettings describes all the markerType-related methods that the Honeycomb API
 // supports.
 //
 // API docs: https://docs.honeycomb.io/api/marker-settings
