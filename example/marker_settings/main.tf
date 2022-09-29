@@ -15,8 +15,8 @@ variable "color" {
 }
 
 resource "honeycombio_marker_setting" "markerSetting" {
-  color = "deploy ${var.color}"
-  type    = "deploy"
+  color = "${var.color}"
+  type  = "deploy"
 
   dataset = var.dataset
 }
