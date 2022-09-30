@@ -3,6 +3,7 @@ package honeycombio
 import (
 	"context"
 	"regexp"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -25,12 +26,24 @@ func newMarkerSetting() *schema.Resource {
 			"color": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$`), "invalide color hex code"),
+				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$`), "invalid color hex code"),
 			},
 			"dataset": {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
+			},
+			"created_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Required: false,
+				Optional: false,
+			},
+			"updated_at": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Required: false,
+				Optional: false,
 			},
 		},
 	}
@@ -70,6 +83,8 @@ func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta
 	d.SetId(markerSetting.ID)
 	d.Set("type", markerSetting.Type)
 	d.Set("color", markerSetting.Color)
+	d.Set("created_at", markerSetting.CreatedAt.UTC().Format(time.RFC3339))
+	d.Set("updated_at", markerSetting.UpdatedAt.UTC().Format(time.RFC3339))
 	return nil
 }
 

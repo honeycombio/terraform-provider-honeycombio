@@ -1,6 +1,6 @@
 # Resource: honeycombio_marker_setting
 
-Creates a marker setting. For more information about marker settings, check out [Marker Settings API](https://docs.honeycomb.io/api/marker-settings/).
+Creates a marker setting. For more information about marker settings, check out the [Marker Settings API](https://docs.honeycomb.io/api/marker-settings/).
 
 ## Example Usage
 
@@ -9,14 +9,13 @@ variable "dataset" {
   type = string
 }
 
-variable "color" {
+variable "type" {
   type = string
 }
 
 resource "honeycombio_marker_setting" "markerSetting" {
-  type = "deploy"
-  color = "${var.color}"
-
+  type =  var.type
+  color = "#DF4661"
   dataset = var.dataset
 }
 ```
