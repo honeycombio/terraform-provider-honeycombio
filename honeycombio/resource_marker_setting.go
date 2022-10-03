@@ -25,7 +25,7 @@ func newMarkerSetting() *schema.Resource {
 			},
 			"color": {
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$`), "invalid color hex code"),
 			},
 			"dataset": {
