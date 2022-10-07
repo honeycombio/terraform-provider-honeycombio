@@ -1,3 +1,20 @@
+# 0.11.0 (Oct 5, 2022)
+
+ENHANCEMENTS:
+
+* resource/honeycombio_marker_setting: support for `marker_setting` (#224)
+
+BUGFIXES:
+
+* docs: add clarifying note about Trigger time_range vs frequency (#219)
+
+HOUSEKEEPING:
+
+* build(deps): bump goreleaser/goreleaser-action from 3.0.0 to 3.1.0 (#218)
+* build(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 (#223)
+* build(deps): bump codecov/codecov-action from 3.1.0 to 3.1.1 (#225)
+* Update CODEOWNERS (#220)
+
 # 0.10.0 (Aug 16, 2022)
 
 ENHANCEMENTS:
