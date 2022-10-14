@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
@@ -55,7 +56,7 @@ func (s datasets) List(ctx context.Context) ([]Dataset, error) {
 
 func (s datasets) Get(ctx context.Context, slug string) (*Dataset, error) {
 	var dataset Dataset
-	err := s.client.performRequest(ctx, "GET", "/1/datasets/"+slug, nil, &dataset)
+	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/datasets/%s", urlEncodeDataset(slug)), nil, &dataset)
 	return &dataset, err
 }
 
@@ -67,6 +68,6 @@ func (s datasets) Create(ctx context.Context, data *Dataset) (*Dataset, error) {
 
 func (s datasets) Update(ctx context.Context, data *Dataset) (*Dataset, error) {
 	var dataset Dataset
-	err := s.client.performRequest(ctx, "POST", "/1/datasets", data, &dataset)
+	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/datasets/%s", urlEncodeDataset(data.Name)), data, &dataset)
 	return &dataset, err
 }
