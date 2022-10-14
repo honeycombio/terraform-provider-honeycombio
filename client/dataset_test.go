@@ -12,27 +12,11 @@ func TestDatasets(t *testing.T) {
 
 	c := newTestClient(t)
 	datasetName := testDataset(t)
-	updatedDescription := "buzzing with data"
-	updatedExpandJSONDepth := 3
 
 	currentDataset := &Dataset{
 		Name: datasetName,
 		Slug: urlEncodeDataset(datasetName),
 	}
-
-	// create a new dataset with the parameters above
-	t.Run("Create", func(t *testing.T) {
-		d, err := c.Datasets.Create(ctx, currentDataset)
-		assert.NoError(t, err)
-		assert.NotNil(t, d.LastWrittenAt, "last written at is empty")
-		assert.NotNil(t, d.CreatedAt, "created at is empty")
-		// copy dynamic fields before asserting - will be skipped if expected dataset not found
-		if d.Name == currentDataset.Name {
-			currentDataset.LastWrittenAt = d.LastWrittenAt
-			currentDataset.CreatedAt = d.CreatedAt
-		}
-		assert.Equal(t, *currentDataset, *d)
-	})
 
 	t.Run("List", func(t *testing.T) {
 		d, err := c.Datasets.List(ctx)
@@ -89,28 +73,21 @@ func TestDatasets(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
+		updatedDescription := "buzzing with data"
+		updatedExpandJSONDepth := 3
+
 		updateDataset := &Dataset{
 			Name:            datasetName,
-			Slug:            urlEncodeDataset(datasetName),
 			Description:     updatedDescription,
 			ExpandJSONDepth: updatedExpandJSONDepth,
 		}
+		t.Cleanup(func() {
+			// revert updated fields to defaults after the test run
+			c.Datasets.Update(ctx, &Dataset{Name: datasetName})
+		})
 		d, err := c.Datasets.Update(ctx, updateDataset)
-
 		assert.NoError(t, err)
-
-		assert.NotNil(t, d.LastWrittenAt, "last written at is empty")
-		assert.NotNil(t, d.CreatedAt, "created at is empty")
-		// copy dynamic fields before asserting - will be skipped if expected dataset not found
-		if currentDataset.Name == updateDataset.Name {
-			currentDataset.Description = updateDataset.Description
-			currentDataset.ExpandJSONDepth = updateDataset.ExpandJSONDepth
-			currentDataset.LastWrittenAt = updateDataset.LastWrittenAt
-			currentDataset.CreatedAt = updateDataset.CreatedAt
-		}
-
-		assert.Equal(t, *updateDataset, *currentDataset)
-		//assert.Equal(t, currentDataset.Description, updatedDescription)
-		//assert.Equal(t, currentDataset.ExpandJSONDepth, updatedExpandJSONDepth)
+		assert.Equal(t, d.Description, updatedDescription)
+		assert.Equal(t, d.ExpandJSONDepth, updatedExpandJSONDepth)
 	})
 }
