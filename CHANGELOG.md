@@ -1,3 +1,9 @@
+# 0.11.1 (Oct 14, 2022)
+
+BUGFIXES:
+
+* resource/honeycombio_dataset - properly update `description` and `expand_json_depth` attributes (#229)
+
 # 0.11.0 (Oct 5, 2022)
 
 ENHANCEMENTS:
