@@ -174,6 +174,8 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 			},
 			"json": {
 				Type:     schema.TypeString,
+				Required: false,
+				Optional: false,
 				Computed: true,
 			},
 		},
