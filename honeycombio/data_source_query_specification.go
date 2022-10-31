@@ -174,6 +174,8 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 			},
 			"json": {
 				Type:     schema.TypeString,
+				Required: false,
+				Optional: false,
 				Computed: true,
 			},
 		},
@@ -277,6 +279,14 @@ func extractCalculations(d *schema.ResourceData) ([]honeycombio.CalculationSpec,
 		} else if !calculation.Op.IsUnaryOp() && calculation.Column == nil {
 			return nil, fmt.Errorf("calculation op %s is missing an accompanying column", calculation.Op)
 		}
+	}
+	// 'COUNT' is the default calculation and will be returned by the API if
+	// none have been provided. As this can potentially cause an infinite diff
+	// we'll set the default here if we haven't parsed any
+	if len(calculations) == 0 {
+		calculations = append(calculations, honeycombio.CalculationSpec{
+			Op: honeycombio.CalculationOpCount,
+		})
 	}
 
 	return calculations, nil
