@@ -281,8 +281,9 @@ func extractCalculations(d *schema.ResourceData) ([]honeycombio.CalculationSpec,
 		}
 	}
 	// 'COUNT' is the default calculation and will be returned by the API if
-	// `calculations` is not in the QuerySpec
-	if len(calculationSchemas) == 0 {
+	// none have been provided. As this can potentially cause an infinite diff
+	// we'll set the default here if we haven't parsed any
+	if len(calculations) == 0 {
 		calculations = append(calculations, honeycombio.CalculationSpec{
 			Op: honeycombio.CalculationOpCount,
 		})
