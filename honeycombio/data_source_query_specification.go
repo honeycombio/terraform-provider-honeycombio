@@ -278,6 +278,13 @@ func extractCalculations(d *schema.ResourceData) ([]honeycombio.CalculationSpec,
 			return nil, fmt.Errorf("calculation op %s is missing an accompanying column", calculation.Op)
 		}
 	}
+	// 'COUNT' is the default calculation and will be returned by the API `calculations`
+	// is not in the QuerySpec
+	if len(calculationSchemas) == 0 {
+		calculations = append(calculations, honeycombio.CalculationSpec{
+			Op: honeycombio.CalculationOpCount,
+		})
+	}
 
 	return calculations, nil
 }

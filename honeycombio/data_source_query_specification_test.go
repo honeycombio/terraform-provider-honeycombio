@@ -8,6 +8,34 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
+func TestAccDataSourceHoneycombioQuery_EmptyDefaults(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.test.json
+}
+`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("query_json", `{
+  "calculations": [
+    {
+      "op": "COUNT"
+    }
+  ],
+  "time_range": 7200
+}`),
+				),
+			},
+		},
+	})
+}
+
 func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
