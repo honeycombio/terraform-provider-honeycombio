@@ -112,7 +112,7 @@ output "query_json" {
     value = data.honeycombio_query_specification.test.json
 }`
 
-//Note: By default go encodes `<` and `>` for html, hence the `\u003e`
+// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
 const expectedJSON string = `{
   "calculations": [
     {
