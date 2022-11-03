@@ -57,13 +57,10 @@ func newDataset() *schema.Resource {
 func resourceDatasetCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
-	name := d.Get("name").(string)
-	description := d.Get("description").(string)
-	expandJSONDepth := d.Get("expand_json_depth").(int)
 	data := &honeycombio.Dataset{
-		Name:            name,
-		Description:     description,
-		ExpandJSONDepth: expandJSONDepth,
+		Name:            d.Get("name").(string),
+		Description:     d.Get("description").(string),
+		ExpandJSONDepth: d.Get("expand_json_depth").(int),
 	}
 	dataset, err := client.Datasets.Create(ctx, data)
 	if err != nil {
@@ -98,13 +95,10 @@ func resourceDatasetRead(ctx context.Context, d *schema.ResourceData, meta inter
 func resourceDatasetUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
-	name := d.Get("name").(string)
-	description := d.Get("description").(string)
-	expandJSONDepth := d.Get("expand_json_depth").(int)
 	data := &honeycombio.Dataset{
-		Name:            name,
-		Description:     description,
-		ExpandJSONDepth: expandJSONDepth,
+		Name:            d.Get("name").(string),
+		Description:     d.Get("description").(string),
+		ExpandJSONDepth: d.Get("expand_json_depth").(int),
 	}
 	dataset, err := client.Datasets.Update(ctx, data)
 	if err != nil {
