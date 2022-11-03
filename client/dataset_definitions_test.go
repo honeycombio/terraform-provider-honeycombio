@@ -13,23 +13,23 @@ func TestDatasetDefinitions(t *testing.T) {
 
 	// Definition to create
 	//  "trace_id": { "name": "trace.trace_id" }, "duration_ms": { "name": "request_processing_time"}
-
-	traceIDValue := "trace.trace_id"
 	// Exisiting Derived Column: GTE(INT($duration_ms), 50)
-	durationMsValue := "gt50_duration_ms"
+	//
 
 	traceIDDefinition := DefinitionColumn{
-		Name: traceIDValue,
+		Name:       "trace.trace_id",
+		ColumnType: "column",
 	}
 
-	durationMsDefinition := DefinitionColumn{
-		Name: durationMsValue,
-	}
+	// durationMsDefinition := DefinitionColumn{
+	// 	Name:       "GTE($duration_ms, 50)",
+	// 	ColumnType: "derived_column",
+	// }
 
 	// Create the parent that contains all of the dataset defs (TraceID = trace_id)
 	datasetDefinition := DatasetDefinition{
-		DurationMs: durationMsDefinition,
-		TraceID:    traceIDDefinition,
+		TraceID: traceIDDefinition,
+		// DurationMs: durationMsDefinition,
 	}
 
 	c := newTestClient(t)
@@ -39,6 +39,7 @@ func TestDatasetDefinitions(t *testing.T) {
 		result, err := c.DatasetDefinitions.Get(ctx, dataset)
 		assert.NoError(t, err)
 		assert.Equal(t, "column", result.TraceID.ColumnType)
+		assert.Equal(t, "column", result.DurationMs.ColumnType)
 	})
 
 	// set the Trace ID definition
@@ -47,8 +48,8 @@ func TestDatasetDefinitions(t *testing.T) {
 		assert.NoError(t, err)
 
 		// check duration ms derived column
-		assert.Equal(t, "gt50_duration_ms", result.DurationMs.Name)
-		assert.Equal(t, "derived_column", result.DurationMs.ColumnType)
+		// assert.Equal(t, "GTE(INT($duration_ms), 50)", result.DurationMs.Name)
+		// assert.Equal(t, "derived_column", result.DurationMs.ColumnType)
 
 		// check trace ID
 		assert.Equal(t, "trace.trace_id", result.TraceID.Name)
@@ -59,7 +60,7 @@ func TestDatasetDefinitions(t *testing.T) {
 		assert.Equal(t, "", result.Error.ColumnType)
 	})
 
-	// Provider cleanup
+	//Provider cleanup
 	t.Run("Delete", func(t *testing.T) {
 		err := c.DatasetDefinitions.Delete(ctx, dataset)
 		assert.NoError(t, err)

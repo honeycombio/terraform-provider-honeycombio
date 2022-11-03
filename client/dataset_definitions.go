@@ -34,7 +34,9 @@ type datasetDefinitions struct {
 // DatasetDefinition represents a Honeycomb dataset metadata.
 type DefinitionColumn struct {
 	Name       string `json:"name"`
-	ColumnType string `json:"column_type,omitempty"`
+	ColumnType string `json:"column_type,omitempty"` //this is regular vs. derived column instead of data type -> IsDerivedColumn boolean
+	//Type as datatype? -> since we don't want to set an integer column field to a string definiton?
+	//IsHidden? ->  since we don't want to allow an integer column field to a string definiton?
 }
 
 // DatasetDefinition represents a Honeycomb dataset metadata.
