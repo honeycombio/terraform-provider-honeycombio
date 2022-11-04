@@ -41,6 +41,7 @@ func newColumn() *schema.Resource {
 			"type": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Default:      "string",
 				ValidateFunc: validation.StringInSlice(columnTypeStrings(), false),
 			},
 			"dataset": {
