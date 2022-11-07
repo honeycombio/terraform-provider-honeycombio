@@ -39,7 +39,7 @@ func newDatasetDefinition() *schema.Resource {
 						},
 						"value": {
 							Type:         schema.TypeString,
-							Required:     true,
+							Optional:     true,
 							ValidateFunc: validation.StringLenBetween(0, 255),
 						},
 					},
@@ -65,6 +65,7 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 
 	dd, err := client.DatasetDefinitions.Get(ctx, dataset)
 	if err == honeycombio.ErrNotFound {
+		d.SetId("")
 		return nil
 	} else if err != nil {
 		return diag.FromErr(err)
@@ -137,12 +138,19 @@ func flattenDatasetDefinition(dd *honeycombio.DatasetDefinition) []map[string]in
 	result := make([]map[string]interface{}, 0)
 
 	// for each field allowed unpack the values and set
-	if dd.DurationMs.Name != "" && !CheckDatasetDefinitionDurationMs(dd.DurationMs.Name) {
-		result = append(result, map[string]interface{}{
-			"name":  "duration_ms",
-			"value": dd.DurationMs.Name,
-		})
-	}
+	// if dd.DurationMs.Name != "" && !CheckDatasetDefinitionDurationMs(dd.DurationMs.Name) {
+	// 	result = append(result, map[string]interface{}{
+	// 		"name":  "duration_ms",
+	// 		"value": dd.DurationMs.Name,
+	// 	})
+	// }
+
+	// if !CheckDatasetDefinitionDurationMs(dd.DurationMs.Name) {
+	result = append(result, map[string]interface{}{
+		"name":  "duration_ms",
+		"value": dd.DurationMs.Name,
+	})
+	// }
 
 	if dd.Error.Name != "" && !CheckDatasetDefinitionError(dd.Error.Name) {
 		result = append(result, map[string]interface{}{
