@@ -1,3 +1,17 @@
+# 0.11.2 (Nov 7, 2022)
+
+BUGFIXES:
+
+* datasource/honeycombio_query_specfication: missing 'calculation' can cause infinite diff (#234)
+* resource/honeycombio_column: missing `type` can cause infinite diff (#235) 
+* datasource/honeycombio_query_specification: suppress 'equivalent' Query Specification diffs (#236)
+
+HOUSEKEEPING:
+
+* build(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.23.0 to 2.24.0 (#228)
+* build(deps): bump goreleaser/goreleaser-action from 3.1.0 to 3.2.0 (#231)
+* build(deps): bump github.com/stretchr/testify from 1.8.0 to 1.8.1 (#232)
+
 # 0.11.1 (Oct 14, 2022)
 
 BUGFIXES:
