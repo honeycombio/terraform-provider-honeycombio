@@ -19,9 +19,9 @@ func TestColumns(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		data := &Column{
 			KeyName:     "column_test",
-			Hidden:      BoolPtr(false),
+			Hidden:      ToPtr(false),
 			Description: "This column is created by a test",
-			Type:        ColumnTypePtr(ColumnTypeFloat),
+			Type:        ToPtr(ColumnTypeFloat),
 		}
 		column, err = c.Columns.Create(ctx, dataset, data)
 
@@ -65,9 +65,9 @@ func TestColumns(t *testing.T) {
 		data := &Column{
 			ID:          column.ID,
 			KeyName:     "a-new-keyname",
-			Hidden:      BoolPtr(true),
+			Hidden:      ToPtr(true),
 			Description: "This is a new description",
-			Type:        ColumnTypePtr(ColumnTypeBoolean),
+			Type:        ToPtr(ColumnTypeBoolean),
 		}
 		column, err = c.Columns.Update(ctx, dataset, data)
 

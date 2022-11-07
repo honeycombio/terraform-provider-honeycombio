@@ -1,41 +1,48 @@
 package client
 
-// BoolPtr returns a pointer to the given bool
-func BoolPtr(v bool) *bool {
+import "reflect"
+
+// Returns a pointer to the given value
+func ToPtr[T any](v T) *T {
 	return &v
 }
 
-// CalculationOpPtr returns a pointer to the given CalculationOp.
-func CalculationOpPtr(v CalculationOp) *CalculationOp {
-	return &v
-}
+// Determines if two slices of the same type are equivalent
+// as opposed to equal
+//
+// For example: []string{"bob", "alice"} is equivalent but not equal to []string{"alice", "bob"}
+func Equivalent[T any](a, b []T) bool {
+	if len(a) != len(b) {
+		return false
+	}
 
-// HavingOpPtr returns a pointer to the given HavingOp.
-func HavingOpPtr(v HavingOp) *HavingOp {
-	return &v
-}
+	for _, ours := range a {
+		found := false
+		for _, theirs := range b {
+			if reflect.DeepEqual(ours, theirs) {
+				found = true
+				break
+			}
+		}
 
-// ColumnTypePtr returns a pointer to the given ColumnType.
-func ColumnTypePtr(v ColumnType) *ColumnType {
-	return &v
-}
+		if !found {
+			return false
+		}
+	}
+	// do it the other way around to make sure we're not missing a match
+	for _, theirs := range b {
+		found := false
+		for _, ours := range a {
+			if reflect.DeepEqual(theirs, ours) {
+				found = true
+				break
+			}
+		}
 
-// IntPtr returns a pointer to the given int.
-func IntPtr(v int) *int {
-	return &v
-}
+		if !found {
+			return false
+		}
+	}
 
-// Int64Ptr returns a pointer to the given int64.
-func Int64Ptr(v int64) *int64 {
-	return &v
-}
-
-// SortOrderPtr returns a pointer to the given SortOrder.
-func SortOrderPtr(v SortOrder) *SortOrder {
-	return &v
-}
-
-// StringPtr returns a pointer to the given string.
-func StringPtr(v string) *string {
-	return &v
+	return true
 }

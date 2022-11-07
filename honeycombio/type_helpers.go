@@ -361,7 +361,7 @@ func expandRecipientFilter(f []interface{}) *recipientFilter {
 	filter := f[0].(map[string]interface{})
 	name := filter["name"].(string)
 	if v, ok := filter["value"].(string); ok && v != "" {
-		value = honeycombio.StringPtr(v)
+		value = honeycombio.ToPtr(v)
 	}
 	if v, ok := filter["value_regex"].(string); ok && v != "" {
 		valRegexp = regexp.MustCompile(v)

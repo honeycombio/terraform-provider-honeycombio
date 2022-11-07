@@ -1,5 +1,7 @@
 package client
 
+import "reflect"
+
 // QuerySpec represents a Honeycomb query.
 //
 // API docs: https://docs.honeycomb.io/api/query-specification/
@@ -46,6 +48,71 @@ type QuerySpec struct {
 	// The time resolution of the query’s graph, in seconds. Valid values are
 	// the query’s time range /10 at maximum, and /1000 at minimum.
 	Granularity *int `json:"granularity,omitempty"`
+}
+
+// Determines if two QuerySpecs are equivalent
+func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
+	// The order of Calculations is important for visualization rendering, so we're looking for equality
+	calcMatch := true
+	if len(qs.Calculations) != len(other.Calculations) {
+		calcMatch = false
+	} else {
+		for i := range qs.Calculations {
+			if !reflect.DeepEqual(qs.Calculations[i], other.Calculations[i]) {
+				calcMatch = false
+				break
+			}
+		}
+	}
+	if !calcMatch {
+		// 'COUNT' is the default Calculation and equivalent to an empty Calculations -- check that before we give up
+		defaultCalc := []CalculationSpec{{Op: CalculationOpCount}}
+		if (other.Calculations != nil && reflect.DeepEqual(qs.Calculations, defaultCalc)) ||
+			(qs.Calculations != nil && reflect.DeepEqual(other.Calculations, defaultCalc)) ||
+			(len(qs.Calculations) > 1 || len(other.Calculations) > 1) {
+			return false
+		}
+	}
+
+	// the exact order of filters does not matter, but their equvalence does
+	if !Equivalent(qs.Filters, other.Filters) {
+		return false
+	}
+	if qs.FilterCombination != other.FilterCombination {
+		// 'AND' is the default and equivalent to an empty Filter Combination
+		if (qs.FilterCombination == FilterCombinationAnd && other.FilterCombination != "") ||
+			(other.FilterCombination == FilterCombinationAnd && qs.FilterCombination != "") {
+			return false
+		}
+	}
+	if !reflect.DeepEqual(qs.Breakdowns, other.Breakdowns) {
+		return false
+	}
+	if !reflect.DeepEqual(qs.Orders, other.Orders) {
+		return false
+	}
+	// the exact order of havings does not matter, but their equvalence does
+	if !Equivalent(qs.Havings, other.Havings) {
+		return false
+	}
+	if !reflect.DeepEqual(qs.Limit, other.Limit) {
+		return false
+	}
+	if !reflect.DeepEqual(qs.TimeRange, other.TimeRange) {
+		// 7200 is the default, so an unset value is equivalent to 7200
+		if (reflect.DeepEqual(qs.TimeRange, 7200) && other.TimeRange != nil) ||
+			(reflect.DeepEqual(other.TimeRange, 7200) && qs.TimeRange != nil) {
+			return false
+		}
+	}
+	if !reflect.DeepEqual(qs.StartTime, other.StartTime) || !reflect.DeepEqual(qs.EndTime, other.EndTime) {
+		return false
+	}
+	if !reflect.DeepEqual(qs.Granularity, other.Granularity) {
+		return false
+	}
+
+	return true
 }
 
 // CalculationSpec represents a calculation within a query.

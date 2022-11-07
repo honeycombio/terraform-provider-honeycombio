@@ -271,7 +271,7 @@ func extractCalculations(d *schema.ResourceData) ([]honeycombio.CalculationSpec,
 
 		c, ok := d.GetOk(fmt.Sprintf("calculation.%d.column", i))
 		if ok {
-			calculations[i].Column = honeycombio.StringPtr(c.(string))
+			calculations[i].Column = honeycombio.ToPtr(c.(string))
 		}
 
 		if calculation.Op.IsUnaryOp() && calculation.Column != nil {
@@ -315,17 +315,17 @@ func extractHavings(d *schema.ResourceData) ([]honeycombio.HavingSpec, error) {
 
 		co, ok := d.GetOk(fmt.Sprintf("having.%d.calculate_op", i))
 		if ok {
-			having.CalculateOp = honeycombio.CalculationOpPtr(honeycombio.CalculationOp(co.(string)))
+			having.CalculateOp = honeycombio.ToPtr(honeycombio.CalculationOp(co.(string)))
 		}
 
 		c, ok := d.GetOk(fmt.Sprintf("having.%d.column", i))
 		if ok {
-			having.Column = honeycombio.StringPtr(c.(string))
+			having.Column = honeycombio.ToPtr(c.(string))
 		}
 
 		op, ok := d.GetOk(fmt.Sprintf("having.%d.op", i))
 		if ok {
-			having.Op = honeycombio.HavingOpPtr(honeycombio.HavingOp(op.(string)))
+			having.Op = honeycombio.ToPtr(honeycombio.HavingOp(op.(string)))
 		}
 
 		v, ok := d.GetOk(fmt.Sprintf("having.%d.value", i))
@@ -431,12 +431,12 @@ func extractOrders(d *schema.ResourceData) []honeycombio.OrderSpec {
 
 		op, ok := d.GetOk(fmt.Sprintf("order.%d.op", i))
 		if ok {
-			order.Op = honeycombio.CalculationOpPtr(honeycombio.CalculationOp(op.(string)))
+			order.Op = honeycombio.ToPtr(honeycombio.CalculationOp(op.(string)))
 		}
 
 		c, ok := d.GetOk(fmt.Sprintf("order.%d.column", i))
 		if ok {
-			order.Column = honeycombio.StringPtr(c.(string))
+			order.Column = honeycombio.ToPtr(c.(string))
 		}
 
 		so, ok := d.GetOk(fmt.Sprintf("order.%d.order", i))
@@ -447,7 +447,7 @@ func extractOrders(d *schema.ResourceData) []honeycombio.OrderSpec {
 			//
 			// not sending to avoid constant plan diffs
 			if ov != honeycombio.SortOrderAsc {
-				order.Order = honeycombio.SortOrderPtr(ov)
+				order.Order = honeycombio.ToPtr(ov)
 			}
 		}
 
@@ -462,7 +462,7 @@ func extractOptionalInt(d *schema.ResourceData, key string) *int {
 	if !ok {
 		return nil
 	}
-	return honeycombio.IntPtr(value.(int))
+	return honeycombio.ToPtr(value.(int))
 }
 
 func extractOptionalInt64(d *schema.ResourceData, key string) *int64 {
@@ -470,5 +470,5 @@ func extractOptionalInt64(d *schema.ResourceData, key string) *int64 {
 	if !ok {
 		return nil
 	}
-	return honeycombio.Int64Ptr(int64(value.(int)))
+	return honeycombio.ToPtr(int64(value.(int)))
 }
