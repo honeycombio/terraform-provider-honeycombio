@@ -24,7 +24,7 @@ func newQuery() *schema.Resource {
 				Required:         true,
 				ForceNew:         true,
 				ValidateDiagFunc: validateQueryJSON(),
-				DiffSuppressFunc: verify.SuppressEquivJSONDiffs,
+				DiffSuppressFunc: verify.SupressEquivQuerySpecDiff,
 			},
 			"dataset": {
 				Type:     schema.TypeString,

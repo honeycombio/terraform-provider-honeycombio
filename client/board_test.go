@@ -22,10 +22,10 @@ func TestBoards(t *testing.T) {
 		Calculations: []CalculationSpec{
 			{
 				Op:     CalculationOpAvg,
-				Column: StringPtr("duration_ms"),
+				Column: ToPtr("duration_ms"),
 			},
 		},
-		TimeRange: IntPtr(3600), // 1 hour
+		TimeRange: ToPtr(3600), // 1 hour
 	})
 	assert.NoError(t, err)
 
@@ -78,7 +78,7 @@ func TestBoards(t *testing.T) {
 					Op: CalculationOpCount,
 				},
 			},
-			TimeRange: IntPtr(7200), // 2 hours
+			TimeRange: ToPtr(7200), // 2 hours
 		})
 		assert.NoError(t, err)
 		b.ColumnLayout = BoardColumnStyleMulti

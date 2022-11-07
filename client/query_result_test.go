@@ -23,7 +23,7 @@ func TestQueryResults(t *testing.T) {
 				Op: "COUNT",
 			},
 		},
-		TimeRange: IntPtr(60 * 60 * 24),
+		TimeRange: ToPtr(60 * 60 * 24),
 	})
 
 	t.Run("Create", func(t *testing.T) {

@@ -152,8 +152,8 @@ func readColumn(d *schema.ResourceData) *honeycombio.Column {
 	return &honeycombio.Column{
 		ID:          d.Id(),
 		KeyName:     d.Get("key_name").(string),
-		Hidden:      honeycombio.BoolPtr(d.Get("hidden").(bool)),
+		Hidden:      honeycombio.ToPtr(d.Get("hidden").(bool)),
 		Description: d.Get("description").(string),
-		Type:        honeycombio.ColumnTypePtr(honeycombio.ColumnType(d.Get("type").(string))),
+		Type:        honeycombio.ToPtr(honeycombio.ColumnType(d.Get("type").(string))),
 	}
 }

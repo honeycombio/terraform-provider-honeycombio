@@ -84,7 +84,7 @@ func testAccCheckQueryExists(t *testing.T, dataset string, name string, duration
 			Calculations: []honeycombio.CalculationSpec{
 				{
 					Op:     honeycombio.CalculationOpAvg,
-					Column: honeycombio.StringPtr("duration_ms"),
+					Column: honeycombio.ToPtr("duration_ms"),
 				},
 			},
 			Filters: []honeycombio.FilterSpec{
@@ -94,7 +94,7 @@ func testAccCheckQueryExists(t *testing.T, dataset string, name string, duration
 					Value:  float64(duration),
 				},
 			},
-			TimeRange: honeycombio.IntPtr(7200),
+			TimeRange: honeycombio.ToPtr(7200),
 		}
 
 		ok = assert.Equal(t, expectedQuery, createdQuery)

@@ -29,7 +29,7 @@ func TestTriggers(t *testing.T) {
 				Calculations: []CalculationSpec{
 					{
 						Op:     CalculationOpP99,
-						Column: StringPtr("duration_ms"),
+						Column: ToPtr("duration_ms"),
 					},
 				},
 				Filters: []FilterSpec{
@@ -70,7 +70,7 @@ func TestTriggers(t *testing.T) {
 		data.AlertType = trigger.AlertType
 		data.Recipients[0].ID = trigger.Recipients[0].ID
 		// set default time range
-		data.Query.TimeRange = IntPtr(300)
+		data.Query.TimeRange = ToPtr(300)
 
 		// set the default alert type
 		data.AlertType = TriggerAlertTypeValueOnChange
@@ -158,7 +158,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 						Op: CalculationOpCount,
 					},
 				},
-				Limit: IntPtr(100),
+				Limit: ToPtr(100),
 			},
 			expectedErr: errors.New("limit is not allowed in a trigger query"),
 		},
@@ -171,7 +171,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 				},
 				Orders: []OrderSpec{
 					{
-						Column: StringPtr("duration_ms"),
+						Column: ToPtr("duration_ms"),
 					},
 				},
 			},

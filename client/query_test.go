@@ -24,7 +24,7 @@ func TestQueries(t *testing.T) {
 				},
 				{
 					Op:     CalculationOpHeatmap,
-					Column: StringPtr("duration_ms"),
+					Column: ToPtr("duration_ms"),
 				},
 			},
 			Filters: []FilterSpec{
@@ -42,16 +42,16 @@ func TestQueries(t *testing.T) {
 			Breakdowns:        []string{"column_1", "column_2"},
 			Orders: []OrderSpec{
 				{
-					Column: StringPtr("column_1"),
+					Column: ToPtr("column_1"),
 				},
 				{
-					Op:    CalculationOpPtr(CalculationOpCount),
-					Order: SortOrderPtr(SortOrderDesc),
+					Op:    ToPtr(CalculationOpCount),
+					Order: ToPtr(SortOrderDesc),
 				},
 			},
-			Limit:       IntPtr(100),
-			TimeRange:   IntPtr(3600), // 1 hour
-			Granularity: IntPtr(60),   // 1 minute
+			Limit:       ToPtr(100),
+			TimeRange:   ToPtr(3600), // 1 hour
+			Granularity: ToPtr(60),   // 1 minute
 		}
 
 		query, err = c.Queries.Create(ctx, dataset, data)
