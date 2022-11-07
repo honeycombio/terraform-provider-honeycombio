@@ -1,42 +1,56 @@
 package honeycombio
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 	// set multiple definitions in a single HCL block
+	ctx := context.Background()
+	c := testAccClient(t)
 	dataset := testAccDataset()
 
+	col, err := c.Columns.Create(ctx, dataset, &honeycombio.Column{
+		KeyName:     "column_name",
+		Description: "This column is created by dd resource test",
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	//Josslyn : TODO this needs some additional work to refresh after the plan gets updated, currently doesn't pass
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				// initial setup, don't set anything, all default values
-				// MOLLY: I don't understand why this step is necessary
-				// but tests won't pass without it
+				// initial setup with no dataset definitons
 				Config: testAccDatasetDefinitonConfig(dataset),
 			},
-			// {
-			// 	// update the name field to a non-default value
-			// 	Config: `
-			// 	resource "honeycombio_dataset_definition" "test" {
-			// 	dataset    = "testacc"
+			{
+				// update the name field to a non-default value
+				Config: fmt.Sprintf(`
+				resource "honeycombio_dataset_definition" "test" {
+				  dataset     = "%s"
+				  field {
+					name = "name"
+					value = "%s"
+					}
+				}`, dataset, col.KeyName),
 
-			// 	field {
-			// 		name = "name"
-			// 		value = "job.status"
-			// 	}
-			// 		}`,
-			// 	Check: resource.ComposeTestCheckFunc(
-			// 		resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "name"),
-			// 		resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "job.status"),
-			// 	),
-			// },
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDatasetDefinitionExists(t, dataset, "honeycombio_dataset_definition.test", "name"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.name", "name"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "field.0.value", "column_name"),
+				),
+			},
 			// {
 			// 	// reset the name field to the default value by ommitting it
 			// 	// set duration_ms to a non-default field
@@ -160,4 +174,24 @@ func testAccDatasetDefinitonConfig(dataset string) string {
 resource "honeycombio_dataset_definition" "test" {
   dataset = "%s"
 }`, dataset)
+}
+
+func testAccCheckDatasetDefinitionExists(t *testing.T, dataset string, resourceName string, name string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resourceState, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", resourceName)
+		}
+
+		client := testAccClient(t)
+		createdDef, err := client.DatasetDefinitions.Get(context.Background(), dataset)
+		if err != nil {
+			return fmt.Errorf("could not find created dataset definition: %w", err)
+		}
+
+		assert.Equal(t, name, createdDef.Name)
+		assert.Equal(t, resourceState.Primary.Attributes["DurationMs"], createdDef.DurationMs.Name)
+
+		return nil
+	}
 }
