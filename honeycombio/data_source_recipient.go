@@ -140,11 +140,11 @@ func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceD
 	}
 	matchType := honeycombio.RecipientType(d.Get("type").(string))
 
-	var rcptFilter *recipientFilter
+	rcptFilter := &recipientFilter{Type: matchType}
 	if v, ok := d.GetOk("target"); ok {
 		// deprecated argument to be removed in future
 		target := v.(string)
-		rcptFilter = &recipientFilter{Type: matchType, Value: &target}
+		rcptFilter.Value = &target
 	}
 	if v, ok := d.GetOk("detail_filter"); ok {
 		rcptFilter = expandRecipientFilter(v.([]interface{}))
