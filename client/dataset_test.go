@@ -18,20 +18,6 @@ func TestDatasets(t *testing.T) {
 		Slug: urlEncodeDataset(datasetName),
 	}
 
-	// create a new dataset with the parameters above
-	t.Run("Create", func(t *testing.T) {
-		d, err := c.Datasets.Create(ctx, currentDataset)
-		assert.NoError(t, err)
-		assert.NotNil(t, d.LastWrittenAt, "last written at is empty")
-		assert.NotNil(t, d.CreatedAt, "created at is empty")
-		// copy dynamic fields before asserting - will be skipped if expected dataset not found
-		if d.Name == currentDataset.Name {
-			currentDataset.LastWrittenAt = d.LastWrittenAt
-			currentDataset.CreatedAt = d.CreatedAt
-		}
-		assert.Equal(t, *currentDataset, *d)
-	})
-
 	t.Run("List", func(t *testing.T) {
 		d, err := c.Datasets.List(ctx)
 

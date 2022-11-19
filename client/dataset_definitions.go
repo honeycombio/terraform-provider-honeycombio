@@ -5,8 +5,7 @@ import (
 	"fmt"
 )
 
-// Dataset definitions describe the fields in your Dataset that have special meaning.
-// supports.
+// Dataset Definitions define the fields in your Dataset that have special meaning.
 //
 // API docs: https://docs.honeycomb.io/api/dataset-definitions/
 type DatasetDefinitions interface {

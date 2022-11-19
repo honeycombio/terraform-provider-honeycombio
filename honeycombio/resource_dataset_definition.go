@@ -126,7 +126,7 @@ func extractDatasetDefinitionByName(name string, dd *honeycombio.DatasetDefiniti
 	case "user":
 		return dd.User.Name
 	default:
-		return ""
+		return "unknown"
 	}
 }
 
