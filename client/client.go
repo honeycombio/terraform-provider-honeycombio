@@ -68,7 +68,7 @@ type Client struct {
 	DatasetDefinitions DatasetDefinitions
 	DerivedColumns     DerivedColumns
 	Markers            Markers
-	MarkerSettings   MarkerSettings  
+	MarkerSettings     MarkerSettings
 	Queries            Queries
 	QueryAnnotations   QueryAnnotations
 	QueryResults       QueryResults
