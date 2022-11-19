@@ -21,20 +21,34 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
-resource "honeycombio_dataset_definition" "test" {
+resource "honeycombio_dataset_definition" "name" {
   dataset = "%s"
 
-  name  = "%s"
-  column = "%s"
-}`, dataset, "name", "app.tenant"),
+  name   = "name"
+  column = "app.tenant"
+}
+
+resource "honeycombio_dataset_definition" "service_name" {
+  dataset = "%s"
+
+  name   = "service_name"
+  column = "column_1"
+}
+
+`, dataset, dataset),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "name", "name"),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.test", "column", "app.tenant"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.name", "name", "name"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.name", "column", "app.tenant"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.service_name", "name", "service_name"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.service_name", "column", "column_1"),
 				),
 			},
 		},
 		CheckDestroy: resource.ComposeTestCheckFunc(
+			// ensure that after destroying ('deleting') the above definitions
+			// they have been reset to their defaults values
 			testAccCheckDatasetDefinitionResetToDefault(t, dataset, "name"),
+			testAccCheckDatasetDefinitionResetToDefault(t, dataset, "service_name"),
 		),
 	})
 }
