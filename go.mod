@@ -7,6 +7,7 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.0
 	github.com/joho/godotenv v1.4.0
 	github.com/stretchr/testify v1.8.1
+	golang.org/x/exp v0.0.0-20221114191408-850992195362
 )
 
 require (
@@ -49,7 +50,6 @@ require (
 	github.com/vmihailenco/tagparser v0.1.1 // indirect
 	github.com/zclconf/go-cty v1.11.0 // indirect
 	golang.org/x/crypto v0.0.0-20220517005047-85d78b3ac167 // indirect
-	golang.org/x/exp v0.0.0-20221114191408-850992195362 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
