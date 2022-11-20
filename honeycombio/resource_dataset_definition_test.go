@@ -83,7 +83,7 @@ func testAccCheckDatasetDefinitionResetToDefault(t *testing.T, dataset string, n
 		// defaults would be nil or one of the values in `DatasetDefinitionColumnDefaults`
 		column := extractDatasetDefinitionColumnByName(dd, name)
 		if column != nil {
-			assert.True(t, slices.Contains(honeycombio.DatasetDefinitionColumnDefaults()[name], column.Name))
+			assert.True(t, slices.Contains(honeycombio.DatasetDefinitionDefaults()[name], column.Name))
 		}
 
 		return nil

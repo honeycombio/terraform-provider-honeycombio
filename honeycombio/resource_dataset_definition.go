@@ -31,7 +31,7 @@ func newDatasetDefinition() *schema.Resource {
 				Type:         schema.TypeString,
 				Description:  "The name of the definition being set.",
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(honeycombio.DatasetDefinitionColumns(), false),
+				ValidateFunc: validation.StringInSlice(honeycombio.DatasetDefinitionFields(), false),
 			},
 			"column": {
 				Type:         schema.TypeString,

@@ -58,7 +58,8 @@ func EmptyDatasetDefinition() *DefinitionColumn {
 	return &DefinitionColumn{Name: ""}
 }
 
-func DatasetDefinitionColumns() []string {
+// The names of all possible Dataset Definitions which can be set
+func DatasetDefinitionFields() []string {
 	return []string{
 		"duration_ms",
 		"error",
@@ -77,7 +78,8 @@ func DatasetDefinitionColumns() []string {
 	}
 }
 
-func DatasetDefinitionColumnDefaults() map[string][]string {
+// A mapping of Dataset Definition names to their possible default values (excluding 'nil')
+func DatasetDefinitionDefaults() map[string][]string {
 	return map[string][]string{
 		"duration_ms":     {"duration_ms", "durationMs", "request_processing_time"},
 		"error":           {"error"},
