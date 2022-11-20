@@ -18,6 +18,7 @@ func newDatasetDefinition() *schema.Resource {
 		ReadContext:   resourceDatasetDefinitionRead,
 		UpdateContext: resourceDatasetDefinitionUpdate,
 		DeleteContext: resourceDatasetDefinitionDelete,
+		Importer:      nil,
 
 		Schema: map[string]*schema.Schema{
 			"dataset": {
@@ -28,7 +29,7 @@ func newDatasetDefinition() *schema.Resource {
 			},
 			"name": {
 				Type:         schema.TypeString,
-				Description:  " The name of the definition being set.",
+				Description:  "The name of the definition being set.",
 				Required:     true,
 				ValidateFunc: validation.StringInSlice(honeycombio.DatasetDefinitionColumns(), false),
 			},
@@ -36,7 +37,14 @@ func newDatasetDefinition() *schema.Resource {
 				Type:         schema.TypeString,
 				Description:  "The column to set the definition to. Must be the name of an existing Column or the alias of an existing Derived Column.",
 				Required:     true,
-				ValidateFunc: validation.StringLenBetween(0, 255),
+				ValidateFunc: validation.StringLenBetween(1, 255),
+			},
+			"column_type": {
+				Type:        schema.TypeString,
+				Description: "The type of the column assigned to the definition. Either `column` or `derived_column`.",
+				Required:    false,
+				Optional:    false,
+				Computed:    true,
 			},
 		},
 	}
@@ -55,11 +63,12 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	name := d.Get("name").(string)
-	column := extractDatasetDefinitionByName(name, dd)
+	column := extractDatasetDefinitionColumnByName(dd, name)
 
 	d.SetId(strconv.Itoa(hashcode.String(fmt.Sprintf("%s-%s", dataset, name))))
 	d.Set("name", name)
-	d.Set("column", column)
+	d.Set("column", column.Name)
+	d.Set("column_type", column.ColumnType)
 
 	return nil
 }
@@ -95,38 +104,38 @@ func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData
 	return nil
 }
 
-func extractDatasetDefinitionByName(name string, dd *honeycombio.DatasetDefinition) string {
+func extractDatasetDefinitionColumnByName(dd *honeycombio.DatasetDefinition, name string) *honeycombio.DefinitionColumn {
 	switch name {
 	case "duration_ms":
-		return dd.DurationMs.Name
+		return dd.DurationMs
 	case "error":
-		return dd.Error.Name
+		return dd.Error
 	case "name":
-		return dd.Name.Name
+		return dd.Name
 	case "parent_id":
-		return dd.ParentID.Name
+		return dd.ParentID
 	case "route":
-		return dd.Route.Name
+		return dd.Route
 	case "service_name":
-		return dd.ServiceName.Name
+		return dd.ServiceName
 	case "span_id":
-		return dd.SpanID.Name
+		return dd.SpanID
 	case "span_kind":
-		return dd.SpanKind.Name
+		return dd.SpanKind
 	case "annotation_type":
-		return dd.AnnotationType.Name
+		return dd.AnnotationType
 	case "link_trace_id":
-		return dd.LinkTraceID.Name
+		return dd.LinkTraceID
 	case "link_span_id":
-		return dd.LinkSpanID.Name
+		return dd.LinkSpanID
 	case "status":
-		return dd.Status.Name
+		return dd.Status
 	case "trace_id":
-		return dd.TraceID.Name
+		return dd.TraceID
 	case "user":
-		return dd.User.Name
+		return dd.User
 	default:
-		return "unknown"
+		return nil
 	}
 }
 

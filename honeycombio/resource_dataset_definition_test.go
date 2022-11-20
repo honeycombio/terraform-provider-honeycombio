@@ -21,34 +21,53 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
+resource "honeycombio_derived_column" "log10_duration" {
+  dataset = "%[1]s"
+
+  alias      = "log10_duration"
+  expression = "LOG10($duration_ms)"
+}
+
 resource "honeycombio_dataset_definition" "name" {
-  dataset = "%s"
+  dataset = "%[1]s"
 
   name   = "name"
   column = "app.tenant"
 }
 
-resource "honeycombio_dataset_definition" "service_name" {
-  dataset = "%s"
+resource "honeycombio_dataset_definition" "duration_ms" {
+  dataset = "%[1]s"
 
-  name   = "service_name"
-  column = "column_1"
+  name   = "duration_ms"
+  column = honeycombio_derived_column.log10_duration.alias
 }
 
-`, dataset, dataset),
+resource "honeycombio_dataset_definition" "route" {
+  dataset = "%[1]s"
+
+  name   = "route"
+  column = "column_2"
+}
+`, dataset),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.name", "name", "name"),
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.name", "column", "app.tenant"),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.service_name", "name", "service_name"),
-					resource.TestCheckResourceAttr("honeycombio_dataset_definition.service_name", "column", "column_1"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.name", "column_type", "column"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.duration_ms", "name", "duration_ms"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.duration_ms", "column", "log10_duration"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.duration_ms", "column_type", "derived_column"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.route", "name", "route"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.route", "column", "column_2"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.route", "column_type", "column"),
 				),
 			},
 		},
 		CheckDestroy: resource.ComposeTestCheckFunc(
 			// ensure that after destroying ('deleting') the above definitions
-			// they have been reset to their defaults values
+			// they have been reset to their default values
 			testAccCheckDatasetDefinitionResetToDefault(t, dataset, "name"),
-			testAccCheckDatasetDefinitionResetToDefault(t, dataset, "service_name"),
+			testAccCheckDatasetDefinitionResetToDefault(t, dataset, "duration_ms"),
+			testAccCheckDatasetDefinitionResetToDefault(t, dataset, "route"),
 		),
 	})
 }
@@ -61,8 +80,11 @@ func testAccCheckDatasetDefinitionResetToDefault(t *testing.T, dataset string, n
 			return fmt.Errorf("could not lookup dataset definitions: %w", err)
 		}
 
-		column := extractDatasetDefinitionByName(name, dd)
-		assert.True(t, slices.Contains(honeycombio.DatasetDefinitionColumnDefaults()[name], column))
+		// defaults would be nil or one of the values in `DatasetDefinitionColumnDefaults`
+		column := extractDatasetDefinitionColumnByName(dd, name)
+		if column != nil {
+			assert.True(t, slices.Contains(honeycombio.DatasetDefinitionColumnDefaults()[name], column.Name))
+		}
 
 		return nil
 	}

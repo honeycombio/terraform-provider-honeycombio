@@ -41,3 +41,13 @@ Definition Name    | Description
 `span_id`          | Span ID
 `trace_id`         | Trace ID
 `user`             | User
+
+## Attribute Reference
+
+In addition to all arguments above, the following attributes are exported:
+
+* `column_type` - The type of the column assigned to the definition. Will be one of `column` or `derived_column`.
+
+## Import
+
+Dataset Definitions cannot be imported.
