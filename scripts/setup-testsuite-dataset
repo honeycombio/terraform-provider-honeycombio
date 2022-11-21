@@ -12,6 +12,7 @@ declare -A REQUIRED_COLUMNS=(
   [trace.parent_id]=string
   [trace.trace_id]=string
   [app.tenant]=string
+  [app.error]=string
   [column_1]=string
   [column_2]=string
   [duration_ms]=float

@@ -55,6 +55,7 @@ func Provider() *schema.Provider {
 			"honeycombio_burn_alert":          newBurnAlert(),
 			"honeycombio_column":              newColumn(),
 			"honeycombio_dataset":             newDataset(),
+			"honeycombio_dataset_definition":  newDatasetDefinition(),
 			"honeycombio_derived_column":      newDerivedColumn(),
 			"honeycombio_marker":              newMarker(),
 			"honeycombio_marker_setting":      newMarkerSetting(),
