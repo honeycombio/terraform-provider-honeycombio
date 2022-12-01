@@ -21,7 +21,7 @@ func TestAccHoneycombioColumn_basic(t *testing.T) {
 			{
 				Config: testAccColumnConfig(keyName, dataset),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("honeycombio_column.test", "key_name", keyName),
+					resource.TestCheckResourceAttr("honeycombio_column.test", "name", keyName),
 					resource.TestCheckResourceAttr("honeycombio_column.test", "type", "float"),
 					resource.TestCheckResourceAttr("honeycombio_column.test", "hidden", "false"),
 					resource.TestCheckResourceAttr("honeycombio_column.test", "description", "Duration of the trace"),
@@ -40,7 +40,7 @@ func TestAccHoneycombioColumn_basic(t *testing.T) {
 func testAccColumnConfig(keyName, dataset string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_column" "test" {
-  key_name    = "%s"
+  name        = "%s"
   type        = "float"
   hidden      = false
   description = "Duration of the trace"

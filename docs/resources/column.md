@@ -12,7 +12,7 @@ variable "dataset" {
 }
 
 resource "honeycombio_column" "duration_ms" { 
-  key_name    = "duration_ms_log10"
+  name        = "duration_ms_log10"
   type        = "float"
   description = "Duration of the trace"
 
@@ -25,7 +25,8 @@ resource "honeycombio_column" "duration_ms" {
 The following arguments are supported:
 
 * `dataset` - (Required) The dataset this column is added to.
-* `key_name` - (Required) The name of the column. Must be unique per dataset.
+* `name` - (Required) The name of the column. Must be unique per dataset.
+* `key_name` - (Deprecated) Please use `name` instead. The name of the column. Must be unique per dataset. Conficts with `name`.
 * `type` - (Optional) The type of the column, allowed values are `string`, `float`, `integer` and `boolean`. Defaults to `string`.
 * `hidden` - (Optional) Whether this column should be hidden in the query builder and sample data. Defaults to false.
 * `description` - (Optional) A description that is shown in the UI.
@@ -41,7 +42,7 @@ In addition to all arguments above, the following attributes are exported:
 
 ## Import
 
-Columns can be imported using a combination of the dataset name and their key name, e.g.
+Columns can be imported using a combination of the dataset name and their name, e.g.
 
 ```
 $ terraform import honeycombio_column.my_column my-dataset/duration_ms
