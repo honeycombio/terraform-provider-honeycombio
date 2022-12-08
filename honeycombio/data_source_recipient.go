@@ -27,8 +27,8 @@ If you want to match multiple recipients, use the 'honeycombio_recipients' data 
 			"dataset": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Deprecated:  "Recpients are now a Team-level construct. The provided 'dataset' value is being ignored and should be removed.",
-				Description: "Deprecated: recpients are now a Team-level construct. Any provided 'dataset' value will be ignored.",
+				Deprecated:  "Recipients are now a Team-level construct. The provided 'dataset' value is being ignored and should be removed.",
+				Description: "Deprecated: recipients are now a Team-level construct. Any provided 'dataset' value will be ignored.",
 			},
 			"type": {
 				Type:         schema.TypeString,
