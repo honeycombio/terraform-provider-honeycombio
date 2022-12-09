@@ -98,7 +98,7 @@ FEATURES:
 ENHANCEMENTS:
 
 * client: error details from the API are now displayed in Terraform errors (#184)
-* datasource/honeycombio_recipient: - now uses the [Recpients API](https://docs.honeycomb.io/api/recipients/) and can filter recipient types with an optional `detail_filter` (#188)
+* datasource/honeycombio_recipient: - now uses the [Recipients API](https://docs.honeycomb.io/api/recipients/) and can filter recipient types with an optional `detail_filter` (#188)
   * `dataset` is now ignored and marked as a deprecated argument
   * `target` contines to work but is now deprecated
   * `detail_filter` improves the experience of selecting the _correct_ PagerDuty recipient you are looking for.
