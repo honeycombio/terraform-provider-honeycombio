@@ -251,6 +251,9 @@ func expandBoardQueryGraphSettings(gs interface{}) (honeycombio.BoardGraphSettin
 	if len(raw) > 1 {
 		return graphSettings, errors.New("got more than one set of graph settings?")
 	}
+	if _, ok := raw[0].(map[string]interface{}); !ok {
+		return graphSettings, nil
+	}
 	s := raw[0].(map[string]interface{})
 
 	if v, ok := s["log_scale"].(bool); ok && v {
