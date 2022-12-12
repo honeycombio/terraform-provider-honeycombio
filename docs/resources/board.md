@@ -30,7 +30,6 @@ resource "honeycombio_board" "board" {
   name        = "My Board"
 
   query {
-    dataset  = var.dataset
     query_id = honeycombio_query.query.id
   }
 }
