@@ -53,6 +53,8 @@ type Board struct {
 	ColumnLayout BoardColumnStyle `json:"column_layout,omitempty"`
 	// How the board should be displayed in the UI, defaults to "list".
 	Style BoardStyle `json:"style,omitempty"`
+	// Links returned by the board API for the Board
+	Links BoardLinks `json:"links,omitempty"`
 	// A list of queries displayed on the board, in order of appearance.
 	Queries []BoardQuery `json:"queries"`
 }
@@ -77,6 +79,12 @@ const (
 	BoardColumnStyleMulti  BoardColumnStyle = "multi"
 	BoardColumnStyleSingle BoardColumnStyle = "single"
 )
+
+// BoardLinks represents links returned by the board API.
+type BoardLinks struct {
+	// URL For accessing the board
+	BoardURL string `json:"board_url,omitempty"`
+}
 
 // BoardQuery represents a query that is part of a board.
 type BoardQuery struct {

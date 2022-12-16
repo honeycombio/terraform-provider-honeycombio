@@ -54,6 +54,10 @@ func TestBoards(t *testing.T) {
 		data.ID = b.ID
 		data.Queries[0].QueryID = b.Queries[0].QueryID
 
+		// ensure the board URL got populated
+		assert.NotEqual(t, b.Links.BoardURL, "")
+		data.Links.BoardURL = b.Links.BoardURL
+
 		assert.Equal(t, data, b)
 	})
 

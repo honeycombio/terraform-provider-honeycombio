@@ -43,6 +43,12 @@ func newBoard() *schema.Resource {
 				Default:      "list",
 				ValidateFunc: validation.StringInSlice(boardStyleStrings(), false),
 			},
+			"board_url": {
+				Type:     schema.TypeString,
+				Required: false,
+				Optional: false,
+				Computed: true,
+			},
 			"query": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -156,6 +162,7 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 	d.Set("description", b.Description)
 	d.Set("style", b.Style)
 	d.Set("column_layout", b.ColumnLayout)
+	d.Set("board_url", b.Links.BoardURL)
 
 	queries := make([]map[string]interface{}, len(b.Queries))
 

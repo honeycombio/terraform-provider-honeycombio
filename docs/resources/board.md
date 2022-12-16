@@ -125,12 +125,13 @@ Currently supported toggles are:
 In addition to all arguments above, the following attributes are exported:
 
 * `id` - ID of the board.
+* `board_url` - The URL to the board in the Honeycomb UI.
 
 ## Import
 
 Boards can be imported using their ID, e.g.
 
-```
+```shell
 $ terraform import honeycombio_board.my_board AobW9oAZX71
 ```
 
