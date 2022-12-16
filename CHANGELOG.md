@@ -3,6 +3,7 @@
 NOTES:
 
 * `honeycombio_column` resource's argument `key_name` has been deprecated in favor of `name` and will be removed in a future release of the provider.
+* `honeycombio_column` no longer silently imports an existing column on create.
 
 ENHANCEMENTS:
 
@@ -13,6 +14,7 @@ ENHANCEMENTS:
 BUGFIXES:
 
 * datasource/honeycombio_recipient: fix bug where only supplying 'type' would error (#240)
+* resource/honeycombio_column: no longer silently imports an existing column on create (#242)
 * docs: fix 'recipients' misspellings (#246)
 * docs: remove deprecated 'dataset' from simple board example (#249)
 * resource/honeycombio_board: fix panic on board graph settings parsing (#250)
