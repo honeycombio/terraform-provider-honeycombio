@@ -44,10 +44,10 @@ func newBoard() *schema.Resource {
 				ValidateFunc: validation.StringInSlice(boardStyleStrings(), false),
 			},
 			"board_url": {
-				Type:       schema.TypeString,
-				Required:   false,
-				Optional:   false,
-				Computed:   true,
+				Type:     schema.TypeString,
+				Required: false,
+				Optional: false,
+				Computed: true,
 			},
 			"query": {
 				Type:     schema.TypeList,
