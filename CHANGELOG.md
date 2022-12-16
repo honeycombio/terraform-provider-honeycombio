@@ -1,3 +1,30 @@
+# 0.12.0 (Dec 16, 2022)
+
+NOTES:
+
+* `honeycombio_column` resource's argument `key_name` has been deprecated in favor of `name` and will be removed in a future release of the provider.
+
+ENHANCEMENTS:
+
+* *New Resource*: `honeycombio_dataset_definitions` (#217)
+* resource/honeycombio_column: deprecate 'key_name' in favor of 'name' (#242)
+* resource/honeycombio_board: add new 'board_url' attribute (#254)
+
+BUGFIXES:
+
+* datasource/honeycombio_recipient: fix bug where only supplying 'type' would error (#240)
+* docs: fix 'recipients' misspellings (#246)
+* docs: remove deprecated 'dataset' from simple board example (#249)
+* resource/honeycombio_board: fix panic on board graph settings parsing (#250)
+* docs: fix 'README' markdown rendering (#253)
+
+HOUSEKEEPING:
+
+* build(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.24.0 to 2.24.1 (#239)
+* add missing OSS Lifecycle badge (#243)
+* build(ci): send GitHub issues and PRs to Asana (#244, #251)
+* build(deps): Bump goreleaser/goreleaser-action from 3.2.0 to 4.1.0 (#252)
+
 # 0.11.2 (Nov 7, 2022)
 
 BUGFIXES:
