@@ -17,7 +17,7 @@ func newColumn() *schema.Resource {
 		CreateContext: resourceColumnCreate,
 		ReadContext:   resourceColumnRead,
 		UpdateContext: resourceColumnUpdate,
-		DeleteContext: schema.NoopContext,
+		DeleteContext: resourceColumnDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceColumnImport,
 		},
@@ -157,6 +157,18 @@ func resourceColumnUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	d.SetId(column.ID)
 	return resourceColumnRead(ctx, d, meta)
+}
+
+func resourceColumnDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	client := meta.(*honeycombio.Client)
+
+	dataset := d.Get("dataset").(string)
+
+	err := client.Columns.Delete(ctx, dataset, d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return nil
 }
 
 func expandColumn(d *schema.ResourceData) *honeycombio.Column {

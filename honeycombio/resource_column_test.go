@@ -1,12 +1,14 @@
 package honeycombio
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccHoneycombioColumn_basic(t *testing.T) {
@@ -34,6 +36,17 @@ func TestAccHoneycombioColumn_basic(t *testing.T) {
 				ImportStateVerify: true,
 			},
 		},
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			func(s *terraform.State) error {
+				// ensure column is removed on destroy
+				client := testAccClient(t)
+				_, err := client.Columns.GetByKeyName(context.Background(), dataset, keyName)
+				if err == nil {
+					return fmt.Errorf("column %q was not deleted on destroy", keyName)
+				}
+				return nil
+			},
+		),
 	})
 }
 
