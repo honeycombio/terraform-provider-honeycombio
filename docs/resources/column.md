@@ -1,8 +1,11 @@
 # Resource: honeycombio_column
 
-Creates a column in a dataset.
+Provides a Honeycomb Column resource.
+This can be used to create, update, and delete columns in a dataset.
 
--> **Note** Destroying or replacing this resource will not delete the previously created column. This is intentional to preserve the column and its data. The API supports deleting columns, so if this is required for your use case please open an issue in [honeycombio/terraform-provider-honeycombio](https://github.com/honeycombio/terraform-provider-honeycombio).
+-> **Note**: deleting a column is a destructive and irreversible operation which also removes the data in the column.
+
+-> **Note**: prior to version 0.13.0 of the provider, columns were *not* deleted on destroy but left in place and only removed from state.
 
 ## Example Usage
 
@@ -11,7 +14,7 @@ variable "dataset" {
   type = string
 }
 
-resource "honeycombio_column" "duration_ms" { 
+resource "honeycombio_column" "duration_ms" {
   name        = "duration_ms_log10"
   type        = "float"
   description = "Duration of the trace"
