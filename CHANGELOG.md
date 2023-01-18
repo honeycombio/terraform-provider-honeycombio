@@ -1,3 +1,17 @@
+# 0.13.0 (Jan 18, 2022)
+
+NOTES: The `honeycombio_column` resource will now *delete* dataset columns on destroy.
+Deletes are a destructive and irreversible operation.
+Prior to this release, column destroys were a 'noop' leaving the column untouched in the dataset.
+
+ENHANCEMENTS:
+
+* resource/honeycombio_column: delete column on destroy (#258)
+
+HOUSEKEEPING:
+
+* build(ci) - add repo name and link to Asana task (#257)
+
 # 0.12.0 (Dec 16, 2022)
 
 NOTES:

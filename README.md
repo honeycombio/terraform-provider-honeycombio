@@ -24,7 +24,7 @@ terraform {
   required_providers {
     honeycombio = {
       source  = "honeycombio/honeycombio"
-      version = "~> 0.12.0"
+      version = "~> 0.13.0"
     }
   }
 }
