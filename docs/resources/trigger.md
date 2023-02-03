@@ -21,6 +21,8 @@ data "honeycombio_query_specification" "example" {
     column = "trace.parent_id"
     op     = "does-not-exist"
   }
+
+  time_range = 1800
 }
 
 resource "honeycombio_query" "example" {
