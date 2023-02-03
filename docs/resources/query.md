@@ -27,7 +27,7 @@ data "honeycombio_query_specification" "test_query" {
 }
 
 resource "honeycombio_query" "test_query" {
-  dataset    = "%s"
+  dataset    = var.dataset
   query_json = data.honeycombio_query_specification.test_query.json
 }
 ```
