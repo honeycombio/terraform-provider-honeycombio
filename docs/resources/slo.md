@@ -30,7 +30,7 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the SLO.
 * `description` - (Optional) A description of the SLO's intent and context.
-* `dataset` - (Required) The dataset this SLO is created in. Must be the same dataset as the SLI unless unless the SLI's dataset is `"__all__"`.
+* `dataset` - (Required) The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI's dataset is `"__all__"`.
 * `sli` - (Required) The alias of the Derived Column that will be used as the SLI to indicate event success.
 The derived column used as the SLI must be in the same dataset as the SLO. Additionally,
 the column evaluation should consistently return nil, true, or false, as these are the only valid values for an SLI.
