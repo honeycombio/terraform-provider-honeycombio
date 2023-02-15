@@ -39,7 +39,7 @@ func newSLO() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "The dataset this SLO is created in. Must be the same dataset as the SLI.",
+				Description: "The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI's dataset is `\"__all__\"`.",
 			},
 			"sli": {
 				Type:     schema.TypeString,
