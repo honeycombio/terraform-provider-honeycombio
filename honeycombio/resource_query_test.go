@@ -94,7 +94,7 @@ func testAccCheckQueryExists(t *testing.T, dataset string, name string, duration
 					Value:  float64(duration),
 				},
 			},
-			TimeRange: honeycombio.ToPtr(7200),
+			TimeRange: honeycombio.ToPtr(honeycombio.DefaultQueryTimeRange),
 		}
 
 		ok = assert.Equal(t, expectedQuery, createdQuery)

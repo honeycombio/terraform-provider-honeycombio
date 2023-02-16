@@ -82,7 +82,7 @@ func TestBoards(t *testing.T) {
 					Op: CalculationOpCount,
 				},
 			},
-			TimeRange: ToPtr(7200), // 2 hours
+			TimeRange: ToPtr(DefaultQueryTimeRange),
 		})
 		assert.NoError(t, err)
 		b.ColumnLayout = BoardColumnStyleMulti

@@ -113,8 +113,8 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 			"filter_combination": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "AND",
-				ValidateFunc: validation.StringInSlice([]string{"AND", "OR"}, false),
+				Default:      honeycombio.DefaultFilterCombination,
+				ValidateFunc: validation.StringInSlice([]string{string(honeycombio.FilterCombinationAnd), string(honeycombio.FilterCombinationOr)}, false),
 			},
 			"breakdowns": {
 				Type:     schema.TypeList,
@@ -158,7 +158,7 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 				// Terraform isn't able to set the computed value causing a
 				// constant diff. By using a default value instead, we don't
 				// need the feedback from the API.
-				Default: 7200,
+				Default: honeycombio.DefaultQueryTimeRange,
 			},
 			"start_time": {
 				Type:     schema.TypeInt,
@@ -213,10 +213,10 @@ func dataSourceHoneycombioQuerySpecRead(ctx context.Context, d *schema.ResourceD
 		}
 	}
 
-	// The API doesn't return filter_combination if it is 'AND' (the default)
+	// The API doesn't return filter_combination if it's the default
 	var filterCombination honeycombio.FilterCombination
 	filterString := d.Get("filter_combination").(string)
-	if filterString != "" && filterString != "AND" {
+	if filterString != "" && filterString != string(honeycombio.DefaultFilterCombination) {
 		// doing it this way to support possible different filter types in future
 		// and having one less place to update them
 		filterCombination = honeycombio.FilterCombination(filterString)

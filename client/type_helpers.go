@@ -46,3 +46,21 @@ func Equivalent[T any](a, b []T) bool {
 
 	return true
 }
+
+func IsZero[T comparable](v T) bool {
+	return v == *new(T)
+}
+
+func PtrValueOrDefault[T any](v *T, d T) T {
+	if v != nil {
+		return *v
+	}
+	return d
+}
+
+func ValueOrDefault[T comparable](v, d T) T {
+	if !IsZero(v) {
+		return v
+	}
+	return d
+}
