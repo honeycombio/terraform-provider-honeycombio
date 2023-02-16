@@ -52,17 +52,15 @@ func IsZero[T comparable](v T) bool {
 }
 
 func PtrValueOrDefault[T any](v *T, d T) T {
-	var result = d
 	if v != nil {
-		result = *v
+		return *v
 	}
-	return result
+	return d
 }
 
 func ValueOrDefault[T comparable](v, d T) T {
-	var result = d
 	if !IsZero(v) {
-		result = v
+		return v
 	}
-	return result
+	return d
 }
