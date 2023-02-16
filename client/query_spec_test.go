@@ -183,12 +183,93 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"Different time ranges",
+			QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op: "COUNT",
+					},
+				},
+				TimeRange: ToPtr(1800),
+			},
+			QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op: "COUNT",
+					},
+				},
+			},
+			false,
+		},
+		{
+			"Different FilterCombinations",
+			QuerySpec{
+				FilterCombination: "OR",
+			},
+			QuerySpec{},
+			false,
+		},
+		{
+			"Calculation different from DefaultCalc",
+			QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op:     "MIN",
+						Column: ToPtr("metrics.cpu.utilization"),
+					},
+				},
+			},
+			QuerySpec{},
+			false,
+		},
+		{
+			"Different Calculations",
+			QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op:     "MIN",
+						Column: ToPtr("metrics.cpu.utilization"),
+					},
+				},
+			},
+			QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op:     "MAX",
+						Column: ToPtr("metrics.cpu.utilization"),
+					},
+				},
+			},
+			false,
+		},
+		{
+			"Different Number of Calculations",
+			QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op:     "MIN",
+						Column: ToPtr("metrics.cpu.utilization"),
+					},
+				},
+			},
+			QuerySpec{
+				Calculations: []CalculationSpec{
+					{
+						Op: "COUNT_DISTINCT",
+					},
+					{
+						Op:     "MAX",
+						Column: ToPtr("metrics.cpu.utilization"),
+					},
+				},
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.a.EquivalentTo(tt.b); got != tt.want {
-				t.Errorf("QuerySpec.EquivalentTo() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, tt.a.EquivalentTo(tt.b))
 		})
 	}
 }

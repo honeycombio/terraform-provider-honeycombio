@@ -50,6 +50,8 @@ type QuerySpec struct {
 	Granularity *int `json:"granularity,omitempty"`
 }
 
+const DefaultQueryTimeRange = 2 * 60 * 60
+
 // Determines if two QuerySpecs are equivalent
 func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	// The order of Calculations is important for visualization rendering, so we're looking for equality
@@ -67,9 +69,14 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	if !calcMatch {
 		// 'COUNT' is the default Calculation and equivalent to an empty Calculations -- check that before we give up
 		defaultCalc := []CalculationSpec{{Op: CalculationOpCount}}
-		if (other.Calculations != nil && reflect.DeepEqual(qs.Calculations, defaultCalc)) ||
-			(qs.Calculations != nil && reflect.DeepEqual(other.Calculations, defaultCalc)) ||
-			(len(qs.Calculations) > 1 || len(other.Calculations) > 1) {
+		qsC, oC := defaultCalc, defaultCalc
+		if len(qs.Calculations) != 0 {
+			qsC = qs.Calculations
+		}
+		if len(other.Calculations) != 0 {
+			oC = other.Calculations
+		}
+		if !reflect.DeepEqual(qsC, oC) {
 			return false
 		}
 	}
@@ -78,12 +85,8 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	if !Equivalent(qs.Filters, other.Filters) {
 		return false
 	}
-	if qs.FilterCombination != other.FilterCombination {
-		// 'AND' is the default and equivalent to an empty Filter Combination
-		if (qs.FilterCombination == FilterCombinationAnd && other.FilterCombination != "") ||
-			(other.FilterCombination == FilterCombinationAnd && qs.FilterCombination != "") {
-			return false
-		}
+	if ValueOrDefault(qs.FilterCombination, DefaultFilterCombination) != ValueOrDefault(other.FilterCombination, DefaultFilterCombination) {
+		return false
 	}
 	if !reflect.DeepEqual(qs.Breakdowns, other.Breakdowns) {
 		return false
@@ -98,12 +101,8 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	if !reflect.DeepEqual(qs.Limit, other.Limit) {
 		return false
 	}
-	if !reflect.DeepEqual(qs.TimeRange, other.TimeRange) {
-		// 7200 is the default, so an unset value is equivalent to 7200
-		if (reflect.DeepEqual(qs.TimeRange, 7200) && other.TimeRange != nil) ||
-			(reflect.DeepEqual(other.TimeRange, 7200) && qs.TimeRange != nil) {
-			return false
-		}
+	if PtrValueOrDefault(qs.TimeRange, DefaultQueryTimeRange) != PtrValueOrDefault(other.TimeRange, DefaultQueryTimeRange) {
+		return false
 	}
 	if !reflect.DeepEqual(qs.StartTime, other.StartTime) || !reflect.DeepEqual(qs.EndTime, other.EndTime) {
 		return false
@@ -241,8 +240,9 @@ type FilterCombination string
 
 // Declaration of filter combinations.
 const (
-	FilterCombinationOr  FilterCombination = "OR"
-	FilterCombinationAnd FilterCombination = "AND"
+	FilterCombinationOr      FilterCombination = "OR"
+	FilterCombinationAnd     FilterCombination = "AND"
+	DefaultFilterCombination                   = FilterCombinationAnd
 )
 
 // FilterCombinations returns an exhaustive list of filter combinations.
