@@ -88,7 +88,7 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 					},
 				},
 				FilterCombination: "AND",
-				TimeRange:         ToPtr(7200),
+				TimeRange:         ToPtr(DefaultQueryTimeRange),
 			},
 			QuerySpec{},
 			true,
@@ -123,7 +123,7 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 					},
 				},
 				Breakdowns: []string{"colB", "colA"},
-				TimeRange:  ToPtr(7200),
+				TimeRange:  ToPtr(DefaultQueryTimeRange),
 			},
 			QuerySpec{
 				Calculations: []CalculationSpec{
