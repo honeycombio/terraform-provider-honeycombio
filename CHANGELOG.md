@@ -1,4 +1,23 @@
-# 0.13.0 (Jan 18, 2022)
+# 0.13.1 (Mar 3, 2023)
+
+BUGFIXES:
+
+* docs: correct dataset in `honeycombio_query` example (#270)
+* docs: correct `time_range` in `honeycombio_trigger` example (#272)
+* docs: mention SLI's in `__all__` in SLO dataset docs (#269)
+* datasource/honeycombio_query_specfication: fix query equivalence for time_range, filter ops, and calculations (#282)
+
+HOUSEKEEPING:
+
+* build(deps): Bump goreleaser/goreleaser-action from 4.1.0 to 4.2.0 (#264, #265)
+* build(deps): Bump github.com/joho/godotenv from 1.4.0 to 1.5.1 (#274)
+* build(deps): Bump honeycombio/gha-create-asana-task from 1.0.0 to 1.0.1 (#276)
+* build(ci): Fix Asana Task creation (#277, #279)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.24.1 to 2.25.0 (#281)
+* build(deps): Bump golang.org/x/net from 0.6.0 to 0.7.0 (#283)
+* build(deps): Bump github.com/stretchr/testify from 1.8.1 to 1.8.2 (#284)
+
+# 0.13.0 (Jan 18, 2023)
 
 NOTES: The `honeycombio_column` resource will now *delete* dataset columns on destroy.
 Deletes are a destructive and irreversible operation.
