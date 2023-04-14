@@ -279,6 +279,10 @@ func expandBoardQueryGraphSettings(gs interface{}) (honeycombio.BoardGraphSettin
 		graphSettings.UseUTCXAxis = true
 	}
 
+	if v, ok := s["overlaid_charts"].(bool); ok && v {
+		graphSettings.PreferOverlaidCharts = true
+	}
+
 	return graphSettings, nil
 }
 
@@ -291,6 +295,7 @@ func flattenBoardQueryGraphSettings(gs honeycombio.BoardGraphSettings) []map[str
 		"omit_missing_values": gs.OmitMissingValues,
 		"stacked_graphs":      gs.UseStackedGraphs,
 		"utc_xaxis":           gs.UseUTCXAxis,
+		"overlaid_charts":     gs.PreferOverlaidCharts,
 	})
 
 	return result
