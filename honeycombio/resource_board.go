@@ -284,7 +284,6 @@ func expandBoardQueryGraphSettings(gs interface{}) (honeycombio.BoardGraphSettin
 	if v, ok := s["utc_xaxis"].(bool); ok && v {
 		graphSettings.UseUTCXAxis = true
 	}
-
 	if v, ok := s["overlaid_charts"].(bool); ok && v {
 		graphSettings.PreferOverlaidCharts = true
 	}
