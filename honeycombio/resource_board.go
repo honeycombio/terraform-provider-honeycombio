@@ -109,7 +109,7 @@ See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-sett
 										Type:        schema.TypeBool,
 										Computed:    true,
 										Optional:    true,
-										Description: "Allow charts to be overlaid when using supported Visualize operators",
+										Description: "Allow charts to be overlaid when using supported Visualize operators.",
 									},
 								},
 							},
