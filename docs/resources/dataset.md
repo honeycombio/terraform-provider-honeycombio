@@ -36,7 +36,7 @@ In addition to all arguments above, the following attributes are exported:
 Datasets can be imported by their slug, e.g.
 
 ```shell
-$ terraform import honeycombio_column.my_dataset my-dataset
+$ terraform import honeycombio_dataset.my_dataset my-dataset
 ```
 
 You can find the slug in the URL bar when visiting the Dataset from the UI.
