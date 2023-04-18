@@ -1,6 +1,6 @@
 module github.com/honeycombio/terraform-provider-honeycombio
 
-go 1.18
+go 1.19
 
 require (
 	github.com/hashicorp/go-cty v1.4.1-0.20200414143053-d3edf31b6320
