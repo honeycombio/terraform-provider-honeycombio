@@ -58,6 +58,10 @@ func TestMarkers(t *testing.T) {
 		result, err := c.Markers.Update(ctx, dataset, m)
 
 		assert.NoError(t, err)
+		assert.Equal(t, m.Message, result.Message)
+		assert.Equal(t, m.Type, result.Type)
+		assert.Equal(t, m.URL, result.URL)
+		assert.WithinDuration(t, time.UnixMilli(m.StartTime), time.UnixMilli(m.StartTime), 5*time.Second)
 		assert.WithinDuration(t, time.UnixMilli(m.EndTime), time.UnixMilli(result.EndTime), 5*time.Second)
 	})
 
