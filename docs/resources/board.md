@@ -116,6 +116,7 @@ Currently supported toggles are:
   * `omit_missing_values`
   * `stacked_graphs`
   * `utc_xaxis`
+  * `overlaid_charts`
 
   See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-settings/) in the documentation for more information on any individual setting.
 * `query_style` - (Optional) How the query should be displayed within the board, either `graph` (the default), `table` or `combo`.

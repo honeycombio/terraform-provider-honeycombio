@@ -105,6 +105,12 @@ See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-sett
 										Optional:    true,
 										Description: "Set the graph's X axis to UTC.",
 									},
+									"overlaid_charts": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Optional:    true,
+										Description: "Allow charts to be overlaid when using supported Visualize operators.",
+									},
 								},
 							},
 						},
@@ -278,6 +284,9 @@ func expandBoardQueryGraphSettings(gs interface{}) (honeycombio.BoardGraphSettin
 	if v, ok := s["utc_xaxis"].(bool); ok && v {
 		graphSettings.UseUTCXAxis = true
 	}
+	if v, ok := s["overlaid_charts"].(bool); ok && v {
+		graphSettings.PreferOverlaidCharts = true
+	}
 
 	return graphSettings, nil
 }
@@ -291,6 +300,7 @@ func flattenBoardQueryGraphSettings(gs honeycombio.BoardGraphSettings) []map[str
 		"omit_missing_values": gs.OmitMissingValues,
 		"stacked_graphs":      gs.UseStackedGraphs,
 		"utc_xaxis":           gs.UseUTCXAxis,
+		"overlaid_charts":     gs.PreferOverlaidCharts,
 	})
 
 	return result
