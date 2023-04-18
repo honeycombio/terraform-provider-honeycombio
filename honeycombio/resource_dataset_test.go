@@ -25,6 +25,12 @@ func TestAccHoneycombioDataset_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_dataset.test", "expand_json_depth", "3"),
 				),
 			},
+			{
+				ResourceName:      "honeycombio_dataset.test",
+				ImportStateId:     testDatasetName,
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
 		},
 	})
 }

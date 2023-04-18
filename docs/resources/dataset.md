@@ -30,3 +30,13 @@ In addition to all arguments above, the following attributes are exported:
 * `slug` - The slug of the dataset.
 * `created_at` - ISO8601 formatted time the column was created
 * `last_written_at` - ISO8601 formatted time the column was last written to (received event data)
+
+## Import
+
+Datasets can be imported by their slug, e.g.
+
+```shell
+$ terraform import honeycombio_column.my_dataset my-dataset
+```
+
+You can find the slug in the URL bar when visiting the Dataset from the UI.
