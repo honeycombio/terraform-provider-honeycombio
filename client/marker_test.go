@@ -58,6 +58,7 @@ func TestMarkers(t *testing.T) {
 		result, err := c.Markers.Update(ctx, dataset, m)
 
 		assert.NoError(t, err)
+		assert.Equal(t, m.ID, result.ID)
 		assert.Equal(t, m.Message, result.Message)
 		assert.Equal(t, m.Type, result.Type)
 		assert.Equal(t, m.URL, result.URL)
