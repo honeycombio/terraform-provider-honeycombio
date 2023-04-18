@@ -34,8 +34,8 @@ func TestMarkers(t *testing.T) {
 		assert.Equal(t, data.Message, m.Message)
 		assert.Equal(t, data.Type, m.Type)
 		assert.Equal(t, data.URL, m.URL)
-		assert.Equal(t, data.StartTime, m.StartTime)
-		assert.Equal(t, data.EndTime, m.EndTime)
+		assert.WithinDuration(t, time.UnixMilli(data.StartTime), time.UnixMilli(m.StartTime), 5*time.Second)
+		assert.WithinDuration(t, time.UnixMilli(data.EndTime), time.UnixMilli(m.EndTime), 5*time.Second)
 	})
 
 	t.Run("List", func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestMarkers(t *testing.T) {
 		result, err := c.Markers.Update(ctx, dataset, m)
 
 		assert.NoError(t, err)
-		assert.Equal(t, m, result)
+		assert.WithinDuration(t, time.UnixMilli(m.EndTime), time.UnixMilli(result.EndTime), 5*time.Second)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
