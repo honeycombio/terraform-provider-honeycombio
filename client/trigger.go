@@ -161,9 +161,9 @@ func (s *triggers) Delete(ctx context.Context, dataset string, id string) error 
 //
 // The following properties must be valid:
 //
-//  - the query must contain exactly one calculation
-//  - the HEATMAP calculation may not be used
-//  - only the following fields may be set: calculations, breakdown, filters, filter_combination and time_range
+//   - the query must contain exactly one calculation
+//   - the HEATMAP calculation may not be used
+//   - only the following fields may be set: calculations, breakdown, filters, filter_combination and time_range
 //
 // For more information, refer to https://docs.honeycomb.io/api/triggers/#fields-on-a-trigger
 func MatchesTriggerSubset(query *QuerySpec) error {
