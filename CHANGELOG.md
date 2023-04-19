@@ -1,3 +1,21 @@
+# 0.14.0 (Apr 19, 2023)
+
+ENHANCEMENTS:
+
+* resource/honeycombio_board: add overlaid charts `graph_settings` support (#291)
+* resource/honeycombio_dataset: add resource import support (#294)
+
+BUGFIXES:
+
+* client: fix marker client test flake (#293) 
+
+HOUSEKEEPING:
+
+* build(deps): Bump actions/setup-go from 3 to 4 (#286)
+* build(deps): Bump codecov/codecov-action from 3.1.1 to 3.1.2 (#289)
+* build(deps): bump Go to 1.19 (#292)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.25.0 to 2.26.1 (#288)
+
 # 0.13.1 (Mar 3, 2023)
 
 BUGFIXES:
