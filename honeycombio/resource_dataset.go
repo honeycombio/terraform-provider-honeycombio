@@ -16,6 +16,9 @@ func newDataset() *schema.Resource {
 		ReadContext:   resourceDatasetRead,
 		UpdateContext: resourceDatasetUpdate,
 		DeleteContext: schema.NoopContext,
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
