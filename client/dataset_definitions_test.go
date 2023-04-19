@@ -21,6 +21,7 @@ func TestDatasetDefinitions(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	// reset all defs and remove test helpers at end of test run
+	//nolint:errcheck
 	t.Cleanup(func() {
 		c.DatasetDefinitions.ResetAll(ctx, dataset)
 		c.Columns.Delete(ctx, dataset, col.ID)

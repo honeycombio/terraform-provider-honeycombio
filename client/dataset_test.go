@@ -83,6 +83,7 @@ func TestDatasets(t *testing.T) {
 		}
 		t.Cleanup(func() {
 			// revert updated fields to defaults after the test run
+			//nolint:errcheck
 			c.Datasets.Update(ctx, &Dataset{Name: datasetName})
 		})
 		d, err := c.Datasets.Update(ctx, updateDataset)

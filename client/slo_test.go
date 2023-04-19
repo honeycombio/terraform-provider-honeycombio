@@ -25,6 +25,7 @@ func TestSLOs(t *testing.T) {
 	}
 	// remove SLI DC at end of test run
 	t.Cleanup(func() {
+		//nolint:errcheck
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
