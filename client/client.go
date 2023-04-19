@@ -10,7 +10,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -207,7 +206,7 @@ func (e *honeycombioError) Error() string {
 }
 
 func attemptToExtractHoneycombioError(bodyReader io.Reader) string {
-	body, err := ioutil.ReadAll(bodyReader)
+	body, err := io.ReadAll(bodyReader)
 	if err != nil {
 		return ""
 	}

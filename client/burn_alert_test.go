@@ -33,6 +33,7 @@ func TestBurnAlerts(t *testing.T) {
 		t.Fatal(err)
 	}
 	// remove SLO and SLI at the end of the test run
+	//nolint:errcheck
 	t.Cleanup(func() {
 		c.SLOs.Delete(ctx, dataset, slo.ID)
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
