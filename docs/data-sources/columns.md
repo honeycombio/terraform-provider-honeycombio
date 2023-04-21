@@ -69,5 +69,4 @@ The following arguments are supported:
 
 In addition to all arguments above, the following attributes are exported:
 
-* `names` - a list of all the column names.
-* `types` - a list of all the column types.
+* `names` - a list of all the column names, use with toset()
