@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 )
 
@@ -52,7 +53,7 @@ type BurnAlert struct {
 
 func (s *burnalerts) ListForSLO(ctx context.Context, dataset string, sloId string) ([]BurnAlert, error) {
 	var b []BurnAlert
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/burn_alerts/%s?slo_id=%s", urlEncodeDataset(dataset), sloId), nil, &b)
+	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/burn_alerts/%s?slo_id=%s", urlEncodeDataset(dataset), url.QueryEscape(sloId)), nil, &b)
 	return b, err
 }
 
