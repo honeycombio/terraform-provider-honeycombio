@@ -36,7 +36,7 @@ resource "honeycombio_marker" "hello" {
 }
 ```
 
-More advanced examples may be found in the [example directory](/example/).
+More advanced examples can be found in the [example directory](https://github.com/honeycombio/terraform-provider-honeycombio/tree/main/example).
 
 ## Authentication
 
