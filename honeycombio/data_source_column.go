@@ -53,7 +53,7 @@ func dataSourceHoneycombioColumn() *schema.Resource {
 				Computed:    true,
 				Description: "A description of the column",
 			},
-			"last_written": {
+			"last_written_at": {
 				Type:        schema.TypeString,
 				Required:    false,
 				Optional:    false,
@@ -94,7 +94,7 @@ func dataSourceHoneycombioColumnRead(ctx context.Context, d *schema.ResourceData
 	d.Set("hidden", column.Hidden)
 	d.Set("type", column.Type)
 	d.Set("description", column.Description)
-	d.Set("last_written", column.LastWrittenAt.UTC().Format(time.RFC3339))
+	d.Set("last_written_at", column.LastWrittenAt.UTC().Format(time.RFC3339))
 	d.Set("created_at", column.CreatedAt.UTC().Format(time.RFC3339))
 	d.Set("updated_at", column.UpdatedAt.UTC().Format(time.RFC3339))
 

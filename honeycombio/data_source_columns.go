@@ -28,6 +28,8 @@ func dataSourceHoneycombioColumns() *schema.Resource {
 			"names": {
 				Type:     schema.TypeList,
 				Computed: true,
+				Optional: false,
+				Required: false,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
