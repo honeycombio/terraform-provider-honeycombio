@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"time"
 )
 
@@ -94,7 +95,7 @@ func (s *columns) Get(ctx context.Context, dataset string, id string) (*Column, 
 
 func (s *columns) GetByKeyName(ctx context.Context, dataset string, keyName string) (*Column, error) {
 	var c Column
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/columns/%s?key_name=%s", urlEncodeDataset(dataset), keyName), nil, &c)
+	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/columns/%s?key_name=%s", urlEncodeDataset(dataset), url.QueryEscape(keyName)), nil, &c)
 	return &c, err
 }
 
