@@ -36,6 +36,8 @@ resource "honeycombio_marker" "hello" {
 }
 ```
 
+More advanced examples may be found in the [example directory](/example/).
+
 ## Authentication
 
 The Honeycomb provider requires an API key to communicate with the Honeycomb API. API keys and their permissions can be managed in _Team settings_.
