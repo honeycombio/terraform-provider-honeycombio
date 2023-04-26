@@ -98,7 +98,4 @@ func (d *derivedColumnsDataSource) Read(ctx context.Context, req datasource.Read
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }
