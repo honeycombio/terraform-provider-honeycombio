@@ -60,7 +60,7 @@ func (d *derivedColumnDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				Required:    false,
 			},
 			"description": schema.StringAttribute{
-				Description: "The Dervice Column's description.",
+				Description: "The Derived Column's description.",
 				Computed:    true,
 				Optional:    false,
 				Required:    false,
