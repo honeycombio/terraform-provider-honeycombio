@@ -73,7 +73,7 @@ func TestMuxServer(t *testing.T) {
 		},
 		Steps: []resource.TestStep{
 			{
-				// simple smoketest by accessing the a datasource
+				// simple smoketest by accessing a datasource
 				Config: `data "honeycombio_datasets" "all" {}`,
 			},
 		},
