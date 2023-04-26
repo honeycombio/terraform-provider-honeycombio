@@ -56,6 +56,8 @@ func (d *derivedColumnsDataSource) Schema(_ context.Context, _ datasource.Schema
 			"names": schema.ListAttribute{
 				Description: "The list of Derived Column names.",
 				Computed:    true,
+				Optional:    false,
+				Required:    false,
 				ElementType: types.StringType,
 			},
 		},
