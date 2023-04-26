@@ -2,11 +2,12 @@ package honeycombio
 
 import (
 	"context"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/log"
 )
 
 func init() {
@@ -15,31 +16,24 @@ func init() {
 	schema.DescriptionKind = schema.StringMarkdown
 }
 
-// providerVersion represents the current version of the provider. It should be
-// overwritten during the release process.
-var providerVersion = "dev"
-
-func Provider() *schema.Provider {
+func Provider(version string) *schema.Provider {
 	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"api_key": {
 				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.MultiEnvDefaultFunc([]string{"HONEYCOMB_API_KEY", "HONEYCOMBIO_APIKEY"}, nil),
+				Description: "The Honeycomb API key to use. It can also be set using HONEYCOMB_API_KEY or HONEYCOMBIO_APIKEY environment variables.",
+				Optional:    true,
 				Sensitive:   true,
 			},
 			"api_url": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Description: "Override the URL of the Honeycomb.io API. Defaults to https://api.honeycomb.io.",
+				Optional:    true,
 			},
 			"debug": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Description: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
-				DefaultFunc: func() (interface{}, error) {
-					// use provider environment's configured log level
-					return logging.IsDebugOrHigher(), nil
-				},
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -73,11 +67,33 @@ func Provider() *schema.Provider {
 	}
 
 	provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		apiKey := os.Getenv("HONEYCOMB_API_KEY")
+		if apiKey == "" {
+			// fall through to legacy env var
+			apiKey = os.Getenv("HONEYCOMBIO_APIKEY")
+		}
+		if v, ok := d.GetOk("api_key"); ok {
+			apiKey = v.(string)
+		}
+		debug := log.IsDebugOrHigher()
+		if v, ok := d.GetOk("debug"); ok {
+			debug = v.(bool)
+		}
+
+		// API Key cannot be determined
+		if apiKey == "" {
+			return nil, diag.Errorf(
+				"Unknown Honeycomb API Key.\n\n" +
+					"The provider cannot create the Honeycomb client as there is an unknown configuration value for the Honeycomb API Key. " +
+					"Either target apply the source of the value first, set the value statically in the configuration, or use the HONEYCOMB_API_KEY environment variable.",
+			)
+		}
+
 		config := &honeycombio.Config{
-			APIKey:    d.Get("api_key").(string),
+			APIKey:    apiKey,
 			APIUrl:    d.Get("api_url").(string),
-			UserAgent: provider.UserAgent("terraform-provider-honeycombio", providerVersion),
-			Debug:     d.Get("debug").(bool),
+			UserAgent: provider.UserAgent("terraform-provider-honeycombio", version),
+			Debug:     debug,
 		}
 		c, err := honeycombio.NewClient(config)
 		if err != nil {

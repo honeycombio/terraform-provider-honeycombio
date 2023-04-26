@@ -27,7 +27,7 @@ func testAccPreCheck(t *testing.T) func() {
 
 var testAccProviderFactories = map[string]func() (*schema.Provider, error){
 	"honeycombio": func() (*schema.Provider, error) {
-		return Provider(), nil
+		return Provider("test"), nil
 	},
 }
 
