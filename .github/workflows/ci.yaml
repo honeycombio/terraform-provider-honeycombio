@@ -69,7 +69,7 @@ jobs:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
           HONEYCOMB_DATASET: testacc
           TF_ACC: 1
-        run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./honeycombio/...
+        run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./internal/... ./honeycombio/...
 
       - name: Generate Coverage Report
         uses: codecov/codecov-action@v3.1.3
