@@ -60,7 +60,9 @@ func (p *HoneycombioProvider) Schema(_ context.Context, _ provider.SchemaRequest
 }
 
 func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		NewTriggerResource,
+	}
 }
 
 func (p *HoneycombioProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
@@ -137,6 +139,13 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 }
 
 func getClientFromDatasourceRequest(req *datasource.ConfigureRequest) *client.Client {
+	if req.ProviderData == nil {
+		return nil
+	}
+	return req.ProviderData.(*client.Client)
+}
+
+func getClientFromResourceRequest(req *resource.ConfigureRequest) *client.Client {
 	if req.ProviderData == nil {
 		return nil
 	}

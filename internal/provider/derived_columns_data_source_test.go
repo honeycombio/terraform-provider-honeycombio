@@ -10,7 +10,7 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-func TestAccDerivedColumnsDataSource(t *testing.T) {
+func TestAcc_DerivedColumnsDataSource(t *testing.T) {
 	ctx := context.Background()
 	c := testAccClient(t)
 	dataset := testAccDataset()
@@ -47,7 +47,7 @@ func TestAccDerivedColumnsDataSource(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactories,
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDerivedColumnsDataSourceConfig(dataset, dcPrefix),
