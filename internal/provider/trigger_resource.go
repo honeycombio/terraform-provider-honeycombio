@@ -50,7 +50,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 		Description: "Manages a Trigger.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "Numeric identifier of the Trigger.",
+				Description: "The unique identifier for this Trigger.",
 				Computed:    true,
 				Required:    false,
 				Optional:    false,
