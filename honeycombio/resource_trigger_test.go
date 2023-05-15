@@ -11,6 +11,7 @@ import (
 )
 
 func TestAccHoneycombioTrigger_basic(t *testing.T) {
+	t.Skip("legacy test, skipping")
 	var triggerBefore, triggerAfter honeycombio.Trigger
 
 	dataset := testAccDataset()
@@ -90,6 +91,7 @@ func testAccCheckTriggerAttributes(t *honeycombio.Trigger) resource.TestCheckFun
 }
 
 func TestAccHoneycombioTrigger_triggerRecipientById(t *testing.T) {
+	t.Skip("legacy test, skipping")
 	dataset := testAccDataset()
 
 	trigger, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.NotificationRecipient{
@@ -207,6 +209,7 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAccHoneycombioTrigger_recipientOrderingNoDiff(t *testing.T) {
+	t.Skip("legacy test, skipping")
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{

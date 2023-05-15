@@ -62,7 +62,6 @@ func Provider(version string) *schema.Provider {
 			"honeycombio_slack_recipient":     newSlackRecipient(),
 			"honeycombio_webhook_recipient":   newWebhookRecipient(),
 			"honeycombio_slo":                 newSLO(),
-			"honeycombio_trigger":             newTrigger(),
 		},
 	}
 
