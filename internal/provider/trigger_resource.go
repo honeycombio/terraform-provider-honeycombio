@@ -137,7 +137,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					},
 				},
 			},
-			"recipient": schema.ListNestedBlock{
+			"recipient": schema.SetNestedBlock{
 				Description: "Zero or more recipients to notify when the Trigger fires.",
 				NestedObject: schema.NestedBlockObject{
 					Validators: []validator.Object{
@@ -182,10 +182,10 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							NestedObject: schema.NestedBlockObject{
 								Attributes: map[string]schema.Attribute{
 									"pagerduty_severity": schema.StringAttribute{
-										Optional:    true,
-										Computed:    true,
-										Description: "The severity to set with the PagerDuty notification.",
-										Default:     stringdefault.StaticString("critical"),
+										Optional:      true,
+										Computed:      true,
+										Description:   "The severity to set with the PagerDuty notification. If no serverity is provided, 'critical' is assumed.",
+										PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 										Validators: []validator.String{
 											stringvalidator.All(
 												stringvalidator.OneOf("info", "warning", "error", "critical"),
@@ -224,7 +224,6 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		Frequency:   int(plan.Frequency.ValueInt64()),
 		Recipients:  expandNotificationRecipients(plan.Recipients),
 	}
-
 	trigger, err := r.client.Triggers.Create(ctx, plan.Dataset.ValueString(), newTrigger)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -291,6 +290,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	newTrigger := &client.Trigger{
+		ID:          plan.ID.ValueString(),
 		Name:        plan.Name.ValueString(),
 		Description: plan.Description.ValueString(),
 		Disabled:    plan.Disabled.ValueBool(),
@@ -313,7 +313,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	trigger, err := r.client.Triggers.Get(ctx, plan.Dataset.ValueString(), plan.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Reading Honeycomb Trigger",
+			"Error Updating Honeycomb Trigger",
 			"Could not read Honeycomb Trigger ID "+plan.ID.ValueString()+": "+err.Error(),
 		)
 		return
@@ -326,10 +326,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	plan.QueryID = types.StringValue(trigger.QueryID)
 	plan.AlertType = types.StringValue(trigger.AlertType)
 	plan.Frequency = types.Int64Value(int64(trigger.Frequency))
-	plan.Threshold = []models.TriggerThresholdModel{{
-		Op:    types.StringValue(string(trigger.Threshold.Op)),
-		Value: types.Float64Value(trigger.Threshold.Value),
-	}}
+	plan.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	plan.Recipients = flattenNotificationRecipients(trigger.Recipients)
 
 	diags = resp.State.Set(ctx, plan)
@@ -405,7 +402,7 @@ func expandNotificationRecipients(n []models.NotificationRecipientModel) []clien
 			Type:   client.RecipientType(r.Type.ValueString()),
 			Target: r.Target.ValueString(),
 		}
-		if len(r.Details) == 1 {
+		if r.Details != nil {
 			rcpt.Details = &client.NotificationRecipientDetails{
 				PDSeverity: client.PagerDutySeverity(r.Details[0].PDSeverity.ValueString()),
 			}

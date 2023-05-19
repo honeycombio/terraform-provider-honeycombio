@@ -17,13 +17,13 @@ type Recipients interface {
 	// the given ID
 	Get(ctx context.Context, id string) (*Recipient, error)
 
-	// Create a new Recipient. When creating a new Recipient ID ma not be set.
+	// Create a new Recipient. When creating a new Recipient ID must not be set.
 	Create(ctx context.Context, r *Recipient) (*Recipient, error)
 
 	// Update an existing Recipient.
 	Update(ctx context.Context, r *Recipient) (*Recipient, error)
 
-	// Delete a Recipient from the dataset.
+	// Delete a Recipient
 	Delete(ctx context.Context, id string) error
 }
 
@@ -92,6 +92,7 @@ const (
 	PDSeverityERROR    PagerDutySeverity = "error"
 	PDSeverityWARNING  PagerDutySeverity = "warning"
 	PDSeverityINFO     PagerDutySeverity = "info"
+	PDDefaultSeverity                    = PDSeverityCRITICAL
 )
 
 // TriggerRecipientTypes returns a list of recipient types compatible with Triggers
