@@ -59,8 +59,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v2
         with:
-          # TODO: update to a TF version matrix test once testsuite won't generate conflicting resources
-          terraform_version: 1.0.6
+          terraform_version: 1.4.6
           terraform_wrapper: false
 
       - name: Run TF acceptance tests
