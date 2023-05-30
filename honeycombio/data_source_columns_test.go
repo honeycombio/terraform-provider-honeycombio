@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
@@ -15,13 +17,15 @@ func TestAccDataSourceHoneycombioColumns_basic(t *testing.T) {
 	c := testAccClient(t)
 	dataset := testAccDataset()
 
+	testprefix := acctest.RandString(4)
+
 	testColumns := []honeycombio.Column{
 		{
-			KeyName:     "test_column1",
+			KeyName:     testprefix + "_test_column1",
 			Description: "test column1",
 		},
 		{
-			KeyName:     "test_column2",
+			KeyName:     testprefix + "_test_column2",
 			Description: "test column2",
 		},
 	}
@@ -52,7 +56,7 @@ func TestAccDataSourceHoneycombioColumns_basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDataSourceColumnsConfig([]string{"dataset = \"" + testAccDataset() + "\"", "starts_with = \"test_column\""}),
+				Config: testAccDataSourceColumnsConfig([]string{"dataset = \"" + testAccDataset() + "\"", "starts_with = \"" + testprefix + "\""}),
 				Check:  resource.TestCheckResourceAttr("data.honeycombio_columns.test", "names.#", "2"),
 			},
 			{
