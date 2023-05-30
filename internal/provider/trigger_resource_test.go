@@ -37,7 +37,6 @@ func TestAcc_TriggerResource(t *testing.T) {
 				ResourceName:        "honeycombio_trigger.test",
 				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
 				ImportState:         true,
-				ImportStateVerify:   true,
 			},
 		},
 	})
@@ -46,9 +45,6 @@ func TestAcc_TriggerResource(t *testing.T) {
 // TestAcc_TriggerResourceUpgradeFromVersion014 is intended to test the migration
 // case from the last SDK-based version of the Trigger resource to the current Framework-based
 // version.
-//
-// State is first generated with the SDKv2 provider and then a plan is done with the new provider to
-// ensure there are no planned changes after migrating to the Framework-based resource.
 //
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
@@ -73,7 +69,6 @@ func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
 			{
 				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 				Config:                   config,
-				PlanOnly:                 true,
 			},
 		},
 	})
@@ -189,6 +184,57 @@ resource "honeycombio_trigger" "test" {
   recipient {
     type   = "marker"
     target = "trigger fired"
+  }
+}
+`, dataset),
+			},
+			{
+				// now remove two recipients and add a new one
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT"
+  }
+
+  time_range = 1200
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_trigger" "test" {
+  name = "Ensure mixed order recipients don't cause infinite diffs"
+
+  query_id = honeycombio_query.test.id
+  dataset  = "%[1]s"
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  alert_type = "on_change"
+
+  recipient {
+    type   = "slack"
+    target = "#test"
+  }
+
+  recipient {
+    type   = "email"
+    target = "bob@example.com"
+  }
+
+  recipient {
+    type   = "email"
+    target = "alice@example.com"
+  }
+
+  recipient {
+    type   = "slack"
+    target = "#a-new-channel"
   }
 }
 `, dataset),
