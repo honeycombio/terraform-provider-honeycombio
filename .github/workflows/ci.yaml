@@ -61,7 +61,7 @@ jobs:
 
       - uses: hashicorp/setup-terraform@v2
         with:
-          terraform_version: $TERRAFORM_VERSION
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
       - name: Run TF acceptance tests
@@ -70,7 +70,7 @@ jobs:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
           HONEYCOMB_DATASET: testacc
           TF_ACC: 1
-          TF_ACC_TERRAFORM_VERSION: $TERRAFORM_VERSION
+          TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
         run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./internal/... ./honeycombio/...
 
       - name: Generate Coverage Report
