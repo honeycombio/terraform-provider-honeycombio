@@ -256,9 +256,8 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		idx := slices.IndexFunc(plan.Recipients, func(s models.NotificationRecipientModel) bool {
 			if !s.ID.IsUnknown() {
 				return s.ID.ValueString() == r.ID
-			} else {
-				return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
 			}
+			return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
 		})
 		if idx < 0 {
 			resp.Diagnostics.AddError(
@@ -332,9 +331,8 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 			idx := slices.IndexFunc(state.Recipients, func(s models.NotificationRecipientModel) bool {
 				if !s.ID.IsNull() {
 					return s.ID.ValueString() == r.ID
-				} else {
-					return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
 				}
+				return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
 			})
 			if idx < 0 {
 				resp.Diagnostics.AddError(
@@ -405,9 +403,8 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		idx := slices.IndexFunc(plan.Recipients, func(s models.NotificationRecipientModel) bool {
 			if !s.ID.IsNull() {
 				return s.ID.ValueString() == r.ID
-			} else {
-				return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
 			}
+			return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
 		})
 		if idx < 0 {
 			resp.Diagnostics.AddError(
