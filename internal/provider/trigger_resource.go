@@ -5,6 +5,8 @@ import (
 	"errors"
 	"strings"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
@@ -14,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -22,6 +25,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/modifiers"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
@@ -137,8 +141,9 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					},
 				},
 			},
-			"recipient": schema.ListNestedBlock{
-				Description: "Zero or more recipients to notify when the Trigger fires.",
+			"recipient": schema.SetNestedBlock{
+				Description:   "Zero or more recipients to notify when the Trigger fires.",
+				PlanModifiers: []planmodifier.Set{modifiers.NotificationRecipients()},
 				NestedObject: schema.NestedBlockObject{
 					Validators: []validator.Object{
 						objectvalidator.AtLeastOneOf(
@@ -179,13 +184,14 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							Validators: []validator.List{
 								listvalidator.SizeAtMost(1),
 							},
+							PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()},
 							NestedObject: schema.NestedBlockObject{
 								Attributes: map[string]schema.Attribute{
 									"pagerduty_severity": schema.StringAttribute{
-										Optional:    true,
-										Computed:    true,
-										Description: "The severity to set with the PagerDuty notification.",
-										Default:     stringdefault.StaticString("critical"),
+										Optional:      true,
+										Computed:      true,
+										Description:   "The severity to set with the PagerDuty notification. If no severity is provided, 'critical' is assumed.",
+										PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()},
 										Validators: []validator.String{
 											stringvalidator.All(
 												stringvalidator.OneOf("info", "warning", "error", "critical"),
@@ -208,13 +214,12 @@ func (r *triggerResource) Configure(_ context.Context, req resource.ConfigureReq
 
 func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan models.TriggerResourceModel
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	newTrigger := &client.Trigger{
+	trigger, err := r.client.Triggers.Create(ctx, plan.Dataset.ValueString(), &client.Trigger{
 		Name:        plan.Name.ValueString(),
 		Description: plan.Description.ValueString(),
 		Disabled:    plan.Disabled.ValueBool(),
@@ -223,9 +228,7 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		Threshold:   expandTriggerThreshold(plan.Threshold),
 		Frequency:   int(plan.Frequency.ValueInt64()),
 		Recipients:  expandNotificationRecipients(plan.Recipients),
-	}
-
-	trigger, err := r.client.Triggers.Create(ctx, plan.Dataset.ValueString(), newTrigger)
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating Honeycomb Trigger",
@@ -234,24 +237,68 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	plan.ID = types.StringValue(trigger.ID)
-	plan.Name = types.StringValue(trigger.Name)
-	plan.Description = types.StringValue(trigger.Description)
-	plan.Disabled = types.BoolValue(trigger.Disabled)
-	plan.QueryID = types.StringValue(trigger.QueryID)
-	plan.AlertType = types.StringValue(trigger.AlertType)
-	plan.Threshold = flattenTriggerThreshold(trigger.Threshold)
-	plan.Frequency = types.Int64Value(int64(trigger.Frequency))
-	plan.Recipients = flattenNotificationRecipients(trigger.Recipients)
+	var state models.TriggerResourceModel
+	state.Dataset = plan.Dataset
+	state.ID = types.StringValue(trigger.ID)
+	state.Name = types.StringValue(trigger.Name)
+	state.Description = types.StringValue(trigger.Description)
+	state.Disabled = types.BoolValue(trigger.Disabled)
+	state.QueryID = types.StringValue(trigger.QueryID)
+	state.AlertType = types.StringValue(trigger.AlertType)
+	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
+	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 
-	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
+	recipients := make([]models.NotificationRecipientModel, len(trigger.Recipients))
+	for i, r := range trigger.Recipients {
+		var rcpt models.NotificationRecipientModel
+
+		// match the trigger's recipient to that in the plan
+		idx := slices.IndexFunc(plan.Recipients, func(s models.NotificationRecipientModel) bool {
+			if !s.ID.IsUnknown() {
+				return s.ID.ValueString() == r.ID
+			}
+			return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
+		})
+		if idx < 0 {
+			resp.Diagnostics.AddError(
+				"Error Creating Honeycomb Trigger",
+				"Could not find Recipient "+r.ID+" in plan",
+			)
+		}
+		rcpt = plan.Recipients[idx]
+
+		// TODO: can we move this to the planmodifier by adding a create state?
+		if !rcpt.ID.IsUnknown() {
+			// recipient provided by ID
+			rcpt.ID = types.StringValue(r.ID)
+			rcpt.Type = types.StringNull()
+			rcpt.Target = types.StringNull()
+		} else {
+			// recipient provided by type+target
+			rcpt.ID = types.StringNull()
+			rcpt.Type = types.StringValue(string(r.Type))
+			if rcpt.Type.ValueString() == string(client.RecipientTypePagerDuty) {
+				// PagerDuty recipients don't have a target
+				rcpt.Target = types.StringNull()
+			} else {
+				rcpt.Target = types.StringValue(r.Target)
+			}
+		}
+
+		if r.Type == client.RecipientTypePagerDuty && r.Details != nil {
+			rcpt.Details = make([]models.NotificationRecipientDetailsModel, 1)
+			rcpt.Details[0].PDSeverity = types.StringValue(string(r.Details.PDSeverity))
+		}
+		recipients[i] = rcpt
+	}
+	state.Recipients = recipients
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state models.TriggerResourceModel
-	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -276,21 +323,43 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.AlertType = types.StringValue(trigger.AlertType)
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
-	state.Recipients = flattenNotificationRecipients(trigger.Recipients)
 
-	diags = resp.State.Set(ctx, &state)
-	resp.Diagnostics.Append(diags...)
+	recipients := make([]models.NotificationRecipientModel, len(trigger.Recipients))
+	if state.Recipients != nil {
+		for i, r := range trigger.Recipients {
+			// match the Trigger's recipient to that in state
+			idx := slices.IndexFunc(state.Recipients, func(s models.NotificationRecipientModel) bool {
+				if !s.ID.IsNull() {
+					return s.ID.ValueString() == r.ID
+				}
+				return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
+			})
+			if idx < 0 {
+				resp.Diagnostics.AddError(
+					"Error Reading Honeycomb Trigger",
+					"Could not find Recipient "+r.ID+" in state",
+				)
+			}
+
+			recipients[i] = state.Recipients[idx]
+		}
+	} else {
+		recipients = flattenNotificationRecipients(trigger.Recipients)
+	}
+	state.Recipients = recipients
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan models.TriggerResourceModel
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	newTrigger := &client.Trigger{
+	_, err := r.client.Triggers.Update(ctx, plan.Dataset.ValueString(), &client.Trigger{
+		ID:          plan.ID.ValueString(),
 		Name:        plan.Name.ValueString(),
 		Description: plan.Description.ValueString(),
 		Disabled:    plan.Disabled.ValueBool(),
@@ -299,9 +368,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		Frequency:   int(plan.Frequency.ValueInt64()),
 		Threshold:   expandTriggerThreshold(plan.Threshold),
 		Recipients:  expandNotificationRecipients(plan.Recipients),
-	}
-
-	_, err := r.client.Triggers.Update(ctx, plan.Dataset.ValueString(), newTrigger)
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Honeycomb Trigger",
@@ -313,36 +380,48 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	trigger, err := r.client.Triggers.Get(ctx, plan.Dataset.ValueString(), plan.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Reading Honeycomb Trigger",
+			"Error Updating Honeycomb Trigger",
 			"Could not read Honeycomb Trigger ID "+plan.ID.ValueString()+": "+err.Error(),
 		)
 		return
 	}
 
-	plan.ID = types.StringValue(trigger.ID)
-	plan.Name = types.StringValue(trigger.Name)
-	plan.Description = types.StringValue(trigger.Description)
-	plan.Disabled = types.BoolValue(trigger.Disabled)
-	plan.QueryID = types.StringValue(trigger.QueryID)
-	plan.AlertType = types.StringValue(trigger.AlertType)
-	plan.Frequency = types.Int64Value(int64(trigger.Frequency))
-	plan.Threshold = []models.TriggerThresholdModel{{
-		Op:    types.StringValue(string(trigger.Threshold.Op)),
-		Value: types.Float64Value(trigger.Threshold.Value),
-	}}
-	plan.Recipients = flattenNotificationRecipients(trigger.Recipients)
+	var state models.TriggerResourceModel
+	state.Dataset = plan.Dataset
+	state.ID = types.StringValue(trigger.ID)
+	state.Name = types.StringValue(trigger.Name)
+	state.Description = types.StringValue(trigger.Description)
+	state.Disabled = types.BoolValue(trigger.Disabled)
+	state.QueryID = types.StringValue(trigger.QueryID)
+	state.AlertType = types.StringValue(trigger.AlertType)
+	state.Frequency = types.Int64Value(int64(trigger.Frequency))
+	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 
-	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
+	recipients := make([]models.NotificationRecipientModel, len(trigger.Recipients))
+	for i, r := range trigger.Recipients {
+		// match the Trigger's recipient to that in the plan
+		idx := slices.IndexFunc(plan.Recipients, func(s models.NotificationRecipientModel) bool {
+			if !s.ID.IsNull() {
+				return s.ID.ValueString() == r.ID
+			}
+			return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
+		})
+		if idx < 0 {
+			resp.Diagnostics.AddError(
+				"Error Updating Honeycomb Trigger",
+				"Could not find Recipient "+r.ID+" in plan",
+			)
+		}
+		recipients[i] = plan.Recipients[idx]
 	}
+	state.Recipients = recipients
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *triggerResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state models.TriggerResourceModel
-	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -405,7 +484,7 @@ func expandNotificationRecipients(n []models.NotificationRecipientModel) []clien
 			Type:   client.RecipientType(r.Type.ValueString()),
 			Target: r.Target.ValueString(),
 		}
-		if len(r.Details) == 1 {
+		if r.Details != nil {
 			rcpt.Details = &client.NotificationRecipientDetails{
 				PDSeverity: client.PagerDutySeverity(r.Details[0].PDSeverity.ValueString()),
 			}

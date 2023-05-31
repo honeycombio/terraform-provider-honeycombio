@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
@@ -18,7 +20,7 @@ func TestAccDataSourceHoneycombioColumn_basic(t *testing.T) {
 
 	testColumns := []honeycombio.Column{
 		{
-			KeyName:     "test_column3",
+			KeyName:     acctest.RandString(4) + "_test_column3",
 			Description: "test column3",
 			Type:        honeycombio.ToPtr(honeycombio.ColumnType("float")),
 		},
@@ -45,7 +47,7 @@ func TestAccDataSourceHoneycombioColumn_basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			// match by name and return a single column with the right type
 			{
-				Config: testAccDataSourceColumnConfig([]string{"dataset = \"" + testAccDataset() + "\"", "name = \"test_column3\""}),
+				Config: testAccDataSourceColumnConfig([]string{"dataset = \"" + testAccDataset() + "\"", "name = \"" + testColumns[0].KeyName + "\""}),
 				Check:  resource.TestCheckResourceAttr("data.honeycombio_column.test", "type", "float"),
 			},
 			// test a failed match
