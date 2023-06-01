@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 
 	"golang.org/x/exp/slices"
@@ -22,6 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
@@ -44,6 +46,11 @@ func NewTriggerResource() resource.Resource {
 type triggerResource struct {
 	client *client.Client
 }
+
+// matches HH:mm timestamps with optional leading 0
+//
+//	e.g. 9:00, 09:01
+var hhMMRegex = regexp.MustCompile(`^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$`)
 
 func (r *triggerResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_trigger"
@@ -99,9 +106,12 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Optional:    true,
 				Computed:    true,
 				Description: "Control when the Trigger will send a notification.",
-				Default:     stringdefault.StaticString(client.TriggerAlertTypeValueOnChange),
+				Default:     stringdefault.StaticString(string(client.TriggerAlertTypeOnChange)),
 				Validators: []validator.String{
-					stringvalidator.OneOf(client.TriggerAlertTypeValueOnChange, client.TriggerAlertTypeValueOnTrue),
+					stringvalidator.OneOf(
+						string(client.TriggerAlertTypeOnChange),
+						string(client.TriggerAlertTypeOnTrue),
+					),
 				},
 			},
 			"frequency": schema.Int64Attribute{
@@ -137,6 +147,41 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						"value": schema.Float64Attribute{
 							Required:    true,
 							Description: "The value to be used with the operator.",
+						},
+					},
+				},
+			},
+			"evaluation_schedule": schema.ListNestedBlock{
+				Description: "The schedule that determines when the trigger is run. When the time is within the scheduled window, " +
+					" the trigger will be run at the specified frequency. Outside of the window, the trigger will not be run." +
+					"If no schedule is specified, the trigger will be run at the specified frequency at all times.",
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
+				},
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"start_time": schema.StringAttribute{
+							Description: "UTC time to start evaluating the trigger in HH:mm format",
+							Required:    true,
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(hhMMRegex, "must be in HH:mm format"),
+							},
+						},
+						"end_time": schema.StringAttribute{
+							Description: "UTC time to stop evaluating the trigger in HH:mm format",
+							Required:    true,
+							Validators: []validator.String{
+								stringvalidator.RegexMatches(hhMMRegex, "must be in HH:mm format"),
+							},
+						},
+						"days_of_week": schema.ListAttribute{
+							ElementType: types.StringType,
+							Description: "The days of the week to evaluate the trigger on",
+							Required:    true,
+							Validators: []validator.List{
+								listvalidator.ValueStringsAre(stringvalidator.OneOf("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday")),
+								listvalidator.UniqueValues(),
+							},
 						},
 					},
 				},
@@ -219,16 +264,22 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	trigger, err := r.client.Triggers.Create(ctx, plan.Dataset.ValueString(), &client.Trigger{
-		Name:        plan.Name.ValueString(),
-		Description: plan.Description.ValueString(),
-		Disabled:    plan.Disabled.ValueBool(),
-		QueryID:     plan.QueryID.ValueString(),
-		AlertType:   plan.AlertType.ValueString(),
-		Threshold:   expandTriggerThreshold(plan.Threshold),
-		Frequency:   int(plan.Frequency.ValueInt64()),
-		Recipients:  expandNotificationRecipients(plan.Recipients),
-	})
+	newTrigger := &client.Trigger{
+		Name:               plan.Name.ValueString(),
+		Description:        plan.Description.ValueString(),
+		Disabled:           plan.Disabled.ValueBool(),
+		QueryID:            plan.QueryID.ValueString(),
+		AlertType:          client.TriggerAlertType(plan.AlertType.ValueString()),
+		Threshold:          expandTriggerThreshold(plan.Threshold),
+		Frequency:          int(plan.Frequency.ValueInt64()),
+		Recipients:         expandNotificationRecipients(plan.Recipients),
+		EvaluationSchedule: expandTriggerEvaluationSchedule(plan.EvaluationSchedule),
+	}
+	if plan.EvaluationSchedule != nil {
+		newTrigger.EvaluationScheduleType = client.TriggerEvaluationScheduleWindow
+	}
+
+	trigger, err := r.client.Triggers.Create(ctx, plan.Dataset.ValueString(), newTrigger)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Creating Honeycomb Trigger",
@@ -244,9 +295,10 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
 	state.QueryID = types.StringValue(trigger.QueryID)
-	state.AlertType = types.StringValue(trigger.AlertType)
+	state.AlertType = types.StringValue(string(trigger.AlertType))
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
+	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
 
 	recipients := make([]models.NotificationRecipientModel, len(trigger.Recipients))
 	for i, r := range trigger.Recipients {
@@ -320,9 +372,10 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
 	state.QueryID = types.StringValue(trigger.QueryID)
-	state.AlertType = types.StringValue(trigger.AlertType)
+	state.AlertType = types.StringValue(string(trigger.AlertType))
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
+	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
 
 	recipients := make([]models.NotificationRecipientModel, len(trigger.Recipients))
 	if state.Recipients != nil {
@@ -358,17 +411,25 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	_, err := r.client.Triggers.Update(ctx, plan.Dataset.ValueString(), &client.Trigger{
-		ID:          plan.ID.ValueString(),
-		Name:        plan.Name.ValueString(),
-		Description: plan.Description.ValueString(),
-		Disabled:    plan.Disabled.ValueBool(),
-		QueryID:     plan.QueryID.ValueString(),
-		AlertType:   plan.AlertType.ValueString(),
-		Frequency:   int(plan.Frequency.ValueInt64()),
-		Threshold:   expandTriggerThreshold(plan.Threshold),
-		Recipients:  expandNotificationRecipients(plan.Recipients),
-	})
+	updatedTrigger := &client.Trigger{
+		ID:                 plan.ID.ValueString(),
+		Name:               plan.Name.ValueString(),
+		Description:        plan.Description.ValueString(),
+		Disabled:           plan.Disabled.ValueBool(),
+		QueryID:            plan.QueryID.ValueString(),
+		AlertType:          client.TriggerAlertType(plan.AlertType.ValueString()),
+		Frequency:          int(plan.Frequency.ValueInt64()),
+		Threshold:          expandTriggerThreshold(plan.Threshold),
+		Recipients:         expandNotificationRecipients(plan.Recipients),
+		EvaluationSchedule: expandTriggerEvaluationSchedule(plan.EvaluationSchedule),
+	}
+	if updatedTrigger.EvaluationSchedule != nil {
+		updatedTrigger.EvaluationScheduleType = client.TriggerEvaluationScheduleWindow
+	} else {
+		updatedTrigger.EvaluationScheduleType = client.TriggerEvaluationScheduleFrequency
+	}
+
+	_, err := r.client.Triggers.Update(ctx, plan.Dataset.ValueString(), updatedTrigger)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Updating Honeycomb Trigger",
@@ -393,9 +454,10 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
 	state.QueryID = types.StringValue(trigger.QueryID)
-	state.AlertType = types.StringValue(trigger.AlertType)
+	state.AlertType = types.StringValue(string(trigger.AlertType))
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
+	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
 
 	recipients := make([]models.NotificationRecipientModel, len(trigger.Recipients))
 	for i, r := range trigger.Recipients {
@@ -512,4 +574,42 @@ func flattenNotificationRecipients(n []client.NotificationRecipient) []models.No
 	}
 
 	return recipients
+}
+
+func expandTriggerEvaluationSchedule(s []models.TriggerEvaluationScheduleModel) *client.TriggerEvaluationSchedule {
+	if s != nil {
+		days := make([]string, len(s[0].DaysOfWeek))
+		for i, d := range s[0].DaysOfWeek {
+			days[i] = d.ValueString()
+		}
+
+		return &client.TriggerEvaluationSchedule{
+			Window: client.TriggerEvaluationWindow{
+				StartTime:  s[0].StartTime.ValueString(),
+				EndTime:    s[0].EndTime.ValueString(),
+				DaysOfWeek: days,
+			},
+		}
+	}
+
+	return nil
+}
+
+func flattenTriggerEvaluationSchedule(t *client.Trigger) []models.TriggerEvaluationScheduleModel {
+	if t.EvaluationScheduleType == client.TriggerEvaluationScheduleWindow {
+		days := make([]basetypes.StringValue, len(t.EvaluationSchedule.Window.DaysOfWeek))
+		for i, d := range t.EvaluationSchedule.Window.DaysOfWeek {
+			days[i] = types.StringValue(d)
+		}
+
+		return []models.TriggerEvaluationScheduleModel{
+			{
+				StartTime:  types.StringValue(t.EvaluationSchedule.Window.StartTime),
+				EndTime:    types.StringValue(t.EvaluationSchedule.Window.EndTime),
+				DaysOfWeek: days,
+			},
+		}
+	}
+
+	return nil
 }

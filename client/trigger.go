@@ -59,9 +59,16 @@ type Trigger struct {
 	Query   *QuerySpec `json:"query,omitempty"`
 	QueryID string     `json:"query_id,omitempty"`
 	// Alert Type. Describes scheduling behavior for triggers.
-	AlertType string `json:"alert_type,omitempty"`
+	// Defaults to "on_change"
+	AlertType TriggerAlertType `json:"alert_type,omitempty"`
 	// Threshold. This fild is required.
 	Threshold *TriggerThreshold `json:"threshold"`
+	// Evaluation Schedule used by the trigger.
+	// Defaults to "frequency", where the trigger runs at the specified frequency.
+	// The "window" type means that the trigger will run at the specified frequency,
+	// but only in the time window specified by the evaluation schedule.
+	EvaluationScheduleType TriggerEvaluationScheduleType `json:"evaluation_schedule_type,omitempty"`
+	EvaluationSchedule     *TriggerEvaluationSchedule    `json:"evaluation_schedule,omitempty"`
 	// Frequency describes how often the trigger should run. Frequency is an
 	// interval in seconds, defaulting to 900 (15 minutes). Its value must be
 	// divisible by 60 and between 60 and 86400 (between 1 minute and 1 day).
@@ -79,12 +86,37 @@ type TriggerThreshold struct {
 // TriggerThresholdOp the operator of the trigger threshold.
 type TriggerThresholdOp string
 
-// Declaration of trigger threshold ops.
+// TriggerAlertType determines the alert type of a trigger. Valid values are 'on_change' or 'on_true'
+type TriggerAlertType string
+
+// TriggerEvaluationScheduleType determines the evaluation schedule type of a trigger. Valid values are 'frequency' or 'window'
+type TriggerEvaluationScheduleType string
+
+type TriggerEvaluationSchedule struct {
+	Window TriggerEvaluationWindow `json:"window"`
+}
+
+type TriggerEvaluationWindow struct {
+	// A slice of the days of the week to evaluate the trigger on. (e.g. ["monday", "tuesday", "wednesday"])
+	DaysOfWeek []string `json:"days_of_week"`
+	// UTC time in HH:mm format (e.g. 13:00)
+	StartTime string `json:"start_time"`
+	// UTC time in HH:mm format (e.g. 13:00)
+	EndTime string `json:"end_time"`
+}
+
 const (
+	// Trigger threshold ops
 	TriggerThresholdOpGreaterThan        TriggerThresholdOp = ">"
 	TriggerThresholdOpGreaterThanOrEqual TriggerThresholdOp = ">="
 	TriggerThresholdOpLessThan           TriggerThresholdOp = "<"
 	TriggerThresholdOpLessThanOrEqual    TriggerThresholdOp = "<="
+	// Trigger alert types
+	TriggerAlertTypeOnChange TriggerAlertType = "on_change"
+	TriggerAlertTypeOnTrue   TriggerAlertType = "on_true"
+	// Trigger evaluation schedule types
+	TriggerEvaluationScheduleFrequency TriggerEvaluationScheduleType = "frequency"
+	TriggerEvaluationScheduleWindow    TriggerEvaluationScheduleType = "window"
 )
 
 // TriggerThresholdOps returns an exhaustive list of trigger threshold ops.
@@ -97,11 +129,7 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 	}
 }
 
-// Allowed values for alert_type. | on_change is default
-const (
-	TriggerAlertTypeValueOnChange string = "on_change"
-	TriggerAlertTypeValueOnTrue   string = "on_true"
-)
+const ()
 
 func (t *Trigger) MarshalJSON() ([]byte, error) {
 	// aliased type to avoid stack overflows due to recursion
@@ -112,15 +140,17 @@ func (t *Trigger) MarshalJSON() ([]byte, error) {
 		// this doesn't work in the general case, but this
 		// client is now purpose-built for the Terraform provider
 		a := &ATrigger{
-			ID:          t.ID,
-			Name:        t.Name,
-			Description: t.Description,
-			Disabled:    t.Disabled,
-			QueryID:     t.QueryID,
-			AlertType:   t.AlertType,
-			Threshold:   t.Threshold,
-			Frequency:   t.Frequency,
-			Recipients:  t.Recipients,
+			ID:                     t.ID,
+			Name:                   t.Name,
+			Description:            t.Description,
+			Disabled:               t.Disabled,
+			QueryID:                t.QueryID,
+			AlertType:              t.AlertType,
+			Threshold:              t.Threshold,
+			Frequency:              t.Frequency,
+			Recipients:             t.Recipients,
+			EvaluationScheduleType: t.EvaluationScheduleType,
+			EvaluationSchedule:     t.EvaluationSchedule,
 		}
 		return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(a)})
 	}

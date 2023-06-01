@@ -73,7 +73,9 @@ func TestTriggers(t *testing.T) {
 		data.Query.TimeRange = ToPtr(300)
 
 		// set the default alert type
-		data.AlertType = TriggerAlertTypeValueOnChange
+		data.AlertType = TriggerAlertTypeOnChange
+		// set the default evaluation window type
+		data.EvaluationScheduleType = TriggerEvaluationScheduleFrequency
 
 		assert.Equal(t, data, trigger)
 	})
@@ -95,14 +97,22 @@ func TestTriggers(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		trigger.Description = "A new description"
 
-		// update the alert_type to on_true / this is a simple validation that this field works
-		trigger.AlertType = TriggerAlertTypeValueOnTrue
+		// update the alert type to on true
+		trigger.AlertType = TriggerAlertTypeOnTrue
+		// update the evaluation schedule to a window type
+		trigger.EvaluationScheduleType = TriggerEvaluationScheduleWindow
+		trigger.EvaluationSchedule = &TriggerEvaluationSchedule{
+			Window: TriggerEvaluationWindow{
+				DaysOfWeek: []string{"monday", "wednesday", "friday"},
+				StartTime:  "13:00",
+				EndTime:    "21:00",
+			},
+		}
 
 		result, err := c.Triggers.Update(ctx, dataset, trigger)
 
 		// copy IDs before asserting equality
 		trigger.QueryID = result.QueryID
-		trigger.AlertType = result.AlertType
 		assert.NoError(t, err)
 		assert.Equal(t, trigger, result)
 	})
