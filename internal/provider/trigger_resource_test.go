@@ -243,6 +243,114 @@ resource "honeycombio_trigger" "test" {
 	})
 }
 
+func TestAcc_TriggerResourceEvaluationWindow(t *testing.T) {
+	dataset := testAccDataset()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+  op     = "COUNT"
+}
+
+  time_range = 1200
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_trigger" "test" {
+  name = "Ensure evaluation windows are set correctly"
+
+  query_id = honeycombio_query.test.id
+  dataset  = "%[1]s"
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  evaluation_schedule {
+    start_time = "13:00"
+    end_time   = "21:00"
+
+    days_of_week = ["monday", "wednesday", "friday"]
+  }
+}`, dataset),
+			},
+			{
+				// update the schedule with different days and hours
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+  op     = "COUNT"
+}
+
+  time_range = 1200
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_trigger" "test" {
+  name = "Ensure evaluation windows are set correctly"
+
+  query_id = honeycombio_query.test.id
+  dataset  = "%[1]s"
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  evaluation_schedule {
+    start_time = "11:00"
+    end_time   = "22:00"
+
+    days_of_week = ["monday", "wednesday", "friday", "sunday"]
+  }
+}`, dataset),
+			},
+			{
+				// remove the evaluation schedule to switch back to frequency
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+  op     = "COUNT"
+}
+
+  time_range = 1200
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_trigger" "test" {
+  name = "Ensure evaluation windows are set correctly"
+
+  query_id = honeycombio_query.test.id
+  dataset  = "%[1]s"
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+}`, dataset),
+			},
+		},
+	})
+}
+
 func TestAcc_TriggerResourcePagerDutyUnsetSeverity(t *testing.T) {
 	t.Skip("known issue: see https://github.com/honeycombio/terraform-provider-honeycombio/issues/309")
 
