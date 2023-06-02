@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -127,33 +126,6 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 		TriggerThresholdOpLessThan,
 		TriggerThresholdOpLessThanOrEqual,
 	}
-}
-
-func (t *Trigger) MarshalJSON() ([]byte, error) {
-	// aliased type to avoid stack overflows due to recursion
-	type ATrigger Trigger
-
-	if t.QueryID != "" && t.Query != nil {
-		// we can't sent both to the API, so favour QueryID
-		// this doesn't work in the general case, but this
-		// client is now purpose-built for the Terraform provider
-		a := &ATrigger{
-			ID:                     t.ID,
-			Name:                   t.Name,
-			Description:            t.Description,
-			Disabled:               t.Disabled,
-			QueryID:                t.QueryID,
-			AlertType:              t.AlertType,
-			Threshold:              t.Threshold,
-			Frequency:              t.Frequency,
-			Recipients:             t.Recipients,
-			EvaluationScheduleType: t.EvaluationScheduleType,
-			EvaluationSchedule:     t.EvaluationSchedule,
-		}
-		return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(a)})
-	}
-
-	return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(t)})
 }
 
 func (s *triggers) List(ctx context.Context, dataset string) ([]Trigger, error) {
