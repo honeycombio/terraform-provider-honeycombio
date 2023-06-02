@@ -10,7 +10,7 @@ builds:
     flags:
       - -trimpath
     ldflags:
-      - "-s -w -X github.com/honeycombio/terraform-provider-honeycombio/main.providerVersion={{.Version}}"
+      - "-s -w -X main.providerVersion={{.Version}}"
     goos:
       - freebsd
       - windows
