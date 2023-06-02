@@ -136,9 +136,11 @@ The following arguments are supported:
 * `threshold` - (Required) A configuration block (described below) describing the threshold of the trigger.
 * `description` - (Optional) Description of the trigger.
 * `disabled` - (Optional) The state of the trigger. If true, the trigger will not be run. Defaults to false.
-* `frequency` - (Optional) The interval (in seconds) in which to check the results of the query’s calculation against the threshold. This value must be divisible by 60, between 60 and 86400 (between 1 minute and 1 day), and not be more than 4 times the query's duration. Defaults to 900 (15 minutes).
+* `frequency` - (Optional) The interval (in seconds) in which to check the results of the query’s calculation against the threshold.
+This value must be divisible by 60, between 60 and 86400 (between 1 minute and 1 day), and not be more than 4 times the query's duration.
+Defaults to 900 (15 minutes).
 * `alert_type` - (Optional) The frequency for the alert to trigger. (`on_change` is the default behavior, `on_true` can also be selected)
-* `evaluation_schedule` - (Optional) A configuration block (described below) that determines when t he trigger is run.
+* `evaluation_schedule` - (Optional) A configuration block (described below) that determines when the trigger is run.
 When the time is within the scheduled window the trigger will be run at the specified frequency.
 Outside of the window, the trigger will not be run.
 If no schedule is specified, the trigger will be run at the specified frequency at all times.
@@ -160,9 +162,11 @@ Each trigger configuration may provide an `evaluation_schedule` block, which acc
 
 Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments. A trigger recipient block can either refer to an existing recipient (a recipient that is already present in another trigger) or a new recipient. When specifying an existing recipient, only `id` may be set. If you pass in a recipient without its ID and only include the type and target, Honeycomb will make a best effort to match to an existing recipient. To retrieve the ID of an existing recipient, refer to the [`honeycombio_recipient`](../data-sources/recipient.md) data source.
 
-* `type` - (Optional) The type of the trigger recipient, allowed types are `email`, `marker`, `pagerduty`, `slack` and `webhook`. Should not be used in combination with `id`.
-* `target` - (Optional) Target of the trigger recipient, this has another meaning depending on the type of recipient (see the table below). Should not be used in combination with `id`.
-* `id` - (Optional) The ID of an already existing recipient. Should not be used in combination with `type` and `target`.
+* `type` - (Optional) The type of the trigger recipient, allowed types are `email`, `marker`, `pagerduty`, `slack` and `webhook`.
+Cannot not be used in combination with `id`.
+* `target` - (Optional) Target of the trigger recipient, this has another meaning depending on the type of recipient (see the table below).
+Cannot not be used in combination with `id`.
+* `id` - (Optional) The ID of an already existing recipient. Cannot not be used in combination with `type` and `target`.
 * `notification_details` - (Optional) a block of additional details to send along with the notification. The only supported option currently is `pagerduty_severity` which has a default value of `critical` but can be set to one of `info`, `warning`, `error`, or `critical` and must be used in combination with a PagerDuty recipient.
 
 Type      | Target

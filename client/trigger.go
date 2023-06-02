@@ -129,8 +129,6 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 	}
 }
 
-const ()
-
 func (t *Trigger) MarshalJSON() ([]byte, error) {
 	// aliased type to avoid stack overflows due to recursion
 	type ATrigger Trigger
