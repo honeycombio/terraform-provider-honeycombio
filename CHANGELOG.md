@@ -2,7 +2,7 @@
 
 BUGFIXES:
 
-* build(goreleaser): fix regression and set version on released artifact
+* build(goreleaser): fix regression and set version on released artifact (#316)
 
 # 0.15.0 (Jun 2, 2023)
 
