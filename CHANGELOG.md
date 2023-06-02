@@ -1,3 +1,9 @@
+# 0.15.1 (Jun 2, 2023)
+
+BUGFIXES:
+
+* build(goreleaser): fix regression and set version on released artifact (#316)
+
 # 0.15.0 (Jun 2, 2023)
 
 NOTES: this release includes a complete rewrite of the `honeycombio_trigger` resource: migrating it from the Terraform Plugin SDKv2 to the new Plugin Framework.
@@ -20,7 +26,7 @@ FEATURES:
 
 ENHANCEMENTS:
 
-* resource/honeycombio_trigger; add `evaluation_schedule` support (#314)
+* resource/honeycombio_trigger: add `evaluation_schedule` support (#314)
 
 BUGFIXES:
 
