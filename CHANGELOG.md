@@ -1,3 +1,39 @@
+# 0.15.0 (Jun 2, 2023)
+
+NOTES: this release includes a complete rewrite of the `honeycombio_trigger` resource: migrating it from the Terraform Plugin SDKv2 to the new Plugin Framework.
+This was done to fix a number of long-standing bugs related to the `recipient` block.
+
+This migration has resulted in some subtle, but non-breaking side effects:
+
+* after updating, the next "plan" will show all trigger recipients being updated in-place
+  * at the core of most all of these bugs was that fact that all of `id`, `type`, and `target` for a recipient were being stored in state. Now only `id` or the `type`+`target` pair will be stored in the state and the plan output should reflect this.
+* enforcement of only specifying one of `id` or `type`+`target` is now possible due to the new flexibility gained by migrating to the Plugin Framework. Due to the shape of the recipient blocks in the schema, this validation was not possible with the Plugin SDK.
+  * in configurations specifying both `id` and `type`+`target` in recipient blocks, the suggestion is to just use `id` going forward.
+* the migration has introduced a new bug (#309) affecting only PagerDuty recipients where the default notification severity of `critical` was being relied upon without specifying a `notification_details` block.
+  * we felt that the benefit of these fixes outweighted the impact of this newly introduced bug
+  * the bug has a very straight forward work around (just specify the severity!), documented in the issue (#309)
+
+FEATURES:
+
+* *New Datasource*: `honeycombio_column` (#297)
+* *New Datasource*: `honeycombio_columns` (#297)
+
+ENHANCEMENTS:
+
+* resource/honeycombio_trigger; add `evaluation_schedule` support (#314)
+
+BUGFIXES:
+
+* client - escape query string when listing burn alerts for an SLO (#301)
+* resource/honeycombio_trigger: recipient fixes (#306, #311)
+
+HOUSEKEEPING:
+
+* build(ci): appease the linter gods (#296)
+* build(deps): bump codecov/codecov-action from 3.1.2 to 3.1.4 (#298, #307)
+* build(deps): bump github.com/stretchr/testify from 1.8.2 to 1.8.4 (#308, #312)
+* build(deps): introduce TF Plugin Framework (#305)
+
 # 0.14.0 (Apr 19, 2023)
 
 ENHANCEMENTS:
