@@ -36,7 +36,6 @@ func TestColumns(t *testing.T) {
 		data.CreatedAt = column.CreatedAt
 		data.UpdatedAt = column.UpdatedAt
 		assert.Equal(t, data, column)
-
 	})
 
 	t.Run("List", func(t *testing.T) {
@@ -64,7 +63,7 @@ func TestColumns(t *testing.T) {
 		// change all the fields to test
 		data := &Column{
 			ID:          column.ID,
-			KeyName:     "a-new-keyname",
+			KeyName:     column.KeyName,
 			Hidden:      ToPtr(true),
 			Description: "This is a new description",
 			Type:        ToPtr(ColumnTypeBoolean),
@@ -74,6 +73,9 @@ func TestColumns(t *testing.T) {
 		assert.NoError(t, err)
 
 		data.ID = column.ID
+		assert.Equal(t, column.Description, data.Description)
+		assert.Equal(t, column.Type, data.Type)
+		assert.True(t, *column.Hidden)
 		assert.NotNil(t, column.LastWrittenAt, "last written at is empty")
 		assert.NotNil(t, column.CreatedAt, "created at is empty")
 		assert.NotNil(t, column.UpdatedAt, "updated at is empty")
