@@ -392,6 +392,7 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 					"Error Reading Honeycomb Trigger",
 					"Could not find Recipient "+r.ID+" in state",
 				)
+				return
 			}
 
 			recipients[i] = state.Recipients[idx]
@@ -473,6 +474,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 				"Error Updating Honeycomb Trigger",
 				"Could not find Recipient "+r.ID+" in plan",
 			)
+			return
 		}
 		recipients[i] = plan.Recipients[idx]
 	}
