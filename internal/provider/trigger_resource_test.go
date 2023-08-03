@@ -407,6 +407,8 @@ resource "honeycombio_trigger" "test" {
 
 func TestAcc_TriggerResourceThresholdFloatingPointBug(t *testing.T) {
 	// reported as https://github.com/honeycombio/terraform-provider-honeycombio/issues/335
+	dataset := testAccDataset()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
@@ -421,18 +423,26 @@ data "honeycombio_query_specification" "test" {
   time_range = 1200
 }
 
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
 resource "honeycombio_trigger" "test" {
   name = "floating point test"
 
-  dataset  = "%s"
-  query_id = data.honeycombio_query_specification.test.id
+  dataset  = "%[1]s"
+  query_id = honeycombio_query.test.id
 
   threshold {
     op    = ">"
     value = 1 - 0.99
   }
 }
-`, testAccDataset()),
+`, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+				),
 			},
 		},
 	})
