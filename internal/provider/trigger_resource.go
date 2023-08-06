@@ -343,7 +343,7 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 				if !s.ID.IsNull() {
 					return s.ID.ValueString() == r.ID
 				}
-				return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
+				return s.Type.ValueString() == string(r.Type) && s.Target.ValueString() == r.Target
 			})
 			if idx < 0 {
 				// this should never happen?! But if it does, we'll just skip it and hope to get a reproducable case
