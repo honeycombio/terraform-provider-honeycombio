@@ -1,3 +1,27 @@
+# 0.15.2 (Aug 8, 2023)
+
+BUGFIXES:
+
+* resources/honeycombio_trigger: fix floating point precision comparison bug (#337)
+* resources/honeycombio_trigger: resolve trigger recipient panics (#339)
+
+HOUSEKEEPING:
+
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.2.0 to 1.3.0 (#318)
+* build(deps): Bump goreleaser/goreleaser-action from 4.2.0 to 4.3.0 (#319)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.2.0 to 1.3.0 (#320)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.0 to 1.3.1 (#321)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.15.0 to 0.16.0 (#323)
+* client: update column test to not rename column (#324)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.26.1 to 2.27.0 (#328)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.16.0 to 0.17.0 (#326)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.10.0 to 0.11.0 (#327)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.1 to 1.3.2 (#325)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.11.0 to 0.11.1 (#329)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.2 to 1.3.3 (#334)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.3.0 to 1.4.0 (#336)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework-validators from 0.10.0 to 0.11.0 (#338)
+
 # 0.15.1 (Jun 2, 2023)
 
 BUGFIXES:
