@@ -258,7 +258,8 @@ func (r *triggerResource) Configure(_ context.Context, req resource.ConfigureReq
 }
 
 func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan models.TriggerResourceModel
+	var plan, config models.TriggerResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -299,51 +300,8 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
-
-	recipients := make([]models.NotificationRecipientModel, len(trigger.Recipients))
-	for i, r := range trigger.Recipients {
-		var rcpt models.NotificationRecipientModel
-
-		// match the trigger's recipient to that in the plan
-		idx := slices.IndexFunc(plan.Recipients, func(s models.NotificationRecipientModel) bool {
-			if !s.ID.IsUnknown() {
-				return s.ID.ValueString() == r.ID
-			}
-			return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
-		})
-		if idx < 0 {
-			resp.Diagnostics.AddError(
-				"Error Creating Honeycomb Trigger",
-				"Could not find Recipient "+r.ID+" in plan",
-			)
-		}
-		rcpt = plan.Recipients[idx]
-
-		// TODO: can we move this to the planmodifier by adding a create state?
-		if !rcpt.ID.IsUnknown() {
-			// recipient provided by ID
-			rcpt.ID = types.StringValue(r.ID)
-			rcpt.Type = types.StringNull()
-			rcpt.Target = types.StringNull()
-		} else {
-			// recipient provided by type+target
-			rcpt.ID = types.StringNull()
-			rcpt.Type = types.StringValue(string(r.Type))
-			if rcpt.Type.ValueString() == string(client.RecipientTypePagerDuty) {
-				// PagerDuty recipients don't have a target
-				rcpt.Target = types.StringNull()
-			} else {
-				rcpt.Target = types.StringValue(r.Target)
-			}
-		}
-
-		if r.Type == client.RecipientTypePagerDuty && r.Details != nil {
-			rcpt.Details = make([]models.NotificationRecipientDetailsModel, 1)
-			rcpt.Details[0].PDSeverity = types.StringValue(string(r.Details.PDSeverity))
-		}
-		recipients[i] = rcpt
-	}
-	state.Recipients = recipients
+	// we created them as authored so to avoid matching type-target or ID we can just use the same value
+	state.Recipients = config.Recipients
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -379,21 +337,22 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	recipients := make([]models.NotificationRecipientModel, len(trigger.Recipients))
 	if state.Recipients != nil {
+		// match the Trigger's recipients to those in the state sorting out type+target vs ID
 		for i, r := range trigger.Recipients {
-			// match the Trigger's recipient to that in state
 			idx := slices.IndexFunc(state.Recipients, func(s models.NotificationRecipientModel) bool {
 				if !s.ID.IsNull() {
 					return s.ID.ValueString() == r.ID
 				}
-				return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
+				return s.Type.ValueString() == string(r.Type) && s.Target.ValueString() == r.Target
 			})
 			if idx < 0 {
+				// this should never happen?! But if it does, we'll just skip it and hope to get a reproducable case
 				resp.Diagnostics.AddError(
 					"Error Reading Honeycomb Trigger",
 					"Could not find Recipient "+r.ID+" in state",
 				)
+				continue
 			}
-
 			recipients[i] = state.Recipients[idx]
 		}
 	} else {
@@ -405,7 +364,8 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan models.TriggerResourceModel
+	var plan, config models.TriggerResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -458,25 +418,8 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
-
-	recipients := make([]models.NotificationRecipientModel, len(trigger.Recipients))
-	for i, r := range trigger.Recipients {
-		// match the Trigger's recipient to that in the plan
-		idx := slices.IndexFunc(plan.Recipients, func(s models.NotificationRecipientModel) bool {
-			if !s.ID.IsNull() {
-				return s.ID.ValueString() == r.ID
-			}
-			return s.Type.ValueString() == string(r.Type) && (s.Target.IsNull() || s.Target.ValueString() == r.Target)
-		})
-		if idx < 0 {
-			resp.Diagnostics.AddError(
-				"Error Updating Honeycomb Trigger",
-				"Could not find Recipient "+r.ID+" in plan",
-			)
-		}
-		recipients[i] = plan.Recipients[idx]
-	}
-	state.Recipients = recipients
+	// we created them as authored so to avoid matching type-target or ID we can just use the same value
+	state.Recipients = config.Recipients
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
