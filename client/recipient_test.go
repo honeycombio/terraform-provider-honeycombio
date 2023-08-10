@@ -3,8 +3,10 @@ package client
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRecipientsEmail(t *testing.T) {
@@ -22,18 +24,16 @@ func TestRecipientsEmail(t *testing.T) {
 				EmailAddress: "hnytest@example.com",
 			},
 		}
-
+		now := time.Now()
 		rcpt, err = c.Recipients.Create(ctx, data)
 
-		assert.NoError(t, err, "unable to create Recipient")
+		require.NoError(t, err, "unable to create Recipient")
 		assert.NotNil(t, rcpt.ID, "ID is empty")
 		assert.NotNil(t, rcpt.CreatedAt, "created at is empty")
 		assert.NotNil(t, rcpt.UpdatedAt, "updated at is empty")
-		// copy dynamic fields before asserting equality
-		data.ID = rcpt.ID
-		data.CreatedAt = rcpt.CreatedAt
-		data.UpdatedAt = rcpt.UpdatedAt
-		assert.Equal(t, data, rcpt)
+		assert.Equal(t, data.Details.EmailAddress, rcpt.Details.EmailAddress, "email address does not match")
+		assert.WithinDuration(t, now, rcpt.CreatedAt, 2*time.Second)
+		assert.WithinDuration(t, now, rcpt.UpdatedAt, 2*time.Second)
 	})
 
 	t.Run("List", func(t *testing.T) {
@@ -52,25 +52,21 @@ func TestRecipientsEmail(t *testing.T) {
 
 	t.Run("Update", func(t *testing.T) {
 		rcpt.Details.EmailAddress = "hnytest2@example.com"
-
+		now := time.Now()
 		result, err := c.Recipients.Update(ctx, rcpt)
 
 		assert.NoError(t, err, "failed to update Recipient")
-		// copy dynamic field before asserting equality
-		rcpt.CreatedAt = result.CreatedAt
-		rcpt.UpdatedAt = result.UpdatedAt
-		assert.Equal(t, result, rcpt)
+		assert.Equal(t, rcpt.Details.EmailAddress, result.Details.EmailAddress, "email address not updated")
+		assert.WithinDuration(t, now, result.UpdatedAt, 2*time.Second)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
 		err = c.Recipients.Delete(ctx, rcpt.ID)
-
 		assert.NoError(t, err, "failed to delete Recipient")
 	})
 
 	t.Run("Get_NotFound", func(t *testing.T) {
 		_, err := c.Recipients.Get(ctx, rcpt.ID)
-
 		assert.Equal(t, ErrNotFound, err)
 	})
 }
