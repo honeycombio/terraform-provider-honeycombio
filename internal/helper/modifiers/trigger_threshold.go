@@ -7,19 +7,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type defaultTriggerThresholdExceededValueModifier struct{}
+type defaultTriggerThresholdExceededLimitModifier struct{}
 
-var _ planmodifier.Int64 = &defaultTriggerThresholdExceededValueModifier{}
+var _ planmodifier.Int64 = &defaultTriggerThresholdExceededLimitModifier{}
 
-func (m defaultTriggerThresholdExceededValueModifier) Description(_ context.Context) string {
+func (m defaultTriggerThresholdExceededLimitModifier) Description(_ context.Context) string {
 	return "Handles the default value for a Trigger's Threshold Exceeded Limits."
 }
 
-func (m defaultTriggerThresholdExceededValueModifier) MarkdownDescription(ctx context.Context) string {
+func (m defaultTriggerThresholdExceededLimitModifier) MarkdownDescription(ctx context.Context) string {
 	return m.Description(ctx)
 }
 
-func (m defaultTriggerThresholdExceededValueModifier) PlanModifyInt64(ctx context.Context, req planmodifier.Int64Request, resp *planmodifier.Int64Response) {
+func (m defaultTriggerThresholdExceededLimitModifier) PlanModifyInt64(ctx context.Context, req planmodifier.Int64Request, resp *planmodifier.Int64Response) {
 	// Do nothing on resource destroy.
 	if req.Plan.Raw.IsNull() {
 		return
@@ -31,6 +31,6 @@ func (m defaultTriggerThresholdExceededValueModifier) PlanModifyInt64(ctx contex
 	}
 }
 
-func DefaultTriggerThresholdExceededValue() planmodifier.Int64 {
-	return defaultTriggerThresholdExceededValueModifier{}
+func DefaultTriggerThresholdExceededLimit() planmodifier.Int64 {
+	return defaultTriggerThresholdExceededLimitModifier{}
 }

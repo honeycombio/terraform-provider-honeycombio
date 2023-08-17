@@ -157,7 +157,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							PlanModifiers: []planmodifier.Int64{
 								int64planmodifier.UseStateForUnknown(),
 								// Nested blocks currently do not support default values, so we need to set it via a planmodifier
-								modifiers.DefaultTriggerThresholdExceededValue(),
+								modifiers.DefaultTriggerThresholdExceededLimit(),
 							},
 						},
 					},
