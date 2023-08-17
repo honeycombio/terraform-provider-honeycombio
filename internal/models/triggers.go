@@ -17,8 +17,9 @@ type TriggerResourceModel struct {
 }
 
 type TriggerThresholdModel struct {
-	Op    types.String  `tfsdk:"op"`
-	Value types.Float64 `tfsdk:"value"`
+	Op            types.String  `tfsdk:"op"`
+	Value         types.Float64 `tfsdk:"value"`
+	ExceededLimit types.Int64   `tfsdk:"exceeded_limit"`
 }
 
 type NotificationRecipientModel struct {

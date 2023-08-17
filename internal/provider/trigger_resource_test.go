@@ -26,6 +26,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", "Test trigger from terraform-provider-honeycombio"),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "600"),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "1"),
 					resource.TestCheckResourceAttrPair("honeycombio_trigger.test", "query_id", "honeycombio_query.test", "id"),
 				),
 			},
@@ -116,12 +117,18 @@ func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccConfigTriggerRecipientByID(dataset, testRecipients[0].ID),
-				Check:  resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.id", testRecipients[0].ID),
+				Config: testAccConfigTriggerRecipientByID(dataset, testRecipients[0].ID, 3),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.id", testRecipients[0].ID),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "3"),
+				),
 			},
 			{
-				Config: testAccConfigTriggerRecipientByID(dataset, testRecipients[1].ID),
-				Check:  resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.id", testRecipients[1].ID),
+				Config: testAccConfigTriggerRecipientByID(dataset, testRecipients[1].ID, 5),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.id", testRecipients[1].ID),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "5"),
+				),
 			},
 		},
 	})
@@ -454,7 +461,7 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, pdseverity)
 }
 
-func testAccConfigTriggerRecipientByID(dataset, recipientID string) string {
+func testAccConfigTriggerRecipientByID(dataset, recipientID string, exceededLimit int) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
   calculation {
@@ -474,15 +481,17 @@ resource "honeycombio_trigger" "test" {
   name    = "Test trigger with changing recipient id"
   dataset = "%[1]s"
   query_id = honeycombio_query.test.id
+
   threshold {
-    op    = ">"
-    value = 100
+    op             = ">"
+    value          = 100
+    exceeded_limit = %[3]d
   }
 
   recipient {
     id = "%[2]s"
   }
-}`, dataset, recipientID)
+}`, dataset, recipientID, exceededLimit)
 }
 
 func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFunc {

@@ -153,6 +153,7 @@ Each trigger configuration must contain exactly one `threshold` block, which acc
 
 * `op` - (Required) The operator to apply, allowed threshold operators are `>`, `>=`, `<`, and `<=`.
 * `value` - (Required) The value to be used with the operator.
+* `exceeded_limit` - (Optional) The number of times the threshold is met before an alert is sent. Defaults to `1`.
 
 Each trigger configuration may provide an `evaluation_schedule` block, which accepts the following arguments:
 
