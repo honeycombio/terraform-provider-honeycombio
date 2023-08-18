@@ -153,7 +153,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							Optional:    true,
 							Computed:    true,
 							Description: "The number of times the threshold is met before an alert is sent. Defaults to 1.",
-							Validators:  []validator.Int64{int64validator.Between(1, 10)},
+							Validators:  []validator.Int64{int64validator.Between(1, 5)},
 							PlanModifiers: []planmodifier.Int64{
 								int64planmodifier.UseStateForUnknown(),
 								// Nested blocks currently do not support default values, so we need to set it via a planmodifier
