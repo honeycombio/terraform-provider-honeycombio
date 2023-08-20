@@ -32,7 +32,7 @@ func dataSourceHoneycombioRecipients() *schema.Resource {
 				Optional:     true,
 				MinItems:     1,
 				MaxItems:     1,
-				Description:  "Attributes to filter the recipients with. `type` must be set when providing a filter.",
+				Description:  "Attributes to filter the recipients with. `name` must be set when providing a filter.",
 				RequiredWith: []string{"type"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

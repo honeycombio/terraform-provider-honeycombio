@@ -82,21 +82,14 @@ func (d *derivedColumnsDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	if !data.StartsWith.IsNull() {
-		startsWith := data.StartsWith.ValueString()
-
-		for i := len(columns) - 1; i >= 0; i-- {
-			if !strings.HasPrefix(columns[i].Alias, startsWith) {
-				columns = append(columns[:i], columns[i+1:]...)
-			}
+	startsWith := data.StartsWith.ValueString()
+	for _, s := range columns {
+		if startsWith != "" && !strings.HasPrefix(s.Alias, startsWith) {
+			continue
 		}
+		data.Columns = append(data.Columns, types.StringValue(s.ID))
 	}
-
-	ids := make([]string, len(columns))
-	for _, dc := range columns {
-		data.Columns = append(data.Columns, types.StringValue(dc.Alias))
-	}
-	data.ID = types.StringValue(hashcode.Strings(ids))
+	data.ID = types.StringValue(hashcode.StringValues(data.Columns))
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
