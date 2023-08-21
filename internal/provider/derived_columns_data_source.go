@@ -31,7 +31,7 @@ type derivedColumnsDataSourceModel struct {
 	ID         types.String   `tfsdk:"id"`
 	Dataset    types.String   `tfsdk:"dataset"`
 	StartsWith types.String   `tfsdk:"starts_with"`
-	Columns    []types.String `tfsdk:"names"`
+	IDs        []types.String `tfsdk:"names"`
 }
 
 func (d *derivedColumnsDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -87,9 +87,9 @@ func (d *derivedColumnsDataSource) Read(ctx context.Context, req datasource.Read
 		if startsWith != "" && !strings.HasPrefix(s.Alias, startsWith) {
 			continue
 		}
-		data.Columns = append(data.Columns, types.StringValue(s.ID))
+		data.IDs = append(data.IDs, types.StringValue(s.ID))
 	}
-	data.ID = types.StringValue(hashcode.StringValues(data.Columns))
+	data.ID = types.StringValue(hashcode.StringValues(data.IDs))
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)

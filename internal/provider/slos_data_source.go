@@ -36,7 +36,7 @@ type slosDataSourceModel struct {
 	ID           types.String       `tfsdk:"id"`
 	Dataset      types.String       `tfsdk:"dataset"`
 	DetailFilter []slosDetailFilter `tfsdk:"detail_filter"`
-	SLOs         []types.String     `tfsdk:"ids"`
+	IDs          []types.String     `tfsdk:"ids"`
 }
 
 type slosDetailFilter struct {
@@ -138,9 +138,9 @@ func (d *slosDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		if sloFilter != nil && !sloFilter.Match(s) {
 			continue
 		}
-		data.SLOs = append(data.SLOs, types.StringValue(s.ID))
+		data.IDs = append(data.IDs, types.StringValue(s.ID))
 	}
-	data.ID = types.StringValue(hashcode.StringValues(data.SLOs))
+	data.ID = types.StringValue(hashcode.StringValues(data.IDs))
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
