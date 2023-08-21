@@ -1,6 +1,6 @@
 # Data Source: honeycombio_slos
 
-The SLOs data source allows the SLOs of a dataset to be retrieved.
+The SLOs data source retrieves the SLOs of a dataset, with the option of narrowing the retrieval by providing a `detail_filter`.
 
 ## Example Usage
 
