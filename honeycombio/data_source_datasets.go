@@ -46,25 +46,20 @@ func dataSourceHoneycombioDatasetsRead(ctx context.Context, d *schema.ResourceDa
 		return diag.FromErr(err)
 	}
 
-	value, ok := d.GetOk("starts_with")
-	if ok {
-		startsWith := value.(string)
+	var startsWith string
+	if value, ok := d.GetOk("starts_with"); ok {
+		startsWith = value.(string)
+	}
 
-		for i := len(datasets) - 1; i >= 0; i-- {
-			if !strings.HasPrefix(datasets[i].Name, startsWith) {
-				datasets = append(datasets[:i], datasets[i+1:]...)
-			}
+	names := make([]string, 0, len(datasets))
+	slugs := make([]string, 0, len(datasets))
+	for _, d := range datasets {
+		if startsWith != "" && !strings.HasPrefix(d.Name, startsWith) {
+			continue
 		}
+		names = append(names, d.Name)
+		slugs = append(slugs, d.Slug)
 	}
-
-	names := make([]string, len(datasets))
-	slugs := make([]string, len(datasets))
-
-	for i, d := range datasets {
-		names[i] = d.Name
-		slugs[i] = d.Slug
-	}
-
 	d.Set("names", names)
 	d.Set("slugs", slugs)
 
