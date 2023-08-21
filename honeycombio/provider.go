@@ -48,7 +48,6 @@ func Provider(version string) *schema.Provider {
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"honeycombio_board":               newBoard(),
-			"honeycombio_burn_alert":          newBurnAlert(),
 			"honeycombio_column":              newColumn(),
 			"honeycombio_dataset":             newDataset(),
 			"honeycombio_dataset_definition":  newDatasetDefinition(),
