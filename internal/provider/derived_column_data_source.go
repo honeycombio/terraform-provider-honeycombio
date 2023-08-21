@@ -40,13 +40,13 @@ func (d *derivedColumnDataSource) Metadata(_ context.Context, req datasource.Met
 
 func (d *derivedColumnDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Fetches the Derived Columns in a dataset",
+		Description: "Fetches a Derived Column in a dataset",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
 			},
 			"dataset": schema.StringAttribute{
-				Description: "The dataset to fetch the derived columns from. Use '__all__' to fetch Environment-wide derived columns.",
+				Description: "The dataset to fetch the derived column from. Use '__all__' to fetch an Environment-wide derived column.",
 				Required:    true,
 			},
 			"alias": schema.StringAttribute{

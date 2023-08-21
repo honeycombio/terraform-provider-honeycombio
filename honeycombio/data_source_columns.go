@@ -48,20 +48,17 @@ func dataSourceHoneycombioColumnsRead(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(err)
 	}
 
-	value, ok := d.GetOk("starts_with")
-	if ok {
-		startsWith := value.(string)
-
-		for i := len(columns) - 1; i >= 0; i-- {
-			if !strings.HasPrefix(columns[i].KeyName, startsWith) {
-				columns = append(columns[:i], columns[i+1:]...)
-			}
-		}
+	var startsWith string
+	if value, ok := d.GetOk("starts_with"); ok {
+		startsWith = value.(string)
 	}
 
-	names := make([]string, len(columns))
-	for i, d := range columns {
-		names[i] = d.KeyName
+	names := make([]string, 0, len(columns))
+	for _, column := range columns {
+		if startsWith != "" && !strings.HasPrefix(column.KeyName, startsWith) {
+			continue
+		}
+		names = append(names, column.KeyName)
 	}
 	d.Set("names", names)
 
