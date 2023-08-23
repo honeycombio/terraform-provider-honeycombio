@@ -21,17 +21,6 @@ type TriggerThresholdModel struct {
 	Value types.Float64 `tfsdk:"value"`
 }
 
-type NotificationRecipientModel struct {
-	ID      types.String                        `tfsdk:"id"`
-	Type    types.String                        `tfsdk:"type"`
-	Target  types.String                        `tfsdk:"target"`
-	Details []NotificationRecipientDetailsModel `tfsdk:"notification_details"`
-}
-
-type NotificationRecipientDetailsModel struct {
-	PDSeverity types.String `tfsdk:"pagerduty_severity"`
-}
-
 type TriggerEvaluationScheduleModel struct {
 	DaysOfWeek []types.String `tfsdk:"days_of_week"`
 	StartTime  types.String   `tfsdk:"start_time"`
