@@ -26,7 +26,7 @@ data "honeycombio_recipients" "example-dot-com" {
 The following arguments are supported:
 
 * `type` - (Optional) The type of recipient, allowed types are `email`, `pagerduty`, `slack` and `webhook`.
-* `detail_filter` - (Optional) a block to further filter recipients as described below. `type` must be set when providing a filter.
+* `detail_filter` - (Optional) a block to further filter recipients as described below. `name` must be set when providing a filter.
 
 To further filter the recipient results, a `detail_filter` block can be provided which accepts the following arguments:
 

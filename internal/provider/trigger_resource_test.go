@@ -58,7 +58,7 @@ func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
 			{
 				ExternalProviders: map[string]resource.ExternalProvider{
 					"honeycombio": {
-						VersionConstraint: "~> 0.14",
+						VersionConstraint: "~> 0.14.0",
 						Source:            "honeycombio/honeycombio",
 					},
 				},
@@ -70,7 +70,6 @@ func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
 			{
 				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 				Config:                   config,
-				PlanOnly:                 true,
 			},
 		},
 	})
