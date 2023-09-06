@@ -76,6 +76,8 @@ func TestTriggers(t *testing.T) {
 		data.AlertType = TriggerAlertTypeOnChange
 		// set the default evaluation window type
 		data.EvaluationScheduleType = TriggerEvaluationScheduleFrequency
+		// set the default threshold exceeded limit
+		data.Threshold.ExceededLimit = 1
 
 		assert.Equal(t, data, trigger)
 	})
@@ -108,6 +110,8 @@ func TestTriggers(t *testing.T) {
 				EndTime:    "21:00",
 			},
 		}
+		// update the threshold exceeded limit to 3
+		trigger.Threshold.ExceededLimit = 3
 
 		result, err := c.Triggers.Update(ctx, dataset, trigger)
 
