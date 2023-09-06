@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -24,6 +25,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/modifiers"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
@@ -143,6 +145,17 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						"value": schema.Float64Attribute{
 							Required:    true,
 							Description: "The value to be used with the operator.",
+						},
+						"exceeded_limit": schema.Int64Attribute{
+							Optional:    true,
+							Computed:    true,
+							Description: "The number of times the threshold is met before an alert is sent. Defaults to 1.",
+							Validators:  []validator.Int64{int64validator.Between(1, 5)},
+							PlanModifiers: []planmodifier.Int64{
+								int64planmodifier.UseStateForUnknown(),
+								// Nested blocks currently do not support default values, so we need to set it via a planmodifier
+								modifiers.DefaultTriggerThresholdExceededLimit(),
+							},
 						},
 					},
 				},
@@ -402,15 +415,17 @@ func expandTriggerThreshold(t []models.TriggerThresholdModel) *client.TriggerThr
 	}
 
 	return &client.TriggerThreshold{
-		Op:    client.TriggerThresholdOp(t[0].Op.ValueString()),
-		Value: t[0].Value.ValueFloat64(),
+		Op:            client.TriggerThresholdOp(t[0].Op.ValueString()),
+		Value:         t[0].Value.ValueFloat64(),
+		ExceededLimit: int(t[0].ExceededLimit.ValueInt64()),
 	}
 }
 
 func flattenTriggerThreshold(t *client.TriggerThreshold) []models.TriggerThresholdModel {
 	return []models.TriggerThresholdModel{{
-		Op:    types.StringValue(string(t.Op)),
-		Value: types.Float64Value(t.Value),
+		Op:            types.StringValue(string(t.Op)),
+		Value:         types.Float64Value(t.Value),
+		ExceededLimit: types.Int64Value(int64(t.ExceededLimit)),
 	}}
 }
 

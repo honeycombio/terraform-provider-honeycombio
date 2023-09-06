@@ -68,6 +68,7 @@ func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.R
 
 func (p *HoneycombioProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		NewAuthMetadataDataSource,
 		NewDerivedColumnDataSource,
 		NewDerivedColumnsDataSource,
 		NewSLODataSource,

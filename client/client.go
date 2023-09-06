@@ -61,6 +61,7 @@ type Client struct {
 	userAgent  string
 	httpClient *http.Client
 
+	Auth               Auth
 	Boards             Boards
 	Columns            Columns
 	Datasets           Datasets
@@ -101,6 +102,7 @@ func NewClient(config *Config) (*Client, error) {
 		userAgent:  cfg.UserAgent,
 		httpClient: httpClient,
 	}
+	client.Auth = &auth{client: client}
 	client.Boards = &boards{client: client}
 	client.Columns = &columns{client: client}
 	client.Datasets = &datasets{client: client}
@@ -117,6 +119,17 @@ func NewClient(config *Config) (*Client, error) {
 	client.Recipients = &recipients{client: client}
 
 	return client, nil
+}
+
+// IsClassic returns true if the client is configured with a Classic API Key
+//
+// If there is an error fetching the auth metadata, this will return false.
+func (c *Client) IsClassic(ctx context.Context) bool {
+	metadata, err := c.Auth.List(ctx)
+	if err != nil {
+		return false
+	}
+	return metadata.Environment.Slug == ""
 }
 
 // ErrNotFound is returned when the requested item could not be found.
