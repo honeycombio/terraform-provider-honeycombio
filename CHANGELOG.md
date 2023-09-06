@@ -1,3 +1,41 @@
+# 0.16.0 (Sep 6, 2023)
+
+NOTES: this release includes a complete rewrite of the `honeycombio_burn_alert` resource: migrating it from the Terraform Plugin SDKv2 to the new Plugin Framework.
+This was done to fix a number of long-standing bugs related to the `recipient` block similar to the work done in 0.15.0 for the `honeycombio_trigger` resource.
+
+As with the `honeycombio_trigger` resource migration, this work has resulted in some subtle, but non-breaking side effects:
+
+* after updating, the next "plan" will show all burn alert recipients being updated in-place
+  * at the core of most all of these bugs was that fact that all of `id`, `type`, and `target` for a recipient were being stored in state.
+  Now only `id` or the `type`+`target` pair will be stored in the state and the plan output should reflect this.
+* enforcement of only specifying one of `id` or `type`+`target` is now possible due to the new flexibility gained by migrating to the Plugin Framework.
+Due to the shape of the recipient blocks in the schema, this validation was not possible with the Plugin SDK.
+  * in configurations specifying both `id` and `type`+`target` in recipient blocks, the suggestion is to just use `id` going forward.
+
+FEATURES:
+
+* *New Datasource*: `honeycombio_slo` (#345)
+* *New Datasource*: `honeycombio_slos` (#345)
+* *New Datasource*: `honeycombio_auth_metadata` (#353)
+
+ENHANCEMENTS:
+
+* resource/honeycombio_trigger: add threshold `exceeded_limit` support (#351)
+
+BUGFIXES:
+
+* client - fix flakey recipient time comparison test (#342)
+* resources/honeycombio_burn_alert: recipient fixes (#346)
+
+HOUSEKEEPING:
+
+* build(ci): Bump goreleaser/goreleaser-action from 4.3.0 to 4.4.0 (#341)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.4 to 1.3.5 (#344)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.27.0 to 2.28.0 (#347)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework-validators from 0.11.0 to 0.12.0 (#348)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.4.0 to 1.5.1 (#349)
+* build(ci): Bump actions/checkout from 3 to 4 (#350)
+
 # 0.15.2 (Aug 8, 2023)
 
 BUGFIXES:
