@@ -89,3 +89,10 @@ func TestClient_parseHoneycombioError(t *testing.T) {
 
 	assert.Error(t, err, "400 Bad Request: request body should not be empty")
 }
+
+func TestClient_IsClassic(t *testing.T) {
+	ctx := context.Background()
+	c := newTestClient(t)
+
+	assert.Equal(t, len(c.apiKey) == 32, c.IsClassic(ctx))
+}
