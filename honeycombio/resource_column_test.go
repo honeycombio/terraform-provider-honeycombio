@@ -70,7 +70,7 @@ func TestAccHoneycombioColumn_validationErrors(t *testing.T) {
 		ProviderFactories: testAccProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      testAccColumnConfigWithType(dataset, `String`),
+				Config:      testAccColumnConfigWithType(dataset, "string"),
 				ExpectError: regexp.MustCompile(`expected type to be one of \[string float integer boolean\], got String`),
 			},
 		},
