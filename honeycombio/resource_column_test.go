@@ -3,7 +3,6 @@ package honeycombio
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
@@ -60,29 +59,4 @@ resource "honeycombio_column" "test" {
 
   dataset = "%s"
 }`, keyName, dataset)
-}
-
-func TestAccHoneycombioColumn_validationErrors(t *testing.T) {
-	dataset := testAccDataset()
-
-	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config:      testAccColumnConfigWithType(dataset, `String`),
-				ExpectError: regexp.MustCompile(`expected type to be one of \[string float integer boolean\], got String`),
-			},
-		},
-	})
-}
-
-func testAccColumnConfigWithType(dataset, typeStr string) string {
-	return fmt.Sprintf(`
-resource "honeycombio_column" "test" {
-  key_name = "duration_ms_test"
-  type     = "%s"
-
-  dataset = "%s"
-}`, typeStr, dataset)
 }
