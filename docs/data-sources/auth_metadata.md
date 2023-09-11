@@ -8,15 +8,15 @@ The `honeycombio_auth_metadata` data source retreives information about the API 
 data "honeycombio_auth_metadata" "current" {}
 
 output "team_name" {
-  value = honeycombio_auth_metadata.current.team.name
+  value = data.honeycombio_auth_metadata.current.team.name
 }
 
 output "environment_slug" {
-  value = honeycombio_auth_metadata.current.environment.slug
+  value = data.honeycombio_auth_metadata.current.environment.slug
 } 
 
 output "slo_management_access" {
-  value = honeycombio_auth_metadata.current.api_key_access.slos
+  value = data.honeycombio_auth_metadata.current.api_key_access.slos
 }
 ```
 
