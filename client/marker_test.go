@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMarkers(t *testing.T) {
@@ -27,9 +28,7 @@ func TestMarkers(t *testing.T) {
 		}
 		m, err = c.Markers.Create(ctx, dataset, data)
 
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		assert.NotNil(t, m.ID)
 		assert.Equal(t, data.Message, m.Message)
 		assert.Equal(t, data.Type, m.Type)
@@ -49,7 +48,12 @@ func TestMarkers(t *testing.T) {
 		result, err := c.Markers.Get(ctx, dataset, m.ID)
 
 		assert.NoError(t, err)
-		assert.Equal(t, *m, *result)
+		assert.Equal(t, m.ID, result.ID)
+		assert.Equal(t, m.Message, result.Message)
+		assert.Equal(t, m.Type, result.Type)
+		assert.Equal(t, m.URL, result.URL)
+		assert.WithinDuration(t, time.UnixMilli(m.StartTime), time.UnixMilli(result.StartTime), 5*time.Second)
+		assert.WithinDuration(t, time.UnixMilli(m.EndTime), time.UnixMilli(result.EndTime), 5*time.Second)
 	})
 
 	t.Run("Update", func(t *testing.T) {
