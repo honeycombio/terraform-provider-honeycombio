@@ -37,7 +37,6 @@ resource "honeycombio_query" "query" {
 resource "honeycombio_board" "board" {
   name        = "Request Latency"
   description = "Latencies of all requests by Tenant for the last 15 minutes."
-  style       = "list"
 
   query {
     caption  = "Latency"

@@ -50,7 +50,6 @@ resource "honeycombio_query_annotation" "latency_by_userid" {
 
 resource "honeycombio_board" "overview" {
   name        = "Service Overview"
-  style       = "visual"
   description = <<EOT
 Helpful queries to get an overview of our service overall health and performance.
 Useful as a jumping off point for BubbleUp or a quick investigation.
