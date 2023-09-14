@@ -3,7 +3,6 @@ package honeycombio
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -22,7 +21,7 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBoardExists(t, "honeycombio_board.test"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "name", "Test board from terraform-provider-honeycombio"),
-					resource.TestCheckResourceAttr("honeycombio_board.test", "style", "list"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "style", "visual"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "description", ""),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.#", "2"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.caption", "test query 0"),
@@ -62,7 +61,6 @@ resource "honeycombio_query" "test" {
 
 resource "honeycombio_board" "test" {
   name          = "simple board"
-  style         = "visual"
   column_layout = "single"
 
   query {
@@ -82,22 +80,6 @@ resource "honeycombio_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.#", "1"),
 					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.0.query_id", "honeycombio_query.test", "id"),
 				),
-			},
-		},
-	})
-	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: `
-resource "honeycombio_board" "test" {
-  name          = "error board"
-  style         = "list"
-  column_layout = "multi"
-}
-`,
-				ExpectError: regexp.MustCompile(`list style boards cannot specify a column layout`),
 			},
 		},
 	})
@@ -140,7 +122,6 @@ resource "honeycombio_query_annotation" "test" {
 
 resource "honeycombio_board" "test" {
   name  = "Test board from terraform-provider-honeycombio"
-  style = "list"
 
   query {
     caption             = "test query 0"

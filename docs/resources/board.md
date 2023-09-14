@@ -78,7 +78,6 @@ resource "honeycombio_query_annotation" "latency_by_userid" {
 
 resource "honeycombio_board" "overview" {
   name        = "Service Overview"
-  style       = "visual"
 
   query {
     caption             = "Latency by User"
@@ -97,9 +96,9 @@ resource "honeycombio_board" "overview" {
 The following arguments are supported:
 
 * `name` - (Required) Name of the board.
-* `description` - (Optional) Description of the board. Supports markdown.
+* `description` - (Optional) Description of the board. Supports Markdown.
 * `column_layout` - (Optional) the number of columns to layout on the board, either `multi` (the default) or `single`. Only `visual` style boards (see below) have a column layout.
-* `style` - (Optional) How the board should be displayed in the UI, either `list` (the default) or `visual`.
+* `style` - (Optional) Deprecated: All Boards are now displayed as `visual` style. How the board should be displayed in the UI, either `visual` (the default) or `list`.
 * `query` - (Optional) Zero or more configurations blocks (described below) with the queries of the board.
 
 Each board configuration may have zero or more `query` blocks, which accepts the following arguments:
@@ -107,7 +106,7 @@ Each board configuration may have zero or more `query` blocks, which accepts the
 * `query_id` - (Required) The ID of the Query to run.
 * `query_annotation_id` - (Optional) The ID of the Query Annotation to associate with this query.
 * `dataset` - (Deprecated) The dataset this query is associated with.
-* `caption` - (Optional) A description of the query that will be displayed on the board. Supports markdown.
+* `caption` - (Optional) Descriptive text to contextualize the Query within the Board. Supports Markdown.
 * `graph_settings` - (Optional) A map of boolean toggles to manages the settings for this query's graph on the board.
 If a value is unspecified, it is assumed to be false.
 Currently supported toggles are:

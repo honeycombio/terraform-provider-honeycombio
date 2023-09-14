@@ -51,7 +51,8 @@ type Board struct {
 	//
 	// n.b. 'list' style boards cannot specify a column layout
 	ColumnLayout BoardColumnStyle `json:"column_layout,omitempty"`
-	// How the board should be displayed in the UI, defaults to "list".
+	// How the board should be displayed in the UI, defaults to "visual".
+	// Deprecated: All Boards are visual now. This field is ignored.
 	Style BoardStyle `json:"style,omitempty"`
 	// Links returned by the board API for the Board
 	Links BoardLinks `json:"links,omitempty"`
