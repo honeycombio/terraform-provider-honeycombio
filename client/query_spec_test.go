@@ -266,6 +266,78 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"Equivalent column orders",
+			QuerySpec{
+				Orders: []OrderSpec{
+					{Column: ToPtr("column_1")},
+				},
+			},
+			QuerySpec{
+				Orders: []OrderSpec{
+					{
+						Column: ToPtr("column_1"),
+						Order:  ToPtr(SortOrderAsc),
+					},
+				},
+			},
+			true,
+		},
+		{
+			"Not equivalent column orders",
+			QuerySpec{
+				Orders: []OrderSpec{
+					{Column: ToPtr("column_2")},
+				},
+			},
+			QuerySpec{
+				Orders: []OrderSpec{
+					{
+						Column: ToPtr("column_1"),
+						Order:  ToPtr(SortOrderAsc),
+					},
+				},
+			},
+			false,
+		},
+		{
+			"Equivalent Op orders with unspecified default",
+			QuerySpec{
+				Orders: []OrderSpec{
+					{
+						Op:    ToPtr(CalculationOpCount),
+						Order: ToPtr(SortOrderAsc),
+					},
+				},
+			},
+			QuerySpec{
+				Orders: []OrderSpec{
+					{Op: ToPtr(CalculationOpCount)},
+				},
+			},
+			true,
+		},
+		{
+			"Not equivalent Op orders",
+			QuerySpec{
+				Orders: []OrderSpec{
+					{
+						Op:     ToPtr(CalculationOpCountDistinct),
+						Column: ToPtr("column_1"),
+						Order:  ToPtr(SortOrderAsc),
+					},
+				},
+			},
+			QuerySpec{
+				Orders: []OrderSpec{
+					{
+						Op:    ToPtr(CalculationOpCount),
+						Order: ToPtr(SortOrderDesc),
+					},
+				},
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
