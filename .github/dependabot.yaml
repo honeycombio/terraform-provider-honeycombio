@@ -9,7 +9,8 @@ updates:
       - dependencies
     groups:
       hashicorp:
-        - "github.com/hashicorp/*"
+        patterns:
+          - "github.com/hashicorp/*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
