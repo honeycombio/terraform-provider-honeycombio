@@ -1,0 +1,22 @@
+changelog:
+    exclude:
+        labels:
+            - no-changelog
+    categories:
+        - title: NOTES
+          labels:
+              - breaking-change
+        - title: ENHANCEMENTS
+          labels:
+              - improvement
+              - feature
+        - title: BUGFIXES
+          labels:
+              - bug
+        - title: HOUSEKEEPING
+          labels:
+              - refactor
+              - dependencies
+        - title: Other Changes
+          labels:
+              - "*"
