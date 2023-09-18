@@ -5,7 +5,15 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    labels:
+      - dependencies
+    groups:
+      hashicorp:
+        patterns:
+          - "github.com/hashicorp/*"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "daily"
+    labels:
+      - dependencies
