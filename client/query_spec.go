@@ -81,6 +81,22 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 		}
 	}
 
+	// Orders have a default ascending order, so we need to check equivalence
+	if len(qs.Orders) != len(other.Orders) {
+		return false
+	}
+	for i := range qs.Orders {
+		if PtrValueOrDefault(qs.Orders[i].Order, SortOrderAsc) != PtrValueOrDefault(other.Orders[i].Order, SortOrderAsc) {
+			return false
+		}
+		if !reflect.DeepEqual(qs.Orders[i].Column, other.Orders[i].Column) {
+			return false
+		}
+		if !reflect.DeepEqual(qs.Orders[i].Op, other.Orders[i].Op) {
+			return false
+		}
+	}
+
 	// the exact order of filters does not matter, but their equvalence does
 	if !Equivalent(qs.Filters, other.Filters) {
 		return false
@@ -89,9 +105,6 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 		return false
 	}
 	if !reflect.DeepEqual(qs.Breakdowns, other.Breakdowns) {
-		return false
-	}
-	if !reflect.DeepEqual(qs.Orders, other.Orders) {
 		return false
 	}
 	// the exact order of havings does not matter, but their equvalence does
