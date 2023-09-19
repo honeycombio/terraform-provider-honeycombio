@@ -1,3 +1,23 @@
+# 0.17.0 (Sep 19, 2023)
+
+ENHANCEMENTS:
+
+* resources/honeycombio_board: deprecate list-style Boards (#365)
+
+BUGFIXES:
+
+* datasource/honeycombio_auth_metadata: doc fix (#361)
+* fix Marker client test flake (#363)
+* queryspec Orders equivalency (#366)
+
+HOUSEKEEPING:
+
+* build(deps): Bump goreleaser/goreleaser-action from 4.4.0 to 4.6.0 (#352)
+* build: bump Golang to 1.20 (#359)
+* build(deps): upgrade all libraries to protocol version 5.4 and 6.4 (#360)
+* build(deps): Bump crazy-max/ghaction-import-gpg from 5 to 6 (#362)
+* build(deps): Bump goreleaser/goreleaser-action from 4.6.0 to 5.0.0 (#364)
+
 # 0.16.0 (Sep 6, 2023)
 
 NOTES: this release includes a complete rewrite of the `honeycombio_burn_alert` resource: migrating it from the Terraform Plugin SDKv2 to the new Plugin Framework.
