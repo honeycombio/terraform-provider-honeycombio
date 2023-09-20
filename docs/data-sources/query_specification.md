@@ -94,5 +94,5 @@ Each query configuration may have zero or more `having` blocks, which each accep
 
 In addition to all arguments above, the following attributes are exported:
 
-* `id` - ID of the trigger.
+* `id` - ID of the query specification.
 * `json` - JSON representation of the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification), can be used as input for other resources.
