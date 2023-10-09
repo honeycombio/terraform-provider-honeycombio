@@ -43,7 +43,7 @@ resource "honeycombio_query_annotation" "test_annotation" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset this query is added to.
+* `dataset` - (Required) The dataset this query annotation is added to. Use `__all__` for Environment-wide query annotations.
 * `query_id` - (Required) The ID of the query that the annotation will be created on. Note that a query can have more than one annotation.
 * `name` - (Required) The name of the query annotation that will display in the Honeycomb UI.
 * `description` - (Optional) The description for the query annotation.

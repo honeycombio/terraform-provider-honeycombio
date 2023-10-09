@@ -28,7 +28,7 @@ resource "honeycombio_marker" "marker" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset this marker is placed on.
+* `dataset` - (Required) The dataset this marker is placed on. Use `__all__` for Environment-wide markers.
 * `message` - (Optional) The message on the marker.
 * `type` - (Optional) The type of the marker, Honeycomb.io can display markers in different colors depending on their type.
 * `url` - (Optional) A target for the Marker. If you click on the Marker text, it will take you to this URL.

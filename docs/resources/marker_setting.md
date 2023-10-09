@@ -24,7 +24,7 @@ resource "honeycombio_marker_setting" "markerSetting" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset this marker setting is placed on.
+* `dataset` - (Required) The dataset this marker setting is placed on. Use `__all__` for Environment-wide marker settings.
 * `type` - (Required) The type of the marker setting, Honeycomb.io can display markers in different colors depending on their type.
 * `color` - (Required) The color set for the marker as a hex color code (e.g. `#DF4661`)
 
