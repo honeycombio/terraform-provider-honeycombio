@@ -23,6 +23,9 @@ import (
 
 const (
 	DefaultAPIHost   = "https://api.honeycomb.io"
+	DefaultAPIKeyEnv = "HONEYCOMB_API_KEY"
+	// Deprecated: use DefaultAPIKeyEnv instead. To be removed in v1.0
+	LegacyAPIKeyEnv  = "HONEYCOMBIO_API_KEY"
 	defaultUserAgent = "go-honeycombio"
 )
 
@@ -66,7 +69,7 @@ type Client struct {
 
 func DefaultConfig() *Config {
 	c := &Config{
-		APIKey:     os.Getenv("HONEYCOMB_API_KEY"),
+		APIKey:     os.Getenv(DefaultAPIKeyEnv),
 		APIUrl:     DefaultAPIHost,
 		Debug:      false,
 		HTTPClient: cleanhttp.DefaultPooledClient(),
@@ -75,7 +78,7 @@ func DefaultConfig() *Config {
 
 	// if API Key is still unset, try using the legacy environment variable
 	if c.APIKey == "" {
-		c.APIKey = os.Getenv("HONEYCOMBIO_API_KEY")
+		c.APIKey = os.Getenv(LegacyAPIKeyEnv)
 	}
 
 	return c

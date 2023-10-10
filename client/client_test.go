@@ -16,9 +16,9 @@ func newTestClient(t *testing.T) *Client {
 	// load environment values from a .env, if available
 	_ = godotenv.Load("../.env")
 
-	apiKey, ok := os.LookupEnv("HONEYCOMB_API_KEY")
+	apiKey, ok := os.LookupEnv(DefaultAPIKeyEnv)
 	if !ok {
-		t.Fatal("expected environment variable HONEYCOMB_API_KEY")
+		t.Fatal("expected environment variable " + DefaultAPIKeyEnv)
 	}
 	_, debug := os.LookupEnv("HONEYCOMBIO_DEBUG")
 

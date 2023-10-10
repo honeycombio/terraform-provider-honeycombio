@@ -63,10 +63,7 @@ func testAccDataset() string {
 }
 
 func testAccClient(t *testing.T) *client.Client {
-	cfg := &client.Config{
-		APIKey: os.Getenv("HONEYCOMB_API_KEY"),
-	}
-	c, err := client.NewClient(cfg)
+	c, err := client.NewClient(client.DefaultConfig())
 	if err != nil {
 		t.Fatalf("could not initialize Honeycomb client: %v", err)
 	}

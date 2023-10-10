@@ -97,10 +97,10 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 		)
 	}
 
-	apiKey := os.Getenv("HONEYCOMB_API_KEY")
+	apiKey := os.Getenv(client.DefaultAPIKeyEnv)
 	if apiKey == "" {
 		// fall through to legacy env var
-		apiKey = os.Getenv("HONEYCOMBIO_APIKEY")
+		apiKey = os.Getenv(client.LegacyAPIKeyEnv)
 	}
 	if !config.APIKey.IsNull() {
 		apiKey = config.APIKey.ValueString()
