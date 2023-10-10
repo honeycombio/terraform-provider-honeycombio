@@ -104,9 +104,12 @@ func TestBoards(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Get_deletedBoard", func(t *testing.T) {
+	t.Run("Fail to get deleted Board", func(t *testing.T) {
 		_, err := c.Boards.Get(ctx, b.ID)
 
-		assert.Equal(t, ErrNotFound, err)
+		var de DetailedError
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 }

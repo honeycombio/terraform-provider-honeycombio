@@ -127,10 +127,13 @@ func TestTriggers(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Get_deletedTrigger", func(t *testing.T) {
+	t.Run("Fail to Get deleted Trigger", func(t *testing.T) {
 		_, err := c.Triggers.Get(ctx, dataset, trigger.ID)
 
-		assert.Equal(t, ErrNotFound, err)
+		var de DetailedError
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 }
 

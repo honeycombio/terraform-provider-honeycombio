@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 )
 
@@ -77,8 +78,7 @@ func (d *derivedColumnsDataSource) Read(ctx context.Context, req datasource.Read
 	}
 
 	columns, err := d.client.DerivedColumns.List(ctx, data.Dataset.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Unable to list Derived Columns", err.Error())
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Listing Derived Columns", err) {
 		return
 	}
 

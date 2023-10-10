@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -52,7 +53,7 @@ func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	marker, err := client.Markers.Create(ctx, dataset, data)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(marker.ID)
@@ -62,10 +63,15 @@ func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 func resourceMarkerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
+	var detailedErr honeycombio.DetailedError
 	marker, err := client.Markers.Get(ctx, d.Get("dataset").(string), d.Id())
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}

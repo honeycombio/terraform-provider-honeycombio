@@ -43,7 +43,7 @@ func dataSourceHoneycombioDatasetsRead(ctx context.Context, d *schema.ResourceDa
 
 	datasets, err := client.Datasets.List(ctx)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	var startsWith string

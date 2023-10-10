@@ -14,8 +14,7 @@ type Datasets interface {
 	// List all datasets.
 	List(ctx context.Context) ([]Dataset, error)
 
-	// Get a dataset by its slug. Returns ErrNotFound if there is no dataset
-	// with the given slug.
+	// Get a dataset by its slug.
 	Get(ctx context.Context, slug string) (*Dataset, error)
 
 	// Create a new dataset. Only name should be set when creating a dataset,

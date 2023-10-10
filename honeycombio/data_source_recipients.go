@@ -75,7 +75,7 @@ func dataSourceHoneycombioRecipientsRead(ctx context.Context, d *schema.Resource
 
 	rcpts, err := client.Recipients.List(ctx)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	var matchType honeycombio.RecipientType

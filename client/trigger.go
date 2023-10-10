@@ -15,8 +15,7 @@ type Triggers interface {
 	// List all triggers present in this dataset.
 	List(ctx context.Context, dataset string) ([]Trigger, error)
 
-	// Get a trigger by its ID. Returns ErrNotFound if there is no trigger with
-	// the given ID in this dataset.
+	// Get a trigger by its ID.
 	Get(ctx context.Context, dataset string, id string) (*Trigger, error)
 
 	// Create a new trigger in this dataset. When creating a new trigger ID

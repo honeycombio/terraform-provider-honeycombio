@@ -38,7 +38,7 @@ func dataSourceHoneycombioSlackRecipientRead(ctx context.Context, d *schema.Reso
 
 	triggers, err := client.Triggers.List(ctx, dataset)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	searchType := honeycombio.RecipientType(d.Get("type").(string))

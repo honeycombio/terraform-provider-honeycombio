@@ -136,7 +136,7 @@ func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceD
 
 	rcpts, err := client.Recipients.List(ctx)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 	matchType := honeycombio.RecipientType(d.Get("type").(string))
 

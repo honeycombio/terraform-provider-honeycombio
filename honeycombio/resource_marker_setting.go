@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"time"
 
@@ -60,7 +61,7 @@ func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 	markerSetting, err := client.MarkerSettings.Create(ctx, dataset, data)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(markerSetting.ID)
@@ -72,10 +73,15 @@ func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, me
 func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
+	var detailedErr honeycombio.DetailedError
 	markerSetting, err := client.MarkerSettings.Get(ctx, d.Get("dataset").(string), d.Id())
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}
@@ -101,7 +107,7 @@ func resourceMarkerSettingUpdate(ctx context.Context, d *schema.ResourceData, me
 	}
 	markerSetting, err := client.MarkerSettings.Update(ctx, dataset, data)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(markerSetting.ID)
@@ -115,7 +121,7 @@ func resourceMarkerSettingDelete(ctx context.Context, d *schema.ResourceData, me
 
 	err := client.MarkerSettings.Delete(ctx, dataset, d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -167,10 +168,9 @@ func (d *authMetadataDataSource) Read(ctx context.Context, req datasource.ReadRe
 	var data authMetadataDataSourceModel
 
 	metadata, err := d.client.Auth.List(ctx)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to list Auth Metadata",
-			err.Error())
+	if helper.AddDiagnosticOnError(&resp.Diagnostics,
+		"Listing Auth Metadata",
+		err) {
 		return
 	}
 

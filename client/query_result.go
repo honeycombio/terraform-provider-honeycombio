@@ -11,8 +11,7 @@ import (
 //
 // API docs: https://docs.honeycomb.io/api/query-results/
 type QueryResults interface {
-	// Get the query results by ID. Returns ErrNotFound if there is no
-	// query result with the given ID.
+	// Get the query results by ID.
 	Get(ctx context.Context, dataset string, q *QueryResult) error
 
 	// Create a new query result with a given query specification.

@@ -96,9 +96,12 @@ func TestBurnAlerts(t *testing.T) {
 		assert.NoError(t, err, "failed to delete BurnAlert")
 	})
 
-	t.Run("Get_NotFound", func(t *testing.T) {
+	t.Run("Fail to Get deleted Burn Alert", func(t *testing.T) {
 		_, err := c.BurnAlerts.Get(ctx, dataset, burnAlert.ID)
 
-		assert.Equal(t, ErrNotFound, err)
+		var de DetailedError
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 }

@@ -65,10 +65,10 @@ func Provider(version string) *schema.Provider {
 	}
 
 	provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		apiKey := os.Getenv("HONEYCOMB_API_KEY")
+		apiKey := os.Getenv(honeycombio.DefaultAPIKeyEnv)
 		if apiKey == "" {
 			// fall through to legacy env var
-			apiKey = os.Getenv("HONEYCOMBIO_APIKEY")
+			apiKey = os.Getenv(honeycombio.LegacyAPIKeyEnv)
 		}
 		if v, ok := d.GetOk("api_key"); ok {
 			apiKey = v.(string)

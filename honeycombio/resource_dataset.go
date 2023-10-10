@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -77,10 +78,15 @@ func resourceDatasetCreate(ctx context.Context, d *schema.ResourceData, meta int
 func resourceDatasetRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
+	var detailedErr honeycombio.DetailedError
 	dataset, err := client.Datasets.Get(ctx, d.Id())
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}
@@ -105,7 +111,7 @@ func resourceDatasetUpdate(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	dataset, err := client.Datasets.Update(ctx, data)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(dataset.Slug)

@@ -14,12 +14,10 @@ type DerivedColumns interface {
 	// List all derived columns in this dataset.
 	List(ctx context.Context, dataset string) ([]DerivedColumn, error)
 
-	// Get a derived column by its ID. Returns ErrNotFound if there is no
-	// derived column with the given ID in this dataset.
+	// Get a derived column by its ID.
 	Get(ctx context.Context, dataset string, id string) (*DerivedColumn, error)
 
-	// GetByAlias searches a derived column by its alias. Returns ErrNotFound if
-	// there is no derived column with the given alias in this dataset.
+	// GetByAlias searches a derived column by its alias.
 	GetByAlias(ctx context.Context, dataset string, alias string) (*DerivedColumn, error)
 
 	// Create a new derived column in this dataset. When creating a new derived

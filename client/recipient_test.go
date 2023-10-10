@@ -65,8 +65,12 @@ func TestRecipientsEmail(t *testing.T) {
 		assert.NoError(t, err, "failed to delete Recipient")
 	})
 
-	t.Run("Get_NotFound", func(t *testing.T) {
+	t.Run("Fail to Get deleted Recipient", func(t *testing.T) {
 		_, err := c.Recipients.Get(ctx, rcpt.ID)
-		assert.Equal(t, ErrNotFound, err)
+
+		var de DetailedError
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 }

@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -106,7 +107,7 @@ func resourceColumnCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	column, err := client.Columns.Create(ctx, dataset, expandColumn(d))
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(column.ID)
@@ -125,10 +126,15 @@ func resourceColumnRead(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 
 	// we read by name here to faciliate importing by name instead of ID
+	var detailedErr honeycombio.DetailedError
 	column, err := client.Columns.GetByKeyName(ctx, dataset, columnName)
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}
@@ -152,7 +158,7 @@ func resourceColumnUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	column, err := client.Columns.Update(ctx, dataset, expandColumn(d))
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(column.ID)
@@ -166,7 +172,7 @@ func resourceColumnDelete(ctx context.Context, d *schema.ResourceData, meta inte
 
 	err := client.Columns.Delete(ctx, dataset, d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 	return nil
 }

@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -54,10 +55,16 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 	client := meta.(*honeycombio.Client)
 
 	dataset := d.Get("dataset").(string)
+
+	var detailedErr honeycombio.DetailedError
 	dd, err := client.DatasetDefinitions.Get(ctx, dataset)
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}
@@ -83,7 +90,7 @@ func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData
 	dd := expandDatasetDefinition(name, value)
 	_, err := client.DatasetDefinitions.Update(ctx, dataset, dd)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	return resourceDatasetDefinitionRead(ctx, d, meta)
@@ -99,7 +106,7 @@ func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData
 	dd := expandDatasetDefinition(name, "")
 	_, err := client.DatasetDefinitions.Update(ctx, dataset, dd)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 	return nil
 }

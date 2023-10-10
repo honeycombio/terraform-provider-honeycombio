@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -58,7 +59,7 @@ func resourceQueryAnnotationCreate(ctx context.Context, d *schema.ResourceData, 
 
 	queryAnnotation, err := client.QueryAnnotations.Create(ctx, dataset, queryAnnotation)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(queryAnnotation.ID)
@@ -72,7 +73,7 @@ func resourceQueryAnnotationUpdate(ctx context.Context, d *schema.ResourceData, 
 
 	_, err := client.QueryAnnotations.Update(ctx, dataset, queryAnnotation)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	return resourceQueryAnnotationRead(ctx, d, meta)
@@ -84,7 +85,7 @@ func resourceQueryAnnotationDestroy(ctx context.Context, d *schema.ResourceData,
 
 	err := client.QueryAnnotations.Delete(ctx, dataset, d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 	return nil
 }
@@ -93,10 +94,15 @@ func resourceQueryAnnotationRead(ctx context.Context, d *schema.ResourceData, me
 	client := meta.(*honeycombio.Client)
 	dataset := d.Get("dataset").(string)
 
+	var detailedErr honeycombio.DetailedError
 	queryAnnotation, err := client.QueryAnnotations.Get(ctx, dataset, d.Id())
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}

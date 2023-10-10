@@ -32,10 +32,7 @@ var testAccProviderFactories = map[string]func() (*schema.Provider, error){
 }
 
 func testAccClient(t *testing.T) *honeycombio.Client {
-	cfg := &honeycombio.Config{
-		APIKey: os.Getenv("HONEYCOMB_API_KEY"),
-	}
-	c, err := honeycombio.NewClient(cfg)
+	c, err := honeycombio.NewClient(honeycombio.DefaultConfig())
 	if err != nil {
 		t.Fatalf("could not initialize honeycombio.Client: %v", err)
 	}

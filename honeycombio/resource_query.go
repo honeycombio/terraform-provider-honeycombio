@@ -3,6 +3,7 @@ package honeycombio
 import (
 	"context"
 	"encoding/json"
+	"errors"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -47,7 +48,7 @@ func resourceQueryCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	query, err := client.Queries.Create(ctx, dataset, &querySpec)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(*query.ID)
@@ -59,10 +60,15 @@ func resourceQueryRead(ctx context.Context, d *schema.ResourceData, meta interfa
 
 	dataset := d.Get("dataset").(string)
 
+	var detailedErr honeycombio.DetailedError
 	query, err := client.Queries.Get(ctx, dataset, d.Id())
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}

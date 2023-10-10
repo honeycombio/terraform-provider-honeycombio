@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
@@ -117,11 +118,7 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 		SLO:               client.SLORef{ID: plan.SLOID.ValueString()},
 		Recipients:        expandNotificationRecipients(plan.Recipients),
 	})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Creating Honeycomb Burn Alert",
-			"Could not create Burn Alert, unexpected error: "+err.Error(),
-		)
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Burn Alert", err) {
 		return
 	}
 
@@ -143,15 +140,24 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
+	var detailedErr *client.DetailedError
 	ba, err := r.client.BurnAlerts.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
-	if errors.Is(err, client.ErrNotFound) {
-		resp.State.RemoveResource(ctx)
-		return
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			resp.State.RemoveResource(ctx)
+		} else {
+			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
+				"Error Reading Honeycomb Burn Alert",
+				detailedErr,
+			))
+		}
 	} else if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Honeycomb Burn Alert",
 			"Could not read Burn Alert ID "+state.ID.ValueString()+": "+err.Error(),
 		)
+	}
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -201,20 +207,12 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 		SLO:               client.SLORef{ID: plan.SLOID.ValueString()},
 		Recipients:        expandNotificationRecipients(plan.Recipients),
 	})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Updating Honeycomb Burn Alert",
-			"Could not update Burn Alert, unexpected error: "+err.Error(),
-		)
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Burn Alert", err) {
 		return
 	}
 
 	burnAlert, err := r.client.BurnAlerts.Get(ctx, plan.Dataset.ValueString(), plan.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Updating Honeycomb Burn Alert",
-			"Could not read Honeycomb Burn Alert ID "+plan.ID.ValueString()+": "+err.Error(),
-		)
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Burn Alert", err) {
 		return
 	}
 
@@ -237,11 +235,7 @@ func (r *burnAlertResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 
 	err := r.client.BurnAlerts.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Deleting Honeycomb Burn Alert",
-			"Could not delete Burn Alert, unexpected error: "+err.Error(),
-		)
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Deleting Honeycomb Burn Alert", err) {
 		return
 	}
 }

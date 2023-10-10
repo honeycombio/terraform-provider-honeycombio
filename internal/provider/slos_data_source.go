@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/filter"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
@@ -121,8 +122,7 @@ func (d *slosDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 	}
 
 	slos, err := d.client.SLOs.List(ctx, data.Dataset.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Unable to list SLOs", err.Error())
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Listing SLOs", err) {
 		return
 	}
 

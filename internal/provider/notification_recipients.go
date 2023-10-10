@@ -44,7 +44,7 @@ func notificationRecipientSchema() schema.SetNestedBlock {
 					Computed:    true,
 					Description: "The type of the trigger recipient.",
 					Validators: []validator.String{
-						stringvalidator.OneOf(helper.RecipientTypeStrings(client.TriggerRecipientTypes())...),
+						stringvalidator.OneOf(helper.AsStringSlice(client.TriggerRecipientTypes())...),
 					},
 				},
 				"target": schema.StringAttribute{

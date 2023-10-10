@@ -53,7 +53,7 @@ func TestAccDataSourceHoneycombioColumn_basic(t *testing.T) {
 			// test a failed match
 			{
 				Config:      testAccDataSourceColumnConfig([]string{"dataset = \"" + testAccDataset() + "\"", "name = \"test_column5\""}),
-				ExpectError: regexp.MustCompile("Error: column not found, API returned: 404 Not Found"),
+				ExpectError: regexp.MustCompile("404 Not Found"),
 			},
 		},
 	})
