@@ -14,8 +14,7 @@ type QueryAnnotations interface {
 	// List all query annotations.
 	List(ctx context.Context, dataset string) ([]QueryAnnotation, error)
 
-	// Get a query annotation by its ID. Returns ErrNotFound if there is no
-	// query annotation with the given ID.
+	// Get a query annotation by its ID.
 	Get(ctx context.Context, dataset string, id string) (*QueryAnnotation, error)
 
 	// Create a new query annotation. When creating a new query annotation ID

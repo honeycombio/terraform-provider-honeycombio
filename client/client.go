@@ -10,11 +10,20 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
+	"time"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/client/internal/httputil"
+	cleanhttp "github.com/hashicorp/go-cleanhttp"
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
+)
+
+const (
+	DefaultAPIHost   = "https://api.honeycomb.io"
+	defaultUserAgent = "go-honeycombio"
 )
 
 // Config holds all configuration options for the client.
@@ -23,43 +32,20 @@ type Config struct {
 	APIKey string
 	// URL of the Honeycomb API, defaults to "https://api.honeycomb.io".
 	APIUrl string
-	// User agent to send with all requests, defaults to "go-honeycombio".
-	UserAgent string
 	// With debug enabled the client will log all requests and responses.
 	Debug bool
-}
-
-func defaultConfig() *Config {
-	return &Config{
-		APIKey:    "",
-		APIUrl:    "https://api.honeycomb.io",
-		UserAgent: "go-honeycombio",
-		Debug:     false,
-	}
-}
-
-// Merge the given config by copying all non-blank values.
-func (c *Config) merge(other *Config) {
-	if other.APIKey != "" {
-		c.APIKey = other.APIKey
-	}
-	if other.APIUrl != "" {
-		c.APIUrl = other.APIUrl
-	}
-	if other.UserAgent != "" {
-		c.UserAgent = other.UserAgent
-	}
-	if c.Debug || other.Debug {
-		c.Debug = true
-	}
+	// Optionally override the HTTP client with a custom client.
+	HTTPClient *http.Client
+	// Optionally set the user agent to send with all requests, defaults to "go-honeycombio".
+	UserAgent string
 }
 
 // Client to interact with Honeycomb.
 type Client struct {
 	apiKey     string
 	apiURL     *url.URL
-	userAgent  string
-	httpClient *http.Client
+	headers    http.Header
+	httpClient *retryablehttp.Client
 
 	Auth               Auth
 	Boards             Boards
@@ -78,10 +64,39 @@ type Client struct {
 	Recipients         Recipients
 }
 
+func DefaultConfig() *Config {
+	c := &Config{
+		APIKey:     os.Getenv("HONEYCOMB_API_KEY"),
+		APIUrl:     DefaultAPIHost,
+		Debug:      false,
+		HTTPClient: cleanhttp.DefaultPooledClient(),
+		UserAgent:  defaultUserAgent,
+	}
+
+	// if API Key is still unset, try using the legacy environment variable
+	if c.APIKey == "" {
+		c.APIKey = os.Getenv("HONEYCOMBIO_API_KEY")
+	}
+
+	return c
+}
+
 // NewClient creates a new Honeycomb API client.
 func NewClient(config *Config) (*Client, error) {
-	cfg := defaultConfig()
-	cfg.merge(config)
+	cfg := DefaultConfig()
+
+	if config.APIKey != "" {
+		cfg.APIKey = config.APIKey
+	}
+	if config.APIUrl != "" {
+		cfg.APIUrl = config.APIUrl
+	}
+	if config.UserAgent != "" {
+		cfg.UserAgent = config.UserAgent
+	}
+	if config.HTTPClient != nil {
+		cfg.HTTPClient = config.HTTPClient
+	}
 
 	if cfg.APIKey == "" {
 		return nil, errors.New("APIKey must be configured")
@@ -91,17 +106,34 @@ func NewClient(config *Config) (*Client, error) {
 		return nil, fmt.Errorf("could not parse APIUrl: %w", err)
 	}
 
-	httpClient := &http.Client{}
-	if cfg.Debug {
-		httpClient = httputil.WrapWithLogging(httpClient)
+	client := &Client{
+		apiKey:  cfg.APIKey,
+		apiURL:  apiURL,
+		headers: make(http.Header),
 	}
 
-	client := &Client{
-		apiKey:     cfg.APIKey,
-		apiURL:     apiURL,
-		userAgent:  cfg.UserAgent,
-		httpClient: httpClient,
+	client.httpClient = &retryablehttp.Client{
+		Backoff:      retryablehttp.DefaultBackoff,
+		CheckRetry:   client.retryHTTPCheck,
+		ErrorHandler: retryablehttp.PassthroughErrorHandler,
+		HTTPClient:   cfg.HTTPClient,
+		RetryWaitMin: 200 * time.Millisecond,
+		RetryWaitMax: 10 * time.Second,
+		RetryMax:     15,
 	}
+
+	if config.Debug {
+		// if enabled we log all requests and responses to sterr
+		client.httpClient.Logger = log.New(os.Stderr, "", log.LstdFlags)
+		client.httpClient.ResponseLogHook = func(l retryablehttp.Logger, resp *http.Response) {
+			l.Printf("[DEBUG] Response: %s %s", resp.Request.Method, resp.Request.URL.String())
+		}
+	}
+
+	client.headers.Add("Content-Type", "application/json")
+	client.headers.Add("User-Agent", cfg.UserAgent)
+	client.headers.Add("X-Honeycomb-Team", cfg.APIKey)
+
 	client.Auth = &auth{client: client}
 	client.Boards = &boards{client: client}
 	client.Columns = &columns{client: client}
@@ -132,15 +164,13 @@ func (c *Client) IsClassic(ctx context.Context) bool {
 	return metadata.Environment.Slug == ""
 }
 
-// ErrNotFound is returned when the requested item could not be found.
-var ErrNotFound = errors.New("404 Not Found")
-
-// performRequest against the Honeycomb API with the necessary headers and, if
-// requestBody is not nil, a JSON body. The response is parsed in responseBody,
-// if responseBody is not nil.
-// Returns an error if the request failed, if the response contained a non-2xx
-// status code or if parsing the response in responseBody failed. ErrNotFound
-// is returned on a 404 response.
+// performRequest makes a request to the Honeycomb API and, if
+// requestBody is not nil, a JSON body.
+//
+// The response is parsed in responseBody, if responseBody is not nil.
+//
+// Attemps to return a DetailedError if the response status code is not 2xx,
+// but can return a generic error.
 func (c *Client) performRequest(ctx context.Context, method, path string, requestBody, responseBody interface{}) error {
 	var body io.Reader
 
@@ -158,14 +188,11 @@ func (c *Client) performRequest(ctx context.Context, method, path string, reques
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, method, requestURL.String(), body)
+	req, err := retryablehttp.NewRequestWithContext(ctx, method, requestURL.String(), body)
 	if err != nil {
 		return err
 	}
-
-	req.Header.Add("X-Honeycomb-Team", c.apiKey)
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("User-Agent", c.userAgent)
+	req.Header = c.headers
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -173,65 +200,28 @@ func (c *Client) performRequest(ctx context.Context, method, path string, reques
 	}
 	defer resp.Body.Close()
 
-	if !httputil.Is2xx(resp.StatusCode) {
-		if resp.StatusCode == 404 {
-			return ErrNotFound
-		}
+	if !(resp.StatusCode >= 200 && resp.StatusCode <= 299) {
 		return errorFromResponse(resp)
 	}
-
 	if responseBody != nil {
 		err = json.NewDecoder(resp.Body).Decode(responseBody)
 	}
+
 	return err
 }
 
-func errorFromResponse(resp *http.Response) error {
-	errorMsg := attemptToExtractHoneycombioError(resp.Body)
-	if errorMsg == "" {
-		return fmt.Errorf("%s", resp.Status)
-	}
-	return fmt.Errorf("%s: %s", resp.Status, errorMsg)
-}
-
-type honeycombioError struct {
-	Status  int    `json:"status"`
-	Err     string `json:"error"`
-	Details []struct {
-		Code        string `json:"code"`
-		Description string `json:"description"`
-	} `json:"type_detail,omitempty"`
-}
-
-func (e *honeycombioError) Error() string {
-	if len(e.Details) > 0 {
-		var response string
-		for i, d := range e.Details {
-			response += d.Code + " - " + d.Description
-			if i > len(e.Details)-1 {
-				response += ", "
-			}
-		}
-		return response
+// retryHTTPCheck provides a callback for Client.CheckRetry which
+// will retry both rate limit (429) and server gateway (502, 504) errors.
+func (c *Client) retryHTTPCheck(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	if ctx.Err() != nil {
+		return false, ctx.Err()
 	}
 
-	return e.Err
-}
-
-func attemptToExtractHoneycombioError(bodyReader io.Reader) string {
-	body, err := io.ReadAll(bodyReader)
-	if err != nil {
-		return ""
+	if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusBadGateway || resp.StatusCode == http.StatusGatewayTimeout {
+		return true, nil
 	}
 
-	var honeycombioErr honeycombioError
-
-	err = json.Unmarshal(body, &honeycombioErr)
-	if err != nil {
-		return string(body)
-	}
-
-	return honeycombioErr.Error()
+	return false, nil
 }
 
 // urlEncodeDataset sanitizes the dataset name for when it is used as part of

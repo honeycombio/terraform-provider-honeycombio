@@ -2,10 +2,10 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestQueryResults(t *testing.T) {
@@ -25,23 +25,21 @@ func TestQueryResults(t *testing.T) {
 		},
 		TimeRange: ToPtr(60 * 60 * 24),
 	})
+	require.NoError(t, err)
 
 	t.Run("Create", func(t *testing.T) {
 		result, err = c.QueryResults.Create(ctx, dataset, &QueryResultRequest{
 			ID: *query.ID,
 		})
 
-		assert.Nil(t, err, fmt.Sprintf("result errored: %v", err))
+		require.NoError(t, err)
 		assert.NotEmpty(t, result.ID, "result missing ID")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		err := c.QueryResults.Get(ctx, dataset, result)
 
-		if err != nil {
-			t.Fatal(err)
-		}
-
+		assert.NoError(t, err)
 		assert.True(t, result.Complete, "query result didn't complete")
 		assert.NotNil(t, result.Data.Series, "empty data series")
 		assert.NotNil(t, result.Data.Results, "empty data results")
@@ -49,9 +47,12 @@ func TestQueryResults(t *testing.T) {
 		assert.NotEmpty(t, result.Links.Url, "empty result Url")
 	})
 
-	t.Run("Get_notFound", func(t *testing.T) {
+	t.Run("Fail to Get bogus Query Result", func(t *testing.T) {
 		err := c.QueryResults.Get(ctx, dataset, &QueryResult{ID: "abcd1234"})
 
-		assert.ErrorIs(t, err, ErrNotFound)
+		var de DetailedError
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 }

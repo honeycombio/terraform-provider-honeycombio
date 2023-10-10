@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -289,7 +290,7 @@ func createRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 
 	r, err = client.Recipients.Create(ctx, r)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(r.ID)
@@ -299,10 +300,15 @@ func createRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
+	var detailedErr honeycombio.DetailedError
 	r, err := client.Recipients.Get(ctx, d.Id())
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}
@@ -337,7 +343,7 @@ func updateRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 
 	r, err = client.Recipients.Update(ctx, r)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(r.ID)
@@ -349,7 +355,7 @@ func deleteRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 
 	err := client.Recipients.Delete(ctx, d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 	return nil
 }
@@ -425,4 +431,43 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 	}
 
 	return true
+}
+
+// diagFromErr is a helper function that converts an error to a diag.Diagnostics.
+// Intended to be a drop-in replacement for diag.FromErr from the V2 Plugin SDK.
+//
+// If err is a honeycombio.DetailedError, a detailed Diagnostic will be added to diag,
+// otherwise a generic error Diagnostic will be added to diag.
+func diagFromErr(err error) diag.Diagnostics {
+	if err == nil {
+		return nil
+	}
+
+	var detailedErr honeycombio.DetailedError
+	if errors.As(err, &detailedErr) {
+		return diagFromDetailedErr(detailedErr)
+	}
+
+	return diag.FromErr(err)
+}
+
+func diagFromDetailedErr(err honeycombio.DetailedError) diag.Diagnostics {
+	diags := make(diag.Diagnostics, 0, len(err.Details)+1)
+	if len(err.Details) > 0 {
+		for _, d := range err.Details {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  err.Title,
+				Detail:   d.Code + " - " + d.Description,
+			})
+		}
+	} else {
+		diags = append(diags, diag.Diagnostic{
+			Severity: diag.Error,
+			Summary:  err.Title,
+			Detail:   err.Message,
+		})
+	}
+
+	return diags
 }

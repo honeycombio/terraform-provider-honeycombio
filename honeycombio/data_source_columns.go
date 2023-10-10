@@ -45,7 +45,7 @@ func dataSourceHoneycombioColumnsRead(ctx context.Context, d *schema.ResourceDat
 
 	columns, err := client.Columns.List(ctx, dataset)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	var startsWith string

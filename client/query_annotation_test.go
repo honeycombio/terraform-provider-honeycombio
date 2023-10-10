@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestQueryAnnotations(t *testing.T) {
@@ -16,6 +17,7 @@ func TestQueryAnnotations(t *testing.T) {
 	var queryAnnotation *QueryAnnotation
 	var err error
 
+	// no cleanup func needed as queries cannot be deleted
 	query, err := c.Queries.Create(ctx, dataset, &QuerySpec{
 		Calculations: []CalculationSpec{
 			{
@@ -23,10 +25,7 @@ func TestQueryAnnotations(t *testing.T) {
 			},
 		},
 	})
-
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 
 	t.Run("Create", func(t *testing.T) {
 		data := &QueryAnnotation{
@@ -36,10 +35,7 @@ func TestQueryAnnotations(t *testing.T) {
 		}
 		queryAnnotation, err = c.QueryAnnotations.Create(ctx, dataset, data)
 
-		if err != nil {
-			t.Fatal(err)
-		}
-
+		require.NoError(t, err)
 		data.ID = queryAnnotation.ID
 		assert.Equal(t, data, queryAnnotation)
 	})
@@ -47,20 +43,14 @@ func TestQueryAnnotations(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		queryAnnotations, err := c.QueryAnnotations.List(ctx, dataset)
 
-		if err != nil {
-			t.Fatal(err)
-		}
-
+		assert.NoError(t, err)
 		assert.Contains(t, queryAnnotations, *queryAnnotation, "could not find QueryAnnotation with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		result, err := c.QueryAnnotations.Get(ctx, dataset, queryAnnotation.ID)
 
-		if err != nil {
-			t.Fatal(err)
-		}
-
+		assert.NoError(t, err)
 		assert.Equal(t, *queryAnnotation, *result)
 	})
 
@@ -74,25 +64,22 @@ func TestQueryAnnotations(t *testing.T) {
 		}
 		queryAnnotation, err = c.QueryAnnotations.Update(ctx, dataset, data)
 
-		if err != nil {
-			t.Fatal(err)
-		}
-
+		assert.NoError(t, err)
 		data.ID = queryAnnotation.ID
 		assert.Equal(t, data, queryAnnotation)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
 		err = c.QueryAnnotations.Delete(ctx, dataset, queryAnnotation.ID)
-
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 	})
 
-	t.Run("Get_notFound", func(t *testing.T) {
+	t.Run("Fail to Get deleted Query Annotation", func(t *testing.T) {
 		_, err := c.QueryAnnotations.Get(ctx, dataset, queryAnnotation.ID)
 
-		assert.Equal(t, ErrNotFound, err)
+		var de DetailedError
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 }

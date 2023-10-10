@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -69,10 +70,9 @@ func resourceDerivedColumnCreate(ctx context.Context, d *schema.ResourceData, me
 	dataset := d.Get("dataset").(string)
 	derivedColumn := readDerivedColumn(d)
 
-	var err error
-	derivedColumn, err = client.DerivedColumns.Create(ctx, dataset, derivedColumn)
+	derivedColumn, err := client.DerivedColumns.Create(ctx, dataset, derivedColumn)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.Set("alias", derivedColumn.Alias)
@@ -84,10 +84,15 @@ func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta
 
 	dataset := d.Get("dataset").(string)
 
+	var detailedErr honeycombio.DetailedError
 	derivedColumn, err := client.DerivedColumns.GetByAlias(ctx, dataset, d.Get("alias").(string))
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}
@@ -107,7 +112,7 @@ func resourceDerivedColumnUpdate(ctx context.Context, d *schema.ResourceData, me
 
 	derivedColumn, err := client.DerivedColumns.Update(ctx, dataset, derivedColumn)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.Set("alias", derivedColumn.Alias)
@@ -121,7 +126,7 @@ func resourceDerivedColumnDelete(ctx context.Context, d *schema.ResourceData, me
 
 	err := client.DerivedColumns.Delete(ctx, dataset, d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 	return nil
 }

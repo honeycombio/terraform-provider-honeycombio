@@ -13,8 +13,7 @@ type Recipients interface {
 	// List all Recipients
 	List(ctx context.Context) ([]Recipient, error)
 
-	// Get a Recipient by its ID. Returns ErrNotFound if there is no Recipient with
-	// the given ID
+	// Get a Recipient by its ID.
 	Get(ctx context.Context, id string) (*Recipient, error)
 
 	// Create a new Recipient. When creating a new Recipient ID must not be set.

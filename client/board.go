@@ -13,8 +13,7 @@ type Boards interface {
 	// List all boards.
 	List(ctx context.Context) ([]Board, error)
 
-	// Get a board by its ID. Returns ErrNotFound if there is no board with the
-	// given ID.
+	// Get a board by its ID.
 	Get(ctx context.Context, id string) (*Board, error)
 
 	// Create a new board. When creating a new board ID may not be set.

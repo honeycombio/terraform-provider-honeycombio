@@ -1,25 +1,11 @@
 package helper
 
-import "github.com/honeycombio/terraform-provider-honeycombio/client"
-
-func TriggerThresholdOpStrings() []string {
-	in := client.TriggerThresholdOps()
-	out := make([]string, len(in))
-
+// AsStringSlice converts a slice of string-like things to a slice of strings.
+func AsStringSlice[S ~string](in []S) []string {
+	r := make([]string, len(in))
 	for i := range in {
-		out[i] = string(in[i])
+		r[i] = string(in[i])
 	}
 
-	return out
-}
-
-func RecipientTypeStrings(recipientTypes []client.RecipientType) []string {
-	in := recipientTypes
-	out := make([]string, len(in))
-
-	for i := range in {
-		out[i] = string(in[i])
-	}
-
-	return out
+	return r
 }

@@ -61,16 +61,16 @@ func dataSourceHoneycombioQueryResultRead(ctx context.Context, d *schema.Resourc
 	}
 	query, err := client.Queries.Create(ctx, dataset, &querySpec)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	queryResult, err := client.QueryResults.Create(ctx, dataset, &honeycombio.QueryResultRequest{ID: *query.ID})
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 	err = client.QueryResults.Get(ctx, dataset, queryResult)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	results := make([]map[string]string, len(queryResult.Data.Results))

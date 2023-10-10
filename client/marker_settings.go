@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 )
 
@@ -14,8 +15,7 @@ type MarkerSettings interface {
 	// List all marker settings present in this dataset.
 	List(ctx context.Context, dataset string) ([]MarkerSetting, error)
 
-	// Get a marker setting by its ID. Returns ErrNotFound if there is no marker setting with
-	// the given ID in this dataset.
+	// Get a marker setting by its ID.
 	//
 	// This method calls List internally since there is no API available to
 	// directly get a single marker setting.
@@ -75,7 +75,10 @@ func (s *markerSettings) Get(ctx context.Context, dataset string, id string) (*M
 			return &m, nil
 		}
 	}
-	return nil, ErrNotFound
+	return nil, &DetailedError{
+		Status:  http.StatusNotFound,
+		Message: "Marker Setting Not Found.",
+	}
 }
 
 func (s *markerSettings) Create(ctx context.Context, dataset string, data *MarkerSetting) (*MarkerSetting, error) {

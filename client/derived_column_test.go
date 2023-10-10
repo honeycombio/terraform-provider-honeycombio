@@ -2,9 +2,11 @@ package client
 
 import (
 	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDerivedColumns(t *testing.T) {
@@ -24,7 +26,7 @@ func TestDerivedColumns(t *testing.T) {
 		}
 		derivedColumn, err = c.DerivedColumns.Create(ctx, dataset, data)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		data.ID = derivedColumn.ID
 		assert.Equal(t, data, derivedColumn)
@@ -38,8 +40,10 @@ func TestDerivedColumns(t *testing.T) {
 		}
 		_, err = c.DerivedColumns.Create(ctx, dataset, data)
 
+		var de DetailedError
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "chosen alias is the same as an existing derived column")
+		assert.ErrorAs(t, err, &de)
+		assert.Equal(t, de.Status, http.StatusConflict)
 	})
 
 	t.Run("List", func(t *testing.T) {
@@ -85,15 +89,17 @@ func TestDerivedColumns(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Get_notFound", func(t *testing.T) {
+	t.Run("Fail to Get Deleted DC", func(t *testing.T) {
 		_, err := c.DerivedColumns.Get(ctx, dataset, derivedColumn.ID)
 
-		assert.Equal(t, ErrNotFound, err)
-	})
+		var de DetailedError
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 
-	t.Run("GetByAlias_notFound", func(t *testing.T) {
-		_, err := c.DerivedColumns.GetByAlias(ctx, dataset, derivedColumn.Alias)
-
-		assert.Equal(t, ErrNotFound, err)
+		_, err = c.DerivedColumns.GetByAlias(ctx, dataset, derivedColumn.Alias)
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 }

@@ -13,8 +13,7 @@ type SLOs interface {
 	// List all SLOs present in this dataset.
 	List(ctx context.Context, dataset string) ([]SLO, error)
 
-	// Get a SLO by its ID. Returns ErrNotFound if there is no SLO with
-	// the given ID in this dataset.
+	// Get a SLO by its ID.
 	Get(ctx context.Context, dataset string, id string) (*SLO, error)
 
 	// Create a new SLO in this dataset. When creating a SLO ID may not

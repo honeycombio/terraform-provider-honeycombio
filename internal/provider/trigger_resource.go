@@ -139,7 +139,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							Required:    true,
 							Description: "The operator to apply.",
 							Validators: []validator.String{
-								stringvalidator.OneOf(helper.TriggerThresholdOpStrings()...),
+								stringvalidator.OneOf(helper.AsStringSlice(client.TriggerThresholdOps())...),
 							},
 						},
 						"value": schema.Float64Attribute{
@@ -228,11 +228,7 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	trigger, err := r.client.Triggers.Create(ctx, plan.Dataset.ValueString(), newTrigger)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Creating Honeycomb Trigger",
-			"Could not create Trigger, unexpected error: "+err.Error(),
-		)
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Trigger", err) {
 		return
 	}
 
@@ -260,15 +256,24 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
+	var detailedErr *client.DetailedError
 	trigger, err := r.client.Triggers.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
-	if errors.Is(err, client.ErrNotFound) {
-		resp.State.RemoveResource(ctx)
-		return
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			resp.State.RemoveResource(ctx)
+		} else {
+			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
+				"Error Reading Honeycomb Trigger",
+				detailedErr,
+			))
+		}
 	} else if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading Honeycomb Trigger",
-			"Could not read Trigger ID "+state.ID.ValueString()+": "+err.Error(),
+			"Unexpected error reading Trigger ID "+state.ID.ValueString()+": "+err.Error(),
 		)
+	}
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -337,20 +342,12 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	_, err := r.client.Triggers.Update(ctx, plan.Dataset.ValueString(), updatedTrigger)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Updating Honeycomb Trigger",
-			"Could not update Trigger, unexpected error: "+err.Error(),
-		)
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Trigger", err) {
 		return
 	}
 
 	trigger, err := r.client.Triggers.Get(ctx, plan.Dataset.ValueString(), plan.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Updating Honeycomb Trigger",
-			"Could not read Honeycomb Trigger ID "+plan.ID.ValueString()+": "+err.Error(),
-		)
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Trigger", err) {
 		return
 	}
 
@@ -379,11 +376,7 @@ func (r *triggerResource) Delete(ctx context.Context, req resource.DeleteRequest
 	}
 
 	err := r.client.Triggers.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Deleting Honeycomb Trigger",
-			"Could not delete Trigger, unexpected error: "+err.Error(),
-		)
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Deleting Honeycomb Trigger", err) {
 		return
 	}
 }

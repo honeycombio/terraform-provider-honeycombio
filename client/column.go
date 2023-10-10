@@ -15,12 +15,10 @@ type Columns interface {
 	// List all columns in this dataset.
 	List(ctx context.Context, dataset string) ([]Column, error)
 
-	// Get a column by its ID. Returns ErrNotFound if there is no column with
-	// the given ID in this dataset.
+	// Get a column by its ID.
 	Get(ctx context.Context, dataset string, id string) (*Column, error)
 
-	// GetByKeyName searches a column by its key name. Returns ErrNotFound if
-	// there is no column with the given key name in this dataset.
+	// GetByKeyName searches a column by its key name.
 	GetByKeyName(ctx context.Context, dataset string, keyName string) (*Column, error)
 
 	// Create a new column in this dataset. When creating a new column ID may

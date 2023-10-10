@@ -49,10 +49,13 @@ func TestDatasets(t *testing.T) {
 		assert.Equal(t, *currentDataset, *d)
 	})
 
-	t.Run("Get_notFound", func(t *testing.T) {
+	t.Run("Fail to Get bogus Dataset", func(t *testing.T) {
 		_, err := c.Datasets.Get(ctx, "does-not-exist")
 
-		assert.Equal(t, ErrNotFound, err)
+		var de DetailedError
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 
 	t.Run("Create", func(t *testing.T) {

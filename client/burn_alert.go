@@ -11,12 +11,10 @@ import (
 //
 // API docs: https://docs.honeycomb.io/api/burn-alerts/
 type BurnAlerts interface {
-	// List all BurnAlerts associated with a SLO. Returns ErrNotFound if there is no SLO with
-	// the given ID in this dataset.
+	// List all BurnAlerts associated with a SLO.
 	ListForSLO(ctx context.Context, dataset string, sloId string) ([]BurnAlert, error)
 
-	// Get a BurnAlert by its ID. Returns ErrNotFound if there is no BurnAlert with
-	// the given ID in this dataset.
+	// Get a BurnAlert by its ID.
 	Get(ctx context.Context, dataset string, id string) (*BurnAlert, error)
 
 	// Create a new BurnAlert on a SLO. When creating a BurnAlert ID may not

@@ -157,7 +157,7 @@ func resourceBoardCreate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	b, err = client.Boards.Create(ctx, b)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(b.ID)
@@ -167,10 +167,15 @@ func resourceBoardCreate(ctx context.Context, d *schema.ResourceData, meta inter
 func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	client := meta.(*honeycombio.Client)
 
+	var detailedErr honeycombio.DetailedError
 	b, err := client.Boards.Get(ctx, d.Id())
-	if err == honeycombio.ErrNotFound {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}
@@ -210,7 +215,7 @@ func resourceBoardUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 
 	b, err = client.Boards.Update(ctx, b)
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 
 	d.SetId(b.ID)
@@ -222,7 +227,7 @@ func resourceBoardDelete(ctx context.Context, d *schema.ResourceData, meta inter
 
 	err := client.Boards.Delete(ctx, d.Id())
 	if err != nil {
-		return diag.FromErr(err)
+		return diagFromErr(err)
 	}
 	return nil
 }
@@ -304,7 +309,7 @@ func expandBoardQueryGraphSettings(gs interface{}) (honeycombio.BoardGraphSettin
 }
 
 func flattenBoardQueryGraphSettings(gs honeycombio.BoardGraphSettings) []map[string]interface{} {
-	result := make([]map[string]interface{}, 0)
+	result := make([]map[string]interface{}, 0, 1)
 
 	result = append(result, map[string]interface{}{
 		"hide_markers":        gs.HideMarkers,

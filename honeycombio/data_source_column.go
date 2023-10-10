@@ -2,7 +2,6 @@ package honeycombio
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -86,7 +85,7 @@ func dataSourceHoneycombioColumnRead(ctx context.Context, d *schema.ResourceData
 
 	column, err := client.Columns.GetByKeyName(ctx, dataset, matchName)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("column not found, API returned: %s", err.Error()))
+		return diagFromErr(err)
 	}
 
 	d.SetId(column.ID)

@@ -85,9 +85,12 @@ func TestSLOs(t *testing.T) {
 		assert.NoError(t, err, "failed to delete SLO")
 	})
 
-	t.Run("Get_NotFound", func(t *testing.T) {
+	t.Run("Fail to Get deleted SLO", func(t *testing.T) {
 		_, err := c.SLOs.Get(ctx, dataset, slo.ID)
 
-		assert.Equal(t, ErrNotFound, err)
+		var de DetailedError
+		assert.Error(t, err)
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 }

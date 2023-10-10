@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -99,10 +100,9 @@ func (d *sloDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	}
 
 	slo, err := d.client.SLOs.Get(ctx, data.Dataset.ValueString(), data.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			fmt.Sprintf("Unable to lookup SLO \"%s\"", data.ID.ValueString()),
-			err.Error())
+	if helper.AddDiagnosticOnError(&resp.Diagnostics,
+		fmt.Sprintf("Looking up SLO %q", data.ID.ValueString()),
+		err) {
 		return
 	}
 
