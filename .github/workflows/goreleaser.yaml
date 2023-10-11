@@ -5,19 +5,21 @@ on:
     tags:
       - "v*"
 
+# Releases need permissions to read and write the repository contents.
+# GitHub considers creating releases and uploading assets as writing contents.
+permissions:
+  contents: write
+
 jobs:
   goreleaser:
     name: Release (GoReleaser)
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Unshallow
-        run: git fetch --prune --unshallow
+        with:
+          # Allow goreleaser to access older tag information.
+          fetch-depth: 0
       - name: Setup Go
         uses: actions/setup-go@v4
         with:
@@ -33,8 +35,8 @@ jobs:
         uses: goreleaser/goreleaser-action@v5.0.0
         with:
           version: latest
-          args: release --rm-dist
+          args: release --clean
         env:
-          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
           # GitHub sets this automatically
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
