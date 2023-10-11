@@ -464,8 +464,8 @@ func diagFromDetailedErr(err honeycombio.DetailedError) diag.Diagnostics {
 	} else {
 		diags = append(diags, diag.Diagnostic{
 			Severity: diag.Error,
-			Summary:  err.Title,
-			Detail:   err.Message,
+			Summary:  err.Message,
+			Detail:   err.Title,
 		})
 	}
 
