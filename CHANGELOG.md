@@ -1,3 +1,19 @@
+# 0.18.0 (Oct 11, 2023)
+
+ENHANCEMENTS:
+
+* docs: add environment-wide '__all__' note where supported (#371)
+* client: improve error handling and reporting (#372)
+* docs: add clarity around trigger frequency (#373)
+
+BUGFIXES:
+
+* docs: Fix minor typo in "query_specification" documentation (#369)
+
+HOUSEKEEPING:
+
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.4.0 to 1.4.1. (#370)
+
 # 0.17.0 (Sep 19, 2023)
 
 ENHANCEMENTS:
