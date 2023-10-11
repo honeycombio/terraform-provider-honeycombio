@@ -1,3 +1,13 @@
+# 0.18.1 (Oct 11, 2023)
+
+BUGFIXES:
+
+* client: ensure Summary is set on SDK v2 Diagnostics (#378)
+
+HOUSEKEEPING:
+
+* build(deps): Bump golang.org/x/net from 0.13.0 to 0.17.0 (#377)
+
 # 0.18.0 (Oct 11, 2023)
 
 ENHANCEMENTS:
