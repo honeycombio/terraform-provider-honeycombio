@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -45,6 +46,29 @@ func TestAccHoneycombioDerivedColumn_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_derived_column.test", "expression", "LOG10($duration_ms)"),
 					resource.TestCheckResourceAttr("honeycombio_derived_column.test", "description", "LOG10 of duration_ms"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccHoneycombioDerivedColumn_error(t *testing.T) {
+	dataset := testAccDataset()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          testAccPreCheck(t),
+		ProviderFactories: testAccProviderFactories,
+		IDRefreshName:     "honeycombio_derived_column.test",
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "honeycombio_derived_column" "invalid_column_in_expression" {
+  alias       = "invalid_column_in_expression"
+  expression  = "LOG10($invalid_column)"
+
+  dataset = "%s"
+}
+`, dataset),
+				ExpectError: regexp.MustCompile(`Error: unknown column name: invalid_column`),
 			},
 		},
 	})
