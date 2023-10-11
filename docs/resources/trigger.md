@@ -138,7 +138,7 @@ The following arguments are supported:
 * `description` - (Optional) Description of the trigger.
 * `disabled` - (Optional) The state of the trigger. If true, the trigger will not be run. Defaults to false.
 * `frequency` - (Optional) The interval (in seconds) in which to check the results of the query’s calculation against the threshold.
-This value must be divisible by 60, between 60 and 86400 (between 1 minute and 1 day), and not be more than 4 times the query's duration.
+This value must be divisible by 60, between 60 and 86400 (between 1 minute and 1 day), and not be more than 4 times the query's duration (see note below).
 Defaults to 900 (15 minutes).
 * `alert_type` - (Optional) The frequency for the alert to trigger. (`on_change` is the default behavior, `on_true` can also be selected)
 * `evaluation_schedule` - (Optional) A configuration block (described below) that determines when the trigger is run.
@@ -148,7 +148,9 @@ If no schedule is specified, the trigger will be run at the specified frequency 
 * `recipient` - (Optional) Zero or more configuration blocks (described below) with the recipients to notify when the trigger fires.
 
 -> **NOTE** The query used in a Trigger must follow a strict subset: the query must contain *exactly one* calcuation and may only contain `calculation`, `filter`, `filter_combination` and `breakdowns` fields.
-The query's duration (`time_range` in the specification) cannot be more than four times the trigger frequency. For example: if using the default query `time_range` of `7200` the lowest `frequency` for a trigger is `1800`.
+The query's duration cannot be more than four times the trigger frequency (i.e. `duration <= frequency*4`).
+See [A Caveat on Time](https://docs.honeycomb.io/working-with-your-data/query-specification/#a-caveat-on-time)) for more information on specifying a query's duration.
+For example: if using the default query `time_range` of `7200` the lowest `frequency` for a trigger is `1800`.
 
 Each trigger configuration must contain exactly one `threshold` block, which accepts the following arguments:
 

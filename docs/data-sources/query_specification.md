@@ -49,7 +49,7 @@ The following arguments are supported:
 * `order` - (Optional) Zero or more configuration blocks (described below) describing how to order the query results. Each term must appear in either `calculation` or `breakdowns`.
 * `having` - (Optional) Zero or more filters used to restrict returned groups in the query result.
 * `limit` - (Optional)  The maximum number of query results, must be between 1 and 1000.
-* `time_range` - (Optional) The time range of the query in seconds, defaults to two hours.
+* `time_range` - (Optional) The time range of the query in seconds, defaults to `7200` (two hours).
 * `start_time` - (Optional) The absolute start time of the query in Unix Time (= seconds since epoch).
 * `end_time` - (Optional) The absolute end time of the query in Unix Time (= seconds since epoch).
 * `granularity` - (Optional) The time resolution of the query’s graph, in seconds. Valid values must be in between the query’s time range /10 at maximum, and /1000 at minimum.
