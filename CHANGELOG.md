@@ -1,3 +1,10 @@
+# 0.18.2 (Oct 30, 2023)
+
+HOUSEKEEPING:
+
+* build(deps): Bump google.golang.org/grpc from 1.57.0 to 1.57.1 (#382)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from v1.4.1 to v1.4.2 (#381)
+
 # 0.18.1 (Oct 11, 2023)
 
 BUGFIXES:
