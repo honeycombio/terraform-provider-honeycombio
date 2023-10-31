@@ -59,7 +59,7 @@ jobs:
           HONEYCOMB_DATASET: testacc
         run: go test -v -coverprofile=client-coverage.txt -covermode=atomic ./client/...
 
-      - uses: hashicorp/setup-terraform@v2
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
