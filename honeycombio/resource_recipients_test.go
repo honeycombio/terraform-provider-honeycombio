@@ -61,6 +61,19 @@ resource "honeycombio_webhook_recipient" "test" {
 					resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", "https://my.url.corp.net"),
 				),
 			},
+			{
+				Config: `
+			resource "honeycombio_msteams_recipient" "test" {
+			  name = "my teams channel"
+			  url  = "https://my.url.office.com/webhooks/incoming/123456789/abcdefg"
+			}
+			`,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckRecipientExists(t, "honeycombio_msteams_recipient.test"),
+					resource.TestCheckResourceAttr("honeycombio_msteams_recipient.test", "name", "my teams channel"),
+					resource.TestCheckResourceAttr("honeycombio_msteams_recipient.test", "url", "https://my.url.office.com/webhooks/incoming/123456789/abcdefg"),
+				),
+			},
 		},
 	})
 }

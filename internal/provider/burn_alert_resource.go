@@ -79,7 +79,7 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"recipient": notificationRecipientSchema(),
+			"recipient": notificationRecipientSchema(client.RecipientTypes()),
 		},
 	}
 }

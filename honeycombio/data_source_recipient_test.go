@@ -61,6 +61,13 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 				WebhookURL:    "https://my.webhook.dev.corp.io",
 			},
 		},
+		{
+			Type: honeycombio.RecipientTypeMSTeams,
+			Details: honeycombio.RecipientDetails{
+				WebhookName: "My Teams Channel",
+				WebhookURL:  "https://outlook.office.com/webhook/12345",
+			},
+		},
 	}
 
 	for i, r := range testRecipients {
@@ -115,6 +122,13 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "name", "My Notifications Hook"),
 					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "secret", "s0s3kret!"),
 					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", "https://my.webhook.dev.corp.io"),
+				),
+			},
+			{
+				Config: testAccRecipientWithFilterValue("msteams", "name", "My Teams Channel"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "name", "My Teams Channel"),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", "https://outlook.office.com/webhook/12345"),
 				),
 			},
 			{

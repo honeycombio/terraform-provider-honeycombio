@@ -270,6 +270,9 @@ func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*hone
 		r.Details.PDIntegrationName = d.Get("integration_name").(string)
 	case honeycombio.RecipientTypeSlack:
 		r.Details.SlackChannel = d.Get("channel").(string)
+	case honeycombio.RecipientTypeMSTeams:
+		r.Details.WebhookName = d.Get("name").(string)
+		r.Details.WebhookURL = d.Get("url").(string)
 	case honeycombio.RecipientTypeWebhook:
 		r.Details.WebhookName = d.Get("name").(string)
 		r.Details.WebhookSecret = d.Get("secret").(string)
@@ -322,6 +325,9 @@ func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}
 		d.Set("integration_name", r.Details.PDIntegrationName)
 	case honeycombio.RecipientTypeSlack:
 		d.Set("channel", r.Details.SlackChannel)
+	case honeycombio.RecipientTypeMSTeams:
+		d.Set("name", r.Details.WebhookName)
+		d.Set("url", r.Details.WebhookURL)
 	case honeycombio.RecipientTypeWebhook:
 		d.Set("name", r.Details.WebhookName)
 		d.Set("secret", r.Details.WebhookSecret)
@@ -401,10 +407,6 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 	if f == nil {
 		return true
 	}
-	// types don't match, no point in going further
-	if r.Type != f.Type {
-		return false
-	}
 
 	if f.ValueRegex != nil {
 		switch r.Type {
@@ -414,7 +416,7 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 			return f.ValueRegex.MatchString(r.Details.SlackChannel)
 		case honeycombio.RecipientTypePagerDuty:
 			return f.ValueRegex.MatchString(r.Details.PDIntegrationName)
-		case honeycombio.RecipientTypeWebhook:
+		case honeycombio.RecipientTypeWebhook, honeycombio.RecipientTypeMSTeams:
 			return f.ValueRegex.MatchString(r.Details.WebhookName) || f.ValueRegex.MatchString(r.Details.WebhookURL)
 		}
 	} else if f.Value != nil {
@@ -425,7 +427,7 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 			return (r.Details.SlackChannel == *f.Value)
 		case honeycombio.RecipientTypePagerDuty:
 			return (r.Details.PDIntegrationName == *f.Value)
-		case honeycombio.RecipientTypeWebhook:
+		case honeycombio.RecipientTypeWebhook, honeycombio.RecipientTypeMSTeams:
 			return (r.Details.WebhookName == *f.Value) || (r.Details.WebhookURL == *f.Value)
 		}
 	}

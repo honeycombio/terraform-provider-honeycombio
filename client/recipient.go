@@ -61,9 +61,10 @@ type RecipientDetails struct {
 	PDIntegrationName string `json:"pagerduty_integration_name,omitempty"`
 	// slack
 	SlackChannel string `json:"slack_channel,omitempty"`
-	// webhook
-	WebhookName   string `json:"webhook_name,omitempty"`
-	WebhookURL    string `json:"webhook_url,omitempty"`
+	// webhook or msteams
+	WebhookName string `json:"webhook_name,omitempty"`
+	WebhookURL  string `json:"webhook_url,omitempty"`
+	// webhook only
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
 
@@ -81,6 +82,7 @@ const (
 	RecipientTypeSlack     RecipientType = "slack"
 	RecipientTypeWebhook   RecipientType = "webhook"
 	RecipientTypeMarker    RecipientType = "marker"
+	RecipientTypeMSTeams   RecipientType = "msteams"
 )
 
 // PagerDutySeverity holds all the possible PD Severity types
@@ -94,24 +96,21 @@ const (
 	PDDefaultSeverity                    = PDSeverityCRITICAL
 )
 
-// TriggerRecipientTypes returns a list of recipient types compatible with Triggers
+// TriggerRecipientTypes returns a list of recipient types compatible with Triggers.
+// Triggers are a special case as 'Marker' recipients are supported in addition to
+// usual types.
 func TriggerRecipientTypes() []RecipientType {
-	return []RecipientType{
-		RecipientTypeEmail,
-		RecipientTypePagerDuty,
-		RecipientTypeSlack,
-		RecipientTypeWebhook,
-		RecipientTypeMarker,
-	}
+	return append(RecipientTypes(), RecipientTypeMarker)
 }
 
-// BurnAlertRecipientTypes returns a list of recipient types compatible with Burn Alerts
-func BurnAlertRecipientTypes() []RecipientType {
+// RecipientTypes returns all supported Recipient types
+func RecipientTypes() []RecipientType {
 	return []RecipientType{
 		RecipientTypeEmail,
 		RecipientTypePagerDuty,
 		RecipientTypeSlack,
 		RecipientTypeWebhook,
+		RecipientTypeMSTeams,
 	}
 }
 

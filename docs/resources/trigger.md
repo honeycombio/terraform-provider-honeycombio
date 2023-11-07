@@ -166,7 +166,7 @@ Each trigger configuration may provide an `evaluation_schedule` block, which acc
 
 Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments. A trigger recipient block can either refer to an existing recipient (a recipient that is already present in another trigger) or a new recipient. When specifying an existing recipient, only `id` may be set. If you pass in a recipient without its ID and only include the type and target, Honeycomb will make a best effort to match to an existing recipient. To retrieve the ID of an existing recipient, refer to the [`honeycombio_recipient`](../data-sources/recipient.md) data source.
 
-* `type` - (Optional) The type of the trigger recipient, allowed types are `email`, `marker`, `pagerduty`, `slack` and `webhook`.
+* `type` - (Optional) The type of the trigger recipient, allowed types are `email`, `marker`, `msteams`, `pagerduty`, `slack` and `webhook`.
 Cannot not be used in combination with `id`.
 * `target` - (Optional) Target of the trigger recipient, this has another meaning depending on the type of recipient (see the table below).
 Cannot not be used in combination with `id`.

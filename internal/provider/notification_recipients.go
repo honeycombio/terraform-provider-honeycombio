@@ -18,9 +18,9 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
-func notificationRecipientSchema() schema.SetNestedBlock {
+func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.SetNestedBlock {
 	return schema.SetNestedBlock{
-		Description:   "Zero or more recipients to notify when the Trigger fires.",
+		Description:   "Zero or more recipients to notify when the resource fires.",
 		PlanModifiers: []planmodifier.Set{modifiers.NotificationRecipients()},
 		NestedObject: schema.NestedBlockObject{
 			Validators: []validator.Object{
@@ -42,15 +42,15 @@ func notificationRecipientSchema() schema.SetNestedBlock {
 				"type": schema.StringAttribute{
 					Optional:    true,
 					Computed:    true,
-					Description: "The type of the trigger recipient.",
+					Description: "The type of the notification recipient.",
 					Validators: []validator.String{
-						stringvalidator.OneOf(helper.AsStringSlice(client.TriggerRecipientTypes())...),
+						stringvalidator.OneOf(helper.AsStringSlice(allowedTypes)...),
 					},
 				},
 				"target": schema.StringAttribute{
 					Optional:    true,
 					Computed:    true,
-					Description: "Target of the trigger recipient, this has another meaning depending on the type of recipient.",
+					Description: "Target of the notification, this has another meaning depending on the type of recipient.",
 					Validators: []validator.String{
 						stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("type")),
 					},
