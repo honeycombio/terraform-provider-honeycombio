@@ -61,9 +61,10 @@ type RecipientDetails struct {
 	PDIntegrationName string `json:"pagerduty_integration_name,omitempty"`
 	// slack
 	SlackChannel string `json:"slack_channel,omitempty"`
-	// webhook
-	WebhookName   string `json:"webhook_name,omitempty"`
-	WebhookURL    string `json:"webhook_url,omitempty"`
+	// webhook or msteams
+	WebhookName string `json:"webhook_name,omitempty"`
+	WebhookURL  string `json:"webhook_url,omitempty"`
+	// webhook only
 	WebhookSecret string `json:"webhook_secret,omitempty"`
 }
 
@@ -81,6 +82,7 @@ const (
 	RecipientTypeSlack     RecipientType = "slack"
 	RecipientTypeWebhook   RecipientType = "webhook"
 	RecipientTypeMarker    RecipientType = "marker"
+	RecipientTypeMSTeams   RecipientType = "msteams"
 )
 
 // PagerDutySeverity holds all the possible PD Severity types
@@ -102,6 +104,7 @@ func TriggerRecipientTypes() []RecipientType {
 		RecipientTypeSlack,
 		RecipientTypeWebhook,
 		RecipientTypeMarker,
+		RecipientTypeMSTeams,
 	}
 }
 
@@ -112,6 +115,7 @@ func BurnAlertRecipientTypes() []RecipientType {
 		RecipientTypePagerDuty,
 		RecipientTypeSlack,
 		RecipientTypeWebhook,
+		RecipientTypeMSTeams,
 	}
 }
 

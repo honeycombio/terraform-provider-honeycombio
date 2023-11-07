@@ -74,3 +74,42 @@ func TestRecipientsEmail(t *testing.T) {
 		assert.True(t, de.IsNotFound())
 	})
 }
+
+func TestRecipientsWebhooksandMSTeams(t *testing.T) {
+	ctx := context.Background()
+	c := newTestClient(t)
+
+	testRcpts := []Recipient{
+		{
+			Type: RecipientTypeWebhook,
+			Details: RecipientDetails{
+				WebhookName:   "test webhook",
+				WebhookURL:    "https://example.com",
+				WebhookSecret: "secret",
+			},
+		},
+		{
+			Type: RecipientTypeMSTeams,
+			Details: RecipientDetails{
+				WebhookName: "test channel",
+				WebhookURL:  "https://corp.office.com/webhook",
+			},
+		},
+	}
+
+	for _, tr := range testRcpts {
+		r, err := c.Recipients.Create(ctx, &tr)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			_ = c.Recipients.Delete(ctx, r.ID)
+		})
+
+		r, err = c.Recipients.Get(ctx, r.ID)
+		require.NoError(t, err)
+
+		assert.Equal(t, tr.Type, r.Type)
+		assert.Equal(t, tr.Details.WebhookName, r.Details.WebhookName)
+		assert.Equal(t, tr.Details.WebhookURL, r.Details.WebhookURL)
+		assert.Equal(t, tr.Details.WebhookSecret, r.Details.WebhookSecret)
+	}
+}

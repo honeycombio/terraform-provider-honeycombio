@@ -195,7 +195,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					},
 				},
 			},
-			"recipient": notificationRecipientSchema(),
+			"recipient": notificationRecipientSchema(client.TriggerRecipientTypes()),
 		},
 	}
 }

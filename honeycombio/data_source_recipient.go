@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
 func dataSourceHoneycombioRecipient() *schema.Resource {
@@ -33,8 +34,8 @@ If you want to match multiple recipients, use the 'honeycombio_recipients' data 
 			"type": {
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "The type of recipient, allowed types are `email`, `pagerduty`, `slack` and `webhook`.",
-				ValidateFunc: validation.StringInSlice([]string{"email", "pagerduty", "slack", "webhook"}, false),
+				Description:  "The type of recipient, allowed types are `email`, `pagerduty`, `msteams`, `slack` and `webhook`.",
+				ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.BurnAlertRecipientTypes()), false),
 			},
 			"target": {
 				Type:          schema.TypeString,
@@ -95,7 +96,7 @@ If you want to match multiple recipients, use the 'honeycombio_recipients' data 
 				Computed:    true,
 				Required:    false,
 				Optional:    false,
-				Description: "The webhook recipient's name -- if of type `webhook`",
+				Description: "The webhook recipient's name -- if of type `webhook` or `msteams`",
 			},
 			"secret": {
 				Type:        schema.TypeString,
@@ -110,7 +111,7 @@ If you want to match multiple recipients, use the 'honeycombio_recipients' data 
 				Computed:    true,
 				Required:    false,
 				Optional:    false,
-				Description: "The webhook recipient's URL -- if of type `webhook`",
+				Description: "The webhook recipient's URL -- if of type `webhook` or `msteams`",
 			},
 			"integration_key": {
 				Type:        schema.TypeString,
@@ -143,14 +144,10 @@ func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceD
 	rcptFilter := &recipientFilter{Type: matchType}
 	if v, ok := d.GetOk("target"); ok {
 		// deprecated argument to be removed in future
-		target := v.(string)
-		rcptFilter.Value = &target
+		rcptFilter = &recipientFilter{Value: honeycombio.ToPtr(v.(string))}
 	}
 	if v, ok := d.GetOk("detail_filter"); ok {
 		rcptFilter = expandRecipientFilter(v.([]interface{}))
-		if rcptFilter.Type != matchType {
-			return diag.Errorf("provided type doesn't match filter type")
-		}
 	}
 
 	var filteredRcpts []honeycombio.Recipient
@@ -174,6 +171,9 @@ func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceD
 		d.Set("address", rcpt.Details.EmailAddress)
 	case honeycombio.RecipientTypeSlack:
 		d.Set("channel", rcpt.Details.SlackChannel)
+	case honeycombio.RecipientTypeMSTeams:
+		d.Set("name", rcpt.Details.WebhookName)
+		d.Set("url", rcpt.Details.WebhookURL)
 	case honeycombio.RecipientTypeWebhook:
 		d.Set("name", rcpt.Details.WebhookName)
 		d.Set("secret", rcpt.Details.WebhookSecret)

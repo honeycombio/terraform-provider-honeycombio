@@ -58,6 +58,7 @@ func Provider(version string) *schema.Provider {
 			"honeycombio_query_annotation":    newQueryAnnotation(),
 			"honeycombio_email_recipient":     newEmailRecipient(),
 			"honeycombio_pagerduty_recipient": newPDRecipient(),
+			"honeycombio_msteams_recipient":   newMSTeamsRecipient(),
 			"honeycombio_slack_recipient":     newSlackRecipient(),
 			"honeycombio_webhook_recipient":   newWebhookRecipient(),
 			"honeycombio_slo":                 newSLO(),

@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 )
 
@@ -25,7 +26,7 @@ func dataSourceHoneycombioRecipients() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "The type of recipients.",
-				ValidateFunc: validation.StringInSlice([]string{"email", "pagerduty", "slack", "webhook"}, false),
+				ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.BurnAlertRecipientTypes()), false),
 			},
 			"detail_filter": {
 				Type:         schema.TypeList,
@@ -90,9 +91,6 @@ func dataSourceHoneycombioRecipientsRead(ctx context.Context, d *schema.Resource
 	}
 	if v, ok := d.GetOk("detail_filter"); ok {
 		rcptFilter = expandRecipientFilter(v.([]interface{}))
-		if rcptFilter.Type != matchType {
-			return diag.Errorf("provided type doesn't match filter type")
-		}
 	}
 
 	var rcptIDs []string
