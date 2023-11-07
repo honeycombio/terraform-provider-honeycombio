@@ -5,12 +5,17 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"golang.org/x/exp/slices"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -22,9 +27,10 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &burnAlertResource{}
-	_ resource.ResourceWithConfigure   = &burnAlertResource{}
-	_ resource.ResourceWithImportState = &burnAlertResource{}
+	_ resource.Resource                   = &burnAlertResource{}
+	_ resource.ResourceWithConfigure      = &burnAlertResource{}
+	_ resource.ResourceWithImportState    = &burnAlertResource{}
+	_ resource.ResourceWithValidateConfig = &burnAlertResource{}
 )
 
 type burnAlertResource struct {
@@ -56,6 +62,31 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"alert_type": schema.StringAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "The alert type of this Burn Alert.",
+				Default:     stringdefault.StaticString(string(client.BurnAlertAlertTypeExhaustionTime)),
+				Validators: []validator.String{
+					stringvalidator.OneOf(helper.AsStringSlice(client.BurnAlertAlertTypes())...),
+				},
+			},
+			"budget_rate_decrease_percent": schema.Float64Attribute{
+				Optional:    true,
+				Description: "The percent the budget has decreased over the budget rate window.",
+				Validators: []validator.Float64{
+					float64validator.AtLeast(0.0001),
+					float64validator.AtMost(100),
+					validation.Float64PrecisionAtMost(4),
+				},
+			},
+			"budget_rate_window_minutes": schema.Int64Attribute{
+				Optional:    true,
+				Description: "The time period, in minutes, over which a budget rate will be calculated.",
+				Validators: []validator.Int64{
+					int64validator.AtLeast(60),
+				},
+			},
 			"dataset": schema.StringAttribute{
 				Required:    true,
 				Description: "The dataset this Burn Alert is associated with.",
@@ -64,7 +95,7 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"exhaustion_minutes": schema.Int64Attribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The amount of time, in minutes, remaining before the SLO's error budget will be exhausted and the alert will fire.",
 				Validators: []validator.Int64{
 					int64validator.AtLeast(0),
@@ -82,6 +113,90 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"recipient": notificationRecipientSchema(client.RecipientTypes()),
 		},
 	}
+}
+
+func validateAttributesWhenAlertTypeIsExhaustionTime(data models.BurnAlertResourceModel, resp *resource.ValidateConfigResponse) {
+	// Check that the alert_type is exhaustion_time or that it is not configured(which means we default to exhaustion_time)
+	if data.AlertType.IsNull() || data.AlertType.IsUnknown() || data.AlertType.ValueString() == string(client.BurnAlertAlertTypeExhaustionTime) {
+		// When the alert_type is exhaustion_time, exhaustion_minutes is required
+		if data.ExhaustionMinutes.IsNull() || data.ExhaustionMinutes.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("exhaustion_minutes"),
+				"Missing required argument",
+				"The argument \"exhaustion_minutes\" is required, but no definition was found.",
+			)
+		}
+
+		// When the alert_type is exhaustion_time, budget_rate_decrease_percent must not be configured
+		if !(data.BudgetRateDecreasePercent.IsNull() || data.BudgetRateDecreasePercent.IsUnknown()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("budget_rate_decrease_percent"),
+				"Conflicting configuration arguments",
+				"\"budget_rate_decrease_percent\": must not be configured when \"alert_type\" is \"exhaustion_time\"",
+			)
+		}
+
+		// When the alert_type is exhaustion_time, budget_rate_window_minutes must not be configured
+		if !(data.BudgetRateWindowMinutes.IsNull() || data.BudgetRateWindowMinutes.IsUnknown()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("budget_rate_window_minutes"),
+				"Conflicting configuration arguments",
+				"\"budget_rate_window_minutes\": must not be configured when \"alert_type\" is \"exhaustion_time\"",
+			)
+		}
+	}
+}
+
+func validateAttributesWhenAlertTypeIsBudgetRate(data models.BurnAlertResourceModel, resp *resource.ValidateConfigResponse) {
+	// Check if the alert_type is budget_rate
+	if data.AlertType.ValueString() == string(client.BurnAlertAlertTypeBudgetRate) {
+		// When the alert_type is budget_rate, budget_rate_decrease_percent is required
+		if data.BudgetRateDecreasePercent.IsNull() || data.BudgetRateDecreasePercent.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("budget_rate_decrease_percent"),
+				"Missing required argument",
+				"The argument \"budget_rate_decrease_percent\" is required, but no definition was found.",
+			)
+		}
+
+		// When the alert_type is budget_rate, budget_rate_window_minutes is required
+		if data.BudgetRateWindowMinutes.IsNull() || data.BudgetRateWindowMinutes.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("budget_rate_window_minutes"),
+				"Missing required argument",
+				"The argument \"budget_rate_window_minutes\" is required, but no definition was found.",
+			)
+		}
+
+		// When the alert_type is budget_rate, exhaustion_minutes must not be configured
+		if !(data.ExhaustionMinutes.IsNull() || data.ExhaustionMinutes.IsUnknown()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("exhaustion_minutes"),
+				"Conflicting configuration arguments",
+				"\"exhaustion_minutes\": must not be configured when \"alert_type\" is \"budget_rate\"",
+			)
+		}
+	}
+}
+
+func (r *burnAlertResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data models.BurnAlertResourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// When alert_type is exhaustion_time, check that exhaustion_minutes
+	// is configured and budget rate attributes are not configured
+	validateAttributesWhenAlertTypeIsExhaustionTime(data, resp)
+
+	// When alert_type is budget_rate, check that budget rate
+	// attributes are configured and exhaustion_minutes is not configured
+	validateAttributesWhenAlertTypeIsBudgetRate(data, resp)
+
+	return
 }
 
 func (r *burnAlertResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
