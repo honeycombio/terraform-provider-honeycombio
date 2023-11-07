@@ -96,20 +96,15 @@ const (
 	PDDefaultSeverity                    = PDSeverityCRITICAL
 )
 
-// TriggerRecipientTypes returns a list of recipient types compatible with Triggers
+// TriggerRecipientTypes returns a list of recipient types compatible with Triggers.
+// Triggers are a special case as 'Marker' recipients are supported in addition to
+// usual types.
 func TriggerRecipientTypes() []RecipientType {
-	return []RecipientType{
-		RecipientTypeEmail,
-		RecipientTypePagerDuty,
-		RecipientTypeSlack,
-		RecipientTypeWebhook,
-		RecipientTypeMarker,
-		RecipientTypeMSTeams,
-	}
+	return append(RecipientTypes(), RecipientTypeMarker)
 }
 
-// BurnAlertRecipientTypes returns a list of recipient types compatible with Burn Alerts
-func BurnAlertRecipientTypes() []RecipientType {
+// RecipientTypes returns all supported Recipient types
+func RecipientTypes() []RecipientType {
 	return []RecipientType{
 		RecipientTypeEmail,
 		RecipientTypePagerDuty,

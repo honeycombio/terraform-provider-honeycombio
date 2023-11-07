@@ -26,7 +26,7 @@ func dataSourceHoneycombioRecipients() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "The type of recipients.",
-				ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.BurnAlertRecipientTypes()), false),
+				ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.RecipientTypes()), false),
 			},
 			"detail_filter": {
 				Type:         schema.TypeList,

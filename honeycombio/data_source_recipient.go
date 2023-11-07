@@ -34,8 +34,8 @@ If you want to match multiple recipients, use the 'honeycombio_recipients' data 
 			"type": {
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "The type of recipient, allowed types are `email`, `pagerduty`, `msteams`, `slack` and `webhook`.",
-				ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.BurnAlertRecipientTypes()), false),
+				Description:  "The type of recipient.",
+				ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.RecipientTypes()), false),
 			},
 			"target": {
 				Type:          schema.TypeString,
