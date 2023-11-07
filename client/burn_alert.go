@@ -41,12 +41,31 @@ type SLORef struct {
 }
 
 type BurnAlert struct {
-	ID                string                  `json:"id,omitempty"`
-	ExhaustionMinutes int                     `json:"exhaustion_minutes"`
-	SLO               SLORef                  `json:"slo"`
-	CreatedAt         time.Time               `json:"created_at,omitempty"`
-	UpdatedAt         time.Time               `json:"updated_at,omitempty"`
-	Recipients        []NotificationRecipient `json:"recipients,omitempty"`
+	ID                                    string                  `json:"id,omitempty"`
+	AlertType                             string                  `json:"alert_type"`
+	ExhaustionMinutes                     *int                    `json:"exhaustion_minutes,omitempty"`
+	BudgetRateWindowMinutes               *int                    `json:"budget_rate_window_minutes,omitempty"`
+	BudgetRateDecreaseThresholdPerMillion *int                    `json:"budget_rate_decrease_threshold_per_million,omitempty"`
+	SLO                                   SLORef                  `json:"slo"`
+	CreatedAt                             time.Time               `json:"created_at,omitempty"`
+	UpdatedAt                             time.Time               `json:"updated_at,omitempty"`
+	Recipients                            []NotificationRecipient `json:"recipients,omitempty"`
+}
+
+// BurnAlertAlertType represents a burn alert alert type
+type BurnAlertAlertType string
+
+const (
+	BurnAlertAlertTypeExhaustionTime BurnAlertAlertType = "exhaustion_time"
+	BurnAlertAlertTypeBudgetRate     BurnAlertAlertType = "budget_rate"
+)
+
+// BurnAlertAlertTypes returns a list of valid burn alert alert types
+func BurnAlertAlertTypes() []BurnAlertAlertType {
+	return []BurnAlertAlertType{
+		BurnAlertAlertTypeExhaustionTime,
+		BurnAlertAlertTypeBudgetRate,
+	}
 }
 
 func (s *burnalerts) ListForSLO(ctx context.Context, dataset string, sloId string) ([]BurnAlert, error) {
