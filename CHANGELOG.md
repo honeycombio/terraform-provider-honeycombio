@@ -1,3 +1,14 @@
+# 0.19.0 (Nov 8, 2023)
+
+ENHANCEMENTS:
+
+* add support for 'msteams' recipients (#386)
+
+HOUSEKEEPING:
+
+* build(ci): bump hashicorp/setup-terraform from 2 to 3 (#385)
+* maint: prune dead code and tidy up (#387)
+
 # 0.18.2 (Oct 30, 2023)
 
 HOUSEKEEPING:
