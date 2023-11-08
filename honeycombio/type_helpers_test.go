@@ -1,8 +1,9 @@
 package honeycombio
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_coerceValueToType(t *testing.T) {
@@ -49,9 +50,7 @@ func Test_coerceValueToType(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := coerceValueToType(tt.input); !reflect.DeepEqual(got, tt.expected) {
-				t.Errorf("coerceInputToType() = %v<%T>, want %v<%T>", got, got, tt.expected, tt.expected)
-			}
+			assert.Equal(t, tt.expected, coerceValueToType(tt.input))
 		})
 	}
 }

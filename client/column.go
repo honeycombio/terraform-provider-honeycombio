@@ -76,7 +76,12 @@ const (
 
 // ColumnTypes returns an exhaustive list of column types.
 func ColumnTypes() []ColumnType {
-	return []ColumnType{ColumnTypeString, ColumnTypeFloat, ColumnTypeInteger, ColumnTypeBoolean}
+	return []ColumnType{
+		ColumnTypeString,
+		ColumnTypeFloat,
+		ColumnTypeInteger,
+		ColumnTypeBoolean,
+	}
 }
 
 func (s *columns) List(ctx context.Context, dataset string) ([]Column, error) {

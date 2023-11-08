@@ -167,8 +167,14 @@ func (c CalculationOp) IsUnaryOp() bool {
 	return c == CalculationOpCount || c == CalculationOpConcurrency
 }
 
-// CalculationOps returns an exhaustive list of calculation operators.
+// CalculationOps returns an exhaustive list of Calculation Operators.
 func CalculationOps() []CalculationOp {
+	return append(HavingCalculationOps(), CalculationOpHeatmap)
+}
+
+// HavingCalculationOps returns an exhaustive list of calculation operators
+// supported by Havings. Havings does not support Heatmap.
+func HavingCalculationOps() []CalculationOp {
 	return []CalculationOp{
 		CalculationOpCount,
 		CalculationOpConcurrency,
@@ -188,7 +194,6 @@ func CalculationOps() []CalculationOp {
 		CalculationOpP95,
 		CalculationOpP99,
 		CalculationOpP999,
-		CalculationOpHeatmap,
 		CalculationOpRateAvg,
 		CalculationOpRateSum,
 		CalculationOpRateMax,

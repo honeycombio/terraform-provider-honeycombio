@@ -10,7 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 )
 
@@ -27,7 +29,7 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 						"op": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(calculationOpStrings(), false),
+							ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.CalculationOps()), false),
 						},
 						"column": {
 							Type:     schema.TypeString,
@@ -48,7 +50,7 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 						"op": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(filterOpStrings(), false),
+							ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.FilterOps()), false),
 						},
 						"value": {
 							Type:        schema.TypeString,
@@ -90,7 +92,7 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 						"calculate_op": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(havingCalculateOpStrings(), false),
+							ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.HavingCalculationOps()), false),
 						},
 						"column": {
 							Type: schema.TypeString,
@@ -100,7 +102,7 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 						"op": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice(havingOpStrings(), false),
+							ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.HavingOps()), false),
 						},
 						"value": {
 							// API currently assumes this is a number
@@ -131,7 +133,7 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 						"op": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice(calculationOpStrings(), false),
+							ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.CalculationOps()), false),
 						},
 						"column": {
 							Type:     schema.TypeString,
@@ -140,7 +142,7 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 						"order": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice(sortOrderStrings(), false),
+							ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.SortOrders()), false),
 						},
 					},
 				},

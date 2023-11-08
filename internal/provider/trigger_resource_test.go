@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -97,9 +99,7 @@ func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
 
 	for i, r := range testRecipients {
 		rcpt, err := c.Recipients.Create(ctx, &r)
-		if err != nil {
-			t.Error(err)
-		}
+		require.NoError(t, err)
 		// update ID for removal later
 		testRecipients[i].ID = rcpt.ID
 	}

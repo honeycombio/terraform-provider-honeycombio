@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
@@ -62,14 +64,9 @@ func TestAcc_SLOsDataSource(t *testing.T) {
 
 	for i, tc := range testData {
 		sli, err := c.DerivedColumns.Create(ctx, dataset, &tc.SLI)
-		if err != nil {
-			t.Error(err)
-		}
-
+		require.NoError(t, err)
 		slo, err := c.SLOs.Create(ctx, dataset, &tc.SLO)
-		if err != nil {
-			t.Error(err)
-		}
+		require.NoError(t, err)
 
 		// update IDs for removal later
 		testData[i].SLI.ID = sli.ID
