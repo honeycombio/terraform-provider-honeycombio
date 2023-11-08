@@ -7,8 +7,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
+	"github.com/stretchr/testify/require"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAccHoneycombioSLO_basic(t *testing.T) {
@@ -20,11 +22,10 @@ func TestAccHoneycombioSLO_basic(t *testing.T) {
 		Alias:      "sli.acc_slo_test",
 		Expression: "LT($duration_ms, 1000)",
 	})
-	if err != nil {
-		t.Error(err)
-	}
-	// remove SLI DC at end of test run
+	require.NoError(t, err)
+	//nolint:errcheck
 	t.Cleanup(func() {
+		// remove SLI DC at end of test run
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
@@ -44,32 +45,30 @@ resource "honeycombio_slo" "test" {
 }
 `, dataset, sli.Alias),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSLOExists(t, dataset, "honeycombio_slo.test", "TestAcc SLO"),
+					testAccCheckSLOExists(t, dataset, "honeycombio_slo.test"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "name", "TestAcc SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", "integration test SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "sli", sli.Alias),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "target_percentage", "99.95"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "time_period", "30"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckSLOExists(t *testing.T, dataset string, resourceName string, name string) resource.TestCheckFunc {
+func testAccCheckSLOExists(t *testing.T, dataset string, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		resourceState, ok := s.RootModule().Resources[resourceName]
+		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
-			return fmt.Errorf("not found: %s", resourceName)
+			return fmt.Errorf("not found: %s", name)
 		}
 
 		client := testAccClient(t)
-		createdSLO, err := client.SLOs.Get(context.Background(), dataset, resourceState.Primary.ID)
+		_, err := client.SLOs.Get(context.Background(), dataset, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not find created SLO: %w", err)
 		}
-
-		assert.Equal(t, resourceState.Primary.ID, createdSLO.ID)
-		assert.Equal(t, name, createdSLO.Name)
-		assert.Equal(t, resourceState.Primary.Attributes["description"], createdSLO.Description)
-		assert.Equal(t, resourceState.Primary.Attributes["sli"], createdSLO.SLI.Alias)
-		assert.Equal(t, resourceState.Primary.Attributes["target_percentage"], fmt.Sprintf("%v", tpmToFloat(createdSLO.TargetPerMillion)))
-		assert.Equal(t, resourceState.Primary.Attributes["time_period"], fmt.Sprintf("%v", createdSLO.TimePeriodDays))
 
 		return nil
 	}

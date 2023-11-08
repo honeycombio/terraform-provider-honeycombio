@@ -1,9 +1,12 @@
 package honeycombio
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccHoneycombioRecipients_basic(t *testing.T) {
@@ -76,4 +79,21 @@ resource "honeycombio_webhook_recipient" "test" {
 			},
 		},
 	})
+}
+
+func testAccCheckRecipientExists(t *testing.T, resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resourceState, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", resourceName)
+		}
+
+		client := testAccClient(t)
+		_, err := client.Recipients.Get(context.Background(), resourceState.Primary.ID)
+		if err != nil {
+			return fmt.Errorf("could not find created Recipient: %w", err)
+		}
+
+		return nil
+	}
 }

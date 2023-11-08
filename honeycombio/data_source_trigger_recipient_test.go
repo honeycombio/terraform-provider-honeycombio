@@ -1,22 +1,46 @@
 package honeycombio
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
+	ctx := context.Background()
 	dataset := testAccDataset()
+	c := testAccClient(t)
 
-	_, deleteFn := createTriggerWithRecipient(t, dataset, honeycombio.NotificationRecipient{
-		Type:   honeycombio.RecipientTypeEmail,
-		Target: "acctest@example.com",
+	trigger, err := c.Triggers.Create(ctx, dataset, &honeycombio.Trigger{
+		Name: "test trigger",
+		Query: &honeycombio.QuerySpec{
+			Calculations: []honeycombio.CalculationSpec{
+				{Op: honeycombio.CalculationOpCount},
+			},
+		},
+		Threshold: &honeycombio.TriggerThreshold{
+			Op:    honeycombio.TriggerThresholdOpGreaterThan,
+			Value: 100,
+		},
+		Recipients: []honeycombio.NotificationRecipient{
+			{
+				Type:   honeycombio.RecipientTypeEmail,
+				Target: "acctest@example.com",
+			},
+		},
 	})
-	defer deleteFn()
+	require.NoError(t, err)
+	//nolint:errcheck
+	t.Cleanup(func() {
+		c.Triggers.Delete(ctx, dataset, trigger.ID)
+	})
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          testAccPreCheck(t),
@@ -41,7 +65,7 @@ func testAccTriggerRecipient(dataset, recipientType, target string) string {
 	return fmt.Sprintf(`
 data "honeycombio_trigger_recipient" "test" {
   dataset = "%s"
-  type = "%s"
-  target = "%s"
+  type    = "%s"
+  target  = "%s"
 }`, dataset, recipientType, target)
 }

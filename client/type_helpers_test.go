@@ -2,6 +2,8 @@ package client
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEquivalent(t *testing.T) {
@@ -24,9 +26,7 @@ func TestEquivalent(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := Equivalent(tt.a, tt.b); got != tt.want {
-				t.Errorf("Equivalent() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, Equivalent(tt.a, tt.b))
 		})
 	}
 }

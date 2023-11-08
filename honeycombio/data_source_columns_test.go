@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
@@ -32,12 +34,11 @@ func TestAccDataSourceHoneycombioColumns_basic(t *testing.T) {
 
 	for i, column := range testColumns {
 		col, err := c.Columns.Create(ctx, dataset, &column)
+		require.NoError(t, err)
 		// update ID for removal later
 		testColumns[i].ID = col.ID
-		if err != nil {
-			t.Error(err)
-		}
 	}
+	//nolint:errcheck
 	t.Cleanup(func() {
 		// remove Columns at the of the test run
 		for _, col := range testColumns {

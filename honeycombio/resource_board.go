@@ -7,7 +7,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
 func newBoard() *schema.Resource {
@@ -46,7 +48,7 @@ func newBoard() *schema.Resource {
 				Default:      "visual",
 				Description:  "How the Board should be displayed in the UI.",
 				Deprecated:   "All Boards now are displayed visually in the UI. Setting this value will have no effect.",
-				ValidateFunc: validation.StringInSlice(boardStyleStrings(), false),
+				ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.BoardStyles()), false),
 			},
 			"board_url": {
 				Type:        schema.TypeString,
@@ -72,7 +74,7 @@ func newBoard() *schema.Resource {
 							Optional:     true,
 							Computed:     true,
 							Description:  "How the Query should be displayed within the Board.",
-							ValidateFunc: validation.StringInSlice(boardQueryStyleStrings(), false),
+							ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.BoardQueryStyles()), false),
 						},
 						"graph_settings": {
 							Type:     schema.TypeList,

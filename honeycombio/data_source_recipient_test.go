@@ -6,7 +6,10 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
@@ -72,12 +75,11 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 
 	for i, r := range testRecipients {
 		rcpt, err := c.Recipients.Create(ctx, &r)
+		require.NoError(t, err)
 		// update ID for removal later
 		testRecipients[i].ID = rcpt.ID
-		if err != nil {
-			t.Error(err)
-		}
 	}
+	//nolint:errcheck
 	t.Cleanup(func() {
 		// remove Recipients at the of the test run
 		for _, r := range testRecipients {

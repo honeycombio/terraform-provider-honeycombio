@@ -6,7 +6,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
 func dataSourceHoneycombioSlackRecipient() *schema.Resource {
@@ -21,7 +23,7 @@ func dataSourceHoneycombioSlackRecipient() *schema.Resource {
 			"type": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice(recipientTypeStrings(honeycombio.TriggerRecipientTypes()), false),
+				ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.TriggerRecipientTypes()), false),
 			},
 			"target": {
 				Type:     schema.TypeString,

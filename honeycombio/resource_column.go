@@ -10,7 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
 func newColumn() *schema.Resource {
@@ -55,7 +57,7 @@ func newColumn() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				Default:      "string",
-				ValidateFunc: validation.StringInSlice(columnTypeStrings(), false),
+				ValidateFunc: validation.StringInSlice(helper.AsStringSlice(honeycombio.ColumnTypes()), false),
 			},
 			"dataset": {
 				Type:     schema.TypeString,
