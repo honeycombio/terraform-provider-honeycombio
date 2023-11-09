@@ -18,23 +18,54 @@ type DetailedError struct {
 	// Title is a human-readable summary that explains the type of the problem.
 	Title string `json:"title,omitempty"`
 	// Details is an array of structured objects that give details about the error.
-	Details []struct {
-		Code        string `json:"code"`
-		Description string `json:"description"`
-		Field       string `json:"field"`
-	} `json:"type_detail,omitempty"`
+	Details []ErrorTypeDetail `json:"type_detail,omitempty"`
+}
+
+type ErrorTypeDetail struct {
+	Code        string `json:"code"`
+	Description string `json:"description"`
+	Field       string `json:"field"`
+}
+
+func (td ErrorTypeDetail) String() string {
+	response := ""
+	if td.Code != "" {
+		response += td.Code
+		// If any of the fields that could come next are present, add a space separator
+		if td.Field != "" || td.Description != "" {
+			response += " "
+		}
+	}
+
+	if td.Field != "" {
+		response += td.Field
+		// If any of the fields that could come next are present, add a dash separator
+		if td.Description != "" {
+			response += " - "
+		}
+	}
+
+	if td.Description != "" {
+		response += td.Description
+	}
+
+	return response
 }
 
 // Error returns a pretty-printed representation of the error
 func (e DetailedError) Error() string {
 	if len(e.Details) > 0 {
 		var response string
-		for i, d := range e.Details {
-			response += d.Code + " - " + d.Description
-			if i > len(e.Details)-1 {
-				response += ", "
+
+		for index, details := range e.Details {
+			response += details.String()
+
+			// If we haven't reached the end of the list of error details, add a newline separator between each error
+			if index < len(e.Details)-1 {
+				response += "\n"
 			}
 		}
+
 		return response
 	}
 
