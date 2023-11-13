@@ -119,9 +119,7 @@ The following arguments are supported:
    Must be 0 or greater.
    Required when `alert_type` is `exhaustion_time`.
    Must not be provided when `alert_type` is `budget_rate`.
-# TODO: This is a required attribute in the API. It doesn't appear to be required in the provider but
-# I think we should probs mark is required in the docs
-* `recipient` - (Optional) Zero or more configuration blocks (described below) with the recipients to notify when the alert fires.
+* `recipient` - (Required) Zero or more configuration blocks (described below) with the recipients to notify when the alert fires.
 
 Each burn alert configuration may have one or more `recipient` blocks, which each accept the following arguments. A recipient block can either refer to an existing recipient (a recipient that is already present in another burn alert or trigger) or a new recipient. When specifying an existing recipient, only `id` may be set. If you pass in a recipient without its ID and only include the type and target, Honeycomb will make a best effort to match to an existing recipient. To retrieve the ID of an existing recipient, refer to the [`honeycombio_recipient`](../data-sources/recipient.md) data source.
 
