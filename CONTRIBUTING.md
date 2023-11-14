@@ -24,11 +24,24 @@ Hashicorp has a tool to preview documentation. Visit [registry.terraform.io/tool
 
 ### Running the test
 
-Most of the tests are acceptance tests, which will call real APIs. To run the tests you'll need to have access to a Honeycomb account. If not, you can create a new free team.
+Most of the tests are acceptance tests, which will call real APIs. To run the tests you'll need to have access to a Honeycomb account/team. If not, you can create a new free team to run the majority of the tests. 
 
-First, **create an API key**. Initially you'll have to check all permissions, but _Send Events_ and _Create Datasets_ can be disabled once setup is done.
+Some tests, such as those for SLOs and those that access the Query Data API, require a Pro team. Additionally, the test for a Slack recipient requires that the Slack authorization be [set up with the team ahead of time](https://docs.honeycomb.io/working-with-your-data/triggers/#slack)
 
-Next, **initialize the dataset**. The helper script [setup-testsuite-dataset](scripts/setup-testsuite-dataset) will create the dataset and required columns that are used in the tests.
+First, **create an API key**. This key should have the following permissions:
+- Create Datasets
+- Manage Queries and Columns
+- Manage Public Boards
+- Manage Triggers
+- Manage Recipients
+- Manage Markers
+
+
+Next, **initialize the dataset**. The helper script [setup-testsuite-dataset](scripts/setup-testsuite-dataset) will create the dataset and required columns that are used in the tests. You will need to use Bash 4 to run this script.
+
+```sh
+HONEYCOMB_API_KEY=<your API key> HONEYCOMB_DATASET=<dataset> ./scripts/setup-testsuite-dataset
+```
 
 Finally, **run the acceptance tests** by passing the API key and dataset as environment variables:
 
