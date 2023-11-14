@@ -33,13 +33,15 @@ Additionally, the test for a Slack recipient requires that the Slack authorizati
 First, **create an API key**. This key should have the following permissions:
 - Create Datasets
 - Manage Queries and Columns
+- Run Queries
 - Manage Public Boards
+- Manage SLOs
 - Manage Triggers
 - Manage Recipients
 - Manage Markers
 
-
-Next, **initialize the dataset**. The helper script [setup-testsuite-dataset](scripts/setup-testsuite-dataset) will create the dataset and required columns that are used in the tests. You will need to use Bash 4 to run this script.
+Next, **initialize the dataset**. The helper script [setup-testsuite-dataset](scripts/setup-testsuite-dataset) will create the dataset and required columns that are used in the tests. 
+You will need to use Bash 4+ to run this script.
 
 ```sh
 HONEYCOMB_API_KEY=<your API key> HONEYCOMB_DATASET=<dataset> ./scripts/setup-testsuite-dataset
