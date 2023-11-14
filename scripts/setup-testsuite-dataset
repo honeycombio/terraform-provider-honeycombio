@@ -11,11 +11,14 @@ DATASETS_API="${HONEYCOMB_API}/1/datasets"
 declare -A REQUIRED_COLUMNS=(
   [trace.parent_id]=string
   [trace.trace_id]=string
+  [trace.span_id]=string
   [app.tenant]=string
   [app.error]=string
   [column_1]=string
   [column_2]=string
   [duration_ms]=float
+  [name]=string
+  [service_name]=string
 )
 
 log () {
