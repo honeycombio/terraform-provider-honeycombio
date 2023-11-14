@@ -41,7 +41,7 @@ func TestClient_ParseDetailedError(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.Equal(t, http.StatusUnprocessableEntity, de.Status)
-		assert.Equal(t, "https://api.honeycomb.io/problems/validation-failed", de.Type)
+		assert.Equal(t, fmt.Sprintf("%s/problems/validation-failed", c.apiURL), de.Type)
 		assert.Equal(t, "The provided input is invalid.", de.Title)
 		assert.Equal(t, "The provided input is invalid.", de.Message)
 		assert.Equal(t, 1, len(de.Details))
