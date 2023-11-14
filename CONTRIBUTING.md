@@ -26,7 +26,7 @@ Hashicorp has a tool to preview documentation. Visit [registry.terraform.io/tool
 
 Most of the tests are acceptance tests, which will call real APIs. To run the tests you'll need to have access to a Honeycomb account/team. If not, you can create a new free team to run the majority of the tests. 
 
-The tests for SLOs require a Pro Plus team, while the tests for the Query Data API require an Enterprise team.
+Some tests, such as those for SLOs and those for the Query Data API require an Enterprise team.
 
 Additionally, the test for a Slack recipient requires that the Slack authorization be [set up with the team ahead of time](https://docs.honeycomb.io/working-with-your-data/triggers/#slack)
 
