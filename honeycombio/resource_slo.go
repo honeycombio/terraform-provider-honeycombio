@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
 func newSLO() *schema.Resource {
@@ -117,7 +118,7 @@ func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface
 	d.Set("name", s.Name)
 	d.Set("description", s.Description)
 	d.Set("sli", s.SLI.Alias)
-	d.Set("target_percentage", tpmToFloat(s.TargetPerMillion))
+	d.Set("target_percentage", helper.PPMToFloat(s.TargetPerMillion))
 	d.Set("time_period", s.TimePeriodDays)
 
 	return nil
@@ -159,7 +160,7 @@ func expandSLO(d *schema.ResourceData) (*honeycombio.SLO, error) {
 		Name:             d.Get("name").(string),
 		Description:      d.Get("description").(string),
 		TimePeriodDays:   d.Get("time_period").(int),
-		TargetPerMillion: floatToTPM(d.Get("target_percentage").(float64)),
+		TargetPerMillion: helper.FloatToPPM(d.Get("target_percentage").(float64)),
 		SLI:              honeycombio.SLIRef{Alias: d.Get("sli").(string)},
 	}
 	return s, nil
