@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
@@ -65,6 +66,13 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test"),
 				),
+				SkipFunc: func() (bool, error) {
+					apiHost := os.Getenv(client.DefaultAPIHostEnv)
+					if apiHost == "" {
+						return false, nil
+					}
+					return apiHost != client.DefaultAPIHost, nil
+				},
 			},
 			{
 				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,

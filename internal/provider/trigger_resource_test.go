@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -68,6 +69,13 @@ func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
 				),
+				SkipFunc: func() (bool, error) {
+					apiHost := os.Getenv(client.DefaultAPIHostEnv)
+					if apiHost == "" {
+						return false, nil
+					}
+					return apiHost != client.DefaultAPIHost, nil
+				},
 			},
 			{
 				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
