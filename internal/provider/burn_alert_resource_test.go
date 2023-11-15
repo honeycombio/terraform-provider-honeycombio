@@ -4,40 +4,199 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-func TestAcc_BurnAlertResource(t *testing.T) {
+func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+
+	// Create
+	exhaustionMinutes := 240
+
+	// Update
+	updatedExhaustionMinutes := 480
+	budgetRateWindowMinutes := 60
+	budgetRateDecreasePercent := 0.0001
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
+			// Create - basic
 			{
-				Config: testAccConfigBasicBurnAlertTest(dataset, sloID, "info"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test"),
-					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", sloID),
-					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes", "240"),
-					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
-				),
+				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
 			},
-			// then update the PD Severity from info -> critical (the default)
+			// Update - PD Severity from info -> critical (the default)
 			{
-				Config: testAccConfigBasicBurnAlertTest(dataset, sloID, "critical"),
+				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "critical"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "critical", sloID),
 			},
+			// Import
 			{
-				ResourceName:        "honeycombio_burn_alert.test",
-				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
-				ImportState:         true,
+				ResourceName:            "honeycombio_burn_alert.test",
+				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"recipient"},
+			},
+			// Update - exhaustion time to exhaustion time
+			{
+				Config: testAccConfigBurnAlertDefault_basic(updatedExhaustionMinutes, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, updatedExhaustionMinutes, "info", sloID),
+			},
+			// Update - exhaustion time to budget rate
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, "info", sloID),
+			},
+		},
+	})
+}
+
+func TestAcc_BurnAlertResource_exhaustionTimeBasic(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+
+	// Create
+	exhaustionMinutes := 0
+
+	// Update
+	updatedExhaustionMinutes := 240
+	budgetRateWindowMinutes := 60
+	budgetRateDecreasePercent := 5.1
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			// Create - basic
+			{
+				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
+			},
+			// Update - PD Severity from info -> critical (the default)
+			{
+				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "critical"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "critical", sloID),
+			},
+			// Import
+			{
+				ResourceName:            "honeycombio_burn_alert.test",
+				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"recipient"},
+			},
+			// Update - exhaustion time to exhaustion time
+			{
+				Config: testAccConfigBurnAlertDefault_basic(updatedExhaustionMinutes, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, updatedExhaustionMinutes, "info", sloID),
+			},
+			// Update - exhaustion time to budget rate
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, "info", sloID),
+			},
+		},
+	})
+}
+
+func TestAcc_BurnAlertResource_budgetRateBasic(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+
+	// Create
+	budgetRateWindowMinutes := 60
+	budgetRateDecreasePercent := float64(5)
+
+	// Update
+	updatedBudgetRateWindowMinutes := 100
+	updatedBudgetRateDecreasePercent := 0.1
+	exhaustionTime := 0
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			// Create - basic
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, "info", sloID),
+			},
+			// Update - PD Severity from info -> critical (the default)
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "critical"),
+				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, "critical", sloID),
+			},
+			// Import
+			{
+				ResourceName:            "honeycombio_burn_alert.test",
+				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"recipient"},
+			},
+			// Update - budget rate to budget rate
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basic(updatedBudgetRateWindowMinutes, updatedBudgetRateDecreasePercent, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, updatedBudgetRateWindowMinutes, updatedBudgetRateDecreasePercent, "info", sloID),
+			},
+			// Update - budget rate to exhaustion time
+			{
+				Config: testAccConfigBurnAlertExhaustionTime_basic(exhaustionTime, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionTime, "info", sloID),
+			},
+		},
+	})
+}
+
+// Check that creating a budget rate alert with a
+// budget_rate_decrease_percent with trailing zeros works,
+// doesn't produce spurious plans after apply, and imports successfully
+func TestAcc_BurnAlertResource_budgetRateTrailingZeros(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+
+	// Create
+	budgetRateWindowMinutes := 60
+	budgetRateDecreasePercent := float64(5.00000)
+	pdSeverity := "info"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			// Create - trailing zeros on budget_rate_decrease_percent
+			{
+				Config: testAccConfigBurnAlertBudgetRate_trailingZeros(dataset, sloID),
+				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, pdSeverity, sloID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			// Import
+			{
+				ResourceName:            "honeycombio_burn_alert.test",
+				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"recipient"},
 			},
 		},
 	})
@@ -50,8 +209,9 @@ func TestAcc_BurnAlertResource(t *testing.T) {
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
 
-	config := testAccConfigBasicBurnAlertTest(dataset, sloID, "info")
+	config := testAccConfigBurnAlertDefault_basic(60, dataset, sloID, "info")
 
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -64,7 +224,7 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 				},
 				Config: config,
 				Check: resource.ComposeTestCheckFunc(
-					testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test"),
+					testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
 				),
 				// These tests pull in older versions of the provider that don't
 				// support setting the API host easily. We'll skip them for now
@@ -85,7 +245,177 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 	})
 }
 
-func testAccEnsureBurnAlertExists(t *testing.T, name string) resource.TestCheckFunc {
+func TestAcc_BurnAlertResource_Import_validateImportID(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+
+	exhaustionMinutes := 240
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			// Create resource for importing
+			{
+				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
+			},
+			// Import with invalid import ID
+			{
+				ResourceName:        "honeycombio_burn_alert.test",
+				ImportStateIdPrefix: fmt.Sprintf("%v.", dataset),
+				ImportState:         true,
+				ExpectError:         regexp.MustCompile(`Error: Invalid Import ID`),
+			},
+		},
+	})
+}
+
+func TestAcc_BurnAlertResource_validateDefault(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccConfigBurnAlertDefault_basic(-1, dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`exhaustion_minutes value must be at least`),
+			},
+			{
+				Config:      testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`argument "exhaustion_minutes" is required`),
+			},
+			{
+				Config:      testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`"budget_rate_window_minutes": must not be configured when "alert_type"`),
+			},
+			{
+				Config:      testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`"budget_rate_decrease_percent": must not be configured when`),
+			},
+		},
+	})
+}
+
+func TestAcc_BurnAlertResource_validateExhaustionTime(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccConfigBurnAlertExhaustionTime_basic(-1, dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`exhaustion_minutes value must be at least`),
+			},
+			{
+				Config:      testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`argument "exhaustion_minutes" is required`),
+			},
+			{
+				Config:      testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`"budget_rate_window_minutes": must not be configured when "alert_type"`),
+			},
+			{
+				Config:      testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`"budget_rate_decrease_percent": must not be configured when`),
+			},
+		},
+	})
+}
+
+func TestAcc_BurnAlertResource_validateBudgetRate(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	budgetRateWindowMinutes := 60
+	budgetRateDecreasePercent := float64(1)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_basic(0, budgetRateDecreasePercent, dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`budget_rate_window_minutes value must be at least`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, float64(0), dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`budget_rate_decrease_percent value must be at least`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, float64(200), dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`budget_rate_decrease_percent value must be at most`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, float64(1.123456789), dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`budget_rate_decrease_percent precision for value must be at most`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID),
+				ExpectError: regexp.MustCompile(`argument "budget_rate_decrease_percent" is required`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID),
+				ExpectError: regexp.MustCompile(`argument "budget_rate_window_minutes" is required`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID),
+				ExpectError: regexp.MustCompile(`"exhaustion_minutes": must not be configured when "alert_type"`),
+			},
+		},
+	})
+}
+
+// Checks that the exhaustion time burn alert exists, has the correct attributes, and has the correct state
+func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.BurnAlert, exhaustionMinutes int, pagerdutySeverity, sloID string) resource.TestCheckFunc {
+	return resource.ComposeAggregateTestCheckFunc(
+		// Check that the burn alert exists
+		testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
+
+		// Check that the burn alert has the correct attributes
+		testAccEnsureAttributesCorrectExhaustionTime(burnAlert, exhaustionMinutes, sloID),
+
+		// Check that the burn alert has the correct values in state
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", sloID),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "alert_type", "exhaustion_time"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes", fmt.Sprintf("%d", exhaustionMinutes)),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.#", "1"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.pagerduty_severity", pagerdutySeverity),
+		// Budget rate attributes should not be set
+		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "budget_rate_window_minutes"),
+		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "budget_rate_decrease_percent"),
+	)
+}
+
+// Checks that the budget rate burn alert exists, has the correct attributes, and has the correct state
+func testAccEnsureSuccessBudgetRateAlert(t *testing.T, burnAlert *client.BurnAlert, budgetRateWindowMinutes int, budgetRateDecreasePercent float64, pagerdutySeverity, sloID string) resource.TestCheckFunc {
+	return resource.ComposeAggregateTestCheckFunc(
+		// Check that the burn alert exists
+		testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
+
+		// Check that the burn alert has the correct attributes
+		testAccEnsureAttributesCorrectBudgetRate(burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, sloID),
+
+		// Check that the burn alert has the correct values in state
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", sloID),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "alert_type", "budget_rate"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "budget_rate_window_minutes", fmt.Sprintf("%d", budgetRateWindowMinutes)),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "budget_rate_decrease_percent", helper.FloatToPercentString(budgetRateDecreasePercent)),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.#", "1"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.pagerduty_severity", pagerdutySeverity),
+		// Exhaustion time attributes should not be set
+		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes"),
+	)
+}
+
+func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.BurnAlert) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -93,9 +423,88 @@ func testAccEnsureBurnAlertExists(t *testing.T, name string) resource.TestCheckF
 		}
 
 		client := testAccClient(t)
-		_, err := client.BurnAlerts.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+		alert, err := client.BurnAlerts.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created Burn Alert: %w", err)
+		}
+
+		*burnAlert = *alert
+
+		return nil
+	}
+}
+
+func testAccEnsureAttributesCorrectExhaustionTime(burnAlert *client.BurnAlert, exhaustionMinutes int, sloID string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if burnAlert.AlertType != "exhaustion_time" {
+			return fmt.Errorf("incorrect alert_type: %s", burnAlert.AlertType)
+		}
+
+		if burnAlert.ExhaustionMinutes == nil {
+			return fmt.Errorf("incorrect exhaustion_minutes: expected not to be nil")
+		}
+		if *burnAlert.ExhaustionMinutes != exhaustionMinutes {
+			return fmt.Errorf("incorrect exhaustion_minutes: %d", *burnAlert.ExhaustionMinutes)
+		}
+
+		if burnAlert.SLO.ID != sloID {
+			return fmt.Errorf("incorrect SLO ID: %s", burnAlert.SLO.ID)
+		}
+
+		// TODO: more in-depth checking of recipients
+
+		return nil
+	}
+}
+
+func testAccEnsureAttributesCorrectBudgetRate(burnAlert *client.BurnAlert, budgetRateWindowMinutes int, budgetRateDecreasePercent float64, sloID string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if burnAlert.AlertType != "budget_rate" {
+			return fmt.Errorf("incorrect alert_type: %s", burnAlert.AlertType)
+		}
+
+		if burnAlert.BudgetRateWindowMinutes == nil {
+			return fmt.Errorf("incorrect budget_rate_window_minutes: expected not to be nil")
+		}
+		if *burnAlert.BudgetRateWindowMinutes != budgetRateWindowMinutes {
+			return fmt.Errorf("incorrect budget_rate_window_minutes: %d", *burnAlert.BudgetRateWindowMinutes)
+		}
+
+		if burnAlert.BudgetRateDecreaseThresholdPerMillion == nil {
+			return fmt.Errorf("incorrect budget_rate_decrease_percent: expected not to be nil")
+		}
+		// Must convert from PPM back to float to compare with config
+		budgetRateDecreaseThresholdPerMillionAsPercent := helper.PPMToFloat(*burnAlert.BudgetRateDecreaseThresholdPerMillion)
+		if budgetRateDecreaseThresholdPerMillionAsPercent != budgetRateDecreasePercent {
+			return fmt.Errorf("incorrect budget_rate_decrease_percent: %f", budgetRateDecreaseThresholdPerMillionAsPercent)
+		}
+
+		if burnAlert.SLO.ID != sloID {
+			return fmt.Errorf("incorrect SLO ID: %s", burnAlert.SLO.ID)
+		}
+
+		// TODO: more in-depth checking of recipients
+
+		return nil
+	}
+}
+
+func testAccEnsureBurnAlertDestroyed(t *testing.T) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, resourceState := range s.RootModule().Resources {
+			if resourceState.Type != "honeycomb_burn_alert" {
+				continue
+			}
+
+			if resourceState.Primary.ID == "" {
+				return fmt.Errorf("no ID set for burn alert")
+			}
+
+			client := testAccClient(t)
+			_, err := client.BurnAlerts.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+			if err == nil {
+				return fmt.Errorf("burn alert %s was not deleted on destroy", resourceState.Primary.ID)
+			}
 		}
 
 		return nil
@@ -133,7 +542,7 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 	return dataset, slo.ID
 }
 
-func testAccConfigBasicBurnAlertTest(dataset, sloID, pdseverity string) string {
+func testAccConfigBurnAlertDefault_basic(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
@@ -141,16 +550,140 @@ resource "honeycombio_pagerduty_recipient" "test" {
 }
 
 resource "honeycombio_burn_alert" "test" {
-  dataset            = "%[1]s"
-  slo_id             = "%[2]s"
-  exhaustion_minutes = 4 * 60
+  exhaustion_minutes = %[1]d
+
+  dataset            = "%[2]s"
+  slo_id             = "%[3]s"
 
   recipient {
     id = honeycombio_pagerduty_recipient.test.id
 
     notification_details {
-      pagerduty_severity = "%[3]s"
+      pagerduty_severity = "%[4]s"
     }
   }
-}`, dataset, sloID, pdseverity)
+}`, exhaustionMinutes, dataset, sloID, pdseverity)
+}
+
+func testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  budget_rate_window_minutes   = 60
+  budget_rate_decrease_percent = 1
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    type   = "email"
+    target = "test@example.com"
+  }
+}`, dataset, sloID)
+}
+
+func testAccConfigBurnAlertExhaustionTime_basic(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "testacc-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  alert_type         = "exhaustion_time"
+  exhaustion_minutes = %[1]d
+
+  dataset = "%[2]s"
+  slo_id  = "%[3]s"
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[4]s"
+    }
+  }
+}`, exhaustionMinutes, dataset, sloID, pdseverity)
+}
+
+func testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "exhaustion_time"
+  budget_rate_window_minutes   = 60
+  budget_rate_decrease_percent = 1
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    type   = "email"
+    target = "test@example.com"
+  }
+}`, dataset, sloID)
+}
+
+func testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, pdseverity string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "testacc-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  dataset = "%[3]s"
+  slo_id  = "%[4]s"
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[5]s"
+    }
+  }
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, pdseverity)
+}
+
+func testAccConfigBurnAlertBudgetRate_trailingZeros(dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "testacc-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  budget_rate_window_minutes   = 60
+  budget_rate_decrease_percent = 5.00000
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "info"
+    }
+  }
+}`, dataset, sloID)
+}
+
+func testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  alert_type         = "budget_rate"
+  exhaustion_minutes = 60
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    type   = "email"
+    target = "test@example.com"
+  }
+}`, dataset, sloID)
 }
