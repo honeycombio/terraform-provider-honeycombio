@@ -222,41 +222,76 @@ func (r *burnAlertResource) ImportState(ctx context.Context, req resource.Import
 
 func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan, config models.BurnAlertResourceModel
+	// Read in the config and plan data
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	burnAlert, err := r.client.BurnAlerts.Create(ctx, plan.Dataset.ValueString(), &client.BurnAlert{
-		ExhaustionMinutes: int(plan.ExhaustionMinutes.ValueInt64()),
-		SLO:               client.SLORef{ID: plan.SLOID.ValueString()},
-		Recipients:        expandNotificationRecipients(plan.Recipients),
-	})
+	// Get attributes from config and construct the create request
+	createRequest := &client.BurnAlert{
+		AlertType:  plan.AlertType.ValueString(),
+		Recipients: expandNotificationRecipients(plan.Recipients),
+		SLO:        client.SLORef{ID: plan.SLOID.ValueString()},
+	}
+
+	// Process any attributes that could be nil and add them to the create request
+	exhaustionMinutes := int(plan.ExhaustionMinutes.ValueInt64())
+	// Must convert from float to PPM because the API only accepts PPM
+	budgetRateDecreasePercentAsPPM := helper.FloatToPPM(plan.BudgetRateDecreasePercent.ValueFloat64())
+	budgetRateWindowMinutes := int(plan.BudgetRateWindowMinutes.ValueInt64())
+	if plan.AlertType.ValueString() == string(client.BurnAlertAlertTypeExhaustionTime) {
+		createRequest.ExhaustionMinutes = &exhaustionMinutes
+	}
+	if plan.AlertType.ValueString() == string(client.BurnAlertAlertTypeBudgetRate) {
+		createRequest.BudgetRateDecreaseThresholdPerMillion = &budgetRateDecreasePercentAsPPM
+		createRequest.BudgetRateWindowMinutes = &budgetRateWindowMinutes
+	}
+
+	// Create the new burn alert
+	burnAlert, err := r.client.BurnAlerts.Create(ctx, plan.Dataset.ValueString(), createRequest)
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Burn Alert", err) {
 		return
 	}
 
+	// Get attributes from the new burn alert and construct the state values
 	var state models.BurnAlertResourceModel
-	state.Dataset = plan.Dataset
 	state.ID = types.StringValue(burnAlert.ID)
-	state.ExhaustionMinutes = types.Int64Value(int64(burnAlert.ExhaustionMinutes))
-	state.SLOID = types.StringValue(burnAlert.SLO.ID)
+	state.AlertType = types.StringValue(burnAlert.AlertType)
+	state.Dataset = plan.Dataset
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
+	state.SLOID = types.StringValue(burnAlert.SLO.ID)
 
+	// Process any attributes that could be nil and add them to the state values
+	if burnAlert.ExhaustionMinutes != nil {
+		state.ExhaustionMinutes = types.Int64Value(int64(*burnAlert.ExhaustionMinutes))
+	}
+	if burnAlert.BudgetRateDecreaseThresholdPerMillion != nil {
+		// Must convert from PPM back to float to match what the user has in their config
+		budgetRateDecreaseThresholdPerMillionAsPercent := helper.PPMToFloat(*burnAlert.BudgetRateDecreaseThresholdPerMillion)
+		state.BudgetRateDecreasePercent = types.Float64Value(budgetRateDecreaseThresholdPerMillionAsPercent)
+	}
+	if burnAlert.BudgetRateWindowMinutes != nil {
+		state.BudgetRateWindowMinutes = types.Int64Value(int64(*burnAlert.BudgetRateWindowMinutes))
+	}
+
+	// Set the new burn alert's attributes in state
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state models.BurnAlertResourceModel
+	// Read in the state data
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Read the burn alert, using the values from state
 	var detailedErr *client.DetailedError
-	ba, err := r.client.BurnAlerts.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
+	burnAlert, err := r.client.BurnAlerts.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
 			resp.State.RemoveResource(ctx)
@@ -276,14 +311,28 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	state.ID = types.StringValue(ba.ID)
-	state.ExhaustionMinutes = types.Int64Value(int64(ba.ExhaustionMinutes))
-	state.SLOID = types.StringValue(ba.SLO.ID)
+	// Get attributes from the burn alert and construct the state values
+	state.ID = types.StringValue(burnAlert.ID)
+	state.AlertType = types.StringValue(burnAlert.AlertType)
+	state.SLOID = types.StringValue(burnAlert.SLO.ID)
 
-	recipients := make([]models.NotificationRecipientModel, len(ba.Recipients))
+	// Process any attributes that could be nil and add them to the state values
+	if burnAlert.ExhaustionMinutes != nil {
+		state.ExhaustionMinutes = types.Int64Value(int64(*burnAlert.ExhaustionMinutes))
+	}
+	if burnAlert.BudgetRateDecreaseThresholdPerMillion != nil {
+		// Must convert from PPM back to float to match what the user has in their config
+		budgetRateDecreaseThresholdPerMillionAsPercent := helper.PPMToFloat(*burnAlert.BudgetRateDecreaseThresholdPerMillion)
+		state.BudgetRateDecreasePercent = types.Float64Value(budgetRateDecreaseThresholdPerMillionAsPercent)
+	}
+	if burnAlert.BudgetRateWindowMinutes != nil {
+		state.BudgetRateWindowMinutes = types.Int64Value(int64(*burnAlert.BudgetRateWindowMinutes))
+	}
+
+	recipients := make([]models.NotificationRecipientModel, len(burnAlert.Recipients))
 	if state.Recipients != nil {
 		// match the recipients to those in the state sorting out type+target vs ID
-		for i, r := range ba.Recipients {
+		for i, r := range burnAlert.Recipients {
 			idx := slices.IndexFunc(state.Recipients, func(s models.NotificationRecipientModel) bool {
 				if !s.ID.IsNull() {
 					return s.ID.ValueString() == r.ID
@@ -301,54 +350,91 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 			recipients[i] = state.Recipients[idx]
 		}
 	} else {
-		recipients = flattenNotificationRecipients(ba.Recipients)
+		recipients = flattenNotificationRecipients(burnAlert.Recipients)
 	}
 	state.Recipients = recipients
 
+	// Set the burn alert's attributes in state
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, config models.BurnAlertResourceModel
+	// Read in the config and plan data
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	_, err := r.client.BurnAlerts.Update(ctx, plan.Dataset.ValueString(), &client.BurnAlert{
-		ID:                plan.ID.ValueString(),
-		ExhaustionMinutes: int(plan.ExhaustionMinutes.ValueInt64()),
-		SLO:               client.SLORef{ID: plan.SLOID.ValueString()},
-		Recipients:        expandNotificationRecipients(plan.Recipients),
-	})
+	// Get attributes from config and construct the update request
+	updateRequest := &client.BurnAlert{
+		ID:         plan.ID.ValueString(),
+		AlertType:  plan.AlertType.ValueString(),
+		Recipients: expandNotificationRecipients(plan.Recipients),
+		SLO:        client.SLORef{ID: plan.SLOID.ValueString()},
+	}
+
+	// Process any attributes that could be nil and add them to the update request
+	exhaustionMinutes := int(plan.ExhaustionMinutes.ValueInt64())
+	// Must convert from float to PPM because the API only accepts PPM
+	budgetRateDecreasePercentAsPPM := helper.FloatToPPM(plan.BudgetRateDecreasePercent.ValueFloat64())
+	budgetRateWindowMinutes := int(plan.BudgetRateWindowMinutes.ValueInt64())
+	if plan.AlertType.ValueString() == string(client.BurnAlertAlertTypeExhaustionTime) {
+		updateRequest.ExhaustionMinutes = &exhaustionMinutes
+	}
+	if plan.AlertType.ValueString() == string(client.BurnAlertAlertTypeBudgetRate) {
+		updateRequest.BudgetRateDecreaseThresholdPerMillion = &budgetRateDecreasePercentAsPPM
+		updateRequest.BudgetRateWindowMinutes = &budgetRateWindowMinutes
+	}
+
+	// Update the burn alert
+	_, err := r.client.BurnAlerts.Update(ctx, plan.Dataset.ValueString(), updateRequest)
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Burn Alert", err) {
 		return
 	}
 
+	// Read the updated burn alert
 	burnAlert, err := r.client.BurnAlerts.Get(ctx, plan.Dataset.ValueString(), plan.ID.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Burn Alert", err) {
 		return
 	}
 
+	// Get attributes from the updated burn alert and construct the state values
 	var state models.BurnAlertResourceModel
-	state.Dataset = plan.Dataset
 	state.ID = types.StringValue(burnAlert.ID)
-	state.ExhaustionMinutes = types.Int64Value(int64(burnAlert.ExhaustionMinutes))
-	state.SLOID = types.StringValue(burnAlert.SLO.ID)
+	state.AlertType = types.StringValue(burnAlert.AlertType)
+	state.Dataset = plan.Dataset
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
+	state.SLOID = types.StringValue(burnAlert.SLO.ID)
 
+	// Process any attributes that could be nil and add them to the state values
+	if burnAlert.ExhaustionMinutes != nil {
+		state.ExhaustionMinutes = types.Int64Value(int64(*burnAlert.ExhaustionMinutes))
+	}
+	if burnAlert.BudgetRateDecreaseThresholdPerMillion != nil {
+		// Must convert from PPM back to float to match what the user has in their config
+		budgetRateDecreaseThresholdPerMillionAsPercent := helper.PPMToFloat(*burnAlert.BudgetRateDecreaseThresholdPerMillion)
+		state.BudgetRateDecreasePercent = types.Float64Value(budgetRateDecreaseThresholdPerMillionAsPercent)
+	}
+	if burnAlert.BudgetRateWindowMinutes != nil {
+		state.BudgetRateWindowMinutes = types.Int64Value(int64(*burnAlert.BudgetRateWindowMinutes))
+	}
+
+	// Set the updated burn alert's attributes in state
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *burnAlertResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state models.BurnAlertResourceModel
+	// Read in the state data
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
+	// Delete the burn alert, using the values from state
 	err := r.client.BurnAlerts.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Deleting Honeycomb Burn Alert", err) {
 		return
