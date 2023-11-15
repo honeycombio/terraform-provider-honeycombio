@@ -206,7 +206,7 @@ func (r *burnAlertResource) ImportState(ctx context.Context, req resource.Import
 	if len(idSegments) < 2 {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
-			"The supplied ID must be wrtten as <dataset>/<BurnAlert ID>.",
+			"The supplied ID must be written as <dataset>/<BurnAlert ID>.",
 		)
 		return
 	}
