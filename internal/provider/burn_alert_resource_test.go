@@ -272,6 +272,105 @@ func TestAcc_BurnAlertResource_Import_validateImportID(t *testing.T) {
 	})
 }
 
+func TestAcc_BurnAlertResource_validateDefault(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccConfigBurnAlertDefault_basic(-1, dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`exhaustion_minutes value must be at least`),
+			},
+			{
+				Config:      testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`argument "exhaustion_minutes" is required`),
+			},
+			{
+				Config:      testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`"budget_rate_window_minutes": must not be configured when "alert_type"`),
+			},
+			{
+				Config:      testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`"budget_rate_decrease_percent": must not be configured when`),
+			},
+		},
+	})
+}
+
+func TestAcc_BurnAlertResource_validateExhaustionTime(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccConfigBurnAlertExhaustionTime_basic(-1, dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`exhaustion_minutes value must be at least`),
+			},
+			{
+				Config:      testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`argument "exhaustion_minutes" is required`),
+			},
+			{
+				Config:      testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`"budget_rate_window_minutes": must not be configured when "alert_type"`),
+			},
+			{
+				Config:      testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				ExpectError: regexp.MustCompile(`"budget_rate_decrease_percent": must not be configured when`),
+			},
+		},
+	})
+}
+
+func TestAcc_BurnAlertResource_validateBudgetRate(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	budgetRateWindowMinutes := 60
+	budgetRateDecreasePercent := float64(1)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_basic(0, budgetRateDecreasePercent, dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`budget_rate_window_minutes value must be at least`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, float64(0), dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`budget_rate_decrease_percent value must be at least`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, float64(200), dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`budget_rate_decrease_percent value must be at most`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, float64(1.123456789), dataset, sloID, "info"),
+				ExpectError: regexp.MustCompile(`budget_rate_decrease_percent precision for value must be at most`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID),
+				ExpectError: regexp.MustCompile(`argument "budget_rate_decrease_percent" is required`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID),
+				ExpectError: regexp.MustCompile(`argument "budget_rate_window_minutes" is required`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID),
+				ExpectError: regexp.MustCompile(`"exhaustion_minutes": must not be configured when "alert_type"`),
+			},
+		},
+	})
+}
+
 // Checks that the exhaustion time burn alert exists, has the correct attributes, and has the correct state
 func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.BurnAlert, exhaustionMinutes int, pagerdutySeverity, sloID string) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
@@ -466,6 +565,22 @@ resource "honeycombio_burn_alert" "test" {
 }`, exhaustionMinutes, dataset, sloID, pdseverity)
 }
 
+func testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  budget_rate_window_minutes   = 60
+  budget_rate_decrease_percent = 1
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    type   = "email"
+    target = "test@example.com"
+  }
+}`, dataset, sloID)
+}
+
 func testAccConfigBurnAlertExhaustionTime_basic(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
@@ -488,6 +603,23 @@ resource "honeycombio_burn_alert" "test" {
     }
   }
 }`, exhaustionMinutes, dataset, sloID, pdseverity)
+}
+
+func testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "exhaustion_time"
+  budget_rate_window_minutes   = 60
+  budget_rate_decrease_percent = 1
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    type   = "email"
+    target = "test@example.com"
+  }
+}`, dataset, sloID)
 }
 
 func testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, pdseverity string) string {
@@ -536,6 +668,22 @@ resource "honeycombio_burn_alert" "test" {
     notification_details {
       pagerduty_severity = "info"
     }
+  }
+}`, dataset, sloID)
+}
+
+func testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  alert_type         = "budget_rate"
+  exhaustion_minutes = 60
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    type   = "email"
+    target = "test@example.com"
   }
 }`, dataset, sloID)
 }
