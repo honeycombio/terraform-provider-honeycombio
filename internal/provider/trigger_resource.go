@@ -379,19 +379,21 @@ func (r *triggerResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	var detailedErr client.DetailedError
 	err := r.client.Triggers.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
-	if errors.As(err, &detailedErr) {
-		// if not found consider it deleted -- so don't error
-		if !detailedErr.IsNotFound() {
-			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
+	if err != nil {
+		if errors.As(err, &detailedErr) {
+			// if not found consider it deleted -- so don't error
+			if !detailedErr.IsNotFound() {
+				resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
+					"Error Deleting Honeycomb Trigger",
+					&detailedErr,
+				))
+			}
+		} else {
+			resp.Diagnostics.AddError(
 				"Error Deleting Honeycomb Trigger",
-				&detailedErr,
-			))
+				"Could not delete Trigger ID "+state.ID.ValueString()+": "+err.Error(),
+			)
 		}
-	} else {
-		resp.Diagnostics.AddError(
-			"Error Deleting Honeycomb Trigger",
-			"Could not delete Trigger ID "+state.ID.ValueString()+": "+err.Error(),
-		)
 	}
 }
 
