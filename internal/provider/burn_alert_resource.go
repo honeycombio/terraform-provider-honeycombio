@@ -195,8 +195,6 @@ func (r *burnAlertResource) ValidateConfig(ctx context.Context, req resource.Val
 	// When alert_type is budget_rate, check that budget rate
 	// attributes are configured and exhaustion_minutes is not configured
 	validateAttributesWhenAlertTypeIsBudgetRate(data, resp)
-
-	return
 }
 
 func (r *burnAlertResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -290,15 +288,17 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	// Read the burn alert, using the values from state
-	var detailedErr *client.DetailedError
+	var detailedErr client.DetailedError
 	burnAlert, err := r.client.BurnAlerts.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
+			// if not found consider it deleted -- so just remove it from state
 			resp.State.RemoveResource(ctx)
+			return
 		} else {
 			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
 				"Error Reading Honeycomb Burn Alert",
-				detailedErr,
+				&detailedErr,
 			))
 		}
 	} else if err != nil {
@@ -435,8 +435,20 @@ func (r *burnAlertResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 
 	// Delete the burn alert, using the values from state
+	var detailedErr client.DetailedError
 	err := r.client.BurnAlerts.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
-	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Deleting Honeycomb Burn Alert", err) {
-		return
+	if errors.As(err, &detailedErr) {
+		// if not found consider it deleted -- so don't error
+		if !detailedErr.IsNotFound() {
+			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
+				"Error Deleting Honeycomb Burn Alert",
+				&detailedErr,
+			))
+		}
+	} else {
+		resp.Diagnostics.AddError(
+			"Error Deleting Honeycomb Burn Alert",
+			"Could not delete Burn Alert ID "+state.ID.ValueString()+": "+err.Error(),
+		)
 	}
 }

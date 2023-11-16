@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -105,11 +106,15 @@ func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface
 
 	dataset := d.Get("dataset").(string)
 
+	var detailedErr honeycombio.DetailedError
 	s, err := client.SLOs.Get(ctx, dataset, d.Id())
-	detailedErr, isDetailedErr := err.(*honeycombio.DetailedError)
-	if isDetailedErr && detailedErr.IsNotFound() {
-		d.SetId("")
-		return nil
+	if errors.As(err, &detailedErr) {
+		if detailedErr.IsNotFound() {
+			d.SetId("")
+			return nil
+		} else {
+			return diagFromDetailedErr(detailedErr)
+		}
 	} else if err != nil {
 		return diag.FromErr(err)
 	}

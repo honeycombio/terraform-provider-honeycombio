@@ -256,15 +256,17 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	var detailedErr *client.DetailedError
+	var detailedErr client.DetailedError
 	trigger, err := r.client.Triggers.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
+			// if not found consider it deleted -- so just remove it from state
 			resp.State.RemoveResource(ctx)
+			return
 		} else {
 			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
 				"Error Reading Honeycomb Trigger",
-				detailedErr,
+				&detailedErr,
 			))
 		}
 	} else if err != nil {
@@ -375,9 +377,21 @@ func (r *triggerResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
+	var detailedErr client.DetailedError
 	err := r.client.Triggers.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
-	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Deleting Honeycomb Trigger", err) {
-		return
+	if errors.As(err, &detailedErr) {
+		// if not found consider it deleted -- so don't error
+		if !detailedErr.IsNotFound() {
+			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
+				"Error Deleting Honeycomb Trigger",
+				&detailedErr,
+			))
+		}
+	} else {
+		resp.Diagnostics.AddError(
+			"Error Deleting Honeycomb Trigger",
+			"Could not delete Trigger ID "+state.ID.ValueString()+": "+err.Error(),
+		)
 	}
 }
 
