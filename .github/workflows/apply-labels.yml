@@ -1,3 +1,7 @@
+name: Project labels
+on:
+  workflow_dispatch:
+
 jobs:
   apply-labels:
     runs-on: ubuntu-latest
