@@ -1,3 +1,19 @@
+# 0.20.0 (Nov 16, 2023)
+
+ENHANCEMENTS
+
+* r/burn_alert: Add support for budget rate burn alerts (#391)
+
+BUGFIXES
+* client: Fix bug where API errors weren't including the field or getting separated (#392)
+
+HOUSEKEEPING
+
+* build(deps): Bump github.com/hashicorp/go-retryablehttp from v0.7.4 to v0.7.5 (#389)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from v2.29.0 to v2.30.0 (#390)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.19.0 to 0.19.1 (#394)
+* client: better support for nondefault api hosts (#393)
+
 # 0.19.0 (Nov 8, 2023)
 
 ENHANCEMENTS:
