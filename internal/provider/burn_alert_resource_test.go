@@ -371,6 +371,38 @@ func TestAcc_BurnAlertResource_validateBudgetRate(t *testing.T) {
 	})
 }
 
+// Checks to ensure that if a Burn Alert was removed from Honeycomb outside of Terraform (UI or API)
+// that it is detected and planned for recreation.
+func TestAcc_BurnAlertResource_RecreateOnNotFound(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+
+	exhaustionMinutes := 240
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigBurnAlertExhaustionTime_basic(exhaustionMinutes, dataset, sloID, "info"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
+					func(_ *terraform.State) error {
+						// the final 'check' deletes the Burn Alert directly via the API leaving it behind in the state
+						err := testAccClient(t).BurnAlerts.Delete(context.Background(), dataset, burnAlert.ID)
+						if err != nil {
+							return fmt.Errorf("failed to delete Burn Alert: %w", err)
+						}
+						return nil
+					},
+				),
+				// ensure that the plan is non-empty after the deletion
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
 // Checks that the exhaustion time burn alert exists, has the correct attributes, and has the correct state
 func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.BurnAlert, exhaustionMinutes int, pagerdutySeverity, sloID string) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
@@ -522,9 +554,8 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 		Alias:      "sli." + acctest.RandString(8),
 		Expression: "BOOL(1)",
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
+
 	slo, err := c.SLOs.Create(ctx, dataset, &client.SLO{
 		Name:             acctest.RandString(8) + " SLO",
 		TimePeriodDays:   14,

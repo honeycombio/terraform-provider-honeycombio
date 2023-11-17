@@ -90,7 +90,7 @@ func errorFromResponse(resp *http.Response) error {
 	err = json.Unmarshal(e, &detailedErr)
 	if err != nil {
 		// we failed to parse the body as a DetailedError, so build one from what we know
-		return &DetailedError{
+		return DetailedError{
 			Status:  resp.StatusCode,
 			Message: resp.Status,
 		}
