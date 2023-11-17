@@ -54,7 +54,9 @@ func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 					func(_ *terraform.State) error {
 						// the final 'check' deletes the SLO directly via the API leaving it behind in the state
 						err := testAccClient(t).SLOs.Delete(context.Background(), dataset, slo.ID)
-						require.NoError(t, err)
+						if err != nil {
+							return fmt.Errorf("failed to delete SLO: %w", err)
+						}
 						return nil
 					},
 				),

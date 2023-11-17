@@ -390,7 +390,9 @@ func TestAcc_BurnAlertResource_RecreateOnNotFound(t *testing.T) {
 					func(_ *terraform.State) error {
 						// the final 'check' deletes the Burn Alert directly via the API leaving it behind in the state
 						err := testAccClient(t).BurnAlerts.Delete(context.Background(), dataset, burnAlert.ID)
-						require.NoError(t, err)
+						if err != nil {
+							return fmt.Errorf("failed to delete Burn Alert: %w", err)
+						}
 						return nil
 					},
 				),
