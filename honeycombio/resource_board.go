@@ -78,7 +78,6 @@ func newBoard() *schema.Resource {
 						},
 						"graph_settings": {
 							Type:     schema.TypeList,
-							MinItems: 1,
 							MaxItems: 1,
 							Computed: true,
 							Optional: true,
@@ -88,37 +87,37 @@ See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-sett
 								Schema: map[string]*schema.Schema{
 									"log_scale": {
 										Type:        schema.TypeBool,
-										Computed:    true,
+										Default:     false,
 										Optional:    true,
 										Description: "Set the graph's Y axis to Log scale.",
 									},
 									"omit_missing_values": {
 										Type:        schema.TypeBool,
-										Computed:    true,
+										Default:     false,
 										Optional:    true,
 										Description: "Enable interpolatation between datapoints when the interveneing time buckets have no matching events.",
 									},
 									"hide_markers": {
 										Type:        schema.TypeBool,
-										Computed:    true,
+										Default:     false,
 										Optional:    true,
 										Description: "Disable the overlay of Markers on the graph.",
 									},
 									"stacked_graphs": {
 										Type:        schema.TypeBool,
-										Computed:    true,
+										Default:     false,
 										Optional:    true,
 										Description: "Enable the display of groups as stacked colored area under their line graphs.",
 									},
 									"utc_xaxis": {
 										Type:        schema.TypeBool,
-										Computed:    true,
+										Default:     false,
 										Optional:    true,
 										Description: "Set the graph's X axis to UTC.",
 									},
 									"overlaid_charts": {
 										Type:        schema.TypeBool,
-										Computed:    true,
+										Default:     false,
 										Optional:    true,
 										Description: "Allow charts to be overlaid when using supported Visualize operators.",
 									},
