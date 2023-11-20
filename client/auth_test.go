@@ -8,11 +8,12 @@ import (
 )
 
 func TestAuthMetadata(t *testing.T) {
-	ctx := context.Background()
+	t.Parallel()
+
 	c := newTestClient(t)
 
 	t.Run("List", func(t *testing.T) {
-		metadata, err := c.Auth.List(ctx)
+		metadata, err := c.Auth.List(context.Background())
 
 		assert.NoError(t, err)
 		assert.NotEmpty(t, metadata.APIKeyAccess)

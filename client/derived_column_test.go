@@ -5,11 +5,14 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestDerivedColumns(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	c := newTestClient(t)
@@ -20,8 +23,8 @@ func TestDerivedColumns(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		data := &DerivedColumn{
-			Alias:       "derived_column_test",
-			Expression:  "LOG10($duration_ms)",
+			Alias:       test.RandomStringWithPrefix("test.", 10),
+			Expression:  "BOOL(1)",
 			Description: "This derived column is created by a test",
 		}
 		derivedColumn, err = c.DerivedColumns.Create(ctx, dataset, data)
@@ -34,8 +37,8 @@ func TestDerivedColumns(t *testing.T) {
 
 	t.Run("Create_DuplicateErr", func(t *testing.T) {
 		data := &DerivedColumn{
-			Alias:       "derived_column_test",
-			Expression:  "LOG10($duration_ms)",
+			Alias:       derivedColumn.Alias,
+			Expression:  "BOOL(0)",
 			Description: "This is a derived column with the same name as an existing one",
 		}
 		_, err = c.DerivedColumns.Create(ctx, dataset, data)
@@ -71,8 +74,8 @@ func TestDerivedColumns(t *testing.T) {
 		// change all the fields to test
 		data := &DerivedColumn{
 			ID:          derivedColumn.ID,
-			Alias:       "derived_column_test_new_alias",
-			Expression:  "DIV($duration_ms, 2)",
+			Alias:       test.RandomStringWithPrefix("test.", 10),
+			Expression:  "BOOL(0)",
 			Description: "This is a new description",
 		}
 		derivedColumn, err = c.DerivedColumns.Update(ctx, dataset, data)

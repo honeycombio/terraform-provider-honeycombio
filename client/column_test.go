@@ -4,10 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestColumns(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	c := newTestClient(t)
@@ -18,7 +22,7 @@ func TestColumns(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		data := &Column{
-			KeyName:     "column_test",
+			KeyName:     test.RandomStringWithPrefix("test.", 10),
 			Hidden:      ToPtr(false),
 			Description: "This column is created by a test",
 			Type:        ToPtr(ColumnTypeFloat),
@@ -53,7 +57,7 @@ func TestColumns(t *testing.T) {
 	})
 
 	t.Run("GetByKeyName", func(t *testing.T) {
-		result, err := c.Columns.GetByKeyName(ctx, dataset, "column_test")
+		result, err := c.Columns.GetByKeyName(ctx, dataset, column.KeyName)
 
 		assert.NoError(t, err)
 		assert.Equal(t, *column, *result)
@@ -99,4 +103,39 @@ func TestColumns(t *testing.T) {
 		assert.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
+}
+
+// createRandomTestColumns creates three columns with random names and returns them.
+// One column is of type Float, and two are of type String.
+//
+// The columns are automatically cleaned up after the test run.
+func createRandomTestColumns(t *testing.T, c *Client, dataset string) (*Column, *Column, *Column) {
+	t.Helper()
+
+	ctx := context.Background()
+
+	floatCol, err := c.Columns.Create(ctx, dataset, &Column{
+		KeyName: test.RandomStringWithPrefix("test.", 8),
+		Type:    ToPtr(ColumnTypeFloat),
+	})
+	require.NoError(t, err)
+	col1, err := c.Columns.Create(ctx, dataset, &Column{
+		KeyName: test.RandomStringWithPrefix("test.", 8),
+		Type:    ToPtr(ColumnTypeString),
+	})
+	require.NoError(t, err)
+	col2, err := c.Columns.Create(ctx, dataset, &Column{
+		KeyName: test.RandomStringWithPrefix("test.", 8),
+		Type:    ToPtr(ColumnTypeString),
+	})
+	require.NoError(t, err)
+
+	//nolint:errcheck
+	t.Cleanup(func() {
+		c.Columns.Delete(ctx, dataset, floatCol.ID)
+		c.Columns.Delete(ctx, dataset, col1.ID)
+		c.Columns.Delete(ctx, dataset, col2.ID)
+	})
+
+	return floatCol, col1, col2
 }

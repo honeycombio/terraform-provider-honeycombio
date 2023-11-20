@@ -4,10 +4,13 @@ import (
 	"context"
 	"testing"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMarkerSettings(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	var m *MarkerSetting
@@ -17,7 +20,7 @@ func TestMarkerSettings(t *testing.T) {
 	dataset := testDataset(t)
 
 	currentMarkerSetting := &MarkerSetting{
-		Type:  "test11",
+		Type:  test.RandomStringWithPrefix("test.", 8),
 		Color: "#b71c1c",
 	}
 

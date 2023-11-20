@@ -7,6 +7,8 @@ import (
 )
 
 func TestEquivalent(t *testing.T) {
+	t.Parallel()
+
 	type Person struct {
 		Name string
 		Age  int

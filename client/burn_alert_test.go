@@ -5,38 +5,49 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBurnAlerts(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	var err error
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
+	testAlertEmail := test.RandomString(8) + "@example.com"
 
 	sli, err := c.DerivedColumns.Create(ctx, dataset, &DerivedColumn{
-		Alias:      "sli.ba_slo_test",
-		Expression: "LT($duration_ms, 1000)",
+		Alias:      test.RandomStringWithPrefix("test.", 8),
+		Expression: "BOOL(1)",
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
 	slo, err := c.SLOs.Create(ctx, dataset, &SLO{
-		Name:             "BurnAlert Test SLO",
+		Name:             test.RandomStringWithPrefix("test.", 8),
 		TimePeriodDays:   7,
 		TargetPerMillion: 999000,
 		SLI:              SLIRef{Alias: sli.Alias},
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err)
+
 	// remove SLO and SLI at the end of the test run
 	//nolint:errcheck
 	t.Cleanup(func() {
 		c.SLOs.Delete(ctx, dataset, slo.ID)
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+
+		// remove test alert email from recipients
+		rcpts, _ := c.Recipients.List(ctx)
+		for _, r := range rcpts {
+			if r.Type == RecipientTypeEmail && r.Details.EmailAddress == testAlertEmail {
+				c.Recipients.Delete(ctx, r.ID)
+				break
+			}
+		}
 	})
 
 	var defaultBurnAlert *BurnAlert
@@ -47,7 +58,7 @@ func TestBurnAlerts(t *testing.T) {
 		Recipients: []NotificationRecipient{
 			{
 				Type:   "email",
-				Target: "testalert@example.com",
+				Target: testAlertEmail,
 			},
 		},
 	}
@@ -58,7 +69,7 @@ func TestBurnAlerts(t *testing.T) {
 		Recipients: []NotificationRecipient{
 			{
 				Type:   "email",
-				Target: "testalert@example.com",
+				Target: testAlertEmail,
 			},
 		},
 	}
@@ -72,7 +83,7 @@ func TestBurnAlerts(t *testing.T) {
 		Recipients: []NotificationRecipient{
 			{
 				Type:   "email",
-				Target: "testalert@example.com",
+				Target: testAlertEmail,
 			},
 		},
 	}
@@ -84,7 +95,7 @@ func TestBurnAlerts(t *testing.T) {
 		Recipients: []NotificationRecipient{
 			{
 				Type:   "email",
-				Target: "testalert@example.com",
+				Target: testAlertEmail,
 			},
 		},
 	}
@@ -100,7 +111,7 @@ func TestBurnAlerts(t *testing.T) {
 		Recipients: []NotificationRecipient{
 			{
 				Type:   "email",
-				Target: "testalert@example.com",
+				Target: testAlertEmail,
 			},
 		},
 	}
@@ -114,7 +125,7 @@ func TestBurnAlerts(t *testing.T) {
 		Recipients: []NotificationRecipient{
 			{
 				Type:   "email",
-				Target: "testalert@example.com",
+				Target: testAlertEmail,
 			},
 		},
 	}

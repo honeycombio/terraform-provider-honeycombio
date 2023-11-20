@@ -9,6 +9,8 @@ import (
 
 // create a query with an elaborate QuerySpec as smoke test
 func TestQuerySpec(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	c := newTestClient(t)
@@ -73,6 +75,8 @@ func TestQuerySpec(t *testing.T) {
 }
 
 func TestQuerySpec_EquivalentTo(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name string
 		a, b QuerySpec

@@ -8,6 +8,8 @@ import (
 )
 
 func TestDatasets(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	c := newTestClient(t)

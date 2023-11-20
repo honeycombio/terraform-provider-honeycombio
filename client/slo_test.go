@@ -4,10 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSLOs(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	var slo *SLO
@@ -17,12 +21,11 @@ func TestSLOs(t *testing.T) {
 	dataset := testDataset(t)
 
 	sli, err := c.DerivedColumns.Create(ctx, dataset, &DerivedColumn{
-		Alias:      "sli.slo_test",
-		Expression: "LT($duration_ms, 1000)",
+		Alias:      test.RandomStringWithPrefix("test.", 10),
+		Expression: "BOOL(1)",
 	})
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err, "unable to create SLI")
+
 	// remove SLI DC at end of test run
 	t.Cleanup(func() {
 		//nolint:errcheck
@@ -31,13 +34,12 @@ func TestSLOs(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		data := &SLO{
-			Name:             "Testsuite SLO",
+			Name:             test.RandomStringWithPrefix("test.", 10),
 			Description:      "My Super Sweet Test",
 			TimePeriodDays:   30,
 			TargetPerMillion: 995000,
 			SLI:              SLIRef{Alias: sli.Alias},
 		}
-
 		slo, err = c.SLOs.Create(ctx, dataset, data)
 
 		assert.NoError(t, err, "unable to create SLO")
@@ -66,7 +68,7 @@ func TestSLOs(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
-		slo.Name = "Test Sweet SLO"
+		slo.Name = test.RandomStringWithPrefix("test.", 10)
 		slo.TimePeriodDays = 14
 		slo.Description = "Even sweeter"
 		slo.TargetPerMillion = 990000

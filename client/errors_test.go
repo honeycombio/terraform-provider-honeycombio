@@ -11,6 +11,8 @@ import (
 )
 
 func TestClient_ParseDetailedError(t *testing.T) {
+	t.Parallel()
+
 	var de DetailedError
 	ctx := context.Background()
 	c := newTestClient(t)
@@ -112,6 +114,8 @@ func TestErrors_DetailedError_Error(t *testing.T) {
 }
 
 func TestErrors_ErrorTypeDetail_String(t *testing.T) {
+	t.Parallel()
+
 	testCases := []struct {
 		name           string
 		input          ErrorTypeDetail

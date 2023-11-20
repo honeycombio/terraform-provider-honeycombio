@@ -6,11 +6,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMarkers(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	var m *Marker
@@ -22,7 +25,7 @@ func TestMarkers(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		data := &Marker{
 			Message:   fmt.Sprintf("Test run at %v", time.Now()),
-			Type:      "deploys",
+			Type:      test.RandomStringWithPrefix("test.", 8),
 			URL:       "http://example.com",
 			StartTime: time.Now().Unix(),
 		}

@@ -2,14 +2,16 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"testing"
-	"time"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestBoards(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	var b *Board
@@ -18,20 +20,29 @@ func TestBoards(t *testing.T) {
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
+	column, err := c.Columns.Create(ctx, dataset, &Column{
+		KeyName: test.RandomStringWithPrefix("test.", 8),
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		//nolint:errcheck
+		c.Columns.Delete(ctx, dataset, column.ID)
+	})
+
 	query, err := c.Queries.Create(ctx, dataset, &QuerySpec{
 		Calculations: []CalculationSpec{
 			{
 				Op:     CalculationOpAvg,
-				Column: ToPtr("duration_ms"),
+				Column: &column.KeyName,
 			},
 		},
 		TimeRange: ToPtr(3600), // 1 hour
 	})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	t.Run("Create", func(t *testing.T) {
 		data := &Board{
-			Name:         fmt.Sprintf("Test Board, created at %v", time.Now()),
+			Name:         test.RandomStringWithPrefix("test.", 8),
 			Description:  "A board with some queries",
 			Style:        BoardStyleVisual,
 			ColumnLayout: BoardColumnStyleSingle,

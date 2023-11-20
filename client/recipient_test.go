@@ -5,11 +5,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRecipientsEmail(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	var rcpt *Recipient
@@ -21,7 +24,7 @@ func TestRecipientsEmail(t *testing.T) {
 		data := &Recipient{
 			Type: RecipientTypeEmail,
 			Details: RecipientDetails{
-				EmailAddress: "hnytest@example.com",
+				EmailAddress: test.RandomString(8) + "@example.com",
 			},
 		}
 		now := time.Now()
@@ -76,6 +79,8 @@ func TestRecipientsEmail(t *testing.T) {
 }
 
 func TestRecipientsWebhooksandMSTeams(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := newTestClient(t)
 
@@ -83,7 +88,7 @@ func TestRecipientsWebhooksandMSTeams(t *testing.T) {
 		{
 			Type: RecipientTypeWebhook,
 			Details: RecipientDetails{
-				WebhookName:   "test webhook",
+				WebhookName:   test.RandomStringWithPrefix("test.", 10),
 				WebhookURL:    "https://example.com",
 				WebhookSecret: "secret",
 			},
@@ -91,7 +96,7 @@ func TestRecipientsWebhooksandMSTeams(t *testing.T) {
 		{
 			Type: RecipientTypeMSTeams,
 			Details: RecipientDetails{
-				WebhookName: "test channel",
+				WebhookName: test.RandomStringWithPrefix("test.", 10),
 				WebhookURL:  "https://corp.office.com/webhook",
 			},
 		},
