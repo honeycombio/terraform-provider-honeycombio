@@ -3,14 +3,16 @@ package client
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
-	"time"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTriggers(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	var trigger *Trigger
@@ -18,10 +20,11 @@ func TestTriggers(t *testing.T) {
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
+	floatCol, col1, col2 := createRandomTestColumns(t, c, dataset)
 
 	t.Run("Create", func(t *testing.T) {
 		data := &Trigger{
-			Name:        fmt.Sprintf("Test trigger created at %v", time.Now()),
+			Name:        test.RandomStringWithPrefix("test.", 8),
 			Description: "Some description",
 			Disabled:    true,
 			Query: &QuerySpec{
@@ -29,16 +32,16 @@ func TestTriggers(t *testing.T) {
 				Calculations: []CalculationSpec{
 					{
 						Op:     CalculationOpP99,
-						Column: ToPtr("duration_ms"),
+						Column: &floatCol.KeyName,
 					},
 				},
 				Filters: []FilterSpec{
 					{
-						Column: "column_1",
+						Column: col1.KeyName,
 						Op:     FilterOpExists,
 					},
 					{
-						Column: "column_2",
+						Column: col2.KeyName,
 						Op:     FilterOpContains,
 						Value:  "foobar",
 					},
@@ -58,10 +61,7 @@ func TestTriggers(t *testing.T) {
 			},
 		}
 		trigger, err = c.Triggers.Create(ctx, dataset, data)
-
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 		assert.NotNil(t, trigger.ID)
 
 		// copy IDs before asserting equality
@@ -138,6 +138,8 @@ func TestTriggers(t *testing.T) {
 }
 
 func TestMatchesTriggerSubset(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		in          QuerySpec
 		expectedErr error
@@ -188,7 +190,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 				},
 				Orders: []OrderSpec{
 					{
-						Column: ToPtr("duration_ms"),
+						Column: ToPtr(test.RandomStringWithPrefix("test.", 8)),
 					},
 				},
 			},

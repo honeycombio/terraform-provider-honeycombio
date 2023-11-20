@@ -5,9 +5,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestQueries(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	c := newTestClient(t)
@@ -15,6 +18,8 @@ func TestQueries(t *testing.T) {
 
 	var query *QuerySpec
 	var err error
+
+	floatCol, col1, col2 := createRandomTestColumns(t, c, dataset)
 
 	t.Run("Create", func(t *testing.T) {
 		data := &QuerySpec{
@@ -24,25 +29,25 @@ func TestQueries(t *testing.T) {
 				},
 				{
 					Op:     CalculationOpHeatmap,
-					Column: ToPtr("duration_ms"),
+					Column: &floatCol.KeyName,
 				},
 			},
 			Filters: []FilterSpec{
 				{
-					Column: "column_1",
+					Column: col1.KeyName,
 					Op:     FilterOpExists,
 				},
 				{
-					Column: "duration_ms",
+					Column: floatCol.KeyName,
 					Op:     FilterOpSmallerThan,
 					Value:  10000.0,
 				},
 			},
 			FilterCombination: FilterCombinationOr,
-			Breakdowns:        []string{"column_1", "column_2"},
+			Breakdowns:        []string{col1.KeyName, col2.KeyName},
 			Orders: []OrderSpec{
 				{
-					Column: ToPtr("column_1"),
+					Column: &col1.KeyName,
 				},
 				{
 					Op:    ToPtr(CalculationOpCount),
@@ -55,10 +60,7 @@ func TestQueries(t *testing.T) {
 		}
 
 		query, err = c.Queries.Create(ctx, dataset, data)
-
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		data.ID = query.ID
 		assert.Equal(t, data, query)
@@ -66,10 +68,7 @@ func TestQueries(t *testing.T) {
 
 	t.Run("Get", func(t *testing.T) {
 		q, err := c.Queries.Get(ctx, dataset, *query.ID)
-
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		assert.Equal(t, query, q)
 	})

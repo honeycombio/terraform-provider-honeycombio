@@ -45,6 +45,8 @@ func testDataset(t *testing.T) string {
 }
 
 func TestClient_InvalidConfig(t *testing.T) {
+	t.Parallel()
+
 	_, err := NewClient(&Config{
 		APIKey: "123",
 		APIUrl: "cache_object:foo/bar",
@@ -54,6 +56,8 @@ func TestClient_InvalidConfig(t *testing.T) {
 }
 
 func TestClient_IsClassic(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := newTestClient(t)
 

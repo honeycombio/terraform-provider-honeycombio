@@ -85,7 +85,7 @@ func DatasetDefinitionDefaults() map[string][]string {
 		"error":           {"error"},
 		"name":            {"name"},
 		"parent_id":       {"trace.parent_id", "parentId"},
-		"route":           {"route", "request_path"},
+		"route":           {"route", "http.route", "request_path"},
 		"service_name":    {"service_name", "service.name", "serviceName"},
 		"span_id":         {"id", "trace.span_id"},
 		"span_kind":       {"meta.span_type"},

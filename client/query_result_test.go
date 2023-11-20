@@ -9,6 +9,8 @@ import (
 )
 
 func TestQueryResults(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	var result *QueryResult
