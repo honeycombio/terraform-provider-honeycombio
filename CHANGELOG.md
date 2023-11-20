@@ -1,13 +1,25 @@
+# 0.20.1 (Nov 20, 2023)
+
+BUGFIXES:
+
+* fix: missing resources shouldn't error but be recreated (#398)
+* r/board: "graph_settings" values should revert to false when removed (#400)
+
+HOUSEKEEPING:
+
+* chore: first pass at moving away from pre-created columns (#401)
+
 # 0.20.0 (Nov 16, 2023)
 
-ENHANCEMENTS
+ENHANCEMENTS:
 
 * r/burn_alert: Add support for budget rate burn alerts (#391)
 
-BUGFIXES
+BUGFIXES:
+
 * client: Fix bug where API errors weren't including the field or getting separated (#392)
 
-HOUSEKEEPING
+HOUSEKEEPING:
 
 * build(deps): Bump github.com/hashicorp/go-retryablehttp from v0.7.4 to v0.7.5 (#389)
 * build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from v2.29.0 to v2.30.0 (#390)
