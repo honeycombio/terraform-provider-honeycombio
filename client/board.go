@@ -113,12 +113,12 @@ const (
 
 // BoardGraphSettings represents the display settings for an individual graph in a board.
 type BoardGraphSettings struct {
-	OmitMissingValues    bool `json:"omit_missing_values,omitempty"`
-	UseStackedGraphs     bool `json:"stacked_graphs,omitempty"`
-	UseLogScale          bool `json:"log_scale,omitempty"`
-	UseUTCXAxis          bool `json:"utc_xaxis,omitempty"`
-	HideMarkers          bool `json:"hide_markers,omitempty"`
-	PreferOverlaidCharts bool `json:"overlaid_charts,omitempty"`
+	OmitMissingValues    bool `json:"omit_missing_values"`
+	UseStackedGraphs     bool `json:"stacked_graphs"`
+	UseLogScale          bool `json:"log_scale"`
+	UseUTCXAxis          bool `json:"utc_xaxis"`
+	HideMarkers          bool `json:"hide_markers"`
+	PreferOverlaidCharts bool `json:"overlaid_charts"`
 }
 
 // BoardQueryStyles returns an exhaustive list of board query styles.
