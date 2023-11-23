@@ -371,9 +371,26 @@ func TestAcc_BurnAlertResource_validateBudgetRate(t *testing.T) {
 	})
 }
 
+func TestAcc_BurnAlertResource_validateUnknownOrVariableAttributesExhaustionTime(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigBurnAlertBudgetRate_validateUnknownOrVariableAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, 90, "info", sloID),
+			},
+		},
+	})
+}
+
 // Checks to ensure that if a Burn Alert was removed from Honeycomb outside of Terraform (UI or API)
 // that it is detected and planned for recreation.
-func TestAcc_BurnAlertResource_RecreateOnNotFound(t *testing.T) {
+func TestAcc_BurnAlertResource_recreateOnNotFound(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
@@ -715,6 +732,34 @@ resource "honeycombio_burn_alert" "test" {
   recipient {
     type   = "email"
     target = "test@example.com"
+  }
+}`, dataset, sloID)
+}
+
+func testAccConfigBurnAlertBudgetRate_validateUnknownOrVariableAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
+	return fmt.Sprintf(`
+variable "exhaustion_minutes" {
+  type    = number
+  default = 90
+}
+
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "testacc-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = var.exhaustion_minutes
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "info"
+    }
   }
 }`, dataset, sloID)
 }

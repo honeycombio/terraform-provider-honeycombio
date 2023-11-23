@@ -119,7 +119,7 @@ func validateAttributesWhenAlertTypeIsExhaustionTime(data models.BurnAlertResour
 	// Check that the alert_type is exhaustion_time or that it is not configured(which means we default to exhaustion_time)
 	if data.AlertType.IsNull() || data.AlertType.IsUnknown() || data.AlertType.ValueString() == string(client.BurnAlertAlertTypeExhaustionTime) {
 		// When the alert_type is exhaustion_time, exhaustion_minutes is required
-		if data.ExhaustionMinutes.IsNull() || data.ExhaustionMinutes.IsUnknown() {
+		if data.ExhaustionMinutes.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("exhaustion_minutes"),
 				"Missing required argument",
@@ -151,7 +151,7 @@ func validateAttributesWhenAlertTypeIsBudgetRate(data models.BurnAlertResourceMo
 	// Check if the alert_type is budget_rate
 	if data.AlertType.ValueString() == string(client.BurnAlertAlertTypeBudgetRate) {
 		// When the alert_type is budget_rate, budget_rate_decrease_percent is required
-		if data.BudgetRateDecreasePercent.IsNull() || data.BudgetRateDecreasePercent.IsUnknown() {
+		if data.BudgetRateDecreasePercent.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("budget_rate_decrease_percent"),
 				"Missing required argument",
@@ -160,7 +160,7 @@ func validateAttributesWhenAlertTypeIsBudgetRate(data models.BurnAlertResourceMo
 		}
 
 		// When the alert_type is budget_rate, budget_rate_window_minutes is required
-		if data.BudgetRateWindowMinutes.IsNull() || data.BudgetRateWindowMinutes.IsUnknown() {
+		if data.BudgetRateWindowMinutes.IsNull() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("budget_rate_window_minutes"),
 				"Missing required argument",
