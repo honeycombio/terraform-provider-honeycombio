@@ -93,6 +93,8 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 				},
 				FilterCombination: "AND",
 				TimeRange:         ToPtr(DefaultQueryTimeRange),
+				// Granularity may be exported out of the Query Builder as '0' when not provided
+				Granularity: ToPtr(0),
 			},
 			QuerySpec{},
 			true,
