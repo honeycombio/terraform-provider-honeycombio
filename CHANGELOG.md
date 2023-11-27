@@ -1,3 +1,10 @@
+# 0.20.2 (Nov 27, 2023)
+
+BUGFIXES:
+
+* client - queryspec Granularity equivalency (#404)
+* r/burn_alert: validation needs to allow 'unknown' values for interpolation (#403)
+
 # 0.20.1 (Nov 20, 2023)
 
 BUGFIXES:
