@@ -120,7 +120,8 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	if !reflect.DeepEqual(qs.StartTime, other.StartTime) || !reflect.DeepEqual(qs.EndTime, other.EndTime) {
 		return false
 	}
-	if !reflect.DeepEqual(qs.Granularity, other.Granularity) {
+	// Granularity may be exported out of the Query Builder as '0' when not provided
+	if PtrValueOrDefault(qs.Granularity, 0) != PtrValueOrDefault(other.Granularity, 0) {
 		return false
 	}
 
