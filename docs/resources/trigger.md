@@ -161,7 +161,7 @@ Each trigger configuration must contain exactly one `threshold` block, which acc
 Each trigger configuration may provide an `evaluation_schedule` block, which accepts the following arguments:
 
 * `start_time` - (Required) UTC time to start evaluating the trigger in HH:mm format (e.g. `13:00`)
-* `end_time` - (Required) UTC time to start evaluating the trigger in HH:mm format (e.g. `13:00`)
+* `end_time` - (Required) UTC time to stop evaluating the trigger in HH:mm format (e.g. `13:00`)
 * `days_of_week` - (Required) A list of days of the week (in lowercase) to evaluate the trigger on
 
 Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments. A trigger recipient block can either refer to an existing recipient (a recipient that is already present in another trigger) or a new recipient. When specifying an existing recipient, only `id` may be set. If you pass in a recipient without its ID and only include the type and target, Honeycomb will make a best effort to match to an existing recipient. To retrieve the ID of an existing recipient, refer to the [`honeycombio_recipient`](../data-sources/recipient.md) data source.
