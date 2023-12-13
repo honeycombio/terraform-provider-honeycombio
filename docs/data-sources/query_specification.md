@@ -71,9 +71,7 @@ Each query configuration may have zero or more `filter` blocks, which each accep
 * `value_float` - (Optional) Deprecated: use 'value' instead. The value used for the filter when the column is a float. Mutually exclusive with `value` and the other `value_*` options.
 * `value_boolean` - (Optional) Deprecated: use 'value' instead. The value used for the filter when the column is a boolean. Mutually exclusive with `value` and the other `value_*` options.
 
--> **NOTE** The type of the filter value should match with the type of the column. To determine the type of a column visit the dataset settings page, all the columns and their type are listed under _Schema_. This provider will not be able to detect invalid combinations.
-
--> **NOTE** Filter op `in` and `not-in` expect an array of strings as value. Use the `value` attribute and pass the values in single string separated by `,` without additional spaces (similar to the query builder in the UI). For example: the list `foo`, `bar` becomes `foo,bar`.
+* -> **NOTE** Filter op `in` and `not-in` expect an array of strings as value. Use the `value` attribute and pass the values in single string separated by `,` without additional spaces (similar to the query builder in the UI). For example: the list `foo`, `bar` becomes `foo,bar`.
 
 Each query configuration may have zero or more `order` blocks, which each accept the following arguments. An order term can refer to a `calculation` or a column set in `breakdowns`. When referring to a `calculation`, `op` and `column` must be the same as the calculation.
 
