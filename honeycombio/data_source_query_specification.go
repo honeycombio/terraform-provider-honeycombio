@@ -54,7 +54,7 @@ func dataSourceHoneycombioQuerySpec() *schema.Resource {
 						},
 						"value": {
 							Type:        schema.TypeString,
-							Description: "The value used for the filter. Not needed if op is `exists`, `not-exists`, `in` or `not-in`. Mutually exclusive with the other `value_*` options.",
+							Description: "The value used for the filter. Not needed if op is `exists` or `not-exists`. Mutually exclusive with the other `value_*` options.",
 							Optional:    true,
 						},
 						"value_string": {
