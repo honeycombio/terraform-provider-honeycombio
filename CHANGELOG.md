@@ -3,9 +3,6 @@
 BUGFIXES:
 
 * fix: legacy api key typo (#412)
-
-ENHANCEMENTS:
-
 * Fix description of end_time in trigger docs (#408)
 * docs: cleanup value_string reference (#409)
 
