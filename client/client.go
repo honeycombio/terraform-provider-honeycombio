@@ -26,7 +26,7 @@ const (
 	DefaultAPIHostEnv = "HONEYCOMB_API_HOST"
 	DefaultAPIKeyEnv  = "HONEYCOMB_API_KEY"
 	// Deprecated: use DefaultAPIKeyEnv instead. To be removed in v1.0
-	LegacyAPIKeyEnv  = "HONEYCOMBIO_API_KEY"
+	LegacyAPIKeyEnv  = "HONEYCOMBIO_APIKEY"
 	defaultUserAgent = "go-honeycombio"
 )
 
