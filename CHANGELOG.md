@@ -1,3 +1,15 @@
+# 0.20.3 (Dec 14, 2023)
+
+ENHANCEMENTS:
+
+* Fix description of end_time in trigger docs (#408)
+* docs: cleanup value_string reference (#409)
+
+HOUSEKEEPING:
+
+* build(deps): Bumps github.com/hashicorp/terraform-plugin-testing from 1.5.1 to 1.6.0 (#406)
+* build(deps): Bump actions/setup-go from 4 to 5 (#407)
+
 # 0.20.2 (Nov 27, 2023)
 
 BUGFIXES:
