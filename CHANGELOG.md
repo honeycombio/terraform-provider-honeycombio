@@ -1,5 +1,9 @@
 # 0.20.3 (Dec 14, 2023)
 
+BUGFIXES:
+
+* fix: legacy api key typo (#412)
+
 ENHANCEMENTS:
 
 * Fix description of end_time in trigger docs (#408)
