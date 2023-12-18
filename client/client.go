@@ -22,9 +22,9 @@ import (
 )
 
 const (
-	DefaultAPIHost    = "https://api.honeycomb.io"
-	DefaultAPIHostEnv = "HONEYCOMB_API_HOST"
-	DefaultAPIKeyEnv  = "HONEYCOMB_API_KEY"
+	DefaultAPIHost        = "https://api.honeycomb.io"
+	DefaultAPIEndpointEnv = "HONEYCOMB_API_ENDPOINT"
+	DefaultAPIKeyEnv      = "HONEYCOMB_API_KEY"
 	// Deprecated: use DefaultAPIKeyEnv instead. To be removed in v1.0
 	LegacyAPIKeyEnv  = "HONEYCOMBIO_APIKEY"
 	defaultUserAgent = "go-honeycombio"
@@ -71,7 +71,7 @@ type Client struct {
 func DefaultConfig() *Config {
 	c := &Config{
 		APIKey:     os.Getenv(DefaultAPIKeyEnv),
-		APIUrl:     os.Getenv(DefaultAPIHostEnv),
+		APIUrl:     os.Getenv(DefaultAPIEndpointEnv),
 		Debug:      false,
 		HTTPClient: cleanhttp.DefaultPooledClient(),
 		UserAgent:  defaultUserAgent,

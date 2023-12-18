@@ -11,13 +11,14 @@ A Terraform provider for Honeycomb.io.
 
 🏗️ Examples can be found in [example/](example/)
 
-❓ Questions? Feel free to create a new issue or find us on the **Honeycomb Pollinators** Slack, channel [**#terraform-provider**](https://honeycombpollinators.slack.com/archives/C017T9FFT0D) (you can find a link to request an invite [here](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/))
+❓ Questions? Feel free to create a new issue or find us on the **Honeycomb Pollinators** Slack, channel [**#discuss-api-and-terraform**](https://honeycombpollinators.slack.com/archives/C017T9FFT0D) (you can find a link to request an invite [here](https://www.honeycomb.io/blog/spread-the-love-appreciating-our-pollinators-community/))
 
 🔧 Want to contribute? Check out [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## Using the provider
 
-You can install the provider directly from the [Terraform Registry](https://registry.terraform.io/providers/honeycombio/honeycombio/latest). Add the following block in your Terraform config, this will download the provider from the Terraform Registry:
+You can install the provider directly from the [Terraform Registry](https://registry.terraform.io/providers/honeycombio/honeycombio/latest).
+Add the following block in your Terraform config, this will download the provider from the Terraform Registry:
 
 ```hcl
 terraform {
@@ -31,6 +32,18 @@ terraform {
 ```
 
 Set the API key used by Terraform setting the `HONEYCOMB_API_KEY` environment variable.
+You can override the default API Endpoint (`https://api.honeycomb.io`) by setting the `HONEYCOMB_API_ENDPOINT` environment variable.
+
+### Configuring the provider for Honeycomb EU
+
+If you are a Honeycomb EU customer, to use the provider you must override the default API host.
+This can be done with a `provider` block (example below) or by setting the `HONEYCOMB_API_ENDPOINT` environment variable.
+
+```hcl
+provider "honeycombio" {
+  api_url = "https://api.eu1.honeycomb.io"
+}
+```
 
 ## License
 
