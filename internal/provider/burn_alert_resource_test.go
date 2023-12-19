@@ -230,7 +230,7 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 				// support setting the API host easily. We'll skip them for now
 				// if we have a non-default API host.
 				SkipFunc: func() (bool, error) {
-					apiHost := os.Getenv(client.DefaultAPIHostEnv)
+					apiHost := os.Getenv(client.DefaultAPIEndpointEnv)
 					if apiHost == "" {
 						return false, nil
 					}
