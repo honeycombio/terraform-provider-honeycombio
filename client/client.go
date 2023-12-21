@@ -197,9 +197,7 @@ func (c *Client) Do(ctx context.Context, method, path string, requestBody, respo
 	if requestBody != nil {
 		buf := new(bytes.Buffer)
 		err := json.NewEncoder(buf).Encode(requestBody)
-		if err != nil {
-			return err
-		}
+
 		body = buf
 	}
 
