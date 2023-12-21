@@ -74,3 +74,16 @@ func TestClient_IsClassic(t *testing.T) {
 
 	assert.Equal(t, len(apiKey) == 32, c.IsClassic(ctx))
 }
+
+func TestClient_EndpointURL(t *testing.T) {
+	t.Parallel()
+
+	endpointUrl := "https://api.example.com"
+	c, err := client.NewClientWithConfig(&client.Config{
+		APIUrl: endpointUrl,
+		APIKey: "abcd123",
+	})
+	require.NoError(t, err, "failed to create client")
+
+	assert.Equal(t, endpointUrl, c.EndpointURL().String())
+}

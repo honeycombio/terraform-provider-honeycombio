@@ -168,9 +168,9 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	return client, nil
 }
 
-// EndpointURL returns the Client's configured API endpoint URL as a string.
-func (c *Client) EndpointURL() string {
-	return c.apiURL.String()
+// EndpointURL returns the Client's configured API endpoint URL
+func (c *Client) EndpointURL() *url.URL {
+	return c.apiURL
 }
 
 // IsClassic returns true if the client is configured with a Classic API Key
