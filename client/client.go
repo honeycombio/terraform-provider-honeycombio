@@ -68,6 +68,7 @@ type Client struct {
 	Recipients         Recipients
 }
 
+// DefaultConfig returns a Config initilized with default values.
 func DefaultConfig() *Config {
 	c := &Config{
 		APIKey:     os.Getenv(DefaultAPIKeyEnv),
@@ -167,8 +168,8 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	return client, nil
 }
 
-// Returns the Client's configured API endpoint URL as a string.
-func (c *Client) URL() string {
+// EndpointURL returns the Client's configured API endpoint URL as a string.
+func (c *Client) EndpointURL() string {
 	return c.apiURL.String()
 }
 
