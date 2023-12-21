@@ -138,7 +138,6 @@ type CalculationSpec struct {
 // CalculationOp represents the operator of a calculation.
 type CalculationOp string
 
-// Declaration of calculation operators.
 const (
 	CalculationOpCount         CalculationOp = "COUNT"
 	CalculationOpConcurrency   CalculationOp = "CONCURRENCY"
