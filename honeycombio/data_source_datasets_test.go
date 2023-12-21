@@ -22,7 +22,7 @@ func TestAccDataSourceHoneycombioDataset_basic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccDataSourceDatasetConfig([]string{"starts_with = \"" + string(dataset[0:2]) + "\""}),
+				Config: testAccDataSourceDatasetConfig([]string{"starts_with = \"" + dataset[0:2] + "\""}),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckOutputContains("names", dataset),
 				),

@@ -88,9 +88,9 @@ func (s *markers) Get(ctx context.Context, dataset string, id string) (*Marker, 
 			return &m, nil
 		}
 	}
-	return nil, &DetailedError{
+	return nil, DetailedError{
 		Status:  http.StatusNotFound,
-		Message: "Marker Setting Not Found.",
+		Message: "Marker Not Found.",
 	}
 }
 

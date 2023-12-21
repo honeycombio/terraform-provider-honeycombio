@@ -45,7 +45,7 @@ type Board struct {
 	Name string `json:"name"`
 	// Description of the board.
 	Description string `json:"description,omitempty"`
-	// The number of columns to be layed out when displaying the board.
+	// The number of columns to be laid out when displaying the board.
 	// Defaults to "multi".
 	//
 	// n.b. 'list' style boards cannot specify a column layout

@@ -150,7 +150,7 @@ func (t *Trigger) MarshalJSON() ([]byte, error) {
 			EvaluationScheduleType: t.EvaluationScheduleType,
 			EvaluationSchedule:     t.EvaluationSchedule,
 		}
-		return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(a)})
+		return json.Marshal(&struct{ *ATrigger }{ATrigger: a})
 	}
 
 	return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(t)})

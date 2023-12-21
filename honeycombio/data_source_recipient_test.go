@@ -139,11 +139,11 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 			},
 			{
 				Config:      testAccRecipientWithFilterRegex("email", "address", "^acctest*"),
-				ExpectError: regexp.MustCompile("your recipient query returned more than one result. Please try a more specific search critera."),
+				ExpectError: regexp.MustCompile("your recipient query returned more than one result. Please try a more specific search criteria."),
 			},
 			{
 				Config:      testAccRecipientWithFilterRegex("pagerduty", "integration_name", "^.*Important Service$"),
-				ExpectError: regexp.MustCompile("your recipient query returned more than one result. Please try a more specific search critera."),
+				ExpectError: regexp.MustCompile("your recipient query returned more than one result. Please try a more specific search criteria."),
 			},
 		},
 	})

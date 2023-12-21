@@ -8,14 +8,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func SuppressEquivJSONDiffs(_, orig, new string, d *schema.ResourceData) bool {
+func SuppressEquivJSONDiffs(_, j1, j2 string, d *schema.ResourceData) bool {
 	oldBuf := bytes.NewBufferString("")
-	if err := json.Compact(oldBuf, []byte(orig)); err != nil {
+	if err := json.Compact(oldBuf, []byte(j1)); err != nil {
 		return false
 	}
 
 	newBuf := bytes.NewBufferString("")
-	if err := json.Compact(newBuf, []byte(new)); err != nil {
+	if err := json.Compact(newBuf, []byte(j2)); err != nil {
 		return false
 	}
 
