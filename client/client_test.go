@@ -1,4 +1,4 @@
-package client
+package client_test
 
 import (
 	"context"
@@ -8,26 +8,29 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-func newTestClient(t *testing.T) *Client {
+const testUserAgent = "go-honeycombio/test"
+
+func newTestClient(t *testing.T) *client.Client {
 	t.Helper()
 
 	// load environment values from a .env, if available
 	_ = godotenv.Load("../.env")
 
-	apiKey, ok := os.LookupEnv(DefaultAPIKeyEnv)
+	apiKey, ok := os.LookupEnv(client.DefaultAPIKeyEnv)
 	if !ok {
-		t.Fatal("expected environment variable " + DefaultAPIKeyEnv)
+		t.Fatal("expected environment variable " + client.DefaultAPIKeyEnv)
 	}
 	_, debug := os.LookupEnv("HONEYCOMBIO_DEBUG")
 
-	cfg := &Config{
+	c, err := client.NewClientWithConfig(&client.Config{
 		APIKey:    apiKey,
 		Debug:     debug,
-		UserAgent: "go-honeycombio/test",
-	}
-	c, err := NewClient(cfg)
+		UserAgent: testUserAgent,
+	})
 	require.NoError(t, err, "failed to create client")
 
 	return c
@@ -47,7 +50,7 @@ func testDataset(t *testing.T) string {
 func TestClient_InvalidConfig(t *testing.T) {
 	t.Parallel()
 
-	_, err := NewClient(&Config{
+	_, err := client.NewClientWithConfig(&client.Config{
 		APIKey: "123",
 		APIUrl: "cache_object:foo/bar",
 	})
@@ -59,7 +62,15 @@ func TestClient_IsClassic(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	c := newTestClient(t)
+	apiKey, ok := os.LookupEnv(client.DefaultAPIKeyEnv)
+	if !ok {
+		t.Fatal("expected environment variable " + client.DefaultAPIKeyEnv)
+	}
+	c, err := client.NewClientWithConfig(&client.Config{
+		APIKey:    apiKey,
+		UserAgent: testUserAgent,
+	})
+	require.NoError(t, err, "failed to create client")
 
-	assert.Equal(t, len(c.apiKey) == 32, c.IsClassic(ctx))
+	assert.Equal(t, len(apiKey) == 32, c.IsClassic(ctx))
 }

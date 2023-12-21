@@ -1,9 +1,10 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -15,9 +16,8 @@ func TestDatasets(t *testing.T) {
 	c := newTestClient(t)
 	datasetName := testDataset(t)
 
-	currentDataset := &Dataset{
+	currentDataset := &client.Dataset{
 		Name: datasetName,
-		Slug: urlEncodeDataset(datasetName),
 	}
 
 	t.Run("List", func(t *testing.T) {
@@ -30,6 +30,7 @@ func TestDatasets(t *testing.T) {
 			assert.NotNil(t, dataset.CreatedAt, "created at is empty")
 			// copy dynamic fields before asserting - will be skipped if expected dataset not found
 			if dataset.Name == currentDataset.Name {
+				currentDataset.Slug = dataset.Slug
 				currentDataset.LastWrittenAt = dataset.LastWrittenAt
 				currentDataset.CreatedAt = dataset.CreatedAt
 			}
@@ -54,14 +55,14 @@ func TestDatasets(t *testing.T) {
 	t.Run("Fail to Get bogus Dataset", func(t *testing.T) {
 		_, err := c.Datasets.Get(ctx, "does-not-exist")
 
-		var de DetailedError
+		var de client.DetailedError
 		assert.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 
 	t.Run("Create", func(t *testing.T) {
-		createDataset := &Dataset{
+		createDataset := &client.Dataset{
 			Name: datasetName,
 		}
 		d, err := c.Datasets.Create(ctx, createDataset)
@@ -81,7 +82,7 @@ func TestDatasets(t *testing.T) {
 		updatedDescription := "buzzing with data"
 		updatedExpandJSONDepth := 3
 
-		updateDataset := &Dataset{
+		updateDataset := &client.Dataset{
 			Name:            datasetName,
 			Description:     updatedDescription,
 			ExpandJSONDepth: updatedExpandJSONDepth,
@@ -89,7 +90,7 @@ func TestDatasets(t *testing.T) {
 		t.Cleanup(func() {
 			// revert updated fields to defaults after the test run
 			//nolint:errcheck
-			c.Datasets.Update(ctx, &Dataset{Name: datasetName})
+			c.Datasets.Update(ctx, &client.Dataset{Name: datasetName})
 		})
 		d, err := c.Datasets.Update(ctx, updateDataset)
 		assert.NoError(t, err)

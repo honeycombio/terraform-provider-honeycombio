@@ -1,10 +1,12 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 // create a query with an elaborate QuerySpec as smoke test
@@ -16,58 +18,58 @@ func TestQuerySpec(t *testing.T) {
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	query := QuerySpec{
-		Calculations: []CalculationSpec{
+	query := client.QuerySpec{
+		Calculations: []client.CalculationSpec{
 			{
-				Op: CalculationOpCount,
+				Op: client.CalculationOpCount,
 			},
 			{
-				Op:     CalculationOpHeatmap,
-				Column: ToPtr("duration_ms"),
+				Op:     client.CalculationOpHeatmap,
+				Column: client.ToPtr("duration_ms"),
 			},
 			{
-				Op:     CalculationOpP99,
-				Column: ToPtr("duration_ms"),
+				Op:     client.CalculationOpP99,
+				Column: client.ToPtr("duration_ms"),
 			},
 		},
-		Filters: []FilterSpec{
+		Filters: []client.FilterSpec{
 			{
 				Column: "column_1",
-				Op:     FilterOpExists,
+				Op:     client.FilterOpExists,
 			},
 			{
 				Column: "duration_ms",
-				Op:     FilterOpSmallerThan,
+				Op:     client.FilterOpSmallerThan,
 				Value:  10000.0,
 			},
 			{
 				Column: "column_1",
-				Op:     FilterOpNotEquals,
+				Op:     client.FilterOpNotEquals,
 				Value:  "",
 			},
 		},
-		FilterCombination: FilterCombinationOr,
+		FilterCombination: client.FilterCombinationOr,
 		Breakdowns:        []string{"column_1", "column_2"},
-		Orders: []OrderSpec{
+		Orders: []client.OrderSpec{
 			{
-				Column: ToPtr("column_1"),
+				Column: client.ToPtr("column_1"),
 			},
 			{
-				Op:    ToPtr(CalculationOpCount),
-				Order: ToPtr(SortOrderDesc),
+				Op:    client.ToPtr(client.CalculationOpCount),
+				Order: client.ToPtr(client.SortOrderDesc),
 			},
 		},
-		Havings: []HavingSpec{
+		Havings: []client.HavingSpec{
 			{
-				Column:      ToPtr("duration_ms"),
-				Op:          ToPtr(HavingOpGreaterThan),
-				CalculateOp: ToPtr(CalculationOpP99),
+				Column:      client.ToPtr("duration_ms"),
+				Op:          client.ToPtr(client.HavingOpGreaterThan),
+				CalculateOp: client.ToPtr(client.CalculationOpP99),
 				Value:       1000.0,
 			},
 		},
-		Limit:       ToPtr(100),
-		TimeRange:   ToPtr(3600), // 1 hour
-		Granularity: ToPtr(60),   // 1 minute
+		Limit:       client.ToPtr(100),
+		TimeRange:   client.ToPtr(3600), // 1 hour
+		Granularity: client.ToPtr(60),   // 1 minute
 	}
 
 	_, err := c.Queries.Create(ctx, dataset, &query)
@@ -79,39 +81,39 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 
 	tests := []struct {
 		name string
-		a, b QuerySpec
+		a, b client.QuerySpec
 		want bool
 	}{
-		{"Empty", QuerySpec{}, QuerySpec{}, true},
+		{"Empty", client.QuerySpec{}, client.QuerySpec{}, true},
 		{
 			"Empty Defaults",
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op: "COUNT",
 					},
 				},
 				FilterCombination: "AND",
-				TimeRange:         ToPtr(DefaultQueryTimeRange),
+				TimeRange:         client.ToPtr(client.DefaultQueryTimeRange),
 				// Granularity may be exported out of the Query Builder as '0' when not provided
-				Granularity: ToPtr(0),
+				Granularity: client.ToPtr(0),
 			},
-			QuerySpec{},
+			client.QuerySpec{},
 			true,
 		},
 		{
 			"Equivalent but shuffled",
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op:     "HEATMAP",
-						Column: ToPtr("duration_ms"),
+						Column: client.ToPtr("duration_ms"),
 					},
 					{
 						Op: "COUNT",
 					},
 				},
-				Filters: []FilterSpec{
+				Filters: []client.FilterSpec{
 					{
 						Column: "colA",
 						Op:     "=",
@@ -129,19 +131,19 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 					},
 				},
 				Breakdowns: []string{"colB", "colA"},
-				TimeRange:  ToPtr(DefaultQueryTimeRange),
+				TimeRange:  client.ToPtr(client.DefaultQueryTimeRange),
 			},
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op:     "HEATMAP",
-						Column: ToPtr("duration_ms"),
+						Column: client.ToPtr("duration_ms"),
 					},
 					{
 						Op: "COUNT",
 					},
 				},
-				Filters: []FilterSpec{
+				Filters: []client.FilterSpec{
 					{
 						Column: "colC",
 						Op:     "=",
@@ -165,25 +167,25 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 		},
 		{
 			"Calculation order matters",
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op:     "HEATMAP",
-						Column: ToPtr("duration_ms"),
+						Column: client.ToPtr("duration_ms"),
 					},
 					{
 						Op: "COUNT",
 					},
 				},
 			},
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op: "COUNT",
 					},
 					{
 						Op:     "HEATMAP",
-						Column: ToPtr("duration_ms"),
+						Column: client.ToPtr("duration_ms"),
 					},
 				},
 			},
@@ -191,16 +193,16 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 		},
 		{
 			"Different time ranges",
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op: "COUNT",
 					},
 				},
-				TimeRange: ToPtr(1800),
+				TimeRange: client.ToPtr(1800),
 			},
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op: "COUNT",
 					},
@@ -210,40 +212,40 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 		},
 		{
 			"Different FilterCombinations",
-			QuerySpec{
+			client.QuerySpec{
 				FilterCombination: "OR",
 			},
-			QuerySpec{},
+			client.QuerySpec{},
 			false,
 		},
 		{
 			"Calculation different from DefaultCalc",
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op:     "MIN",
-						Column: ToPtr("metrics.cpu.utilization"),
+						Column: client.ToPtr("metrics.cpu.utilization"),
 					},
 				},
 			},
-			QuerySpec{},
+			client.QuerySpec{},
 			false,
 		},
 		{
 			"Different Calculations",
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op:     "MIN",
-						Column: ToPtr("metrics.cpu.utilization"),
+						Column: client.ToPtr("metrics.cpu.utilization"),
 					},
 				},
 			},
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op:     "MAX",
-						Column: ToPtr("metrics.cpu.utilization"),
+						Column: client.ToPtr("metrics.cpu.utilization"),
 					},
 				},
 			},
@@ -251,22 +253,22 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 		},
 		{
 			"Different Number of Calculations",
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op:     "MIN",
-						Column: ToPtr("metrics.cpu.utilization"),
+						Column: client.ToPtr("metrics.cpu.utilization"),
 					},
 				},
 			},
-			QuerySpec{
-				Calculations: []CalculationSpec{
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
 						Op: "COUNT_DISTINCT",
 					},
 					{
 						Op:     "MAX",
-						Column: ToPtr("metrics.cpu.utilization"),
+						Column: client.ToPtr("metrics.cpu.utilization"),
 					},
 				},
 			},
@@ -274,16 +276,16 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 		},
 		{
 			"Equivalent column orders",
-			QuerySpec{
-				Orders: []OrderSpec{
-					{Column: ToPtr("column_1")},
+			client.QuerySpec{
+				Orders: []client.OrderSpec{
+					{Column: client.ToPtr("column_1")},
 				},
 			},
-			QuerySpec{
-				Orders: []OrderSpec{
+			client.QuerySpec{
+				Orders: []client.OrderSpec{
 					{
-						Column: ToPtr("column_1"),
-						Order:  ToPtr(SortOrderAsc),
+						Column: client.ToPtr("column_1"),
+						Order:  client.ToPtr(client.SortOrderAsc),
 					},
 				},
 			},
@@ -291,16 +293,16 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 		},
 		{
 			"Not equivalent column orders",
-			QuerySpec{
-				Orders: []OrderSpec{
-					{Column: ToPtr("column_2")},
+			client.QuerySpec{
+				Orders: []client.OrderSpec{
+					{Column: client.ToPtr("column_2")},
 				},
 			},
-			QuerySpec{
-				Orders: []OrderSpec{
+			client.QuerySpec{
+				Orders: []client.OrderSpec{
 					{
-						Column: ToPtr("column_1"),
-						Order:  ToPtr(SortOrderAsc),
+						Column: client.ToPtr("column_1"),
+						Order:  client.ToPtr(client.SortOrderAsc),
 					},
 				},
 			},
@@ -308,37 +310,37 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 		},
 		{
 			"Equivalent Op orders with unspecified default",
-			QuerySpec{
-				Orders: []OrderSpec{
+			client.QuerySpec{
+				Orders: []client.OrderSpec{
 					{
-						Op:    ToPtr(CalculationOpCount),
-						Order: ToPtr(SortOrderAsc),
+						Op:    client.ToPtr(client.CalculationOpCount),
+						Order: client.ToPtr(client.SortOrderAsc),
 					},
 				},
 			},
-			QuerySpec{
-				Orders: []OrderSpec{
-					{Op: ToPtr(CalculationOpCount)},
+			client.QuerySpec{
+				Orders: []client.OrderSpec{
+					{Op: client.ToPtr(client.CalculationOpCount)},
 				},
 			},
 			true,
 		},
 		{
 			"Not equivalent Op orders",
-			QuerySpec{
-				Orders: []OrderSpec{
+			client.QuerySpec{
+				Orders: []client.OrderSpec{
 					{
-						Op:     ToPtr(CalculationOpCountDistinct),
-						Column: ToPtr("column_1"),
-						Order:  ToPtr(SortOrderAsc),
+						Op:     client.ToPtr(client.CalculationOpCountDistinct),
+						Column: client.ToPtr("column_1"),
+						Order:  client.ToPtr(client.SortOrderAsc),
 					},
 				},
 			},
-			QuerySpec{
-				Orders: []OrderSpec{
+			client.QuerySpec{
+				Orders: []client.OrderSpec{
 					{
-						Op:    ToPtr(CalculationOpCount),
-						Order: ToPtr(SortOrderDesc),
+						Op:    client.ToPtr(client.CalculationOpCount),
+						Order: client.ToPtr(client.SortOrderDesc),
 					},
 				},
 			},

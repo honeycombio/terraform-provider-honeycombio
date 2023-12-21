@@ -1,12 +1,14 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestSLOs(t *testing.T) {
@@ -14,13 +16,13 @@ func TestSLOs(t *testing.T) {
 
 	ctx := context.Background()
 
-	var slo *SLO
+	var slo *client.SLO
 	var err error
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	sli, err := c.DerivedColumns.Create(ctx, dataset, &DerivedColumn{
+	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
 		Alias:      test.RandomStringWithPrefix("test.", 10),
 		Expression: "BOOL(1)",
 	})
@@ -33,12 +35,12 @@ func TestSLOs(t *testing.T) {
 	})
 
 	t.Run("Create", func(t *testing.T) {
-		data := &SLO{
+		data := &client.SLO{
 			Name:             test.RandomStringWithPrefix("test.", 10),
 			Description:      "My Super Sweet Test",
 			TimePeriodDays:   30,
 			TargetPerMillion: 995000,
-			SLI:              SLIRef{Alias: sli.Alias},
+			SLI:              client.SLIRef{Alias: sli.Alias},
 		}
 		slo, err = c.SLOs.Create(ctx, dataset, data)
 
@@ -90,7 +92,7 @@ func TestSLOs(t *testing.T) {
 	t.Run("Fail to Get deleted SLO", func(t *testing.T) {
 		_, err := c.SLOs.Get(ctx, dataset, slo.ID)
 
-		var de DetailedError
+		var de client.DetailedError
 		assert.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

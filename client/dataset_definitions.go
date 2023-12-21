@@ -100,7 +100,7 @@ func DatasetDefinitionDefaults() map[string][]string {
 
 func (s *datasetDefinitions) Get(ctx context.Context, dataset string) (*DatasetDefinition, error) {
 	var result DatasetDefinition
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), nil, &result)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), nil, &result)
 	return &result, err
 }
 
@@ -122,11 +122,11 @@ func (s *datasetDefinitions) ResetAll(ctx context.Context, dataset string) error
 		User:           EmptyDatasetDefinition(),
 	}
 
-	return s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), emptyDefinitions, nil)
+	return s.client.Do(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), emptyDefinitions, nil)
 }
 
 func (s *datasetDefinitions) Update(ctx context.Context, dataset string, d *DatasetDefinition) (*DatasetDefinition, error) {
 	var result DatasetDefinition
-	err := s.client.performRequest(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), d, &result)
+	err := s.client.Do(ctx, "PATCH", fmt.Sprintf("/1/dataset_definitions/%s", urlEncodeDataset(dataset)), d, &result)
 	return &result, err
 }

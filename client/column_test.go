@@ -1,12 +1,14 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestColumns(t *testing.T) {
@@ -17,15 +19,15 @@ func TestColumns(t *testing.T) {
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	var column *Column
+	var column *client.Column
 	var err error
 
 	t.Run("Create", func(t *testing.T) {
-		data := &Column{
+		data := &client.Column{
 			KeyName:     test.RandomStringWithPrefix("test.", 10),
-			Hidden:      ToPtr(false),
+			Hidden:      client.ToPtr(false),
 			Description: "This column is created by a test",
-			Type:        ToPtr(ColumnTypeFloat),
+			Type:        client.ToPtr(client.ColumnTypeFloat),
 		}
 		column, err = c.Columns.Create(ctx, dataset, data)
 
@@ -65,12 +67,12 @@ func TestColumns(t *testing.T) {
 
 	t.Run("Update", func(t *testing.T) {
 		// change all the fields to test
-		data := &Column{
+		data := &client.Column{
 			ID:          column.ID,
 			KeyName:     column.KeyName,
-			Hidden:      ToPtr(true),
+			Hidden:      client.ToPtr(true),
 			Description: "This is a new description",
-			Type:        ToPtr(ColumnTypeBoolean),
+			Type:        client.ToPtr(client.ColumnTypeBoolean),
 		}
 		column, err = c.Columns.Update(ctx, dataset, data)
 
@@ -98,7 +100,7 @@ func TestColumns(t *testing.T) {
 	t.Run("Fail to get deleted Column", func(t *testing.T) {
 		_, err := c.Columns.Get(ctx, dataset, column.ID)
 
-		var de DetailedError
+		var de client.DetailedError
 		assert.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
@@ -109,24 +111,28 @@ func TestColumns(t *testing.T) {
 // One column is of type Float, and two are of type String.
 //
 // The columns are automatically cleaned up after the test run.
-func createRandomTestColumns(t *testing.T, c *Client, dataset string) (*Column, *Column, *Column) {
+func createRandomTestColumns(
+	t *testing.T,
+	c *client.Client,
+	dataset string,
+) (*client.Column, *client.Column, *client.Column) {
 	t.Helper()
 
 	ctx := context.Background()
 
-	floatCol, err := c.Columns.Create(ctx, dataset, &Column{
+	floatCol, err := c.Columns.Create(ctx, dataset, &client.Column{
 		KeyName: test.RandomStringWithPrefix("test.", 8),
-		Type:    ToPtr(ColumnTypeFloat),
+		Type:    client.ToPtr(client.ColumnTypeFloat),
 	})
 	require.NoError(t, err)
-	col1, err := c.Columns.Create(ctx, dataset, &Column{
+	col1, err := c.Columns.Create(ctx, dataset, &client.Column{
 		KeyName: test.RandomStringWithPrefix("test.", 8),
-		Type:    ToPtr(ColumnTypeString),
+		Type:    client.ToPtr(client.ColumnTypeString),
 	})
 	require.NoError(t, err)
-	col2, err := c.Columns.Create(ctx, dataset, &Column{
+	col2, err := c.Columns.Create(ctx, dataset, &client.Column{
 		KeyName: test.RandomStringWithPrefix("test.", 8),
-		Type:    ToPtr(ColumnTypeString),
+		Type:    client.ToPtr(client.ColumnTypeString),
 	})
 	require.NoError(t, err)
 

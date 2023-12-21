@@ -1,12 +1,14 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestBoards(t *testing.T) {
@@ -14,13 +16,13 @@ func TestBoards(t *testing.T) {
 
 	ctx := context.Background()
 
-	var b *Board
+	var b *client.Board
 	var err error
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	column, err := c.Columns.Create(ctx, dataset, &Column{
+	column, err := c.Columns.Create(ctx, dataset, &client.Column{
 		KeyName: test.RandomStringWithPrefix("test.", 8),
 	})
 	require.NoError(t, err)
@@ -29,30 +31,30 @@ func TestBoards(t *testing.T) {
 		c.Columns.Delete(ctx, dataset, column.ID)
 	})
 
-	query, err := c.Queries.Create(ctx, dataset, &QuerySpec{
-		Calculations: []CalculationSpec{
+	query, err := c.Queries.Create(ctx, dataset, &client.QuerySpec{
+		Calculations: []client.CalculationSpec{
 			{
-				Op:     CalculationOpAvg,
+				Op:     client.CalculationOpAvg,
 				Column: &column.KeyName,
 			},
 		},
-		TimeRange: ToPtr(3600), // 1 hour
+		TimeRange: client.ToPtr(3600), // 1 hour
 	})
 	require.NoError(t, err)
 
 	t.Run("Create", func(t *testing.T) {
-		data := &Board{
+		data := &client.Board{
 			Name:         test.RandomStringWithPrefix("test.", 8),
 			Description:  "A board with some queries",
-			Style:        BoardStyleVisual,
-			ColumnLayout: BoardColumnStyleSingle,
-			Queries: []BoardQuery{
+			Style:        client.BoardStyleVisual,
+			ColumnLayout: client.BoardColumnStyleSingle,
+			Queries: []client.BoardQuery{
 				{
 					Caption:       "A sample query",
-					QueryStyle:    BoardQueryStyleCombo,
+					QueryStyle:    client.BoardQueryStyleCombo,
 					Dataset:       dataset,
 					QueryID:       *query.ID,
-					GraphSettings: BoardGraphSettings{OmitMissingValues: true, UseUTCXAxis: true},
+					GraphSettings: client.BoardGraphSettings{OmitMissingValues: true, UseUTCXAxis: true},
 				},
 			},
 		}
@@ -87,21 +89,21 @@ func TestBoards(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
-		newQuery, err := c.Queries.Create(ctx, dataset, &QuerySpec{
-			Calculations: []CalculationSpec{
+		newQuery, err := c.Queries.Create(ctx, dataset, &client.QuerySpec{
+			Calculations: []client.CalculationSpec{
 				{
-					Op: CalculationOpCount,
+					Op: client.CalculationOpCount,
 				},
 			},
-			TimeRange: ToPtr(DefaultQueryTimeRange),
+			TimeRange: client.ToPtr(client.DefaultQueryTimeRange),
 		})
 		assert.NoError(t, err)
-		b.ColumnLayout = BoardColumnStyleMulti
-		b.Queries = append(b.Queries, BoardQuery{
+		b.ColumnLayout = client.BoardColumnStyleMulti
+		b.Queries = append(b.Queries, client.BoardQuery{
 			Caption:       "A second query",
-			QueryStyle:    BoardQueryStyleGraph,
+			QueryStyle:    client.BoardQueryStyleGraph,
 			QueryID:       *newQuery.ID,
-			GraphSettings: BoardGraphSettings{UseUTCXAxis: true},
+			GraphSettings: client.BoardGraphSettings{UseUTCXAxis: true},
 		})
 
 		result, err := c.Boards.Update(ctx, b)
@@ -118,7 +120,7 @@ func TestBoards(t *testing.T) {
 	t.Run("Fail to get deleted Board", func(t *testing.T) {
 		_, err := c.Boards.Get(ctx, b.ID)
 
-		var de DetailedError
+		var de client.DetailedError
 		assert.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

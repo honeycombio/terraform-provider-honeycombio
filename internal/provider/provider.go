@@ -123,7 +123,7 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 		debug = config.Debug.ValueBool()
 	}
 
-	client, err := client.NewClient(&client.Config{
+	client, err := client.NewClientWithConfig(&client.Config{
 		APIKey:    apiKey,
 		APIUrl:    config.APIUrl.ValueString(),
 		Debug:     debug,

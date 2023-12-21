@@ -1,4 +1,4 @@
-package client
+package client_test
 
 import (
 	"context"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func TestQueryResults(t *testing.T) {
@@ -13,24 +15,24 @@ func TestQueryResults(t *testing.T) {
 
 	ctx := context.Background()
 
-	var result *QueryResult
+	var result *client.QueryResult
 	var err error
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	query, err := c.Queries.Create(ctx, dataset, &QuerySpec{
-		Calculations: []CalculationSpec{
+	query, err := c.Queries.Create(ctx, dataset, &client.QuerySpec{
+		Calculations: []client.CalculationSpec{
 			{
 				Op: "COUNT",
 			},
 		},
-		TimeRange: ToPtr(60 * 60 * 24),
+		TimeRange: client.ToPtr(60 * 60 * 24),
 	})
 	require.NoError(t, err)
 
 	t.Run("Create", func(t *testing.T) {
-		result, err = c.QueryResults.Create(ctx, dataset, &QueryResultRequest{
+		result, err = c.QueryResults.Create(ctx, dataset, &client.QueryResultRequest{
 			ID: *query.ID,
 		})
 
@@ -50,9 +52,9 @@ func TestQueryResults(t *testing.T) {
 	})
 
 	t.Run("Fail to Get bogus Query Result", func(t *testing.T) {
-		err := c.QueryResults.Get(ctx, dataset, &QueryResult{ID: "abcd1234"})
+		err := c.QueryResults.Get(ctx, dataset, &client.QueryResult{ID: "abcd1234"})
 
-		var de DetailedError
+		var de client.DetailedError
 		assert.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

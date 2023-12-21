@@ -52,28 +52,28 @@ type QueryAnnotation struct {
 
 func (s *queryAnnotations) List(ctx context.Context, dataset string) ([]QueryAnnotation, error) {
 	var q []QueryAnnotation
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/query_annotations/%s", urlEncodeDataset(dataset)), nil, &q)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/query_annotations/%s", urlEncodeDataset(dataset)), nil, &q)
 	return q, err
 }
 
 func (s *queryAnnotations) Get(ctx context.Context, dataset string, ID string) (*QueryAnnotation, error) {
 	var q QueryAnnotation
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/query_annotations/%s/%s", urlEncodeDataset(dataset), ID), nil, &q)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/query_annotations/%s/%s", urlEncodeDataset(dataset), ID), nil, &q)
 	return &q, err
 }
 
 func (s *queryAnnotations) Create(ctx context.Context, dataset string, data *QueryAnnotation) (*QueryAnnotation, error) {
 	var q QueryAnnotation
-	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/query_annotations/%s", urlEncodeDataset(dataset)), data, &q)
+	err := s.client.Do(ctx, "POST", fmt.Sprintf("/1/query_annotations/%s", urlEncodeDataset(dataset)), data, &q)
 	return &q, err
 }
 
 func (s *queryAnnotations) Update(ctx context.Context, dataset string, data *QueryAnnotation) (*QueryAnnotation, error) {
 	var q QueryAnnotation
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/query_annotations/%s/%s", urlEncodeDataset(dataset), data.ID), data, &q)
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/query_annotations/%s/%s", urlEncodeDataset(dataset), data.ID), data, &q)
 	return &q, err
 }
 
 func (s *queryAnnotations) Delete(ctx context.Context, dataset string, id string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/query_annotations/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
+	return s.client.Do(ctx, "DELETE", fmt.Sprintf("/1/query_annotations/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
 }

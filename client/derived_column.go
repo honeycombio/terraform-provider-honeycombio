@@ -57,34 +57,34 @@ type DerivedColumn struct {
 
 func (s *derivedColumns) List(ctx context.Context, dataset string) ([]DerivedColumn, error) {
 	var c []DerivedColumn
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s", urlEncodeDataset(dataset)), nil, &c)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s", urlEncodeDataset(dataset)), nil, &c)
 	return c, err
 }
 
 func (s *derivedColumns) Get(ctx context.Context, dataset string, id string) (*DerivedColumn, error) {
 	var c DerivedColumn
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s/%s", urlEncodeDataset(dataset), id), nil, &c)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s/%s", urlEncodeDataset(dataset), id), nil, &c)
 	return &c, err
 }
 
 func (s *derivedColumns) GetByAlias(ctx context.Context, dataset string, alias string) (*DerivedColumn, error) {
 	var c DerivedColumn
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s?alias=%s", urlEncodeDataset(dataset), url.QueryEscape(alias)), nil, &c)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s?alias=%s", urlEncodeDataset(dataset), url.QueryEscape(alias)), nil, &c)
 	return &c, err
 }
 
 func (s *derivedColumns) Create(ctx context.Context, dataset string, data *DerivedColumn) (*DerivedColumn, error) {
 	var d DerivedColumn
-	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/derived_columns/%s", urlEncodeDataset(dataset)), data, &d)
+	err := s.client.Do(ctx, "POST", fmt.Sprintf("/1/derived_columns/%s", urlEncodeDataset(dataset)), data, &d)
 	return &d, err
 }
 
 func (s *derivedColumns) Update(ctx context.Context, dataset string, data *DerivedColumn) (*DerivedColumn, error) {
 	var d DerivedColumn
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/derived_columns/%s/%s", urlEncodeDataset(dataset), data.ID), data, &d)
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/derived_columns/%s/%s", urlEncodeDataset(dataset), data.ID), data, &d)
 	return &d, err
 }
 
 func (s *derivedColumns) Delete(ctx context.Context, dataset string, id string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/derived_columns/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
+	return s.client.Do(ctx, "DELETE", fmt.Sprintf("/1/derived_columns/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
 }

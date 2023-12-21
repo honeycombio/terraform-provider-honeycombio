@@ -89,8 +89,14 @@ func DefaultConfig() *Config {
 	return c
 }
 
-// NewClient creates a new Honeycomb API client.
-func NewClient(config *Config) (*Client, error) {
+// NewClient creates a new Honeycomb API client with default settings.
+func NewClient() (*Client, error) {
+	return NewClientWithConfig(DefaultConfig())
+}
+
+// NewClientWithConfig creates a new Honeycomb API client using the provided
+// Config.
+func NewClientWithConfig(config *Config) (*Client, error) {
 	cfg := DefaultConfig()
 
 	if config.APIKey != "" {
@@ -161,6 +167,11 @@ func NewClient(config *Config) (*Client, error) {
 	return client, nil
 }
 
+// Returns the Client's configured API endpoint URL as a string.
+func (c *Client) URL() string {
+	return c.apiURL.String()
+}
+
 // IsClassic returns true if the client is configured with a Classic API Key
 //
 // If there is an error fetching the auth metadata, this will return false.
@@ -172,14 +183,14 @@ func (c *Client) IsClassic(ctx context.Context) bool {
 	return metadata.Environment.Slug == ""
 }
 
-// performRequest makes a request to the Honeycomb API and, if
-// requestBody is not nil, a JSON body.
+// Do makes a request to the configured Honeycomb API endpoint
+// and, if requestBody is not nil, sends along the JSON.
 //
 // The response is parsed in responseBody, if responseBody is not nil.
 //
 // Attemps to return a DetailedError if the response status code is not 2xx,
 // but can return a generic error.
-func (c *Client) performRequest(ctx context.Context, method, path string, requestBody, responseBody interface{}) error {
+func (c *Client) Do(ctx context.Context, method, path string, requestBody, responseBody interface{}) error {
 	var body io.Reader
 
 	if requestBody != nil {

@@ -1,12 +1,14 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestDatasetDefinitions(t *testing.T) {
@@ -16,27 +18,27 @@ func TestDatasetDefinitions(t *testing.T) {
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
-	definitionDefaults := DatasetDefinitionDefaults()
+	definitionDefaults := client.DatasetDefinitionDefaults()
 
 	// ensure default definition columns exist -- create any which may be missing.
 	// we leave these behind at the end of the test run
 	// as they can't be deleted while being used as a definition column
-	for _, col := range []Column{
-		{KeyName: "duration_ms", Type: ToPtr(ColumnTypeFloat)},
-		{KeyName: "error", Type: ToPtr(ColumnTypeBoolean)},
-		{KeyName: "name", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "trace.parent_id", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "http.route", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "service.name", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "trace.span_id", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "meta.span_type", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "meta.annotation_type", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "http.status_code", Type: ToPtr(ColumnTypeInteger)},
-		{KeyName: "trace.trace_id", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "request.user.id", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "request.user.username", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "trace.link.trace_id", Type: ToPtr(ColumnTypeString)},
-		{KeyName: "trace.link.span_id", Type: ToPtr(ColumnTypeString)},
+	for _, col := range []client.Column{
+		{KeyName: "duration_ms", Type: client.ToPtr(client.ColumnTypeFloat)},
+		{KeyName: "error", Type: client.ToPtr(client.ColumnTypeBoolean)},
+		{KeyName: "name", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "trace.parent_id", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "http.route", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "service.name", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "trace.span_id", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "meta.span_type", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "meta.annotation_type", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "http.status_code", Type: client.ToPtr(client.ColumnTypeInteger)},
+		{KeyName: "trace.trace_id", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "request.user.id", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "request.user.username", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "trace.link.trace_id", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "trace.link.span_id", Type: client.ToPtr(client.ColumnTypeString)},
 	} {
 		//nolint:errcheck
 		// ignore errors, we don't care if the column already exists
@@ -44,9 +46,9 @@ func TestDatasetDefinitions(t *testing.T) {
 	}
 
 	// create some new columns to assign as definitions -- we will clean these up at the end of the test run
-	testCol, err := c.Columns.Create(ctx, dataset, &Column{KeyName: test.RandomStringWithPrefix("test.", 10)})
+	testCol, err := c.Columns.Create(ctx, dataset, &client.Column{KeyName: test.RandomStringWithPrefix("test.", 10)})
 	require.NoError(t, err)
-	testDC, err := c.DerivedColumns.Create(ctx, dataset, &DerivedColumn{
+	testDC, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
 		Alias:      test.RandomStringWithPrefix("test.", 10),
 		Expression: "BOOL(1)",
 	})
@@ -83,9 +85,9 @@ func TestDatasetDefinitions(t *testing.T) {
 	})
 
 	t.Run("Update a pair of definitions", func(t *testing.T) {
-		_, err := c.DatasetDefinitions.Update(ctx, dataset, &DatasetDefinition{
-			Name:  &DefinitionColumn{Name: testCol.KeyName},
-			Error: &DefinitionColumn{Name: testDC.Alias},
+		_, err := c.DatasetDefinitions.Update(ctx, dataset, &client.DatasetDefinition{
+			Name:  &client.DefinitionColumn{Name: testCol.KeyName},
+			Error: &client.DefinitionColumn{Name: testDC.Alias},
 		})
 		assert.NoError(t, err)
 		// refetch to be extra sure that our update took effect
@@ -98,9 +100,9 @@ func TestDatasetDefinitions(t *testing.T) {
 	})
 
 	t.Run("Reset the fields: ensure reverted to default", func(t *testing.T) {
-		result, err := c.DatasetDefinitions.Update(ctx, dataset, &DatasetDefinition{
-			Name:  EmptyDatasetDefinition(),
-			Error: EmptyDatasetDefinition(),
+		result, err := c.DatasetDefinitions.Update(ctx, dataset, &client.DatasetDefinition{
+			Name:  client.EmptyDatasetDefinition(),
+			Error: client.EmptyDatasetDefinition(),
 		})
 		assert.NoError(t, err)
 		assert.Equal(t, result.Name.Name, "name")

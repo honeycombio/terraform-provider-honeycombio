@@ -1,11 +1,13 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestMarkerSettings(t *testing.T) {
@@ -13,13 +15,13 @@ func TestMarkerSettings(t *testing.T) {
 
 	ctx := context.Background()
 
-	var m *MarkerSetting
+	var m *client.MarkerSetting
 	var err error
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	currentMarkerSetting := &MarkerSetting{
+	currentMarkerSetting := &client.MarkerSetting{
 		Type:  test.RandomStringWithPrefix("test.", 8),
 		Color: "#b71c1c",
 	}
@@ -78,6 +80,6 @@ func TestMarkerSettings(t *testing.T) {
 		_, err := c.MarkerSettings.Get(ctx, dataset, m.ID)
 
 		assert.Error(t, err)
-		assert.True(t, err.(*DetailedError).IsNotFound())
+		assert.True(t, err.(*client.DetailedError).IsNotFound())
 	})
 }

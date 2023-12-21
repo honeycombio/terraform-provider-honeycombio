@@ -52,28 +52,28 @@ type SLO struct {
 
 func (s *slos) List(ctx context.Context, dataset string) ([]SLO, error) {
 	var r []SLO
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/slos/%s", urlEncodeDataset(dataset)), nil, &r)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/slos/%s", urlEncodeDataset(dataset)), nil, &r)
 	return r, err
 }
 
 func (s *slos) Get(ctx context.Context, dataset string, id string) (*SLO, error) {
 	var r SLO
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/slos/%s/%s", urlEncodeDataset(dataset), id), nil, &r)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/slos/%s/%s", urlEncodeDataset(dataset), id), nil, &r)
 	return &r, err
 }
 
 func (s *slos) Create(ctx context.Context, dataset string, data *SLO) (*SLO, error) {
 	var r SLO
-	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/slos/%s", urlEncodeDataset(dataset)), data, &r)
+	err := s.client.Do(ctx, "POST", fmt.Sprintf("/1/slos/%s", urlEncodeDataset(dataset)), data, &r)
 	return &r, err
 }
 
 func (s *slos) Update(ctx context.Context, dataset string, data *SLO) (*SLO, error) {
 	var r SLO
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/slos/%s/%s", urlEncodeDataset(dataset), data.ID), data, &r)
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/slos/%s/%s", urlEncodeDataset(dataset), data.ID), data, &r)
 	return &r, err
 }
 
 func (s *slos) Delete(ctx context.Context, dataset string, id string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/slos/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
+	return s.client.Do(ctx, "DELETE", fmt.Sprintf("/1/slos/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
 }
