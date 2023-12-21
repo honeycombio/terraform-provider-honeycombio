@@ -127,7 +127,7 @@ func resourceColumnRead(ctx context.Context, d *schema.ResourceData, meta interf
 		columnName = d.Get("key_name").(string)
 	}
 
-	// we read by name here to faciliate importing by name instead of ID
+	// we read by name here to facilitate importing by name instead of ID
 	var detailedErr honeycombio.DetailedError
 	column, err := client.Columns.GetByKeyName(ctx, dataset, columnName)
 	if errors.As(err, &detailedErr) {

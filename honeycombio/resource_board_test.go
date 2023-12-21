@@ -240,6 +240,7 @@ resource "honeycombio_board" "test" {
 }`, dataset)
 }
 
+//nolint:unparam
 func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]

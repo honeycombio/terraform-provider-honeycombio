@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/joho/godotenv"
+
+	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func init() {
@@ -26,6 +27,7 @@ func testAccPreCheck(t *testing.T) func() {
 }
 
 var testAccProviderFactories = map[string]func() (*schema.Provider, error){
+	//nolint:unparam
 	"honeycombio": func() (*schema.Provider, error) {
 		return Provider("test"), nil
 	},

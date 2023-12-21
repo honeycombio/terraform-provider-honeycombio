@@ -300,7 +300,7 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 				return s.Type.ValueString() == string(r.Type) && s.Target.ValueString() == r.Target
 			})
 			if idx < 0 {
-				// this should never happen?! But if it does, we'll just skip it and hope to get a reproducable case
+				// this should never happen?! But if it does, we'll just skip it and hope to get a reproducible case
 				resp.Diagnostics.AddError(
 					"Error Reading Honeycomb Trigger",
 					"Could not find Recipient "+r.ID+" in state",

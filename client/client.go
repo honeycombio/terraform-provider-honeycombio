@@ -189,7 +189,7 @@ func (c *Client) IsClassic(ctx context.Context) bool {
 //
 // The response is parsed in responseBody, if responseBody is not nil.
 //
-// Attemps to return a DetailedError if the response status code is not 2xx,
+// Attempts to return a DetailedError if the response status code is not 2xx,
 // but can return a generic error.
 func (c *Client) Do(ctx context.Context, method, path string, requestBody, responseBody interface{}) error {
 	var body io.Reader

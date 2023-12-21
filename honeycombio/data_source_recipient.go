@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
@@ -161,7 +162,7 @@ func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("your recipient query returned no results.")
 	}
 	if len(filteredRcpts) > 1 {
-		return diag.Errorf("your recipient query returned more than one result. Please try a more specific search critera.")
+		return diag.Errorf("your recipient query returned more than one result. Please try a more specific search criteria.")
 	}
 	rcpt := filteredRcpts[0]
 	d.SetId(rcpt.ID)

@@ -5,8 +5,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"golang.org/x/exp/slices"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -340,7 +341,7 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 				return s.Type.ValueString() == string(r.Type) && s.Target.ValueString() == r.Target
 			})
 			if idx < 0 {
-				// this should never happen?! But if it does, we'll just skip it and hope to get a reproducable case
+				// this should never happen?! But if it does, we'll just skip it and hope to get a reproducible case
 				resp.Diagnostics.AddError(
 					"Error Reading Honeycomb Burn Alert",
 					"Could not find Recipient "+r.ID+" in state",

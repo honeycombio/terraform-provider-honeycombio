@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
@@ -29,10 +30,7 @@ func TestMarkerSettings(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 
 		m, err = c.MarkerSettings.Create(ctx, dataset, currentMarkerSetting)
-
-		if err != nil {
-			t.Fatal(err)
-		}
+		require.NoError(t, err)
 
 		assert.NotNil(t, m.ID)
 		assert.Equal(t, currentMarkerSetting.Type, m.Type)
@@ -63,7 +61,6 @@ func TestMarkerSettings(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
-
 		result, err := c.MarkerSettings.Update(ctx, dataset, m)
 
 		assert.NoError(t, err)
@@ -79,7 +76,9 @@ func TestMarkerSettings(t *testing.T) {
 	t.Run("Fail to Get deleted Marker Setting", func(t *testing.T) {
 		_, err := c.MarkerSettings.Get(ctx, dataset, m.ID)
 
+		var de client.DetailedError
 		assert.Error(t, err)
-		assert.True(t, err.(*client.DetailedError).IsNotFound())
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 }

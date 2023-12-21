@@ -84,7 +84,9 @@ func TestMarkers(t *testing.T) {
 	t.Run("Fail to Get deleted Marker", func(t *testing.T) {
 		_, err := c.Markers.Get(ctx, dataset, m.ID)
 
+		var de client.DetailedError
 		assert.Error(t, err)
-		assert.True(t, err.(*client.DetailedError).IsNotFound())
+		assert.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
 	})
 }

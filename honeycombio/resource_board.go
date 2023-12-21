@@ -95,7 +95,7 @@ See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-sett
 										Type:        schema.TypeBool,
 										Default:     false,
 										Optional:    true,
-										Description: "Enable interpolatation between datapoints when the interveneing time buckets have no matching events.",
+										Description: "Enable interpolatation between datapoints when the intervening time buckets have no matching events.",
 									},
 									"hide_markers": {
 										Type:        schema.TypeBool,

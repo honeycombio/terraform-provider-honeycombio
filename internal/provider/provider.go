@@ -100,6 +100,7 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 	apiKey := os.Getenv(client.DefaultAPIKeyEnv)
 	if apiKey == "" {
 		// fall through to legacy env var
+		//nolint:staticcheck
 		apiKey = os.Getenv(client.LegacyAPIKeyEnv)
 	}
 	if !config.APIKey.IsNull() {
@@ -146,6 +147,7 @@ func getClientFromDatasourceRequest(req *datasource.ConfigureRequest) *client.Cl
 	if req.ProviderData == nil {
 		return nil
 	}
+	//nolint:forcetypeassert
 	return req.ProviderData.(*client.Client)
 }
 
@@ -153,5 +155,6 @@ func getClientFromResourceRequest(req *resource.ConfigureRequest) *client.Client
 	if req.ProviderData == nil {
 		return nil
 	}
+	//nolint:forcetypeassert
 	return req.ProviderData.(*client.Client)
 }

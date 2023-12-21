@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"

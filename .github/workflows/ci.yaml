@@ -26,6 +26,11 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3.7.0
+        with:
+          version: latest
+
       - name: Build
         run: go build -v .
 
@@ -75,37 +80,3 @@ jobs:
 
       - name: Generate Coverage Report
         uses: codecov/codecov-action@v3.1.4
-
-  fmt:
-    name: Formatting
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: "go.mod"
-          cache: true
-
-      - name: Check formatting
-        run: |
-          # install goimports from another directory to not touch go.mod
-          pushd ../
-          go install golang.org/x/tools/cmd/goimports@v0.8.0
-          popd
-
-          goimports -l -w .
-
-          if ! git diff --quiet; then
-            echo Running goimports has caused changes, please run go fmt
-            exit 1
-          fi
-
-          go mod tidy
-
-          if ! git diff --quiet; then
-            echo 'go mod tidy' has caused changes, please run go mod tidy
-            exit 1
-          fi

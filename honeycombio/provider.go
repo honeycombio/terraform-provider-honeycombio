@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/log"
 )
@@ -69,6 +70,7 @@ func Provider(version string) *schema.Provider {
 		apiKey := os.Getenv(honeycombio.DefaultAPIKeyEnv)
 		if apiKey == "" {
 			// fall through to legacy env var
+			//nolint:staticcheck
 			apiKey = os.Getenv(honeycombio.LegacyAPIKeyEnv)
 		}
 		if v, ok := d.GetOk("api_key"); ok {

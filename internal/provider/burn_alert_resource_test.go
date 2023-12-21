@@ -11,8 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )

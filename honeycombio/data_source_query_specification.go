@@ -286,9 +286,7 @@ func extractCalculations(d *schema.ResourceData) ([]honeycombio.CalculationSpec,
 	// none have been provided. As this can potentially cause an infinite diff
 	// we'll set the default here if we haven't parsed any
 	if len(calculations) == 0 {
-		calculations = append(calculations, honeycombio.CalculationSpec{
-			Op: honeycombio.CalculationOpCount,
-		})
+		calculations = []honeycombio.CalculationSpec{{Op: honeycombio.CalculationOpCount}}
 	}
 
 	return calculations, nil
@@ -390,7 +388,6 @@ func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, e
 			return filter, fmt.Errorf(multipleValuesError)
 		}
 		filter.Value = vb
-		valueSet = true
 	}
 
 	if filter.Op == honeycombio.FilterOpIn || filter.Op == honeycombio.FilterOpNotIn {
