@@ -1,9 +1,10 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,12 +17,12 @@ func TestQueryAnnotations(t *testing.T) {
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	var queryAnnotation *QueryAnnotation
+	var queryAnnotation *client.QueryAnnotation
 	var err error
 
 	// no cleanup func needed as queries cannot be deleted
-	query, err := c.Queries.Create(ctx, dataset, &QuerySpec{
-		Calculations: []CalculationSpec{
+	query, err := c.Queries.Create(ctx, dataset, &client.QuerySpec{
+		Calculations: []client.CalculationSpec{
 			{
 				Op: "COUNT",
 			},
@@ -30,7 +31,7 @@ func TestQueryAnnotations(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("Create", func(t *testing.T) {
-		data := &QueryAnnotation{
+		data := &client.QueryAnnotation{
 			Name:        "Query created by a test",
 			Description: "This derived column is created by a test",
 			QueryID:     *query.ID,
@@ -58,7 +59,7 @@ func TestQueryAnnotations(t *testing.T) {
 
 	t.Run("Update", func(t *testing.T) {
 		// change all the fields to test
-		data := &QueryAnnotation{
+		data := &client.QueryAnnotation{
 			ID:          queryAnnotation.ID,
 			Name:        "This is a new name for the query created by a test",
 			Description: "This is a new description",
@@ -79,7 +80,7 @@ func TestQueryAnnotations(t *testing.T) {
 	t.Run("Fail to Get deleted Query Annotation", func(t *testing.T) {
 		_, err := c.QueryAnnotations.Get(ctx, dataset, queryAnnotation.ID)
 
-		var de DetailedError
+		var de client.DetailedError
 		assert.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

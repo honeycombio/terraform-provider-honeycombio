@@ -86,34 +86,34 @@ func ColumnTypes() []ColumnType {
 
 func (s *columns) List(ctx context.Context, dataset string) ([]Column, error) {
 	var c []Column
-	err := s.client.performRequest(ctx, "GET", "/1/columns/"+urlEncodeDataset(dataset), nil, &c)
+	err := s.client.Do(ctx, "GET", "/1/columns/"+urlEncodeDataset(dataset), nil, &c)
 	return c, err
 }
 
 func (s *columns) Get(ctx context.Context, dataset string, id string) (*Column, error) {
 	var c Column
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/columns/%s/%s", urlEncodeDataset(dataset), id), nil, &c)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/columns/%s/%s", urlEncodeDataset(dataset), id), nil, &c)
 	return &c, err
 }
 
 func (s *columns) GetByKeyName(ctx context.Context, dataset string, keyName string) (*Column, error) {
 	var c Column
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/columns/%s?key_name=%s", urlEncodeDataset(dataset), url.QueryEscape(keyName)), nil, &c)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/columns/%s?key_name=%s", urlEncodeDataset(dataset), url.QueryEscape(keyName)), nil, &c)
 	return &c, err
 }
 
 func (s *columns) Create(ctx context.Context, dataset string, data *Column) (*Column, error) {
 	var c Column
-	err := s.client.performRequest(ctx, "POST", "/1/columns/"+urlEncodeDataset(dataset), data, &c)
+	err := s.client.Do(ctx, "POST", "/1/columns/"+urlEncodeDataset(dataset), data, &c)
 	return &c, err
 }
 
 func (s *columns) Update(ctx context.Context, dataset string, data *Column) (*Column, error) {
 	var c Column
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/columns/%s/%s", urlEncodeDataset(dataset), data.ID), data, &c)
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/columns/%s/%s", urlEncodeDataset(dataset), data.ID), data, &c)
 	return &c, err
 }
 
 func (s *columns) Delete(ctx context.Context, dataset string, id string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/columns/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
+	return s.client.Do(ctx, "DELETE", fmt.Sprintf("/1/columns/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
 }

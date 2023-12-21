@@ -116,28 +116,28 @@ func RecipientTypes() []RecipientType {
 
 func (s *recipients) List(ctx context.Context) ([]Recipient, error) {
 	var r []Recipient
-	err := s.client.performRequest(ctx, "GET", "/1/recipients", nil, &r)
+	err := s.client.Do(ctx, "GET", "/1/recipients", nil, &r)
 	return r, err
 }
 
 func (s *recipients) Get(ctx context.Context, ID string) (*Recipient, error) {
 	var r Recipient
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/recipients/%s", ID), nil, &r)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/recipients/%s", ID), nil, &r)
 	return &r, err
 }
 
 func (s *recipients) Create(ctx context.Context, data *Recipient) (*Recipient, error) {
 	var r Recipient
-	err := s.client.performRequest(ctx, "POST", "/1/recipients", data, &r)
+	err := s.client.Do(ctx, "POST", "/1/recipients", data, &r)
 	return &r, err
 }
 
 func (s *recipients) Update(ctx context.Context, data *Recipient) (*Recipient, error) {
 	var r Recipient
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/recipients/%s", data.ID), data, &r)
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/recipients/%s", data.ID), data, &r)
 	return &r, err
 }
 
 func (s *recipients) Delete(ctx context.Context, id string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/recipients/%s", id), nil, nil)
+	return s.client.Do(ctx, "DELETE", fmt.Sprintf("/1/recipients/%s", id), nil, nil)
 }

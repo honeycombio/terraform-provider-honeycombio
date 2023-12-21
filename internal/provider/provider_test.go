@@ -63,7 +63,7 @@ func testAccDataset() string {
 }
 
 func testAccClient(t *testing.T) *client.Client {
-	c, err := client.NewClient(client.DefaultConfig())
+	c, err := client.NewClient()
 	if err != nil {
 		t.Fatalf("could not initialize Honeycomb client: %v", err)
 	}

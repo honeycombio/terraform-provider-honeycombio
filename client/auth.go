@@ -48,6 +48,6 @@ type AuthMetadata struct {
 
 func (s *auth) List(ctx context.Context) (AuthMetadata, error) {
 	var r AuthMetadata
-	err := s.client.performRequest(ctx, "GET", "/1/auth", nil, &r)
+	err := s.client.Do(ctx, "GET", "/1/auth", nil, &r)
 	return r, err
 }

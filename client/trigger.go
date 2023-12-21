@@ -158,30 +158,30 @@ func (t *Trigger) MarshalJSON() ([]byte, error) {
 
 func (s *triggers) List(ctx context.Context, dataset string) ([]Trigger, error) {
 	var t []Trigger
-	err := s.client.performRequest(ctx, "GET", "/1/triggers/"+urlEncodeDataset(dataset), nil, &t)
+	err := s.client.Do(ctx, "GET", "/1/triggers/"+urlEncodeDataset(dataset), nil, &t)
 	return t, err
 }
 
 func (s *triggers) Get(ctx context.Context, dataset string, id string) (*Trigger, error) {
 	var t Trigger
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), id), nil, &t)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), id), nil, &t)
 	return &t, err
 }
 
 func (s *triggers) Create(ctx context.Context, dataset string, data *Trigger) (*Trigger, error) {
 	var t Trigger
-	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/triggers/%s", urlEncodeDataset(dataset)), data, &t)
+	err := s.client.Do(ctx, "POST", fmt.Sprintf("/1/triggers/%s", urlEncodeDataset(dataset)), data, &t)
 	return &t, err
 }
 
 func (s *triggers) Update(ctx context.Context, dataset string, data *Trigger) (*Trigger, error) {
 	var t Trigger
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), data.ID), data, &t)
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), data.ID), data, &t)
 	return &t, err
 }
 
 func (s *triggers) Delete(ctx context.Context, dataset string, id string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
+	return s.client.Do(ctx, "DELETE", fmt.Sprintf("/1/triggers/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
 }
 
 // MatchesTriggerSubset checks that the given QuerySpec matches the strict

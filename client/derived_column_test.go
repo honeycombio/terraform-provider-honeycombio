@@ -1,13 +1,15 @@
-package client
+package client_test
 
 import (
 	"context"
 	"net/http"
 	"testing"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestDerivedColumns(t *testing.T) {
@@ -18,11 +20,11 @@ func TestDerivedColumns(t *testing.T) {
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	var derivedColumn *DerivedColumn
+	var derivedColumn *client.DerivedColumn
 	var err error
 
 	t.Run("Create", func(t *testing.T) {
-		data := &DerivedColumn{
+		data := &client.DerivedColumn{
 			Alias:       test.RandomStringWithPrefix("test.", 10),
 			Expression:  "BOOL(1)",
 			Description: "This derived column is created by a test",
@@ -36,14 +38,14 @@ func TestDerivedColumns(t *testing.T) {
 	})
 
 	t.Run("Create_DuplicateErr", func(t *testing.T) {
-		data := &DerivedColumn{
+		data := &client.DerivedColumn{
 			Alias:       derivedColumn.Alias,
 			Expression:  "BOOL(0)",
 			Description: "This is a derived column with the same name as an existing one",
 		}
 		_, err = c.DerivedColumns.Create(ctx, dataset, data)
 
-		var de DetailedError
+		var de client.DetailedError
 		assert.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.Equal(t, de.Status, http.StatusConflict)
@@ -72,7 +74,7 @@ func TestDerivedColumns(t *testing.T) {
 
 	t.Run("Update", func(t *testing.T) {
 		// change all the fields to test
-		data := &DerivedColumn{
+		data := &client.DerivedColumn{
 			ID:          derivedColumn.ID,
 			Alias:       test.RandomStringWithPrefix("test.", 10),
 			Expression:  "BOOL(0)",
@@ -95,7 +97,7 @@ func TestDerivedColumns(t *testing.T) {
 	t.Run("Fail to Get Deleted DC", func(t *testing.T) {
 		_, err := c.DerivedColumns.Get(ctx, dataset, derivedColumn.ID)
 
-		var de DetailedError
+		var de client.DetailedError
 		assert.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

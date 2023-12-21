@@ -128,28 +128,28 @@ func BoardQueryStyles() []BoardQueryStyle {
 
 func (s *boards) List(ctx context.Context) ([]Board, error) {
 	var b []Board
-	err := s.client.performRequest(ctx, "GET", "/1/boards", nil, &b)
+	err := s.client.Do(ctx, "GET", "/1/boards", nil, &b)
 	return b, err
 }
 
 func (s *boards) Get(ctx context.Context, ID string) (*Board, error) {
 	var b Board
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/boards/%s", ID), nil, &b)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/boards/%s", ID), nil, &b)
 	return &b, err
 }
 
 func (s *boards) Create(ctx context.Context, data *Board) (*Board, error) {
 	var b Board
-	err := s.client.performRequest(ctx, "POST", "/1/boards", data, &b)
+	err := s.client.Do(ctx, "POST", "/1/boards", data, &b)
 	return &b, err
 }
 
 func (s *boards) Update(ctx context.Context, data *Board) (*Board, error) {
 	var b Board
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/boards/%s", data.ID), data, &b)
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/boards/%s", data.ID), data, &b)
 	return &b, err
 }
 
 func (s *boards) Delete(ctx context.Context, id string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/boards/%s", id), nil, nil)
+	return s.client.Do(ctx, "DELETE", fmt.Sprintf("/1/boards/%s", id), nil, nil)
 }

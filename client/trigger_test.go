@@ -1,13 +1,15 @@
-package client
+package client_test
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestTriggers(t *testing.T) {
@@ -15,7 +17,7 @@ func TestTriggers(t *testing.T) {
 
 	ctx := context.Background()
 
-	var trigger *Trigger
+	var trigger *client.Trigger
 	var err error
 
 	c := newTestClient(t)
@@ -23,39 +25,39 @@ func TestTriggers(t *testing.T) {
 	floatCol, col1, col2 := createRandomTestColumns(t, c, dataset)
 
 	t.Run("Create", func(t *testing.T) {
-		data := &Trigger{
+		data := &client.Trigger{
 			Name:        test.RandomStringWithPrefix("test.", 8),
 			Description: "Some description",
 			Disabled:    true,
-			Query: &QuerySpec{
+			Query: &client.QuerySpec{
 				Breakdowns: nil,
-				Calculations: []CalculationSpec{
+				Calculations: []client.CalculationSpec{
 					{
-						Op:     CalculationOpP99,
+						Op:     client.CalculationOpP99,
 						Column: &floatCol.KeyName,
 					},
 				},
-				Filters: []FilterSpec{
+				Filters: []client.FilterSpec{
 					{
 						Column: col1.KeyName,
-						Op:     FilterOpExists,
+						Op:     client.FilterOpExists,
 					},
 					{
 						Column: col2.KeyName,
-						Op:     FilterOpContains,
+						Op:     client.FilterOpContains,
 						Value:  "foobar",
 					},
 				},
-				FilterCombination: FilterCombinationOr,
+				FilterCombination: client.FilterCombinationOr,
 			},
 			Frequency: 300,
-			Threshold: &TriggerThreshold{
-				Op:    TriggerThresholdOpGreaterThan,
+			Threshold: &client.TriggerThreshold{
+				Op:    client.TriggerThresholdOpGreaterThan,
 				Value: 10000,
 			},
-			Recipients: []NotificationRecipient{
+			Recipients: []client.NotificationRecipient{
 				{
-					Type:   RecipientTypeMarker,
+					Type:   client.RecipientTypeMarker,
 					Target: "This marker is created by a trigger",
 				},
 			},
@@ -70,12 +72,12 @@ func TestTriggers(t *testing.T) {
 		data.AlertType = trigger.AlertType
 		data.Recipients[0].ID = trigger.Recipients[0].ID
 		// set default time range
-		data.Query.TimeRange = ToPtr(300)
+		data.Query.TimeRange = client.ToPtr(300)
 
 		// set the default alert type
-		data.AlertType = TriggerAlertTypeOnChange
+		data.AlertType = client.TriggerAlertTypeOnChange
 		// set the default evaluation window type
-		data.EvaluationScheduleType = TriggerEvaluationScheduleFrequency
+		data.EvaluationScheduleType = client.TriggerEvaluationScheduleFrequency
 		// set the default threshold exceeded limit
 		data.Threshold.ExceededLimit = 1
 
@@ -100,11 +102,11 @@ func TestTriggers(t *testing.T) {
 		trigger.Description = "A new description"
 
 		// update the alert type to on true
-		trigger.AlertType = TriggerAlertTypeOnTrue
+		trigger.AlertType = client.TriggerAlertTypeOnTrue
 		// update the evaluation schedule to a window type
-		trigger.EvaluationScheduleType = TriggerEvaluationScheduleWindow
-		trigger.EvaluationSchedule = &TriggerEvaluationSchedule{
-			Window: TriggerEvaluationWindow{
+		trigger.EvaluationScheduleType = client.TriggerEvaluationScheduleWindow
+		trigger.EvaluationSchedule = &client.TriggerEvaluationSchedule{
+			Window: client.TriggerEvaluationWindow{
 				DaysOfWeek: []string{"monday", "wednesday", "friday"},
 				StartTime:  "13:00",
 				EndTime:    "21:00",
@@ -130,7 +132,7 @@ func TestTriggers(t *testing.T) {
 	t.Run("Fail to Get deleted Trigger", func(t *testing.T) {
 		_, err := c.Triggers.Get(ctx, dataset, trigger.ID)
 
-		var de DetailedError
+		var de client.DetailedError
 		assert.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
@@ -141,56 +143,56 @@ func TestMatchesTriggerSubset(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		in          QuerySpec
+		in          client.QuerySpec
 		expectedErr error
 	}{
 		{
-			in: QuerySpec{
-				Calculations: []CalculationSpec{
+			in: client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
-						Op: CalculationOpCount,
+						Op: client.CalculationOpCount,
 					},
 				},
 			},
 			expectedErr: nil,
 		},
 		{
-			in: QuerySpec{
+			in: client.QuerySpec{
 				Calculations: nil,
 			},
 			expectedErr: errors.New("a trigger query should contain exactly one calculation"),
 		},
 		{
-			in: QuerySpec{
-				Calculations: []CalculationSpec{
+			in: client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
-						Op: CalculationOpHeatmap,
+						Op: client.CalculationOpHeatmap,
 					},
 				},
 			},
 			expectedErr: errors.New("a trigger query may not contain a HEATMAP calculation"),
 		},
 		{
-			in: QuerySpec{
-				Calculations: []CalculationSpec{
+			in: client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
-						Op: CalculationOpCount,
+						Op: client.CalculationOpCount,
 					},
 				},
-				Limit: ToPtr(100),
+				Limit: client.ToPtr(100),
 			},
 			expectedErr: errors.New("limit is not allowed in a trigger query"),
 		},
 		{
-			in: QuerySpec{
-				Calculations: []CalculationSpec{
+			in: client.QuerySpec{
+				Calculations: []client.CalculationSpec{
 					{
-						Op: CalculationOpCount,
+						Op: client.CalculationOpCount,
 					},
 				},
-				Orders: []OrderSpec{
+				Orders: []client.OrderSpec{
 					{
-						Column: ToPtr(test.RandomStringWithPrefix("test.", 8)),
+						Column: client.ToPtr(test.RandomStringWithPrefix("test.", 8)),
 					},
 				},
 			},
@@ -199,7 +201,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		err := MatchesTriggerSubset(&c.in)
+		err := client.MatchesTriggerSubset(&c.in)
 
 		assert.Equal(t, c.expectedErr, err, "Test case %d, QuerySpec: %v", i, c.in)
 	}

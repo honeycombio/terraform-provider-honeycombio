@@ -28,12 +28,12 @@ var _ Queries = (*queries)(nil)
 
 func (s *queries) Get(ctx context.Context, dataset string, id string) (*QuerySpec, error) {
 	var q QuerySpec
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/queries/%s/%s", urlEncodeDataset(dataset), id), nil, &q)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/queries/%s/%s", urlEncodeDataset(dataset), id), nil, &q)
 	return &q, err
 }
 
 func (s *queries) Create(ctx context.Context, dataset string, data *QuerySpec) (*QuerySpec, error) {
 	var q QuerySpec
-	err := s.client.performRequest(ctx, "POST", "/1/queries/"+urlEncodeDataset(dataset), data, &q)
+	err := s.client.Do(ctx, "POST", "/1/queries/"+urlEncodeDataset(dataset), data, &q)
 	return &q, err
 }

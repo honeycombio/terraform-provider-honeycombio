@@ -49,24 +49,24 @@ type Dataset struct {
 
 func (s datasets) List(ctx context.Context) ([]Dataset, error) {
 	var datasets []Dataset
-	err := s.client.performRequest(ctx, "GET", "/1/datasets", nil, &datasets)
+	err := s.client.Do(ctx, "GET", "/1/datasets", nil, &datasets)
 	return datasets, err
 }
 
 func (s datasets) Get(ctx context.Context, slug string) (*Dataset, error) {
 	var dataset Dataset
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/datasets/%s", urlEncodeDataset(slug)), nil, &dataset)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/datasets/%s", urlEncodeDataset(slug)), nil, &dataset)
 	return &dataset, err
 }
 
 func (s datasets) Create(ctx context.Context, data *Dataset) (*Dataset, error) {
 	var dataset Dataset
-	err := s.client.performRequest(ctx, "POST", "/1/datasets", data, &dataset)
+	err := s.client.Do(ctx, "POST", "/1/datasets", data, &dataset)
 	return &dataset, err
 }
 
 func (s datasets) Update(ctx context.Context, data *Dataset) (*Dataset, error) {
 	var dataset Dataset
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/datasets/%s", urlEncodeDataset(data.Name)), data, &dataset)
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/datasets/%s", urlEncodeDataset(data.Name)), data, &dataset)
 	return &dataset, err
 }

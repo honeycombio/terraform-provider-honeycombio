@@ -1,13 +1,15 @@
-package client
+package client_test
 
 import (
 	"context"
 	"fmt"
 	"testing"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestBurnAlerts(t *testing.T) {
@@ -21,16 +23,16 @@ func TestBurnAlerts(t *testing.T) {
 	dataset := testDataset(t)
 	testAlertEmail := test.RandomString(8) + "@example.com"
 
-	sli, err := c.DerivedColumns.Create(ctx, dataset, &DerivedColumn{
+	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
 		Alias:      test.RandomStringWithPrefix("test.", 8),
 		Expression: "BOOL(1)",
 	})
 	require.NoError(t, err)
-	slo, err := c.SLOs.Create(ctx, dataset, &SLO{
+	slo, err := c.SLOs.Create(ctx, dataset, &client.SLO{
 		Name:             test.RandomStringWithPrefix("test.", 8),
 		TimePeriodDays:   7,
 		TargetPerMillion: 999000,
-		SLI:              SLIRef{Alias: sli.Alias},
+		SLI:              client.SLIRef{Alias: sli.Alias},
 	})
 	require.NoError(t, err)
 
@@ -43,19 +45,19 @@ func TestBurnAlerts(t *testing.T) {
 		// remove test alert email from recipients
 		rcpts, _ := c.Recipients.List(ctx)
 		for _, r := range rcpts {
-			if r.Type == RecipientTypeEmail && r.Details.EmailAddress == testAlertEmail {
+			if r.Type == client.RecipientTypeEmail && r.Details.EmailAddress == testAlertEmail {
 				c.Recipients.Delete(ctx, r.ID)
 				break
 			}
 		}
 	})
 
-	var defaultBurnAlert *BurnAlert
+	var defaultBurnAlert *client.BurnAlert
 	exhaustionMinutes24Hours := 24 * 60
-	defaultBurnAlertCreateRequest := BurnAlert{
+	defaultBurnAlertCreateRequest := client.BurnAlert{
 		ExhaustionMinutes: &exhaustionMinutes24Hours,
-		SLO:               SLORef{ID: slo.ID},
-		Recipients: []NotificationRecipient{
+		SLO:               client.SLORef{ID: slo.ID},
+		Recipients: []client.NotificationRecipient{
 			{
 				Type:   "email",
 				Target: testAlertEmail,
@@ -63,10 +65,10 @@ func TestBurnAlerts(t *testing.T) {
 		},
 	}
 	exhaustionMinutes1Hour := 60
-	defaultBurnAlertUpdateRequest := BurnAlert{
+	defaultBurnAlertUpdateRequest := client.BurnAlert{
 		ExhaustionMinutes: &exhaustionMinutes1Hour,
-		SLO:               SLORef{ID: slo.ID},
-		Recipients: []NotificationRecipient{
+		SLO:               client.SLORef{ID: slo.ID},
+		Recipients: []client.NotificationRecipient{
 			{
 				Type:   "email",
 				Target: testAlertEmail,
@@ -74,13 +76,13 @@ func TestBurnAlerts(t *testing.T) {
 		},
 	}
 
-	var exhaustionTimeBurnAlert *BurnAlert
+	var exhaustionTimeBurnAlert *client.BurnAlert
 	exhaustionMinutes0Minutes := 0
-	exhaustionTimeBurnAlertCreateRequest := BurnAlert{
-		AlertType:         string(BurnAlertAlertTypeExhaustionTime),
+	exhaustionTimeBurnAlertCreateRequest := client.BurnAlert{
+		AlertType:         client.BurnAlertAlertTypeExhaustionTime,
 		ExhaustionMinutes: &exhaustionMinutes0Minutes,
-		SLO:               SLORef{ID: slo.ID},
-		Recipients: []NotificationRecipient{
+		SLO:               client.SLORef{ID: slo.ID},
+		Recipients: []client.NotificationRecipient{
 			{
 				Type:   "email",
 				Target: testAlertEmail,
@@ -88,11 +90,11 @@ func TestBurnAlerts(t *testing.T) {
 		},
 	}
 	exhaustionMinutes4Hours := 4 * 60
-	exhaustionTimeBurnAlertUpdateRequest := BurnAlert{
-		AlertType:         string(BurnAlertAlertTypeExhaustionTime),
+	exhaustionTimeBurnAlertUpdateRequest := client.BurnAlert{
+		AlertType:         client.BurnAlertAlertTypeExhaustionTime,
 		ExhaustionMinutes: &exhaustionMinutes4Hours,
-		SLO:               SLORef{ID: slo.ID},
-		Recipients: []NotificationRecipient{
+		SLO:               client.SLORef{ID: slo.ID},
+		Recipients: []client.NotificationRecipient{
 			{
 				Type:   "email",
 				Target: testAlertEmail,
@@ -100,15 +102,15 @@ func TestBurnAlerts(t *testing.T) {
 		},
 	}
 
-	var budgetRateBurnAlert *BurnAlert
+	var budgetRateBurnAlert *client.BurnAlert
 	budgetRateWindowMinutes1Hour := 60
 	budgetRateDecreaseThresholdPerMillion1Percent := 10000
-	budgetRateBurnAlertCreateRequest := BurnAlert{
-		AlertType:                             string(BurnAlertAlertTypeBudgetRate),
+	budgetRateBurnAlertCreateRequest := client.BurnAlert{
+		AlertType:                             client.BurnAlertAlertTypeBudgetRate,
 		BudgetRateWindowMinutes:               &budgetRateWindowMinutes1Hour,
 		BudgetRateDecreaseThresholdPerMillion: &budgetRateDecreaseThresholdPerMillion1Percent,
-		SLO:                                   SLORef{ID: slo.ID},
-		Recipients: []NotificationRecipient{
+		SLO:                                   client.SLORef{ID: slo.ID},
+		Recipients: []client.NotificationRecipient{
 			{
 				Type:   "email",
 				Target: testAlertEmail,
@@ -117,12 +119,12 @@ func TestBurnAlerts(t *testing.T) {
 	}
 	budgetRateWindowMinutes2Hours := 2 * 60
 	budgetRateDecreaseThresholdPerMillion5Percent := 10000
-	budgetRateBurnAlertUpdateRequest := BurnAlert{
-		AlertType:                             string(BurnAlertAlertTypeBudgetRate),
+	budgetRateBurnAlertUpdateRequest := client.BurnAlert{
+		AlertType:                             client.BurnAlertAlertTypeBudgetRate,
 		BudgetRateWindowMinutes:               &budgetRateWindowMinutes2Hours,
 		BudgetRateDecreaseThresholdPerMillion: &budgetRateDecreaseThresholdPerMillion5Percent,
-		SLO:                                   SLORef{ID: slo.ID},
-		Recipients: []NotificationRecipient{
+		SLO:                                   client.SLORef{ID: slo.ID},
+		Recipients: []client.NotificationRecipient{
 			{
 				Type:   "email",
 				Target: testAlertEmail,
@@ -131,25 +133,25 @@ func TestBurnAlerts(t *testing.T) {
 	}
 
 	testCases := map[string]struct {
-		alertType     string
-		createRequest BurnAlert
-		updateRequest BurnAlert
-		burnAlert     *BurnAlert
+		alertType     client.BurnAlertAlertType
+		createRequest client.BurnAlert
+		updateRequest client.BurnAlert
+		burnAlert     *client.BurnAlert
 	}{
 		"default - exhaustion_time": {
-			alertType:     string(BurnAlertAlertTypeExhaustionTime),
+			alertType:     client.BurnAlertAlertTypeExhaustionTime,
 			createRequest: defaultBurnAlertCreateRequest,
 			updateRequest: defaultBurnAlertUpdateRequest,
 			burnAlert:     defaultBurnAlert,
 		},
 		"exhaustion_time": {
-			alertType:     string(BurnAlertAlertTypeExhaustionTime),
+			alertType:     client.BurnAlertAlertTypeExhaustionTime,
 			createRequest: exhaustionTimeBurnAlertCreateRequest,
 			updateRequest: exhaustionTimeBurnAlertUpdateRequest,
 			burnAlert:     exhaustionTimeBurnAlert,
 		},
 		"budget_rate": {
-			alertType:     string(BurnAlertAlertTypeBudgetRate),
+			alertType:     client.BurnAlertAlertTypeBudgetRate,
 			createRequest: budgetRateBurnAlertCreateRequest,
 			updateRequest: budgetRateBurnAlertUpdateRequest,
 			burnAlert:     budgetRateBurnAlert,
@@ -157,7 +159,7 @@ func TestBurnAlerts(t *testing.T) {
 	}
 
 	for testName, testCase := range testCases {
-		var burnAlert *BurnAlert
+		var burnAlert *client.BurnAlert
 		var err error
 
 		t.Run(fmt.Sprintf("Create: %s", testName), func(t *testing.T) {
@@ -219,7 +221,7 @@ func TestBurnAlerts(t *testing.T) {
 		t.Run(fmt.Sprintf("Fail to GET a deleted burn alert: %s", testName), func(t *testing.T) {
 			_, err := c.BurnAlerts.Get(ctx, dataset, burnAlert.ID)
 
-			var de DetailedError
+			var de client.DetailedError
 			assert.Error(t, err)
 			assert.ErrorAs(t, err, &de)
 			assert.True(t, de.IsNotFound())
@@ -228,13 +230,13 @@ func TestBurnAlerts(t *testing.T) {
 }
 
 func TestBurnAlerts_BurnAlertAlertTypes(t *testing.T) {
-	expectedAlertTypes := []BurnAlertAlertType{
-		BurnAlertAlertTypeExhaustionTime,
-		BurnAlertAlertTypeBudgetRate,
+	expectedAlertTypes := []client.BurnAlertAlertType{
+		client.BurnAlertAlertTypeExhaustionTime,
+		client.BurnAlertAlertTypeBudgetRate,
 	}
 
 	t.Run("returns expected burn alert alert types", func(t *testing.T) {
-		actualAlertTypes := BurnAlertAlertTypes()
+		actualAlertTypes := client.BurnAlertAlertTypes()
 
 		assert.NotEmpty(t, actualAlertTypes)
 		assert.Equal(t, len(expectedAlertTypes), len(actualAlertTypes))

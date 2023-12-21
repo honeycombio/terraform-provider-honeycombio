@@ -1,4 +1,4 @@
-package client
+package client_test
 
 import (
 	"context"
@@ -6,9 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestMarkers(t *testing.T) {
@@ -16,14 +18,14 @@ func TestMarkers(t *testing.T) {
 
 	ctx := context.Background()
 
-	var m *Marker
+	var m *client.Marker
 	var err error
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
 	t.Run("Create", func(t *testing.T) {
-		data := &Marker{
+		data := &client.Marker{
 			Message:   fmt.Sprintf("Test run at %v", time.Now()),
 			Type:      test.RandomStringWithPrefix("test.", 8),
 			URL:       "http://example.com",
@@ -83,6 +85,6 @@ func TestMarkers(t *testing.T) {
 		_, err := c.Markers.Get(ctx, dataset, m.ID)
 
 		assert.Error(t, err)
-		assert.True(t, err.(*DetailedError).IsNotFound())
+		assert.True(t, err.(*client.DetailedError).IsNotFound())
 	})
 }

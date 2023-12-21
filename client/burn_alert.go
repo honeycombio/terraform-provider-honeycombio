@@ -42,7 +42,7 @@ type SLORef struct {
 
 type BurnAlert struct {
 	ID                                    string                  `json:"id,omitempty"`
-	AlertType                             string                  `json:"alert_type"`
+	AlertType                             BurnAlertAlertType      `json:"alert_type"`
 	ExhaustionMinutes                     *int                    `json:"exhaustion_minutes,omitempty"`
 	BudgetRateWindowMinutes               *int                    `json:"budget_rate_window_minutes,omitempty"`
 	BudgetRateDecreaseThresholdPerMillion *int                    `json:"budget_rate_decrease_threshold_per_million,omitempty"`
@@ -70,28 +70,28 @@ func BurnAlertAlertTypes() []BurnAlertAlertType {
 
 func (s *burnalerts) ListForSLO(ctx context.Context, dataset string, sloId string) ([]BurnAlert, error) {
 	var b []BurnAlert
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/burn_alerts/%s?slo_id=%s", urlEncodeDataset(dataset), url.QueryEscape(sloId)), nil, &b)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/burn_alerts/%s?slo_id=%s", urlEncodeDataset(dataset), url.QueryEscape(sloId)), nil, &b)
 	return b, err
 }
 
 func (s *burnalerts) Get(ctx context.Context, dataset string, id string) (*BurnAlert, error) {
 	var b BurnAlert
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/burn_alerts/%s/%s", urlEncodeDataset(dataset), id), nil, &b)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/burn_alerts/%s/%s", urlEncodeDataset(dataset), id), nil, &b)
 	return &b, err
 }
 
 func (s *burnalerts) Create(ctx context.Context, dataset string, data *BurnAlert) (*BurnAlert, error) {
 	var b BurnAlert
-	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/burn_alerts/%s", urlEncodeDataset(dataset)), data, &b)
+	err := s.client.Do(ctx, "POST", fmt.Sprintf("/1/burn_alerts/%s", urlEncodeDataset(dataset)), data, &b)
 	return &b, err
 }
 
 func (s *burnalerts) Update(ctx context.Context, dataset string, data *BurnAlert) (*BurnAlert, error) {
 	var b BurnAlert
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/burn_alerts/%s/%s", urlEncodeDataset(dataset), data.ID), data, &b)
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/burn_alerts/%s/%s", urlEncodeDataset(dataset), data.ID), data, &b)
 	return &b, err
 }
 
 func (s *burnalerts) Delete(ctx context.Context, dataset string, id string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/burn_alerts/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
+	return s.client.Do(ctx, "DELETE", fmt.Sprintf("/1/burn_alerts/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
 }

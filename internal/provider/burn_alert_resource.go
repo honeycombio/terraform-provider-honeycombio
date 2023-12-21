@@ -229,7 +229,7 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 
 	// Get attributes from config and construct the create request
 	createRequest := &client.BurnAlert{
-		AlertType:  plan.AlertType.ValueString(),
+		AlertType:  client.BurnAlertAlertType(plan.AlertType.ValueString()),
 		Recipients: expandNotificationRecipients(plan.Recipients),
 		SLO:        client.SLORef{ID: plan.SLOID.ValueString()},
 	}
@@ -256,7 +256,7 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 	// Get attributes from the new burn alert and construct the state values
 	var state models.BurnAlertResourceModel
 	state.ID = types.StringValue(burnAlert.ID)
-	state.AlertType = types.StringValue(burnAlert.AlertType)
+	state.AlertType = types.StringValue(string(burnAlert.AlertType))
 	state.Dataset = plan.Dataset
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
@@ -313,7 +313,7 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 	// Get attributes from the burn alert and construct the state values
 	state.ID = types.StringValue(burnAlert.ID)
-	state.AlertType = types.StringValue(burnAlert.AlertType)
+	state.AlertType = types.StringValue(string(burnAlert.AlertType))
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)
 
 	// Process any attributes that could be nil and add them to the state values
@@ -370,7 +370,7 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 	// Get attributes from config and construct the update request
 	updateRequest := &client.BurnAlert{
 		ID:         plan.ID.ValueString(),
-		AlertType:  plan.AlertType.ValueString(),
+		AlertType:  client.BurnAlertAlertType(plan.AlertType.ValueString()),
 		Recipients: expandNotificationRecipients(plan.Recipients),
 		SLO:        client.SLORef{ID: plan.SLOID.ValueString()},
 	}
@@ -403,7 +403,7 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 	// Get attributes from the updated burn alert and construct the state values
 	var state models.BurnAlertResourceModel
 	state.ID = types.StringValue(burnAlert.ID)
-	state.AlertType = types.StringValue(burnAlert.AlertType)
+	state.AlertType = types.StringValue(string(burnAlert.AlertType))
 	state.Dataset = plan.Dataset
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients

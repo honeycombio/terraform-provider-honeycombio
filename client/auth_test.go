@@ -1,4 +1,4 @@
-package client
+package client_test
 
 import (
 	"context"
@@ -13,14 +13,15 @@ func TestAuthMetadata(t *testing.T) {
 	c := newTestClient(t)
 
 	t.Run("List", func(t *testing.T) {
-		metadata, err := c.Auth.List(context.Background())
+		ctx := context.Background()
+		metadata, err := c.Auth.List(ctx)
 
 		assert.NoError(t, err)
 		assert.NotEmpty(t, metadata.APIKeyAccess)
 		assert.NotEmpty(t, metadata.Team.Name)
 		assert.NotEmpty(t, metadata.Team.Slug)
 		// classic environment's don't have environment name and slugs
-		if len(c.apiKey) == 32 {
+		if c.IsClassic(ctx) {
 			assert.Empty(t, metadata.Environment.Name)
 			assert.Empty(t, metadata.Environment.Slug)
 		} else {

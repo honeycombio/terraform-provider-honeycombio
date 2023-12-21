@@ -1,4 +1,4 @@
-package client
+package client_test
 
 import (
 	"context"
@@ -8,21 +8,23 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func TestClient_ParseDetailedError(t *testing.T) {
 	t.Parallel()
 
-	var de DetailedError
+	var de client.DetailedError
 	ctx := context.Background()
 	c := newTestClient(t)
 
 	t.Run("Post with no body should fail with 400 unparseable", func(t *testing.T) {
-		err := c.performRequest(ctx, "POST", "/1/boards/", nil, nil)
+		err := c.Do(ctx, "POST", "/1/boards/", nil, nil)
 		require.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.Equal(t, de.Status, http.StatusBadRequest)
-		assert.Equal(t, de.Type, fmt.Sprintf("%s/problems/unparseable", c.apiURL))
+		assert.Equal(t, de.Type, fmt.Sprintf("%s/problems/unparseable", c.EndpointURL()))
 		assert.Equal(t, de.Title, "The request body could not be parsed.")
 		assert.Equal(t, de.Message, "could not parse request body")
 	})
@@ -32,18 +34,18 @@ func TestClient_ParseDetailedError(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.Equal(t, de.Status, http.StatusNotFound)
-		assert.Equal(t, de.Type, fmt.Sprintf("%s/problems/not-found", c.apiURL))
+		assert.Equal(t, de.Type, fmt.Sprintf("%s/problems/not-found", c.EndpointURL()))
 		assert.Equal(t, de.Title, "The requested resource cannot be found.")
 		assert.Equal(t, de.Message, "Dataset not found")
 	})
 
 	t.Run("Creating a dataset without a name should return a validation error", func(t *testing.T) {
-		createDatasetRequest := &Dataset{}
+		createDatasetRequest := &client.Dataset{}
 		_, err := c.Datasets.Create(ctx, createDatasetRequest)
 		require.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.Equal(t, http.StatusUnprocessableEntity, de.Status)
-		assert.Equal(t, fmt.Sprintf("%s/problems/validation-failed", c.apiURL), de.Type)
+		assert.Equal(t, fmt.Sprintf("%s/problems/validation-failed", c.EndpointURL()), de.Type)
 		assert.Equal(t, "The provided input is invalid.", de.Title)
 		assert.Equal(t, "The provided input is invalid.", de.Message)
 		assert.Equal(t, 1, len(de.Details))
@@ -59,14 +61,14 @@ func TestErrors_DetailedError_Error(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		input          DetailedError
+		input          client.DetailedError
 		expectedOutput string
 	}{
 		{
 			name: "multiple details get separated by newline",
-			input: DetailedError{
+			input: client.DetailedError{
 				Message: "test message",
-				Details: []ErrorTypeDetail{
+				Details: []client.ErrorTypeDetail{
 					{
 						Code:        "test code1",
 						Field:       "test_field1",
@@ -83,17 +85,17 @@ func TestErrors_DetailedError_Error(t *testing.T) {
 		},
 		{
 			name: "empty details returns message",
-			input: DetailedError{
+			input: client.DetailedError{
 				Message: "test message",
-				Details: []ErrorTypeDetail{},
+				Details: []client.ErrorTypeDetail{},
 			},
 			expectedOutput: "test message",
 		},
 		{
 			name: "one item in details has no newlines",
-			input: DetailedError{
+			input: client.DetailedError{
 				Message: "test message",
-				Details: []ErrorTypeDetail{
+				Details: []client.ErrorTypeDetail{
 					{
 						Code:        "test code",
 						Field:       "test_field",
@@ -118,12 +120,12 @@ func TestErrors_ErrorTypeDetail_String(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		input          ErrorTypeDetail
+		input          client.ErrorTypeDetail
 		expectedOutput string
 	}{
 		{
 			name: "happy path: Code, Field, and Description present",
-			input: ErrorTypeDetail{
+			input: client.ErrorTypeDetail{
 				Code:        "test code",
 				Field:       "test_field",
 				Description: "test description",
@@ -132,12 +134,12 @@ func TestErrors_ErrorTypeDetail_String(t *testing.T) {
 		},
 		{
 			name:           "all fields blank returns empty string",
-			input:          ErrorTypeDetail{},
+			input:          client.ErrorTypeDetail{},
 			expectedOutput: "",
 		},
 		{
 			name: "empty Code",
-			input: ErrorTypeDetail{
+			input: client.ErrorTypeDetail{
 				Field:       "test_field",
 				Description: "test description",
 			},
@@ -145,21 +147,21 @@ func TestErrors_ErrorTypeDetail_String(t *testing.T) {
 		},
 		{
 			name: "empty Code and Field",
-			input: ErrorTypeDetail{
+			input: client.ErrorTypeDetail{
 				Description: "test description",
 			},
 			expectedOutput: "test description",
 		},
 		{
 			name: "empty Code and Description",
-			input: ErrorTypeDetail{
+			input: client.ErrorTypeDetail{
 				Field: "test_field",
 			},
 			expectedOutput: "test_field",
 		},
 		{
 			name: "empty Field",
-			input: ErrorTypeDetail{
+			input: client.ErrorTypeDetail{
 				Code:        "test code",
 				Description: "test description",
 			},
@@ -167,14 +169,14 @@ func TestErrors_ErrorTypeDetail_String(t *testing.T) {
 		},
 		{
 			name: "empty Field and Description",
-			input: ErrorTypeDetail{
+			input: client.ErrorTypeDetail{
 				Code: "test code",
 			},
 			expectedOutput: "test code",
 		},
 		{
 			name: "empty Description",
-			input: ErrorTypeDetail{
+			input: client.ErrorTypeDetail{
 				Code:  "test code",
 				Field: "test_field",
 			},

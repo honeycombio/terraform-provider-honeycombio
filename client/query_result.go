@@ -74,7 +74,7 @@ func (s *queryResults) Get(ctx context.Context, dataset string, q *QueryResult) 
 		select {
 		case <-ticker.C:
 			// poll until complete or errored
-			if err = s.client.performRequest(ctx, "GET", resultUri, nil, &q); err != nil {
+			if err = s.client.Do(ctx, "GET", resultUri, nil, &q); err != nil {
 				return err
 			}
 			if q.Complete {
@@ -88,6 +88,6 @@ func (s *queryResults) Get(ctx context.Context, dataset string, q *QueryResult) 
 
 func (s *queryResults) Create(ctx context.Context, dataset string, data *QueryResultRequest) (*QueryResult, error) {
 	var q QueryResult
-	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/query_results/%s", urlEncodeDataset(dataset)), data, &q)
+	err := s.client.Do(ctx, "POST", fmt.Sprintf("/1/query_results/%s", urlEncodeDataset(dataset)), data, &q)
 	return &q, err
 }

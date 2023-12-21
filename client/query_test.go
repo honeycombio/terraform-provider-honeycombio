@@ -1,9 +1,10 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,47 +17,47 @@ func TestQueries(t *testing.T) {
 	c := newTestClient(t)
 	dataset := testDataset(t)
 
-	var query *QuerySpec
+	var query *client.QuerySpec
 	var err error
 
 	floatCol, col1, col2 := createRandomTestColumns(t, c, dataset)
 
 	t.Run("Create", func(t *testing.T) {
-		data := &QuerySpec{
-			Calculations: []CalculationSpec{
+		data := &client.QuerySpec{
+			Calculations: []client.CalculationSpec{
 				{
-					Op: CalculationOpCount,
+					Op: client.CalculationOpCount,
 				},
 				{
-					Op:     CalculationOpHeatmap,
+					Op:     client.CalculationOpHeatmap,
 					Column: &floatCol.KeyName,
 				},
 			},
-			Filters: []FilterSpec{
+			Filters: []client.FilterSpec{
 				{
 					Column: col1.KeyName,
-					Op:     FilterOpExists,
+					Op:     client.FilterOpExists,
 				},
 				{
 					Column: floatCol.KeyName,
-					Op:     FilterOpSmallerThan,
+					Op:     client.FilterOpSmallerThan,
 					Value:  10000.0,
 				},
 			},
-			FilterCombination: FilterCombinationOr,
+			FilterCombination: client.FilterCombinationOr,
 			Breakdowns:        []string{col1.KeyName, col2.KeyName},
-			Orders: []OrderSpec{
+			Orders: []client.OrderSpec{
 				{
 					Column: &col1.KeyName,
 				},
 				{
-					Op:    ToPtr(CalculationOpCount),
-					Order: ToPtr(SortOrderDesc),
+					Op:    client.ToPtr(client.CalculationOpCount),
+					Order: client.ToPtr(client.SortOrderDesc),
 				},
 			},
-			Limit:       ToPtr(100),
-			TimeRange:   ToPtr(3600), // 1 hour
-			Granularity: ToPtr(60),   // 1 minute
+			Limit:       client.ToPtr(100),
+			TimeRange:   client.ToPtr(3600), // 1 hour
+			Granularity: client.ToPtr(60),   // 1 minute
 		}
 
 		query, err = c.Queries.Create(ctx, dataset, data)

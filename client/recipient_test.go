@@ -1,13 +1,15 @@
-package client
+package client_test
 
 import (
 	"context"
 	"testing"
 	"time"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestRecipientsEmail(t *testing.T) {
@@ -15,15 +17,15 @@ func TestRecipientsEmail(t *testing.T) {
 
 	ctx := context.Background()
 
-	var rcpt *Recipient
+	var rcpt *client.Recipient
 	var err error
 
 	c := newTestClient(t)
 
 	t.Run("Create", func(t *testing.T) {
-		data := &Recipient{
-			Type: RecipientTypeEmail,
-			Details: RecipientDetails{
+		data := &client.Recipient{
+			Type: client.RecipientTypeEmail,
+			Details: client.RecipientDetails{
 				EmailAddress: test.RandomString(8) + "@example.com",
 			},
 		}
@@ -71,7 +73,7 @@ func TestRecipientsEmail(t *testing.T) {
 	t.Run("Fail to Get deleted Recipient", func(t *testing.T) {
 		_, err := c.Recipients.Get(ctx, rcpt.ID)
 
-		var de DetailedError
+		var de client.DetailedError
 		assert.Error(t, err)
 		assert.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
@@ -84,18 +86,18 @@ func TestRecipientsWebhooksandMSTeams(t *testing.T) {
 	ctx := context.Background()
 	c := newTestClient(t)
 
-	testRcpts := []Recipient{
+	testRcpts := []client.Recipient{
 		{
-			Type: RecipientTypeWebhook,
-			Details: RecipientDetails{
+			Type: client.RecipientTypeWebhook,
+			Details: client.RecipientDetails{
 				WebhookName:   test.RandomStringWithPrefix("test.", 10),
 				WebhookURL:    "https://example.com",
 				WebhookSecret: "secret",
 			},
 		},
 		{
-			Type: RecipientTypeMSTeams,
-			Details: RecipientDetails{
+			Type: client.RecipientTypeMSTeams,
+			Details: client.RecipientDetails{
 				WebhookName: test.RandomStringWithPrefix("test.", 10),
 				WebhookURL:  "https://corp.office.com/webhook",
 			},

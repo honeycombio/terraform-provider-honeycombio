@@ -73,7 +73,7 @@ type Marker struct {
 
 func (s *markers) List(ctx context.Context, dataset string) ([]Marker, error) {
 	var m []Marker
-	err := s.client.performRequest(ctx, "GET", fmt.Sprintf("/1/markers/%s", urlEncodeDataset(dataset)), nil, &m)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/markers/%s", urlEncodeDataset(dataset)), nil, &m)
 	return m, err
 }
 
@@ -96,16 +96,16 @@ func (s *markers) Get(ctx context.Context, dataset string, id string) (*Marker, 
 
 func (s *markers) Create(ctx context.Context, dataset string, data *Marker) (*Marker, error) {
 	var m Marker
-	err := s.client.performRequest(ctx, "POST", fmt.Sprintf("/1/markers/%s", urlEncodeDataset(dataset)), data, &m)
+	err := s.client.Do(ctx, "POST", fmt.Sprintf("/1/markers/%s", urlEncodeDataset(dataset)), data, &m)
 	return &m, err
 }
 
 func (s *markers) Update(ctx context.Context, dataset string, data *Marker) (*Marker, error) {
 	var m Marker
-	err := s.client.performRequest(ctx, "PUT", fmt.Sprintf("/1/markers/%s/%s", urlEncodeDataset(dataset), data.ID), data, &m)
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/markers/%s/%s", urlEncodeDataset(dataset), data.ID), data, &m)
 	return &m, err
 }
 
 func (s *markers) Delete(ctx context.Context, dataset string, id string) error {
-	return s.client.performRequest(ctx, "DELETE", fmt.Sprintf("/1/markers/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
+	return s.client.Do(ctx, "DELETE", fmt.Sprintf("/1/markers/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
 }
