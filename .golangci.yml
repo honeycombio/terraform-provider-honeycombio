@@ -41,4 +41,3 @@ run:
     timeout: 5m
     tests: true
     allow-parallel-runners: true
-    modules-download-mode: readonly
