@@ -43,12 +43,12 @@ func (p *HoneycombioProvider) Schema(_ context.Context, _ provider.SchemaRequest
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"api_key": schema.StringAttribute{
-				MarkdownDescription: "The Honeycomb API key to use. It can also be set using HONEYCOMB_API_KEY or HONEYCOMBIO_APIKEY environment variables.",
+				MarkdownDescription: "The Honeycomb API key to use. It can also be set via the `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variables.",
 				Optional:            true,
 				Sensitive:           true,
 			},
 			"api_url": schema.StringAttribute{
-				MarkdownDescription: "Override the URL of the Honeycomb.io API. Defaults to https://api.honeycomb.io.",
+				MarkdownDescription: "Override the URL of the Honeycomb API. Defaults to `https://api.honeycomb.io`. It can also be set via the `HONEYCOMB_API_ENDPOINT` environment variable.",
 				Optional:            true,
 			},
 			"debug": schema.BoolAttribute{
