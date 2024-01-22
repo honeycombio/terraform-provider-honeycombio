@@ -348,6 +348,14 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"Not equivalent breakdowns",
+			client.QuerySpec{
+				Breakdowns: []string{"column_1"},
+			},
+			client.QuerySpec{},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
