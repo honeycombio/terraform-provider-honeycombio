@@ -104,9 +104,15 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	if ValueOrDefault(qs.FilterCombination, DefaultFilterCombination) != ValueOrDefault(other.FilterCombination, DefaultFilterCombination) {
 		return false
 	}
-	if !reflect.DeepEqual(qs.Breakdowns, other.Breakdowns) {
+
+	if !reflect.DeepEqual(qs.Breakdowns, other.Breakdowns) &&
+		// an empty Breakdowns is equivalent to a nil Breakdowns, so we need to check that
+		// as DeepEqual will not consider them equal
+		!(qs.Breakdowns == nil && len(other.Breakdowns) == 0 ||
+			len(qs.Breakdowns) == 0 && other.Breakdowns == nil) {
 		return false
 	}
+
 	// the exact order of havings does not matter, but their equvalence does
 	if !Equivalent(qs.Havings, other.Havings) {
 		return false

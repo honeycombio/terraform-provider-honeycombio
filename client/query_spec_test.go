@@ -97,6 +97,8 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 				TimeRange:         client.ToPtr(client.DefaultQueryTimeRange),
 				// Granularity may be exported out of the Query Builder as '0' when not provided
 				Granularity: client.ToPtr(0),
+				Breakdowns:  []string{},
+				Orders:      []client.OrderSpec{},
 			},
 			client.QuerySpec{},
 			true,
@@ -344,6 +346,14 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 					},
 				},
 			},
+			false,
+		},
+		{
+			"Not equivalent breakdowns",
+			client.QuerySpec{
+				Breakdowns: []string{"column_1"},
+			},
+			client.QuerySpec{},
 			false,
 		},
 	}
