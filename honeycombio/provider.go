@@ -22,13 +22,13 @@ func Provider(version string) *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			"api_key": {
 				Type:        schema.TypeString,
-				Description: "The Honeycomb API key to use. It can also be set using HONEYCOMB_API_KEY or HONEYCOMBIO_APIKEY environment variables.",
+				Description: "The Honeycomb API key to use. It can also be set via the `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variables.",
 				Optional:    true,
 				Sensitive:   true,
 			},
 			"api_url": {
 				Type:        schema.TypeString,
-				Description: "Override the URL of the Honeycomb.io API. Defaults to https://api.honeycomb.io.",
+				Description: "Override the URL of the Honeycomb API. Defaults to `https://api.honeycomb.io`. It can also be set via the `HONEYCOMB_API_ENDPOINT` environment variable.",
 				Optional:    true,
 			},
 			"debug": {
