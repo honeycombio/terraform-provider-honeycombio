@@ -1,3 +1,37 @@
+# 0.21.0 (Jan 26, 2024)
+
+NOTES:
+
+* If you are a downstream consumer of the `client` package in another Go project, this release contains a breaking change:
+`client.NewClient` now takes no arguments and creates a client with the default configuration
+values, while `client.NewClientWithConfig` has been added to allow passing a custom configuration.
+  * This does not effect Terraform Configurations: only projects importing the `client` Package.
+* If you were making use of the previously undocumented `HONEYCOMB_API_HOST` environment variable to override the Honeycomb API URL,
+it has been renamed to the more standard `HONEYCOMB_API_ENDPOINT`.
+
+EHANCEMENTS:
+
+* feat(client): standardize and document API endpoint envvar (#414)
+* refactor(client) - testsuite and constructor improvements (#416)
+
+BUGFIXES:
+
+* fix(client): fix Marker Settings flakey test (#420)
+* fix(client): fix queryspec equivalence for empty breakdowns (#421)
+* fix(docs): add missing mention to HONEYCOMB_API_ENDPOINT env var for endpoint configuration (#422)
+
+HOUSEKEEPING:
+
+* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.19.1 to 0.20.0 (#413)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.12.0 to 0.13.0 (#413)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.30.0 to 2.31.0 (#413)
+* build(deps): Bump golang.org/x/crypto from 0.16.0 to 0.17.0 (#415)
+* chore(ci): switch to golangci-lint and fix lints (#417)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.4.2 to 1.5.0 (#419)
+* build(deps): Bump github.com/cloudflare/circl from 1.3.3 to 1.3.7 (#418)
+* build(deps): Bump codecov/codecov-action from 3.1.4 to 3.1.5 (#423)
+* chore(license): update copyright time range (#424)
+
 # 0.20.3 (Dec 14, 2023)
 
 BUGFIXES:
