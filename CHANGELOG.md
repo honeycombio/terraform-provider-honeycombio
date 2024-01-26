@@ -9,7 +9,7 @@ values, while `client.NewClientWithConfig` has been added to allow passing a cus
 * If you were making use of the previously undocumented `HONEYCOMB_API_HOST` environment variable to override the Honeycomb API URL,
 it has been renamed to the more standard `HONEYCOMB_API_ENDPOINT`.
 
-EHANCEMENTS:
+ENHANCEMENTS:
 
 * feat(client): standardize and document API endpoint envvar (#414)
 * refactor(client) - testsuite and constructor improvements (#416)
