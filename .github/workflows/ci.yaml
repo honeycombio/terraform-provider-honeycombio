@@ -79,4 +79,4 @@ jobs:
         run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./internal/... ./honeycombio/...
 
       - name: Generate Coverage Report
-        uses: codecov/codecov-action@v4.0.0
+        uses: codecov/codecov-action@v4.0.1
