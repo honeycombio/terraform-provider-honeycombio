@@ -148,8 +148,9 @@ func notificationRecipientToModel(r client.NotificationRecipient) models.Notific
 		Target: types.StringValue(r.Target),
 	}
 	if r.Details != nil {
-		rcpt.Details = make([]models.NotificationRecipientDetailsModel, 1)
-		rcpt.Details[0].PDSeverity = types.StringValue(string(r.Details.PDSeverity))
+		rcpt.Details = []models.NotificationRecipientDetailsModel{
+			{PDSeverity: types.StringValue(string(r.Details.PDSeverity))},
+		}
 	}
 
 	return rcpt
