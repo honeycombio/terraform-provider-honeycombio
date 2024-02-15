@@ -421,6 +421,46 @@ func TestAcc_BurnAlertResource_recreateOnNotFound(t *testing.T) {
 	})
 }
 
+func TestAcc_BurnAlertResource_HandlesRecipientChangedOutsideOfTerraform(t *testing.T) {
+	c := testAccClient(t)
+	ctx := context.Background()
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	// setup a slack recipient to be used in the burn alert, and modified outside of terraform
+	channel := "#" + acctest.RandString(8)
+	rcpt, err := c.Recipients.Create(ctx, &client.Recipient{
+		Type: client.RecipientTypeSlack,
+		Details: client.RecipientDetails{
+			SlackChannel: channel,
+		},
+	})
+	require.NoError(t, err, "failed to create test recipient")
+	t.Cleanup(func() {
+		//nolint:errcheck
+		c.Recipients.Delete(ctx, rcpt.ID)
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigBurnAlertWithSlackRecipient(dataset, sloID, channel),
+			},
+			{
+				PreConfig: func() {
+					// update the channel name outside of Terraform
+					channel += "-1"
+					rcpt.Details.SlackChannel = channel
+					_, err := c.Recipients.Update(ctx, rcpt)
+					require.NoError(t, err, "failed to update test recipient")
+				},
+				Config: testAccConfigBurnAlertWithSlackRecipient(dataset, sloID, channel),
+			},
+		},
+	})
+}
+
 // Checks that the exhaustion time burn alert exists, has the correct attributes, and has the correct state
 func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.BurnAlert, exhaustionMinutes int, pagerdutySeverity, sloID string) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
@@ -763,4 +803,19 @@ resource "honeycombio_burn_alert" "test" {
     }
   }
 }`, dataset, sloID)
+}
+
+func testAccConfigBurnAlertWithSlackRecipient(dataset, sloID, channel string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = 60
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    type   = "slack"
+    target = "%[3]s"
+  }
+}`, dataset, sloID, channel)
 }

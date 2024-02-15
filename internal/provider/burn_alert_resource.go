@@ -5,8 +5,6 @@ import (
 	"errors"
 	"strings"
 
-	"golang.org/x/exp/slices"
-
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
@@ -316,6 +314,7 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	state.ID = types.StringValue(burnAlert.ID)
 	state.AlertType = types.StringValue(string(burnAlert.AlertType))
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)
+	state.Recipients = reconcileNotificationRecipientState(burnAlert.Recipients, state.Recipients)
 
 	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {
@@ -329,31 +328,6 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	if burnAlert.BudgetRateWindowMinutes != nil {
 		state.BudgetRateWindowMinutes = types.Int64Value(int64(*burnAlert.BudgetRateWindowMinutes))
 	}
-
-	recipients := make([]models.NotificationRecipientModel, len(burnAlert.Recipients))
-	if state.Recipients != nil {
-		// match the recipients to those in the state sorting out type+target vs ID
-		for i, r := range burnAlert.Recipients {
-			idx := slices.IndexFunc(state.Recipients, func(s models.NotificationRecipientModel) bool {
-				if !s.ID.IsNull() {
-					return s.ID.ValueString() == r.ID
-				}
-				return s.Type.ValueString() == string(r.Type) && s.Target.ValueString() == r.Target
-			})
-			if idx < 0 {
-				// this should never happen?! But if it does, we'll just skip it and hope to get a reproducible case
-				resp.Diagnostics.AddError(
-					"Error Reading Honeycomb Burn Alert",
-					"Could not find Recipient "+r.ID+" in state",
-				)
-				continue
-			}
-			recipients[i] = state.Recipients[idx]
-		}
-	} else {
-		recipients = flattenNotificationRecipients(burnAlert.Recipients)
-	}
-	state.Recipients = recipients
 
 	// Set the burn alert's attributes in state
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
