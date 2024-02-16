@@ -61,6 +61,9 @@ func TestClient_InvalidConfig(t *testing.T) {
 func TestClient_IsClassic(t *testing.T) {
 	t.Parallel()
 
+	// load environment values from a .env, if available
+	_ = godotenv.Load("../.env")
+
 	ctx := context.Background()
 	apiKey, ok := os.LookupEnv(client.DefaultAPIKeyEnv)
 	if !ok {

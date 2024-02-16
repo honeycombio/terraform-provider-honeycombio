@@ -3,7 +3,6 @@ package honeycombio
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -51,14 +50,13 @@ func newDerivedColumn() *schema.Resource {
 
 func resourceDerivedColumnImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
 	// import ID is of the format <dataset>/<derived column alias>
-	// note that the dataset name can also contain '/'
-	idSegments := strings.Split(d.Id(), "/")
-	if len(idSegments) < 2 {
-		return nil, fmt.Errorf("invalid import ID, supplied ID must be written as <dataset>/<derived column alias>")
+	importID := d.Id()
+	idx := strings.Index(importID, "/")
+	if idx < 0 {
+		return nil, errors.New("invalid import ID, supplied ID must be written as <dataset>/<derived column alias>")
 	}
-
-	dataset := strings.Join(idSegments[0:len(idSegments)-1], "/")
-	alias := idSegments[len(idSegments)-1]
+	dataset := importID[:idx]
+	alias := importID[idx+1:]
 
 	d.Set("alias", alias)
 	d.Set("dataset", dataset)
