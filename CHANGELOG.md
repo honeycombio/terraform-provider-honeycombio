@@ -1,3 +1,20 @@
+# 0.21.1 (Feb 16, 2024)
+
+BUGFIXES:
+
+* r/burn_alert, r/trigger: better handle the case where a recipient is modified outside of Terraform (#433)
+
+HOUSEKEEPING:
+
+* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.20.0 to 0.21.0 (#426)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.13.0 to 0.14.0 (#427)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.31.0 to 2.32.0 (#427)
+* build(ci): Bump codecov/codecov-action from 3.1.5 to 3.1.6 (#428)
+* build(ci): Bump codecov/codecov-action from 3.1.6 to 4.0.0 (#429)
+* build(ci): Bump codecov/codecov-action from 4.0.0 to 4.0.1 (#430)
+* build(ci): Bump golangci/golangci-lint-action from 3.7.0 to 3.7.1 (#431)
+* build(ci): Bump golangci/golangci-lint-action from 3.7.1 to 4.0.0 (#432)
+
 # 0.21.0 (Jan 26, 2024)
 
 NOTES:
