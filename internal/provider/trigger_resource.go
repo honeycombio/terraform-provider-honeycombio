@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"golang.org/x/exp/slices"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -288,31 +286,7 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
-
-	recipients := make([]models.NotificationRecipientModel, len(trigger.Recipients))
-	if state.Recipients != nil {
-		// match the Trigger's recipients to those in the state sorting out type+target vs ID
-		for i, r := range trigger.Recipients {
-			idx := slices.IndexFunc(state.Recipients, func(s models.NotificationRecipientModel) bool {
-				if !s.ID.IsNull() {
-					return s.ID.ValueString() == r.ID
-				}
-				return s.Type.ValueString() == string(r.Type) && s.Target.ValueString() == r.Target
-			})
-			if idx < 0 {
-				// this should never happen?! But if it does, we'll just skip it and hope to get a reproducible case
-				resp.Diagnostics.AddError(
-					"Error Reading Honeycomb Trigger",
-					"Could not find Recipient "+r.ID+" in state",
-				)
-				continue
-			}
-			recipients[i] = state.Recipients[idx]
-		}
-	} else {
-		recipients = flattenNotificationRecipients(trigger.Recipients)
-	}
-	state.Recipients = recipients
+	state.Recipients = reconcileReadNotificationRecipientState(trigger.Recipients, state.Recipients)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }

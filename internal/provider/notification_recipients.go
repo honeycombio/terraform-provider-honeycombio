@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"golang.org/x/exp/slices"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
@@ -84,6 +85,34 @@ func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.Set
 	}
 }
 
+func reconcileReadNotificationRecipientState(remote []client.NotificationRecipient, state []models.NotificationRecipientModel) []models.NotificationRecipientModel {
+	if state == nil {
+		// if we don't have any state, we can't reconcile anything so just return the remote recipients
+		return flattenNotificationRecipients(remote)
+	}
+
+	recipients := make([]models.NotificationRecipientModel, len(remote))
+	// match the remote recipients to those in the state
+	// in an effort to preserve the id vs type+target distinction
+	for i, r := range remote {
+		idx := slices.IndexFunc(state, func(s models.NotificationRecipientModel) bool {
+			if !s.ID.IsNull() {
+				return s.ID.ValueString() == r.ID
+			}
+			return s.Type.ValueString() == string(r.Type) && s.Target.ValueString() == r.Target
+		})
+		if idx < 0 {
+			// if we didn't find a match, use the recipient as specified in remote
+			recipients[i] = notificationRecipientToModel(r)
+		} else {
+			// if we found a match, use the stored recipient
+			recipients[i] = state[idx]
+		}
+	}
+
+	return recipients
+}
+
 func expandNotificationRecipients(n []models.NotificationRecipientModel) []client.NotificationRecipient {
 	recipients := make([]client.NotificationRecipient, len(n))
 
@@ -106,19 +135,24 @@ func expandNotificationRecipients(n []models.NotificationRecipientModel) []clien
 
 func flattenNotificationRecipients(n []client.NotificationRecipient) []models.NotificationRecipientModel {
 	recipients := make([]models.NotificationRecipientModel, len(n))
-
 	for i, r := range n {
-		rcpt := models.NotificationRecipientModel{
-			ID:     types.StringValue(r.ID),
-			Type:   types.StringValue(string(r.Type)),
-			Target: types.StringValue(r.Target),
-		}
-		if r.Details != nil {
-			rcpt.Details = make([]models.NotificationRecipientDetailsModel, 1)
-			rcpt.Details[0].PDSeverity = types.StringValue(string(r.Details.PDSeverity))
-		}
-		recipients[i] = rcpt
+		recipients[i] = notificationRecipientToModel(r)
 	}
 
 	return recipients
+}
+
+func notificationRecipientToModel(r client.NotificationRecipient) models.NotificationRecipientModel {
+	rcpt := models.NotificationRecipientModel{
+		ID:     types.StringValue(r.ID),
+		Type:   types.StringValue(string(r.Type)),
+		Target: types.StringValue(r.Target),
+	}
+	if r.Details != nil {
+		rcpt.Details = []models.NotificationRecipientDetailsModel{
+			{PDSeverity: types.StringValue(string(r.Details.PDSeverity))},
+		}
+	}
+
+	return rcpt
 }

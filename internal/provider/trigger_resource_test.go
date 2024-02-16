@@ -421,6 +421,46 @@ resource "honeycombio_trigger" "test" {
 	})
 }
 
+func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing.T) {
+	c := testAccClient(t)
+	ctx := context.Background()
+	dataset := testAccDataset()
+
+	// setup a slack recipient to be used in the trigger, and modified outside of terraform
+	channel := "#" + acctest.RandString(8)
+	rcpt, err := c.Recipients.Create(ctx, &client.Recipient{
+		Type: client.RecipientTypeSlack,
+		Details: client.RecipientDetails{
+			SlackChannel: channel,
+		},
+	})
+	require.NoError(t, err, "failed to create test recipient")
+	t.Cleanup(func() {
+		//nolint:errcheck
+		c.Recipients.Delete(ctx, rcpt.ID)
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerWithSlackRecipient(dataset, channel),
+			},
+			{
+				PreConfig: func() {
+					// update the channel name outside of Terraform
+					channel += "-1"
+					rcpt.Details.SlackChannel = channel
+					_, err := c.Recipients.Update(ctx, rcpt)
+					require.NoError(t, err, "failed to update test recipient")
+				},
+				Config: testAccConfigTriggerWithSlackRecipient(dataset, channel),
+			},
+		},
+	})
+}
+
 func testAccConfigBasicTriggerTest(dataset, pdseverity string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
@@ -502,6 +542,35 @@ resource "honeycombio_trigger" "test" {
     id = "%[2]s"
   }
 }`, dataset, recipientID, exceededLimit)
+}
+
+func testAccConfigTriggerWithSlackRecipient(dataset, channel string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_trigger" "test" {
+  name = "my test trigger"
+
+  dataset  = "%[1]s"
+  query_id = honeycombio_query.test.id
+
+  threshold {
+    op    = "<"
+    value = 100
+  }
+
+  frequency = 1800
+
+  recipient {
+    type   = "slack"
+    target = "%[2]s"
+  }
+}`, dataset, channel)
 }
 
 func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFunc {
