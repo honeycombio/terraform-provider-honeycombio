@@ -85,14 +85,15 @@ func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.Set
 	}
 }
 
-func reconcileNotificationRecipientState(remote []client.NotificationRecipient, state []models.NotificationRecipientModel) []models.NotificationRecipientModel {
+func reconcileReadNotificationRecipientState(remote []client.NotificationRecipient, state []models.NotificationRecipientModel) []models.NotificationRecipientModel {
 	if state == nil {
 		// if we don't have any state, we can't reconcile anything so just return the remote recipients
 		return flattenNotificationRecipients(remote)
 	}
 
 	recipients := make([]models.NotificationRecipientModel, len(remote))
-	// match the remote recipients to those in the state sorting out type+target vs ID
+	// match the remote recipients to those in the state
+	// in an effort to preserve the id vs type+target distinction
 	for i, r := range remote {
 		idx := slices.IndexFunc(state, func(s models.NotificationRecipientModel) bool {
 			if !s.ID.IsNull() {

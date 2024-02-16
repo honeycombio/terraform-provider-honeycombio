@@ -314,7 +314,7 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	state.ID = types.StringValue(burnAlert.ID)
 	state.AlertType = types.StringValue(string(burnAlert.AlertType))
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)
-	state.Recipients = reconcileNotificationRecipientState(burnAlert.Recipients, state.Recipients)
+	state.Recipients = reconcileReadNotificationRecipientState(burnAlert.Recipients, state.Recipients)
 
 	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {

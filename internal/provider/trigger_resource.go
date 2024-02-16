@@ -286,7 +286,7 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
-	state.Recipients = reconcileNotificationRecipientState(trigger.Recipients, state.Recipients)
+	state.Recipients = reconcileReadNotificationRecipientState(trigger.Recipients, state.Recipients)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
