@@ -50,13 +50,10 @@ func newDerivedColumn() *schema.Resource {
 
 func resourceDerivedColumnImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
 	// import ID is of the format <dataset>/<derived column alias>
-	importID := d.Id()
-	idx := strings.Index(importID, "/")
-	if idx < 0 {
+	dataset, alias, found := strings.Cut(d.Id(), "/")
+	if !found {
 		return nil, errors.New("invalid import ID, supplied ID must be written as <dataset>/<derived column alias>")
 	}
-	dataset := importID[:idx]
-	alias := importID[idx+1:]
 
 	d.Set("alias", alias)
 	d.Set("dataset", dataset)

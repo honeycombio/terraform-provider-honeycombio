@@ -87,13 +87,10 @@ func newColumn() *schema.Resource {
 
 func resourceColumnImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
 	// import ID is of the format <dataset>/<column name>
-	importID := d.Id()
-	idx := strings.Index(importID, "/")
-	if idx < 0 {
+	dataset, name, found := strings.Cut(d.Id(), "/")
+	if !found {
 		return nil, errors.New("invalid import ID, supplied ID must be written as <dataset>/<column name>")
 	}
-	dataset := importID[:idx]
-	name := importID[idx+1:]
 
 	d.Set("name", name)
 	d.Set("dataset", dataset)
