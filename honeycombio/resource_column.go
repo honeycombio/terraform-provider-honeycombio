@@ -3,7 +3,6 @@ package honeycombio
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -88,14 +87,10 @@ func newColumn() *schema.Resource {
 
 func resourceColumnImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
 	// import ID is of the format <dataset>/<column name>
-	// note that the dataset name can also contain '/'
-	idSegments := strings.Split(d.Id(), "/")
-	if len(idSegments) < 2 {
-		return nil, fmt.Errorf("invalid import ID, supplied ID must be written as <dataset>/<column name>")
+	dataset, name, found := strings.Cut(d.Id(), "/")
+	if !found {
+		return nil, errors.New("invalid import ID, supplied ID must be written as <dataset>/<column name>")
 	}
-
-	dataset := strings.Join(idSegments[0:len(idSegments)-1], "/")
-	name := idSegments[len(idSegments)-1]
 
 	d.Set("name", name)
 	d.Set("dataset", dataset)
