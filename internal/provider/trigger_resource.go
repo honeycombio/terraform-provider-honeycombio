@@ -373,18 +373,14 @@ func (r *triggerResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 func (r *triggerResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// import ID is of the format <dataset>/<trigger ID>
-	// note that the dataset name can also contain '/'
-	idSegments := strings.Split(req.ID, "/")
-	if len(idSegments) < 2 {
+	dataset, id, found := strings.Cut(req.ID, "/")
+	if !found {
 		resp.Diagnostics.AddError(
 			"Invalid Import ID",
 			"The supplied ID must be wrtten as <dataset>/<trigger ID>.",
 		)
 		return
 	}
-
-	id := idSegments[len(idSegments)-1]
-	dataset := strings.Join(idSegments[0:len(idSegments)-1], "/")
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.TriggerResourceModel{
 		ID:      types.StringValue(id),

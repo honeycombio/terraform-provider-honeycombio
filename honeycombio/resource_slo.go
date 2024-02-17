@@ -3,7 +3,6 @@ package honeycombio
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -69,14 +68,10 @@ the column evaluation should consistently return nil, true, or false, as these a
 
 func resourceSLOImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
 	// import ID is of the format <dataset>/<SLO ID>
-	// note that the dataset name can also contain '/'
-	idSegments := strings.Split(d.Id(), "/")
-	if len(idSegments) < 2 {
-		return nil, fmt.Errorf("invalid import ID, supplied ID must be written as <dataset>/<SLO ID>")
+	dataset, id, found := strings.Cut(d.Id(), "/")
+	if !found {
+		return nil, errors.New("invalid import ID, supplied ID must be written as <dataset>/<SLO ID>")
 	}
-
-	dataset := strings.Join(idSegments[0:len(idSegments)-1], "/")
-	id := idSegments[len(idSegments)-1]
 
 	d.Set("dataset", dataset)
 	d.SetId(id)
