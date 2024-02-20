@@ -1,3 +1,13 @@
+# 0.21.2 (Feb 20, 2024)
+
+BUGFIXES:
+
+* handle column and derived column imports with slashes in the name (#437)
+
+HOUSEKEEPING:
+
+* build(ci): fix codecov after v4 upgrade (#436)
+
 # 0.21.1 (Feb 16, 2024)
 
 BUGFIXES:
