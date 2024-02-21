@@ -84,7 +84,7 @@ data "honeycombio_query_specification" "test" {
     filter {
         column = "app.database.shard"
         op     = "not-in"
-        value  = "347338"
+        value  = "347338,837359"
     }
 
     filter_combination = "OR"
@@ -153,7 +153,8 @@ const expectedJSON string = `{
       "column": "app.database.shard",
       "op": "not-in",
       "value": [
-        "347338"
+        347338,
+        837359
       ]
     }
   ],

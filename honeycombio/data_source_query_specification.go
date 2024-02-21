@@ -394,7 +394,13 @@ func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, e
 		if v, ok := filter.Value.(string); !ok {
 			return filter, fmt.Errorf("value must be a string if filter op is 'in' or 'not-in'")
 		} else {
-			filter.Value = strings.Split(v, ",")
+			// build an array from the comma-separated string
+			values := strings.Split(v, ",")
+			result := make([]interface{}, len(values))
+			for i, value := range values {
+				result[i] = coerceValueToType(value)
+			}
+			filter.Value = result
 		}
 	}
 
