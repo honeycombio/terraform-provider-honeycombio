@@ -355,7 +355,8 @@ func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, e
 	valueSet := false
 	if v, ok := d.GetOk(fmt.Sprintf("filter.%d.value", index)); ok {
 		if filter.Op == honeycombio.FilterOpIn || filter.Op == honeycombio.FilterOpNotIn {
-			// if the filter operation is 'in' or 'not-in', just leave the value as a string
+			// if the filter operation is 'in' or 'not-in', leave the value as a string
+			// to be parsed into an array below
 			filter.Value = v
 		} else {
 			filter.Value = coerceValueToType(v.(string))
