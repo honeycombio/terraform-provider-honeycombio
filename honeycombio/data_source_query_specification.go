@@ -353,49 +353,56 @@ func extractFilter(d *schema.ResourceData, index int) (honeycombio.FilterSpec, e
 	filter.Op = honeycombio.FilterOp(d.Get(fmt.Sprintf("filter.%d.op", index)).(string))
 
 	valueSet := false
-	v, vOk := d.GetOk(fmt.Sprintf("filter.%d.value", index))
-	if vOk {
-		filter.Value = coerceValueToType(v.(string))
+	if v, ok := d.GetOk(fmt.Sprintf("filter.%d.value", index)); ok {
+		if filter.Op == honeycombio.FilterOpIn || filter.Op == honeycombio.FilterOpNotIn {
+			// if the filter operation is 'in' or 'not-in', leave the value as a string
+			// to be parsed into an array below
+			filter.Value = v
+		} else {
+			filter.Value = coerceValueToType(v.(string))
+		}
 		valueSet = true
 	}
-	vs, vsOk := d.GetOk(fmt.Sprintf("filter.%d.value_string", index))
-	if vsOk {
+	if v, ok := d.GetOk(fmt.Sprintf("filter.%d.value_string", index)); ok {
 		if valueSet {
 			return filter, fmt.Errorf(multipleValuesError)
 		}
-		filter.Value = vs
+		filter.Value = v
 		valueSet = true
 	}
-	vi, viOk := d.GetOk(fmt.Sprintf("filter.%d.value_integer", index))
-	if viOk {
+	if v, ok := d.GetOk(fmt.Sprintf("filter.%d.value_integer", index)); ok {
 		if valueSet {
 			return filter, fmt.Errorf(multipleValuesError)
 		}
-		filter.Value = vi
+		filter.Value = v
 		valueSet = true
 	}
-	vf, vfOk := d.GetOk(fmt.Sprintf("filter.%d.value_float", index))
-	if vfOk {
+	if v, ok := d.GetOk(fmt.Sprintf("filter.%d.value_float", index)); ok {
 		if valueSet {
 			return filter, fmt.Errorf(multipleValuesError)
 		}
-		filter.Value = vf
+		filter.Value = v
 		valueSet = true
 	}
-	vb, vbOk := d.GetOk(fmt.Sprintf("filter.%d.value_boolean", index))
-	if vbOk {
+	if v, ok := d.GetOk(fmt.Sprintf("filter.%d.value_boolean", index)); ok {
 		if valueSet {
 			return filter, fmt.Errorf(multipleValuesError)
 		}
-		filter.Value = vb
+		filter.Value = v
 	}
 
 	if filter.Op == honeycombio.FilterOpIn || filter.Op == honeycombio.FilterOpNotIn {
-		vs, ok := filter.Value.(string)
-		if !ok {
+		if v, ok := filter.Value.(string); !ok {
 			return filter, fmt.Errorf("value must be a string if filter op is 'in' or 'not-in'")
+		} else {
+			// build an array from the comma-separated string
+			values := strings.Split(v, ",")
+			result := make([]interface{}, len(values))
+			for i, value := range values {
+				result[i] = coerceValueToType(value)
+			}
+			filter.Value = result
 		}
-		filter.Value = strings.Split(vs, ",")
 	}
 
 	if filter.Op == honeycombio.FilterOpExists || filter.Op == honeycombio.FilterOpDoesNotExist {
