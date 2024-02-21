@@ -81,6 +81,11 @@ data "honeycombio_query_specification" "test" {
         op     = "="
         value  = "ThatSpecialTenant"
     }
+    filter {
+        column = "app.database.shard"
+        op     = "not-in"
+        value  = "347338"
+    }
 
     filter_combination = "OR"
 
@@ -143,6 +148,13 @@ const expectedJSON string = `{
       "column": "app.tenant",
       "op": "=",
       "value": "ThatSpecialTenant"
+    },
+    {
+      "column": "app.database.shard",
+      "op": "not-in",
+      "value": [
+        "347338"
+      ]
     }
   ],
   "filter_combination": "OR",
