@@ -10,5 +10,5 @@ type BurnAlertResourceModel struct {
 	Dataset                   types.String  `tfsdk:"dataset"`
 	SLOID                     types.String  `tfsdk:"slo_id"`
 	ExhaustionMinutes         types.Int64   `tfsdk:"exhaustion_minutes"`
-	Recipients                types.Set     `tfsdk:"recipient"`
+	Recipients                types.Set     `tfsdk:"recipient"` // NotificationRecipientModel
 }

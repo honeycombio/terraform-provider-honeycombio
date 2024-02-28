@@ -12,7 +12,7 @@ type TriggerResourceModel struct {
 	AlertType          types.String                     `tfsdk:"alert_type"`
 	Frequency          types.Int64                      `tfsdk:"frequency"`
 	Threshold          []TriggerThresholdModel          `tfsdk:"threshold"`
-	Recipients         types.Set                        `tfsdk:"recipient"`
+	Recipients         types.Set                        `tfsdk:"recipient"` // NotificationRecipientModel
 	EvaluationSchedule []TriggerEvaluationScheduleModel `tfsdk:"evaluation_schedule"`
 }
 
