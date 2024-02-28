@@ -9,7 +9,7 @@ type NotificationRecipientModel struct {
 	ID      types.String `tfsdk:"id"`
 	Type    types.String `tfsdk:"type"`
 	Target  types.String `tfsdk:"target"`
-	Details types.List   `tfsdk:"notification_details"`
+	Details types.List   `tfsdk:"notification_details"` // NotificationRecipientDetailsModel
 }
 
 type NotificationRecipientDetailsModel struct {
