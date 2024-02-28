@@ -167,7 +167,7 @@ func expandNotificationRecipients(ctx context.Context, set types.Set, diags *dia
 func flattenNotificationRecipients(ctx context.Context, n []client.NotificationRecipient, diags *diag.Diagnostics) types.Set {
 	elemType := types.ObjectType{AttrTypes: models.NotificationRecipientAttrTypes}
 	if len(n) == 0 {
-		return types.SetValueMust(elemType, []attr.Value{})
+		return types.SetNull(elemType)
 	}
 
 	var values []attr.Value
@@ -187,16 +187,19 @@ func notificationRecipientToObjectValue(ctx context.Context, r client.Notificati
 		"target": types.StringValue(r.Target),
 	}
 
+	var result basetypes.ListValue
 	if r.Details != nil {
 		detailsObj := map[string]attr.Value{"pagerduty_severity": types.StringValue(string(r.Details.PDSeverity))}
 		var d diag.Diagnostics
 		detailsObjVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrTypes, detailsObj)
 		diags.Append(d...)
-		result, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{detailsObjVal})
+		result, d = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{detailsObjVal})
 		diags.Append(d...)
-		recipObj["notification_details"] = result
+	} else {
+		result = types.ListNull(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes})
 	}
 
+	recipObj["notification_details"] = result
 	recipObjVal, d := types.ObjectValue(models.NotificationRecipientAttrTypes, recipObj)
 	diags.Append(d...)
 
@@ -210,6 +213,7 @@ func notificationRecipientModelToObjectValue(ctx context.Context, r models.Notif
 		"target": r.Target,
 	}
 
+	var result basetypes.ListValue
 	if !r.Details.IsNull() && !r.Details.IsUnknown() {
 		var details []models.NotificationRecipientDetailsModel
 		diags.Append(r.Details.ElementsAs(ctx, &details, false)...)
@@ -218,11 +222,13 @@ func notificationRecipientModelToObjectValue(ctx context.Context, r models.Notif
 		}
 		detailsObjVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrTypes, map[string]attr.Value{"pagerduty_severity": details[0].PDSeverity})
 		diags.Append(d...)
-		result, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{detailsObjVal})
+		result, d = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{detailsObjVal})
 		diags.Append(d...)
-		recipObj["notification_details"] = result
+	} else {
+		result = types.ListNull(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes})
 	}
 
+	recipObj["notification_details"] = result
 	recipObjVal, d := types.ObjectValue(models.NotificationRecipientAttrTypes, recipObj)
 	diags.Append(d...)
 
