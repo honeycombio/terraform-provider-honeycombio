@@ -242,14 +242,18 @@ func notificationRecipientToModel(ctx context.Context, r client.NotificationReci
 		Type:   types.StringValue(string(r.Type)),
 		Target: types.StringValue(r.Target),
 	}
+	var result basetypes.ListValue
 	if r.Details != nil {
 		detailsObj := map[string]attr.Value{"pagerduty_severity": types.StringValue(string(r.Details.PDSeverity))}
 		objVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrTypes, detailsObj)
 		diags.Append(d...)
-		result, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{objVal})
+		result, d = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{objVal})
 		diags.Append(d...)
-		rcpt.Details = result
+
+	} else {
+		result = types.ListNull(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes})
 	}
 
+	rcpt.Details = result
 	return rcpt
 }
