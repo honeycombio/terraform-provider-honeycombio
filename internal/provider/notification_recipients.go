@@ -1,9 +1,13 @@
 package provider
 
 import (
+	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
@@ -11,12 +15,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"golang.org/x/exp/slices"
-
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/modifiers"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
+	"golang.org/x/exp/slices"
 )
 
 func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.SetNestedBlock {
@@ -85,12 +89,7 @@ func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.Set
 	}
 }
 
-func reconcileReadNotificationRecipientState(remote []client.NotificationRecipient, state []models.NotificationRecipientModel) []models.NotificationRecipientModel {
-	if state == nil {
-		// if we don't have any state, we can't reconcile anything so just return the remote recipients
-		return flattenNotificationRecipients(remote)
-	}
-
+func mapNotificationRecipientToState(ctx context.Context, remote []client.NotificationRecipient, state []models.NotificationRecipientModel, diags *diag.Diagnostics) []models.NotificationRecipientModel {
 	recipients := make([]models.NotificationRecipientModel, len(remote))
 	// match the remote recipients to those in the state
 	// in an effort to preserve the id vs type+target distinction
@@ -103,55 +102,151 @@ func reconcileReadNotificationRecipientState(remote []client.NotificationRecipie
 		})
 		if idx < 0 {
 			// if we didn't find a match, use the recipient as specified in remote
-			recipients[i] = notificationRecipientToModel(r)
+			recipients[i] = notificationRecipientToModel(ctx, r, diags)
 		} else {
 			// if we found a match, use the stored recipient
 			recipients[i] = state[idx]
 		}
 	}
-
 	return recipients
 }
 
-func expandNotificationRecipients(n []models.NotificationRecipientModel) []client.NotificationRecipient {
-	recipients := make([]client.NotificationRecipient, len(n))
+func reconcileReadNotificationRecipientState(ctx context.Context, remote []client.NotificationRecipient, state types.Set, diags *diag.Diagnostics) types.Set {
+	if state.IsNull() || state.IsUnknown() {
+		// if we don't have any state, we can't reconcile anything so just return the remote recipients
+		return flattenNotificationRecipients(ctx, remote, diags)
+	}
 
-	for i, r := range n {
+	var recipients []models.NotificationRecipientModel
+	diags.Append(state.ElementsAs(ctx, &recipients, false)...)
+	if diags.HasError() {
+		// do something
+	}
+	mappedRecips := mapNotificationRecipientToState(ctx, remote, recipients, diags)
+
+	var values []attr.Value
+	for _, r := range mappedRecips {
+		values = append(values, NotificationRecipientModelToObjectValue(ctx, r, diags))
+	}
+	result, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientAttrTypes}, values)
+	diags.Append(d...)
+
+	return result
+}
+
+func expandNotificationRecipients(ctx context.Context, set types.Set, diags *diag.Diagnostics) []client.NotificationRecipient {
+	var recipients []models.NotificationRecipientModel
+	diags.Append(set.ElementsAs(ctx, &recipients, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	clientRecips := make([]client.NotificationRecipient, len(recipients))
+	for i, r := range recipients {
 		rcpt := client.NotificationRecipient{
 			ID:     r.ID.ValueString(),
 			Type:   client.RecipientType(r.Type.ValueString()),
 			Target: r.Target.ValueString(),
 		}
-		if r.Details != nil {
+		if !r.Details.IsNull() && !r.Details.IsUnknown() {
+			var details []models.NotificationRecipientDetailsModel
+			diags.Append(r.Details.ElementsAs(ctx, &details, false)...)
+			if diags.HasError() {
+				// do something
+			}
 			rcpt.Details = &client.NotificationRecipientDetails{
-				PDSeverity: client.PagerDutySeverity(r.Details[0].PDSeverity.ValueString()),
+				PDSeverity: client.PagerDutySeverity(details[0].PDSeverity.ValueString()),
 			}
 		}
-		recipients[i] = rcpt
+		clientRecips[i] = rcpt
 	}
 
-	return recipients
+	return clientRecips
 }
 
-func flattenNotificationRecipients(n []client.NotificationRecipient) []models.NotificationRecipientModel {
-	recipients := make([]models.NotificationRecipientModel, len(n))
-	for i, r := range n {
-		recipients[i] = notificationRecipientToModel(r)
+func flattenNotificationRecipients(ctx context.Context, n []client.NotificationRecipient, diags *diag.Diagnostics) types.Set {
+	elemType := types.ObjectType{AttrTypes: models.NotificationRecipientAttrTypes}
+	if len(n) == 0 {
+		return types.SetValueMust(elemType, []attr.Value{})
 	}
 
-	return recipients
+	var values []attr.Value
+	for _, r := range n {
+		values = append(values, notificationRecipientToObjectValue(ctx, r, diags))
+	}
+	result, d := types.SetValueFrom(ctx, elemType, values)
+	diags.Append(d...)
+
+	return result
 }
 
-func notificationRecipientToModel(r client.NotificationRecipient) models.NotificationRecipientModel {
+func notificationRecipientToObjectValue(ctx context.Context, r client.NotificationRecipient, diags *diag.Diagnostics) basetypes.ObjectValue {
+	recipObj := map[string]attr.Value{
+		"id":     types.StringValue(r.ID),
+		"type":   types.StringValue(string(r.Type)),
+		"target": types.StringValue(r.Target),
+	}
+
+	var detailsObjVal basetypes.ObjectValue
+	if r.Details != nil {
+		detailsObj := map[string]attr.Value{"pagerduty_severity": types.StringValue(string(r.Details.PDSeverity))}
+		var d diag.Diagnostics
+		detailsObjVal, d = types.ObjectValue(models.NotificationRecipientDetailsAttrTypes, detailsObj)
+		diags.Append(d...)
+	} else {
+		detailsObjVal = types.ObjectNull(models.NotificationRecipientDetailsAttrTypes)
+	}
+	result, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{detailsObjVal})
+	diags.Append(d...)
+	recipObj["notification_details"] = result
+	recipObjVal, d := types.ObjectValue(models.NotificationRecipientAttrTypes, recipObj)
+	diags.Append(d...)
+
+	return recipObjVal
+}
+
+func NotificationRecipientModelToObjectValue(ctx context.Context, r models.NotificationRecipientModel, diags *diag.Diagnostics) basetypes.ObjectValue {
+	recipObj := map[string]attr.Value{
+		"id":     r.ID,
+		"type":   r.Type,
+		"target": r.Target,
+	}
+
+	var detailsObjVal basetypes.ObjectValue
+	if !r.Details.IsNull() && !r.Details.IsUnknown() {
+		var details []models.NotificationRecipientDetailsModel
+		diags.Append(r.Details.ElementsAs(ctx, &details, false)...)
+		if diags.HasError() {
+			return basetypes.ObjectValue{}
+		}
+		var d diag.Diagnostics
+		detailsObjVal, d = types.ObjectValue(models.NotificationRecipientDetailsAttrTypes, map[string]attr.Value{"pagerduty_severity": details[0].PDSeverity})
+		diags.Append(d...)
+	} else {
+		detailsObjVal = types.ObjectNull(models.NotificationRecipientDetailsAttrTypes)
+	}
+	result, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{detailsObjVal})
+	diags.Append(d...)
+	recipObj["notification_details"] = result
+	recipObjVal, d := types.ObjectValue(models.NotificationRecipientAttrTypes, recipObj)
+	diags.Append(d...)
+
+	return recipObjVal
+}
+
+func notificationRecipientToModel(ctx context.Context, r client.NotificationRecipient, diags *diag.Diagnostics) models.NotificationRecipientModel {
 	rcpt := models.NotificationRecipientModel{
 		ID:     types.StringValue(r.ID),
 		Type:   types.StringValue(string(r.Type)),
 		Target: types.StringValue(r.Target),
 	}
 	if r.Details != nil {
-		rcpt.Details = []models.NotificationRecipientDetailsModel{
-			{PDSeverity: types.StringValue(string(r.Details.PDSeverity))},
-		}
+		detailsObj := map[string]attr.Value{"pagerduty_severity": types.StringValue(string(r.Details.PDSeverity))}
+		objVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrTypes, detailsObj)
+		diags.Append(d...)
+		result, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{objVal})
+		diags.Append(d...)
+		rcpt.Details = result
 	}
 
 	return rcpt
