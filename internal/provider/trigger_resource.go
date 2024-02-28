@@ -383,8 +383,9 @@ func (r *triggerResource) ImportState(ctx context.Context, req resource.ImportSt
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.TriggerResourceModel{
-		ID:      types.StringValue(id),
-		Dataset: types.StringValue(dataset),
+		ID:         types.StringValue(id),
+		Dataset:    types.StringValue(dataset),
+		Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrTypes}),
 	})...)
 }
 
