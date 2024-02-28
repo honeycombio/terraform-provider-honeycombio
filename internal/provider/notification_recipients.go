@@ -120,13 +120,13 @@ func reconcileReadNotificationRecipientState(ctx context.Context, remote []clien
 	var recipients []models.NotificationRecipientModel
 	diags.Append(state.ElementsAs(ctx, &recipients, false)...)
 	if diags.HasError() {
-		// do something
+		return types.SetNull(types.ObjectType{AttrTypes: models.NotificationRecipientAttrTypes})
 	}
 	mappedRecips := mapNotificationRecipientToState(ctx, remote, recipients, diags)
 
 	var values []attr.Value
 	for _, r := range mappedRecips {
-		values = append(values, NotificationRecipientModelToObjectValue(ctx, r, diags))
+		values = append(values, notificationRecipientModelToObjectValue(ctx, r, diags))
 	}
 	result, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientAttrTypes}, values)
 	diags.Append(d...)
@@ -152,7 +152,7 @@ func expandNotificationRecipients(ctx context.Context, set types.Set, diags *dia
 			var details []models.NotificationRecipientDetailsModel
 			diags.Append(r.Details.ElementsAs(ctx, &details, false)...)
 			if diags.HasError() {
-				// do something
+				return nil
 			}
 			rcpt.Details = &client.NotificationRecipientDetails{
 				PDSeverity: client.PagerDutySeverity(details[0].PDSeverity.ValueString()),
@@ -187,47 +187,42 @@ func notificationRecipientToObjectValue(ctx context.Context, r client.Notificati
 		"target": types.StringValue(r.Target),
 	}
 
-	var detailsObjVal basetypes.ObjectValue
 	if r.Details != nil {
 		detailsObj := map[string]attr.Value{"pagerduty_severity": types.StringValue(string(r.Details.PDSeverity))}
 		var d diag.Diagnostics
-		detailsObjVal, d = types.ObjectValue(models.NotificationRecipientDetailsAttrTypes, detailsObj)
+		detailsObjVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrTypes, detailsObj)
 		diags.Append(d...)
-	} else {
-		detailsObjVal = types.ObjectNull(models.NotificationRecipientDetailsAttrTypes)
+		result, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{detailsObjVal})
+		diags.Append(d...)
+		recipObj["notification_details"] = result
 	}
-	result, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{detailsObjVal})
-	diags.Append(d...)
-	recipObj["notification_details"] = result
+
 	recipObjVal, d := types.ObjectValue(models.NotificationRecipientAttrTypes, recipObj)
 	diags.Append(d...)
 
 	return recipObjVal
 }
 
-func NotificationRecipientModelToObjectValue(ctx context.Context, r models.NotificationRecipientModel, diags *diag.Diagnostics) basetypes.ObjectValue {
+func notificationRecipientModelToObjectValue(ctx context.Context, r models.NotificationRecipientModel, diags *diag.Diagnostics) basetypes.ObjectValue {
 	recipObj := map[string]attr.Value{
 		"id":     r.ID,
 		"type":   r.Type,
 		"target": r.Target,
 	}
 
-	var detailsObjVal basetypes.ObjectValue
 	if !r.Details.IsNull() && !r.Details.IsUnknown() {
 		var details []models.NotificationRecipientDetailsModel
 		diags.Append(r.Details.ElementsAs(ctx, &details, false)...)
 		if diags.HasError() {
 			return basetypes.ObjectValue{}
 		}
-		var d diag.Diagnostics
-		detailsObjVal, d = types.ObjectValue(models.NotificationRecipientDetailsAttrTypes, map[string]attr.Value{"pagerduty_severity": details[0].PDSeverity})
+		detailsObjVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrTypes, map[string]attr.Value{"pagerduty_severity": details[0].PDSeverity})
 		diags.Append(d...)
-	} else {
-		detailsObjVal = types.ObjectNull(models.NotificationRecipientDetailsAttrTypes)
+		result, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{detailsObjVal})
+		diags.Append(d...)
+		recipObj["notification_details"] = result
 	}
-	result, d := types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, []attr.Value{detailsObjVal})
-	diags.Append(d...)
-	recipObj["notification_details"] = result
+
 	recipObjVal, d := types.ObjectValue(models.NotificationRecipientAttrTypes, recipObj)
 	diags.Append(d...)
 

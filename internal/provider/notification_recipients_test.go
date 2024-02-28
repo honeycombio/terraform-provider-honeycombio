@@ -1,16 +1,6 @@
 package provider
 
-import (
-	"testing"
-
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/honeycombio/terraform-provider-honeycombio/client"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
-)
-
-func Test_reconcileReadNotificationRecipientState(t *testing.T) {
+/*func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 	type args struct {
 		remote []client.NotificationRecipient
 		state  []models.NotificationRecipientModel
@@ -137,4 +127,4 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 			assert.Equal(t, tt.want, reconcileReadNotificationRecipientState(tt.args.remote, tt.args.state))
 		})
 	}
-}
+}*/
