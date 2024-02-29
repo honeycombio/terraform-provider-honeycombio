@@ -2,10 +2,9 @@ package client_test
 
 import (
 	"context"
+	"slices"
 	"testing"
 	"time"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -3,6 +3,7 @@ package honeycombio
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -12,7 +13,6 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 
 	"github.com/stretchr/testify/assert"
-	"golang.org/x/exp/slices"
 )
 
 func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
