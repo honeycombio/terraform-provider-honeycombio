@@ -1,3 +1,20 @@
+# 0.22.0 (Feb 29, 2024)
+
+BUGFIXES:
+
+* d/query_specification: always treat 'in','not-in' filter values as an array (#439)
+* r/burn_alert, r/trigger: fix dynamic recipient "Value Conversion Error" (#444)
+
+HOUSEKEEPING:
+
+* build(deps): Bump codecov/codecov-action from 4.0.1 to 4.0.2 (#442)
+* build(deps): Bump codecov/codecov-action from 4.0.2 to 4.1.0 (#443)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.5.0 to 1.6.0 (#445)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.21.0 to 0.22.0 (#445)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.14.0 to 0.15.0 (#445)
+* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.32.0 to 2.33.0 (#445)
+* build: bump Go to 1.21 (#447)
+
 # 0.21.2 (Feb 20, 2024)
 
 BUGFIXES:
