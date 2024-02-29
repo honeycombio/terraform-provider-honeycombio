@@ -461,6 +461,24 @@ func TestAcc_BurnAlertResource_HandlesRecipientChangedOutsideOfTerraform(t *test
 	})
 }
 
+// ensures no type error when using a dynamic recipient block
+func TestAcc_BurnAlertResource_HandlesDynamicRecipientBlock(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigBurnAlertWithDynamicRecipient(dataset, sloID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "2"),
+				),
+			},
+		},
+	})
+}
+
 // Checks that the exhaustion time burn alert exists, has the correct attributes, and has the correct state
 func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.BurnAlert, exhaustionMinutes int, pagerdutySeverity, sloID string) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
@@ -818,4 +836,42 @@ resource "honeycombio_burn_alert" "test" {
     target = "%[3]s"
   }
 }`, dataset, sloID, channel)
+}
+
+func testAccConfigBurnAlertWithDynamicRecipient(dataset, sloID string) string {
+	return fmt.Sprintf(`
+
+variable "recipients" {
+	type = list(object({
+		type   = string
+		target = string
+		}))
+
+	default = [
+		{
+			"type": "email",
+			"target": "test1@example.com"
+		},
+		{
+			"type": "email",
+			"target": "test2@example.com"
+		}
+	]
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = 60
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  dynamic "recipient" {
+	for_each = var.recipients
+
+	content {
+		type   = recipient.value.type
+    	target = recipient.value.target
+	}
+  }
+}`, dataset, sloID)
 }

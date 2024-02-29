@@ -218,7 +218,7 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		AlertType:          client.TriggerAlertType(plan.AlertType.ValueString()),
 		Threshold:          expandTriggerThreshold(plan.Threshold),
 		Frequency:          int(plan.Frequency.ValueInt64()),
-		Recipients:         expandNotificationRecipients(plan.Recipients),
+		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(plan.EvaluationSchedule),
 	}
 	if plan.EvaluationSchedule != nil {
@@ -286,7 +286,7 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
-	state.Recipients = reconcileReadNotificationRecipientState(trigger.Recipients, state.Recipients)
+	state.Recipients = reconcileReadNotificationRecipientState(ctx, trigger.Recipients, state.Recipients, &resp.Diagnostics)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -308,7 +308,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		AlertType:          client.TriggerAlertType(plan.AlertType.ValueString()),
 		Frequency:          int(plan.Frequency.ValueInt64()),
 		Threshold:          expandTriggerThreshold(plan.Threshold),
-		Recipients:         expandNotificationRecipients(plan.Recipients),
+		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(plan.EvaluationSchedule),
 	}
 	if updatedTrigger.EvaluationSchedule != nil {
@@ -383,8 +383,9 @@ func (r *triggerResource) ImportState(ctx context.Context, req resource.ImportSt
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.TriggerResourceModel{
-		ID:      types.StringValue(id),
-		Dataset: types.StringValue(dataset),
+		ID:         types.StringValue(id),
+		Dataset:    types.StringValue(dataset),
+		Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
 	})...)
 }
 

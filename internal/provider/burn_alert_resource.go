@@ -208,8 +208,9 @@ func (r *burnAlertResource) ImportState(ctx context.Context, req resource.Import
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{
-		ID:      types.StringValue(id),
-		Dataset: types.StringValue(dataset),
+		ID:         types.StringValue(id),
+		Dataset:    types.StringValue(dataset),
+		Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
 	})...)
 }
 
@@ -225,7 +226,7 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 	// Get attributes from config and construct the create request
 	createRequest := &client.BurnAlert{
 		AlertType:  client.BurnAlertAlertType(plan.AlertType.ValueString()),
-		Recipients: expandNotificationRecipients(plan.Recipients),
+		Recipients: expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		SLO:        client.SLORef{ID: plan.SLOID.ValueString()},
 	}
 
@@ -310,7 +311,7 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	state.ID = types.StringValue(burnAlert.ID)
 	state.AlertType = types.StringValue(string(burnAlert.AlertType))
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)
-	state.Recipients = reconcileReadNotificationRecipientState(burnAlert.Recipients, state.Recipients)
+	state.Recipients = reconcileReadNotificationRecipientState(ctx, burnAlert.Recipients, state.Recipients, &resp.Diagnostics)
 
 	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {
@@ -342,7 +343,7 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 	updateRequest := &client.BurnAlert{
 		ID:         plan.ID.ValueString(),
 		AlertType:  client.BurnAlertAlertType(plan.AlertType.ValueString()),
-		Recipients: expandNotificationRecipients(plan.Recipients),
+		Recipients: expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		SLO:        client.SLORef{ID: plan.SLOID.ValueString()},
 	}
 

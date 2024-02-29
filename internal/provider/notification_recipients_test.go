@@ -1,8 +1,11 @@
 package provider
 
 import (
+	"context"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
 
@@ -11,19 +14,20 @@ import (
 )
 
 func Test_reconcileReadNotificationRecipientState(t *testing.T) {
+	elemType := types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}
 	type args struct {
 		remote []client.NotificationRecipient
-		state  []models.NotificationRecipientModel
+		state  types.Set
 	}
 	tests := []struct {
 		name string
 		args args
-		want []models.NotificationRecipientModel
+		want types.Set
 	}{
 		{
 			name: "both empty",
 			args: args{},
-			want: []models.NotificationRecipientModel{},
+			want: types.SetNull(elemType),
 		},
 		{
 			name: "empty state",
@@ -31,21 +35,21 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 				remote: []client.NotificationRecipient{
 					{ID: "abcd12345", Type: client.RecipientTypeEmail, Target: "test@example.com"},
 				},
-				state: []models.NotificationRecipientModel{},
+				state: types.SetNull(elemType),
 			},
-			want: []models.NotificationRecipientModel{
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 				{ID: types.StringValue("abcd12345"), Type: types.StringValue("email"), Target: types.StringValue("test@example.com")},
-			},
+			}),
 		},
 		{
 			name: "empty remote",
 			args: args{
 				remote: []client.NotificationRecipient{},
-				state: []models.NotificationRecipientModel{
+				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 					{ID: types.StringValue("abcd12345"), Type: types.StringValue("email"), Target: types.StringValue("test@example.com")},
-				},
+				}),
 			},
-			want: []models.NotificationRecipientModel{},
+			want: types.SetNull(elemType),
 		},
 		{
 			name: "remote and state reconciled",
@@ -54,15 +58,15 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 					{ID: "abcd12345", Type: client.RecipientTypeEmail, Target: "test@example.com"},
 					{ID: "efgh67890", Type: client.RecipientTypeSlack, Target: "#test-channel"},
 				},
-				state: []models.NotificationRecipientModel{
+				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 					{ID: types.StringValue("abcd12345")},                                           // defined by ID
 					{Type: types.StringValue("slack"), Target: types.StringValue("#test-channel")}, // defined by type+target
-				},
+				}),
 			},
-			want: []models.NotificationRecipientModel{
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 				{ID: types.StringValue("abcd12345")},
 				{Type: types.StringValue("slack"), Target: types.StringValue("#test-channel")},
-			},
+			}),
 		},
 		{
 			name: "remote has additional recipients",
@@ -79,24 +83,22 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 							PDSeverity: client.PDSeverityWARNING,
 						}},
 				},
-				state: []models.NotificationRecipientModel{
+				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 					{ID: types.StringValue("abcd12345")},                                           // defined by ID
 					{Type: types.StringValue("slack"), Target: types.StringValue("#test-channel")}, // defined by type+target
-				},
+				}),
 			},
-			want: []models.NotificationRecipientModel{
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 				{ID: types.StringValue("abcd12345")},
 				{Type: types.StringValue("slack"), Target: types.StringValue("#test-channel")},
 				{ID: types.StringValue("qrsty3847"), Type: types.StringValue("slack"), Target: types.StringValue("#test-alerts")},
 				{
-					ID:     types.StringValue("ijkl13579"),
-					Type:   types.StringValue("pagerduty"),
-					Target: types.StringValue("test-pagerduty"),
-					Details: []models.NotificationRecipientDetailsModel{
-						{PDSeverity: types.StringValue("warning")},
-					},
+					ID:      types.StringValue("ijkl13579"),
+					Type:    types.StringValue("pagerduty"),
+					Target:  types.StringValue("test-pagerduty"),
+					Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, severityStringToValue("warning")),
 				},
-			},
+			}),
 		},
 		{
 			name: "state has additional recipients",
@@ -104,15 +106,15 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 				remote: []client.NotificationRecipient{
 					{ID: "efgh67890", Type: client.RecipientTypeSlack, Target: "#test-foo"},
 				},
-				state: []models.NotificationRecipientModel{
+				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 					{ID: types.StringValue("abcd12345")},
 					{Type: types.StringValue("slack"), Target: types.StringValue("#test-foo")},
-					{ID: types.StringValue("ijkl13579"), Details: []models.NotificationRecipientDetailsModel{{PDSeverity: types.StringValue("warning")}}},
-				},
+					{ID: types.StringValue("ijkl13579"), Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, severityStringToValue("warning"))},
+				}),
 			},
-			want: []models.NotificationRecipientModel{
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 				{Type: types.StringValue("slack"), Target: types.StringValue("#test-foo")},
-			},
+			}),
 		},
 		{
 			name: "state has totally unmatched recipients",
@@ -120,21 +122,33 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 				remote: []client.NotificationRecipient{
 					{ID: "efgh67890", Type: client.RecipientTypeSlack, Target: "#test-foo"},
 				},
-				state: []models.NotificationRecipientModel{
+				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 					{ID: types.StringValue("abcd12345")},
 					{Type: types.StringValue("slack"), Target: types.StringValue("#test-channel")},
-					{ID: types.StringValue("ijkl13579"), Details: []models.NotificationRecipientDetailsModel{{PDSeverity: types.StringValue("warning")}}},
-				},
+					{ID: types.StringValue("ijkl13579"), Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, severityStringToValue("warning"))},
+				}),
 			},
-			want: []models.NotificationRecipientModel{
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 				{ID: types.StringValue("efgh67890"), Type: types.StringValue("slack"), Target: types.StringValue("#test-foo")},
-			},
+			}),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, reconcileReadNotificationRecipientState(tt.args.remote, tt.args.state))
+			assert.Equal(t, tt.want, reconcileReadNotificationRecipientState(context.Background(), tt.args.remote, tt.args.state, &diag.Diagnostics{}))
 		})
 	}
+}
+
+func notificationRecipientModelsToSet(n []models.NotificationRecipientModel) types.Set {
+	var values []attr.Value
+	for _, r := range n {
+		values = append(values, notificationRecipientModelToObjectValue(context.Background(), r, &diag.Diagnostics{}))
+	}
+	return types.SetValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}, values)
+}
+
+func severityStringToValue(s string) []attr.Value {
+	return []attr.Value{types.ObjectValueMust(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{"pagerduty_severity": types.StringValue(s)})}
 }
