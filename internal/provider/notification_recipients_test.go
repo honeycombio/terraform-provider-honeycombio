@@ -14,7 +14,7 @@ import (
 )
 
 func Test_reconcileReadNotificationRecipientState(t *testing.T) {
-	elemType := types.ObjectType{AttrTypes: models.NotificationRecipientAttrTypes}
+	elemType := types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}
 	type args struct {
 		remote []client.NotificationRecipient
 		state  types.Set
@@ -96,7 +96,7 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 					ID:      types.StringValue("ijkl13579"),
 					Type:    types.StringValue("pagerduty"),
 					Target:  types.StringValue("test-pagerduty"),
-					Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, severityStringToValue("warning")),
+					Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, severityStringToValue("warning")),
 				},
 			}),
 		},
@@ -109,7 +109,7 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 					{ID: types.StringValue("abcd12345")},
 					{Type: types.StringValue("slack"), Target: types.StringValue("#test-foo")},
-					{ID: types.StringValue("ijkl13579"), Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, severityStringToValue("warning"))},
+					{ID: types.StringValue("ijkl13579"), Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, severityStringToValue("warning"))},
 				}),
 			},
 			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
@@ -125,7 +125,7 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 					{ID: types.StringValue("abcd12345")},
 					{Type: types.StringValue("slack"), Target: types.StringValue("#test-channel")},
-					{ID: types.StringValue("ijkl13579"), Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrTypes}, severityStringToValue("warning"))},
+					{ID: types.StringValue("ijkl13579"), Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, severityStringToValue("warning"))},
 				}),
 			},
 			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
@@ -146,10 +146,9 @@ func notificationRecipientModelsToSet(n []models.NotificationRecipientModel) typ
 	for _, r := range n {
 		values = append(values, notificationRecipientModelToObjectValue(context.Background(), r, &diag.Diagnostics{}))
 	}
-	return types.SetValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientAttrTypes}, values)
+	return types.SetValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}, values)
 }
 
 func severityStringToValue(s string) []attr.Value {
-	detailsObj := map[string]attr.Value{"pagerduty_severity": types.StringValue(s)}
-	return []attr.Value{types.ObjectValueMust(models.NotificationRecipientDetailsAttrTypes, detailsObj)}
+	return []attr.Value{types.ObjectValueMust(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{"pagerduty_severity": types.StringValue(s)})}
 }

@@ -16,13 +16,13 @@ type NotificationRecipientDetailsModel struct {
 	PDSeverity types.String `tfsdk:"pagerduty_severity"`
 }
 
-var NotificationRecipientAttrTypes = map[string]attr.Type{
+var NotificationRecipientAttrType = map[string]attr.Type{
 	"id":                   types.StringType,
 	"type":                 types.StringType,
 	"target":               types.StringType,
-	"notification_details": types.ListType{ElemType: types.ObjectType{AttrTypes: NotificationRecipientDetailsAttrTypes}},
+	"notification_details": types.ListType{ElemType: types.ObjectType{AttrTypes: NotificationRecipientDetailsAttrType}},
 }
 
-var NotificationRecipientDetailsAttrTypes = map[string]attr.Type{
+var NotificationRecipientDetailsAttrType = map[string]attr.Type{
 	"pagerduty_severity": types.StringType,
 }

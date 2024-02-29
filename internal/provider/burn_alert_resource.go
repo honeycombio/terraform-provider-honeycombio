@@ -210,7 +210,7 @@ func (r *burnAlertResource) ImportState(ctx context.Context, req resource.Import
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{
 		ID:         types.StringValue(id),
 		Dataset:    types.StringValue(dataset),
-		Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrTypes}),
+		Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
 	})...)
 }
 
