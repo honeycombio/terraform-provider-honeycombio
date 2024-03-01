@@ -23,7 +23,7 @@ func TestTypeInt_PPMToFloat(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(fmt.Sprintf("returns correct value for input %d", testCase.input), func(t *testing.T) {
-			assert.Equal(t, testCase.expected, PPMToFloat(testCase.input))
+			assert.InEpsilon(t, testCase.expected, PPMToFloat(testCase.input), 0.0001)
 		})
 	}
 }

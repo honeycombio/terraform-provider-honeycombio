@@ -59,8 +59,7 @@ func TestBoards(t *testing.T) {
 			},
 		}
 		b, err = c.Boards.Create(ctx, data)
-
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, b.ID)
 
 		// copy ID before asserting equality
@@ -68,7 +67,7 @@ func TestBoards(t *testing.T) {
 		data.Queries[0].QueryID = b.Queries[0].QueryID
 
 		// ensure the board URL got populated
-		assert.NotEqual(t, b.Links.BoardURL, "")
+		assert.NotEqual(t, "", b.Links.BoardURL)
 		data.Links.BoardURL = b.Links.BoardURL
 
 		assert.Equal(t, data, b)
@@ -76,14 +75,14 @@ func TestBoards(t *testing.T) {
 
 	t.Run("List", func(t *testing.T) {
 		result, err := c.Boards.List(ctx)
+		require.NoError(t, err)
 
-		assert.NoError(t, err)
 		assert.Contains(t, result, *b, "could not find newly created board with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		board, err := c.Boards.Get(ctx, b.ID)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, *b, *board)
 	})
@@ -97,7 +96,7 @@ func TestBoards(t *testing.T) {
 			},
 			TimeRange: client.ToPtr(client.DefaultQueryTimeRange),
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		b.ColumnLayout = client.BoardColumnStyleMulti
 		b.Queries = append(b.Queries, client.BoardQuery{
 			Caption:       "A second query",
@@ -107,22 +106,22 @@ func TestBoards(t *testing.T) {
 		})
 
 		result, err := c.Boards.Update(ctx, b)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, b, result)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
 		err := c.Boards.Delete(ctx, b.ID)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Fail to get deleted Board", func(t *testing.T) {
 		_, err := c.Boards.Get(ctx, b.ID)
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 }

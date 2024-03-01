@@ -46,29 +46,29 @@ func TestDerivedColumns(t *testing.T) {
 		_, err = c.DerivedColumns.Create(ctx, dataset, data)
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
-		assert.Equal(t, de.Status, http.StatusConflict)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
+		assert.Equal(t, http.StatusConflict, de.Status)
 	})
 
 	t.Run("List", func(t *testing.T) {
 		derivedColumns, err := c.DerivedColumns.List(ctx, dataset)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Contains(t, derivedColumns, *derivedColumn, "could not find DerivedColumn with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		result, err := c.DerivedColumns.Get(ctx, dataset, derivedColumn.ID)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, *derivedColumn, *result)
 	})
 
 	t.Run("GetByAlias", func(t *testing.T) {
 		result, err := c.DerivedColumns.GetByAlias(ctx, dataset, derivedColumn.Alias)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, *derivedColumn, *result)
 	})
 
@@ -82,7 +82,7 @@ func TestDerivedColumns(t *testing.T) {
 		}
 		derivedColumn, err = c.DerivedColumns.Update(ctx, dataset, data)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		data.ID = derivedColumn.ID
 		assert.Equal(t, data, derivedColumn)
@@ -91,20 +91,20 @@ func TestDerivedColumns(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		err = c.DerivedColumns.Delete(ctx, dataset, derivedColumn.ID)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Fail to Get Deleted DC", func(t *testing.T) {
 		_, err := c.DerivedColumns.Get(ctx, dataset, derivedColumn.ID)
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 
 		_, err = c.DerivedColumns.GetByAlias(ctx, dataset, derivedColumn.Alias)
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 }

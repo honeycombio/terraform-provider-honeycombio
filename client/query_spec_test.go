@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
@@ -73,7 +74,7 @@ func TestQuerySpec(t *testing.T) {
 	}
 
 	_, err := c.Queries.Create(ctx, dataset, &query)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestQuerySpec_EquivalentTo(t *testing.T) {

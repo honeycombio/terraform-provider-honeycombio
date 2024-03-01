@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
@@ -23,8 +24,7 @@ func TestDatasets(t *testing.T) {
 
 	t.Run("List", func(t *testing.T) {
 		d, err := c.Datasets.List(ctx)
-
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		for _, dataset := range d {
 			assert.NotNil(t, dataset.LastWrittenAt, "last written at is empty")
@@ -41,8 +41,7 @@ func TestDatasets(t *testing.T) {
 
 	t.Run("Get", func(t *testing.T) {
 		d, err := c.Datasets.Get(ctx, currentDataset.Slug)
-
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.NotNil(t, d.LastWrittenAt, "last written at is empty")
 		assert.NotNil(t, d.CreatedAt, "created at is empty")
@@ -57,8 +56,8 @@ func TestDatasets(t *testing.T) {
 		_, err := c.Datasets.Get(ctx, "does-not-exist")
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 
@@ -67,8 +66,7 @@ func TestDatasets(t *testing.T) {
 			Name: datasetName,
 		}
 		d, err := c.Datasets.Create(ctx, createDataset)
-
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.NotNil(t, d.LastWrittenAt, "last written at is empty")
 		assert.NotNil(t, d.CreatedAt, "created at is empty")
@@ -94,7 +92,7 @@ func TestDatasets(t *testing.T) {
 			c.Datasets.Update(ctx, &client.Dataset{Name: datasetName})
 		})
 		d, err := c.Datasets.Update(ctx, updateDataset)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, d.Description, updatedDescription)
 		assert.Equal(t, d.ExpandJSONDepth, updatedExpandJSONDepth)
 	})

@@ -47,14 +47,14 @@ func TestQueryAnnotations(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		queryAnnotations, err := c.QueryAnnotations.List(ctx, dataset)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Contains(t, queryAnnotations, *queryAnnotation, "could not find QueryAnnotation with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		result, err := c.QueryAnnotations.Get(ctx, dataset, queryAnnotation.ID)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, *queryAnnotation, *result)
 	})
 
@@ -68,7 +68,7 @@ func TestQueryAnnotations(t *testing.T) {
 		}
 		queryAnnotation, err = c.QueryAnnotations.Update(ctx, dataset, data)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		data.ID = queryAnnotation.ID
 		assert.Equal(t, data, queryAnnotation)
 	})
@@ -82,8 +82,8 @@ func TestQueryAnnotations(t *testing.T) {
 		_, err := c.QueryAnnotations.Get(ctx, dataset, queryAnnotation.ID)
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 }

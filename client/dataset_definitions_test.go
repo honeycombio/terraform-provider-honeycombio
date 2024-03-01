@@ -64,10 +64,10 @@ func TestDatasetDefinitions(t *testing.T) {
 
 	t.Run("Reset and Assert Default state", func(t *testing.T) {
 		err := c.DatasetDefinitions.ResetAll(ctx, dataset)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		result, err := c.DatasetDefinitions.Get(ctx, dataset)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Contains(t, definitionDefaults["duration_ms"], result.DurationMs.Name)
 		assert.Equal(t, "error", result.Error.Name)
 		assert.Equal(t, "name", result.Name.Name)
@@ -89,14 +89,14 @@ func TestDatasetDefinitions(t *testing.T) {
 			Name:  &client.DefinitionColumn{Name: testCol.KeyName},
 			Error: &client.DefinitionColumn{Name: testDC.Alias},
 		})
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		// refetch to be extra sure that our update took effect
 		datasetDef, err := c.DatasetDefinitions.Get(ctx, dataset)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, datasetDef.Name.Name, testCol.KeyName)
-		assert.Equal(t, datasetDef.Name.ColumnType, "column")
+		assert.Equal(t, "column", datasetDef.Name.ColumnType)
 		assert.Equal(t, datasetDef.Error.Name, testDC.Alias)
-		assert.Equal(t, datasetDef.Error.ColumnType, "derived_column")
+		assert.Equal(t, "derived_column", datasetDef.Error.ColumnType)
 	})
 
 	t.Run("Reset the fields: ensure reverted to default", func(t *testing.T) {
@@ -104,8 +104,8 @@ func TestDatasetDefinitions(t *testing.T) {
 			Name:  client.EmptyDatasetDefinition(),
 			Error: client.EmptyDatasetDefinition(),
 		})
-		assert.NoError(t, err)
-		assert.Equal(t, result.Name.Name, "name")
-		assert.Equal(t, result.Error.Name, "error")
+		require.NoError(t, err)
+		assert.Equal(t, "name", result.Name.Name)
+		assert.Equal(t, "error", result.Error.Name)
 	})
 }

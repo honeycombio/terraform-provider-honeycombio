@@ -165,8 +165,7 @@ func TestBurnAlerts(t *testing.T) {
 		t.Run(fmt.Sprintf("Create: %s", testName), func(t *testing.T) {
 			data := &testCase.createRequest
 			burnAlert, err = c.BurnAlerts.Create(ctx, dataset, data)
-
-			assert.NoError(t, err, "failed to create BurnAlert")
+			require.NoError(t, err, "failed to create BurnAlert")
 			assert.NotNil(t, burnAlert.ID, "BurnAlert ID is empty")
 			assert.NotNil(t, burnAlert.CreatedAt, "created at is empty")
 			assert.NotNil(t, burnAlert.UpdatedAt, "updated at is empty")
@@ -183,7 +182,7 @@ func TestBurnAlerts(t *testing.T) {
 
 		t.Run(fmt.Sprintf("Get: %s", testName), func(t *testing.T) {
 			result, err := c.BurnAlerts.Get(ctx, dataset, burnAlert.ID)
-			assert.NoError(t, err, "failed to get BurnAlert by ID")
+			require.NoError(t, err, "failed to get BurnAlert by ID")
 			assert.Equal(t, burnAlert, result)
 		})
 
@@ -192,8 +191,7 @@ func TestBurnAlerts(t *testing.T) {
 			data.ID = burnAlert.ID
 
 			burnAlert, err = c.BurnAlerts.Update(ctx, dataset, data)
-
-			assert.NoError(t, err, "failed to update BurnAlert")
+			require.NoError(t, err, "failed to update BurnAlert")
 
 			// copy dynamic field before asserting equality
 			data.AlertType = burnAlert.AlertType
@@ -206,8 +204,8 @@ func TestBurnAlerts(t *testing.T) {
 
 		t.Run(fmt.Sprintf("ListForSLO: %s", testName), func(t *testing.T) {
 			results, err := c.BurnAlerts.ListForSLO(ctx, dataset, slo.ID)
+			require.NoError(t, err, "failed to list burn alerts for SLO")
 
-			assert.NoError(t, err, "failed to list burn alerts for SLO")
 			assert.NotZero(t, len(results))
 			assert.Equal(t, burnAlert.ID, results[0].ID, "newly created BurnAlert not in list of SLO's burn alerts")
 		})
@@ -215,15 +213,15 @@ func TestBurnAlerts(t *testing.T) {
 		t.Run(fmt.Sprintf("Delete - %s", testName), func(t *testing.T) {
 			err = c.BurnAlerts.Delete(ctx, dataset, burnAlert.ID)
 
-			assert.NoError(t, err, "failed to delete BurnAlert")
+			require.NoError(t, err, "failed to delete BurnAlert")
 		})
 
 		t.Run(fmt.Sprintf("Fail to GET a deleted burn alert: %s", testName), func(t *testing.T) {
 			_, err := c.BurnAlerts.Get(ctx, dataset, burnAlert.ID)
 
 			var de client.DetailedError
-			assert.Error(t, err)
-			assert.ErrorAs(t, err, &de)
+			require.Error(t, err)
+			require.ErrorAs(t, err, &de)
 			assert.True(t, de.IsNotFound())
 		})
 	}

@@ -54,7 +54,7 @@ func TestClient_InvalidConfig(t *testing.T) {
 		APIKey: "123",
 		APIUrl: "cache_object:foo/bar",
 	})
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "could not parse APIUrl")
 }
 

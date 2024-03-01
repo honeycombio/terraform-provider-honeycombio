@@ -30,8 +30,7 @@ func TestColumns(t *testing.T) {
 			Type:        client.ToPtr(client.ColumnTypeFloat),
 		}
 		column, err = c.Columns.Create(ctx, dataset, data)
-
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		data.ID = column.ID
 		assert.NotNil(t, column.LastWrittenAt, "last written at is empty")
@@ -46,22 +45,19 @@ func TestColumns(t *testing.T) {
 
 	t.Run("List", func(t *testing.T) {
 		columns, err := c.Columns.List(ctx, dataset)
-
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Contains(t, columns, *column, "could not find column with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		result, err := c.Columns.Get(ctx, dataset, column.ID)
-
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, *column, *result)
 	})
 
 	t.Run("GetByKeyName", func(t *testing.T) {
 		result, err := c.Columns.GetByKeyName(ctx, dataset, column.KeyName)
-
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, *column, *result)
 	})
 
@@ -75,8 +71,7 @@ func TestColumns(t *testing.T) {
 			Type:        client.ToPtr(client.ColumnTypeBoolean),
 		}
 		column, err = c.Columns.Update(ctx, dataset, data)
-
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		data.ID = column.ID
 		assert.Equal(t, column.Description, data.Description)
@@ -94,15 +89,15 @@ func TestColumns(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		err = c.Columns.Delete(ctx, dataset, column.ID)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Fail to get deleted Column", func(t *testing.T) {
 		_, err := c.Columns.Get(ctx, dataset, column.ID)
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 }

@@ -44,7 +44,7 @@ func TestSLOs(t *testing.T) {
 		}
 		slo, err = c.SLOs.Create(ctx, dataset, data)
 
-		assert.NoError(t, err, "unable to create SLO")
+		require.NoError(t, err, "unable to create SLO")
 		assert.NotNil(t, slo.ID, "SLO ID is empty")
 		assert.NotNil(t, slo.CreatedAt, "created at is empty")
 		assert.NotNil(t, slo.UpdatedAt, "updated at is empty")
@@ -58,14 +58,14 @@ func TestSLOs(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		results, err := c.SLOs.List(ctx, dataset)
 
-		assert.NoError(t, err, "unable to list SLOs")
+		require.NoError(t, err, "unable to list SLOs")
 		assert.Contains(t, results, *slo, "could not find newly created SLO with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		getSLO, err := c.SLOs.Get(ctx, dataset, slo.ID)
 
-		assert.NoError(t, err, "failed to get SLO by ID")
+		require.NoError(t, err, "failed to get SLO by ID")
 		assert.Equal(t, *slo, *getSLO)
 	})
 
@@ -77,7 +77,7 @@ func TestSLOs(t *testing.T) {
 
 		result, err := c.SLOs.Update(ctx, dataset, slo)
 
-		assert.NoError(t, err, "failed to update SLO")
+		require.NoError(t, err, "failed to update SLO")
 		// copy dynamic field before asserting equality
 		slo.UpdatedAt = result.UpdatedAt
 		assert.Equal(t, result, slo)
@@ -86,15 +86,15 @@ func TestSLOs(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		err = c.SLOs.Delete(ctx, dataset, slo.ID)
 
-		assert.NoError(t, err, "failed to delete SLO")
+		require.NoError(t, err, "failed to delete SLO")
 	})
 
 	t.Run("Fail to Get deleted SLO", func(t *testing.T) {
 		_, err := c.SLOs.Get(ctx, dataset, slo.ID)
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 }

@@ -87,14 +87,14 @@ func TestTriggers(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		result, err := c.Triggers.List(ctx, dataset)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Contains(t, result, *trigger, "could not find newly created trigger with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		getTrigger, err := c.Triggers.Get(ctx, dataset, trigger.ID)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, *trigger, *getTrigger)
 	})
 
@@ -119,22 +119,22 @@ func TestTriggers(t *testing.T) {
 
 		// copy IDs before asserting equality
 		trigger.QueryID = result.QueryID
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, trigger, result)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
 		err = c.Triggers.Delete(ctx, dataset, trigger.ID)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Fail to Get deleted Trigger", func(t *testing.T) {
 		_, err := c.Triggers.Get(ctx, dataset, trigger.ID)
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 }
