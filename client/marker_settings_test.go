@@ -43,7 +43,7 @@ func TestMarkerSettings(t *testing.T) {
 		// this has proven to be a bit racey after the create above, so we'll retry a few times
 		assert.EventuallyWithT(t, func(col *assert.CollectT) {
 			ml, err := c.MarkerSettings.List(ctx, dataset)
-			assert.NoError(col, err)
+			require.NoError(col, err)
 
 			// not doing an Equal here because the timestamps may be different
 			// and confirming the ID is in the listing is sufficient
@@ -57,7 +57,7 @@ func TestMarkerSettings(t *testing.T) {
 
 	t.Run("Get", func(t *testing.T) {
 		result, err := c.MarkerSettings.Get(ctx, dataset, m.ID)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, m.ID, result.ID)
 		assert.Equal(t, m.Type, result.Type)
@@ -69,7 +69,7 @@ func TestMarkerSettings(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		m.Color = "#000000"
 		result, err := c.MarkerSettings.Update(ctx, dataset, m)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.Equal(t, m.ID, result.ID)
 		assert.Equal(t, m.Type, result.Type)
@@ -80,15 +80,15 @@ func TestMarkerSettings(t *testing.T) {
 
 	t.Run("Delete", func(t *testing.T) {
 		err := c.MarkerSettings.Delete(ctx, dataset, m.ID)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Fail to Get deleted Marker Setting", func(t *testing.T) {
 		_, err := c.MarkerSettings.Get(ctx, dataset, m.ID)
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 }

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAuthMetadata(t *testing.T) {
@@ -15,8 +16,8 @@ func TestAuthMetadata(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		ctx := context.Background()
 		metadata, err := c.Auth.List(ctx)
+		require.NoError(t, err)
 
-		assert.NoError(t, err)
 		assert.NotEmpty(t, metadata.APIKeyAccess)
 		assert.NotEmpty(t, metadata.Team.Name)
 		assert.NotEmpty(t, metadata.Team.Slug)

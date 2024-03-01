@@ -43,7 +43,7 @@ func TestQueryResults(t *testing.T) {
 	t.Run("Get", func(t *testing.T) {
 		err := c.QueryResults.Get(ctx, dataset, result)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.True(t, result.Complete, "query result didn't complete")
 		assert.NotNil(t, result.Data.Series, "empty data series")
 		assert.NotNil(t, result.Data.Results, "empty data results")
@@ -55,8 +55,8 @@ func TestQueryResults(t *testing.T) {
 		err := c.QueryResults.Get(ctx, dataset, &client.QueryResult{ID: "abcd1234"})
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 }

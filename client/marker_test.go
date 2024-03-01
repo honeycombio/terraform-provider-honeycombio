@@ -45,14 +45,14 @@ func TestMarkers(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		markers, err := c.Markers.List(ctx, dataset)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Contains(t, markers, *m, "could not find newly created marker with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		result, err := c.Markers.Get(ctx, dataset, m.ID)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, m.ID, result.ID)
 		assert.Equal(t, m.Message, result.Message)
 		assert.Equal(t, m.Type, result.Type)
@@ -66,7 +66,7 @@ func TestMarkers(t *testing.T) {
 
 		result, err := c.Markers.Update(ctx, dataset, m)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, m.ID, result.ID)
 		assert.Equal(t, m.Message, result.Message)
 		assert.Equal(t, m.Type, result.Type)
@@ -78,15 +78,15 @@ func TestMarkers(t *testing.T) {
 	t.Run("Delete", func(t *testing.T) {
 		err := c.Markers.Delete(ctx, dataset, m.ID)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("Fail to Get deleted Marker", func(t *testing.T) {
 		_, err := c.Markers.Get(ctx, dataset, m.ID)
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 }

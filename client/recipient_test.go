@@ -44,14 +44,14 @@ func TestRecipientsEmail(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		results, err := c.Recipients.List(ctx)
 
-		assert.NoError(t, err, "unable to list Recipients")
+		require.NoError(t, err, "unable to list Recipients")
 		assert.Contains(t, results, *rcpt, "could not find newly created Recipient with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
 		result, err := c.Recipients.Get(ctx, rcpt.ID)
 
-		assert.NoError(t, err, "failed to get Recipient by ID")
+		require.NoError(t, err, "failed to get Recipient by ID")
 		assert.Equal(t, *rcpt, *result)
 	})
 
@@ -60,22 +60,22 @@ func TestRecipientsEmail(t *testing.T) {
 		now := time.Now()
 		result, err := c.Recipients.Update(ctx, rcpt)
 
-		assert.NoError(t, err, "failed to update Recipient")
+		require.NoError(t, err, "failed to update Recipient")
 		assert.Equal(t, rcpt.Details.EmailAddress, result.Details.EmailAddress, "email address not updated")
 		assert.WithinDuration(t, now, result.UpdatedAt, 2*time.Second)
 	})
 
 	t.Run("Delete", func(t *testing.T) {
 		err = c.Recipients.Delete(ctx, rcpt.ID)
-		assert.NoError(t, err, "failed to delete Recipient")
+		require.NoError(t, err, "failed to delete Recipient")
 	})
 
 	t.Run("Fail to Get deleted Recipient", func(t *testing.T) {
 		_, err := c.Recipients.Get(ctx, rcpt.ID)
 
 		var de client.DetailedError
-		assert.Error(t, err)
-		assert.ErrorAs(t, err, &de)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
 }
