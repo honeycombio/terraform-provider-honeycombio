@@ -11,14 +11,14 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.33.0
 	github.com/hashicorp/terraform-plugin-testing v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/stretchr/testify v1.8.4
-	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819
+	github.com/stretchr/testify v1.9.0
 )
 
 require (
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.0 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/cloudflare/circl v1.3.7 // indirect
+	golang.org/x/exp v0.0.0-20230809150735-7b3493d9a819 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240123012728-ef4313101c80 // indirect
 )
 
