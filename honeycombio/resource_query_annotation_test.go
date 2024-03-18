@@ -15,8 +15,8 @@ func TestAccHoneycombioQueryAnnotation_update(t *testing.T) {
 	secondName := "second annotation name"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceQueryAnnotationConfig(dataset, firstName),

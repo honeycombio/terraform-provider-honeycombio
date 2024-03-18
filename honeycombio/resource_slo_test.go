@@ -19,8 +19,8 @@ func TestAccHoneycombioSLO_basic(t *testing.T) {
 	slo := &honeycombio.SLO{}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigSLO_basic(dataset, sliAlias),
@@ -44,8 +44,8 @@ func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 	slo := &honeycombio.SLO{}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigSLO_basic(dataset, sliAlias),
