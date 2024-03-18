@@ -115,7 +115,7 @@ func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
 				},
 				Config: config,
 				Check: resource.ComposeTestCheckFunc(
-					testAccEnsureTriggerExists(t, "honeycombio_query.test"),
+					testAccEnsureQueryExists(t, "honeycombio_query.test"),
 				),
 			},
 			{
