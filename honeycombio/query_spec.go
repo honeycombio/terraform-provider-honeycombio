@@ -10,12 +10,6 @@ import (
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-// encodeQuery in a JSON string.
-func encodeQuery(q *honeycombio.QuerySpec) (string, error) {
-	jsonQueryBytes, err := json.MarshalIndent(q, "", "  ")
-	return string(jsonQueryBytes), err
-}
-
 type querySpecValidateDiagFunc func(q *honeycombio.QuerySpec) diag.Diagnostics
 
 // validateQueryJSON checks that the input can be deserialized as a QuerySpec

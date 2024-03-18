@@ -47,4 +47,8 @@ In addition to all arguments above, the following attributes are exported:
 
 ## Import
 
-Queries cannot be imported.
+Querys can be imported using a combination of the dataset name and their ID, e.g.
+
+```
+$ terraform import honeycombio_query.my_query my-dataset/bj8BwOa1uRz
+```

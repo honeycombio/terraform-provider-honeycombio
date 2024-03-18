@@ -88,7 +88,7 @@ func dataSourceHoneycombioQueryResultRead(ctx context.Context, d *schema.Resourc
 	}
 
 	d.SetId(queryResult.ID)
-	queryJSON, err := encodeQuery(query)
+	queryJSON, err := query.Encode()
 	if err != nil {
 		return diag.FromErr(err)
 	}

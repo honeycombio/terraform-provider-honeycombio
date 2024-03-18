@@ -100,6 +100,7 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 				Granularity: client.ToPtr(0),
 				Breakdowns:  []string{},
 				Orders:      []client.OrderSpec{},
+				Limit:       client.ToPtr(client.DefaultQueryLimit),
 			},
 			client.QuerySpec{},
 			true,

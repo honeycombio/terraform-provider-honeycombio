@@ -63,6 +63,7 @@ func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.R
 	return []func() resource.Resource{
 		NewBurnAlertResource,
 		NewTriggerResource,
+		NewQueryResource,
 	}
 }
 
