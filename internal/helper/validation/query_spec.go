@@ -29,10 +29,9 @@ func (v querySpecValidator) ValidateString(ctx context.Context, request validato
 		return
 	}
 
+	var q client.QuerySpec
 	dec := json.NewDecoder(bytes.NewReader([]byte(request.ConfigValue.ValueString())))
 	dec.DisallowUnknownFields()
-
-	var q client.QuerySpec
 	if err := dec.Decode(&q); err != nil {
 		response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
 			request.Path,

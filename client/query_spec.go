@@ -5,6 +5,11 @@ import (
 	"reflect"
 )
 
+const (
+	DefaultQueryTimeRange = 2 * 60 * 60
+	DefaultQueryLimit     = 1000
+)
+
 // QuerySpec represents a Honeycomb query.
 //
 // API docs: https://docs.honeycomb.io/api/query-specification/
@@ -61,11 +66,6 @@ func (qs *QuerySpec) Encode() (string, error) {
 	}
 	return string(b), nil
 }
-
-const (
-	DefaultQueryTimeRange = 2 * 60 * 60
-	DefaultQueryLimit     = 1000
-)
 
 // Determines if two QuerySpecs are equivalent
 func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
