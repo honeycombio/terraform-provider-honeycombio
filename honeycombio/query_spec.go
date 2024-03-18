@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"bytes"
 	"encoding/json"
 
 	"github.com/hashicorp/go-cty/cty"
@@ -17,9 +18,9 @@ type querySpecValidateDiagFunc func(q *honeycombio.QuerySpec) diag.Diagnostics
 func validateQueryJSON(validators ...querySpecValidateDiagFunc) schema.SchemaValidateDiagFunc {
 	return func(i interface{}, path cty.Path) diag.Diagnostics {
 		var q honeycombio.QuerySpec
-
-		err := json.Unmarshal([]byte(i.(string)), &q)
-		if err != nil {
+		dec := json.NewDecoder(bytes.NewReader([]byte(i.(string))))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&q); err != nil {
 			return diag.Errorf("value of query_json is not a valid query specification")
 		}
 
