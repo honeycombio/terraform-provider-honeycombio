@@ -21,8 +21,8 @@ func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 	col2Name := test.RandomStringWithPrefix("test.", 8)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`

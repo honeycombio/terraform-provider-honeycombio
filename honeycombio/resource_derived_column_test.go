@@ -12,9 +12,9 @@ func TestAccHoneycombioDerivedColumn_basic(t *testing.T) {
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
-		IDRefreshName:     "honeycombio_derived_column.test",
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		IDRefreshName:            "honeycombio_derived_column.test",
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDerivedColumnConfig(dataset, "duration_ms_log10"),
@@ -35,9 +35,9 @@ func TestAccHoneycombioDerivedColumn_basic(t *testing.T) {
 
 	// validate 'pretty' alias'
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
-		IDRefreshName:     "honeycombio_derived_column.test",
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		IDRefreshName:            "honeycombio_derived_column.test",
 		Steps: []resource.TestStep{
 			{
 				Config: testAccDerivedColumnConfig(dataset, "LOG(10) duration_ms"),
@@ -55,9 +55,9 @@ func TestAccHoneycombioDerivedColumn_error(t *testing.T) {
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
-		IDRefreshName:     "honeycombio_derived_column.test",
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		IDRefreshName:            "honeycombio_derived_column.test",
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`

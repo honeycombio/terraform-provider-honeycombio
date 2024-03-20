@@ -10,8 +10,8 @@ import (
 
 func TestAccDataSourceHoneycombioQuery_EmptyDefaults(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -38,8 +38,8 @@ output "query_json" {
 
 func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccQueryConfig,
@@ -200,8 +200,8 @@ const expectedJSON string = `{
 
 func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: appendAllTestSteps(
 			testStepsQueryValidationChecks_calculation,
 			testStepsQueryValidationChecks_filter,
@@ -403,8 +403,8 @@ func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {
 
 func TestAccDataSourceHoneycombioQuery_filterOpInAndNotIn(t *testing.T) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -448,8 +448,8 @@ func TestAccDataSourceHoneycombioQuery_zerovalue(t *testing.T) {
 }`
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `

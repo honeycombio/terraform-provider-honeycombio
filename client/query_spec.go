@@ -1,6 +1,14 @@
 package client
 
-import "reflect"
+import (
+	"encoding/json"
+	"reflect"
+)
+
+const (
+	DefaultQueryTimeRange = 2 * 60 * 60
+	DefaultQueryLimit     = 1000
+)
 
 // QuerySpec represents a Honeycomb query.
 //
@@ -50,7 +58,14 @@ type QuerySpec struct {
 	Granularity *int `json:"granularity,omitempty"`
 }
 
-const DefaultQueryTimeRange = 2 * 60 * 60
+// Encode returns the JSON string representation of the QuerySpec.
+func (qs *QuerySpec) Encode() (string, error) {
+	b, err := json.MarshalIndent(qs, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
+}
 
 // Determines if two QuerySpecs are equivalent
 func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
@@ -117,7 +132,7 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	if !Equivalent(qs.Havings, other.Havings) {
 		return false
 	}
-	if !reflect.DeepEqual(qs.Limit, other.Limit) {
+	if PtrValueOrDefault(qs.Limit, DefaultQueryLimit) != PtrValueOrDefault(other.Limit, DefaultQueryLimit) {
 		return false
 	}
 	if PtrValueOrDefault(qs.TimeRange, DefaultQueryTimeRange) != PtrValueOrDefault(other.TimeRange, DefaultQueryTimeRange) {

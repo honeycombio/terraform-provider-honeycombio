@@ -251,7 +251,7 @@ func dataSourceHoneycombioQuerySpecRead(ctx context.Context, d *schema.ResourceD
 		}
 	}
 
-	jsonQuery, err := encodeQuery(query)
+	jsonQuery, err := query.Encode()
 	if err != nil {
 		return diag.FromErr(err)
 	}

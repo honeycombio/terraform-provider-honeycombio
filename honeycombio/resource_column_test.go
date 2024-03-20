@@ -15,9 +15,9 @@ func TestAccHoneycombioColumn_basic(t *testing.T) {
 	keyName := acctest.RandomWithPrefix("duration_ms_test")
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          testAccPreCheck(t),
-		ProviderFactories: testAccProviderFactories,
-		IDRefreshName:     "honeycombio_column.test",
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		IDRefreshName:            "honeycombio_column.test",
 		Steps: []resource.TestStep{
 			{
 				Config: testAccColumnConfig(keyName, dataset),

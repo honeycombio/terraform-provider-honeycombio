@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"bytes"
 	"encoding/json"
 
 	"github.com/hashicorp/go-cty/cty"
@@ -10,12 +11,6 @@ import (
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-// encodeQuery in a JSON string.
-func encodeQuery(q *honeycombio.QuerySpec) (string, error) {
-	jsonQueryBytes, err := json.MarshalIndent(q, "", "  ")
-	return string(jsonQueryBytes), err
-}
-
 type querySpecValidateDiagFunc func(q *honeycombio.QuerySpec) diag.Diagnostics
 
 // validateQueryJSON checks that the input can be deserialized as a QuerySpec
@@ -23,9 +18,9 @@ type querySpecValidateDiagFunc func(q *honeycombio.QuerySpec) diag.Diagnostics
 func validateQueryJSON(validators ...querySpecValidateDiagFunc) schema.SchemaValidateDiagFunc {
 	return func(i interface{}, path cty.Path) diag.Diagnostics {
 		var q honeycombio.QuerySpec
-
-		err := json.Unmarshal([]byte(i.(string)), &q)
-		if err != nil {
+		dec := json.NewDecoder(bytes.NewReader([]byte(i.(string))))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&q); err != nil {
 			return diag.Errorf("value of query_json is not a valid query specification")
 		}
 
