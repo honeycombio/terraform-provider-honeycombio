@@ -1,3 +1,18 @@
+# 0.23.0 (Mar 20, 2024)
+
+ENHANCEMENTS:
+
+* r/query - migrate from SDKv2 to Framework and add import support (#454)
+
+HOUSEKEEPING:
+
+* maint(ci): add testifylint (#449)
+* maint(deps): Bump github.com/stretchr/testify from 1.8.4 to 1.9.0 (#450)
+* maint(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.6.0 to 1.6.1 (#451)
+* maint(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.6.0 to 1.7.0 (#451)
+* maint(ci): update dependabot commit message prefix (#452)
+* maint(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.22.0 to 0.22.1 (#453)
+
 # 0.22.0 (Feb 29, 2024)
 
 BUGFIXES:
