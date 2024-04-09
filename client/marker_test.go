@@ -3,6 +3,7 @@ package client_test
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -43,10 +44,19 @@ func TestMarkers(t *testing.T) {
 	})
 
 	t.Run("List", func(t *testing.T) {
-		markers, err := c.Markers.List(ctx, dataset)
+		// this has proven to be a bit racey after the create above, so we'll retry a few times
+		assert.EventuallyWithT(t, func(col *assert.CollectT) {
+			ml, err := c.Markers.List(ctx, dataset)
+			require.NoError(col, err)
 
-		require.NoError(t, err)
-		assert.Contains(t, markers, *m, "could not find newly created marker with List")
+			// not doing an Equal here because the timestamps may be different
+			// and confirming the ID is in the listing is sufficient
+			assert.Condition(col, func() bool {
+				return slices.ContainsFunc(ml, func(cm client.Marker) bool {
+					return cm.ID == m.ID
+				})
+			})
+		}, time.Second, 200*time.Millisecond, "could not find newly created Marker in List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
