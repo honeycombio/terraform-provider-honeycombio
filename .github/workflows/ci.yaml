@@ -34,8 +34,8 @@ jobs:
       - name: Build
         run: go build -v .
 
-  test:
-    name: Test
+  test-us:
+    name: Test US
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -82,3 +82,52 @@ jobs:
         uses: codecov/codecov-action@v4.3.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+
+    test-eu:
+      name: Test EU
+      needs: build
+      runs-on: ubuntu-latest
+      timeout-minutes: 15
+      env:
+        TERRAFORM_VERSION: "1.0.11"
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v4
+
+        - name: Setup Go
+          uses: actions/setup-go@v5
+          with:
+            go-version-file: "go.mod"
+            cache: true
+
+        - name: Setup test environment
+          env:
+            HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+            HONEYCOMB_DATASET: testacc
+          run: ./scripts/setup-testsuite-dataset
+
+        - name: Run client acceptance tests
+          timeout-minutes: 10
+          env:
+            HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+            HONEYCOMB_DATASET: testacc
+          run: go test -v -coverprofile=client-coverage.txt -covermode=atomic ./client/...
+
+        - uses: hashicorp/setup-terraform@v3
+          with:
+            terraform_version: ${{ env.TERRAFORM_VERSION }}
+            terraform_wrapper: false
+
+        - name: Run TF acceptance tests
+          timeout-minutes: 10
+          env:
+            HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+            HONEYCOMB_DATASET: testacc
+            TF_ACC: 1
+            TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
+          run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./internal/... ./honeycombio/...
+
+        - name: Generate Coverage Report
+          uses: codecov/codecov-action@v4.3.0
+          with:
+            token: ${{ secrets.CODECOV_TOKEN }}
