@@ -3,7 +3,6 @@
 # the integration testsuite requires that a dataset and particular columns already exist
 # this little script handles that bit of bootstrapping in an idempotent fashion
 
-HONEYCOMB_API="${HONEYCOMB_API:=https://api.honeycomb.io}"
 COLUMNS_API="${HONEYCOMB_API}/1/columns"
 DATASETS_API="${HONEYCOMB_API}/1/datasets"
 

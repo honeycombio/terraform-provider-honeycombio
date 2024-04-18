@@ -53,6 +53,7 @@ jobs:
 
       - name: Setup test environment
         env:
+          HONEYCOMB_API: https://api.honeycomb.io
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
           HONEYCOMB_DATASET: testacc
         run: ./scripts/setup-testsuite-dataset
@@ -102,14 +103,15 @@ jobs:
 
         - name: Setup test environment
           env:
-            HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+            HONEYCOMB_API: https://api.eu1.honeycomb.io
+            HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
             HONEYCOMB_DATASET: testacc
           run: ./scripts/setup-testsuite-dataset
 
         - name: Run client acceptance tests
           timeout-minutes: 10
           env:
-            HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+            HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
             HONEYCOMB_DATASET: testacc
           run: go test -v -coverprofile=client-coverage.txt -covermode=atomic ./client/...
 
@@ -121,7 +123,7 @@ jobs:
         - name: Run TF acceptance tests
           timeout-minutes: 10
           env:
-            HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+            HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
             HONEYCOMB_DATASET: testacc
             TF_ACC: 1
             TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
