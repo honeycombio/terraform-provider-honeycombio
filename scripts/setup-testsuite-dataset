@@ -3,8 +3,8 @@
 # the integration testsuite requires that a dataset and particular columns already exist
 # this little script handles that bit of bootstrapping in an idempotent fashion
 
-COLUMNS_API="${HONEYCOMB_API}/1/columns"
-DATASETS_API="${HONEYCOMB_API}/1/datasets"
+COLUMNS_API="${HONEYCOMB_API_ENDPOINT}/1/columns"
+DATASETS_API="${HONEYCOMB_API_ENDPOINT}/1/datasets"
 
 # a map of required columns for the integration tests and their types
 declare -A REQUIRED_COLUMNS=(
@@ -79,6 +79,11 @@ fi
 if [ -z "${HONEYCOMB_DATASET+x}" ]; then
   echo "HONEYCOMB_DATASET is not set"
   exit 255
+fi
+
+if [ -z "${HONEYCOMB_API_ENDPOINT+x}" ]; then
+  echo "HONEYCOMB_API_ENDPOINT is not set, using default https://api.honeycomb.io"
+  ONEYCOMB_API="${HONEYCOMB_API:=https://api.honeycomb.io}"
 fi
 
 if ! create_dataset_if_missing "${HONEYCOMB_DATASET}"; then

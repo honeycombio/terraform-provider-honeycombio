@@ -53,7 +53,6 @@ jobs:
 
       - name: Setup test environment
         env:
-          HONEYCOMB_API: https://api.honeycomb.io
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
           HONEYCOMB_DATASET: testacc
         run: ./scripts/setup-testsuite-dataset
@@ -103,7 +102,7 @@ jobs:
 
       - name: Setup test environment
         env:
-          HONEYCOMB_API: https://api.eu1.honeycomb.io
+          HONEYCOMB_API_ENDPOINT: https://api.eu1.honeycomb.io
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
           HONEYCOMB_DATASET: testacc
         run: ./scripts/setup-testsuite-dataset
