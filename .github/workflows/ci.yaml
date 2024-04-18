@@ -111,6 +111,7 @@ jobs:
       - name: Run client acceptance tests
         timeout-minutes: 10
         env:
+          HONEYCOMB_API_ENDPOINT: https://api.eu1.honeycomb.io
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
           HONEYCOMB_DATASET: testacc
         run: go test -v -coverprofile=client-coverage.txt -covermode=atomic ./client/...
@@ -123,6 +124,7 @@ jobs:
       - name: Run TF acceptance tests
         timeout-minutes: 10
         env:
+          HONEYCOMB_API_ENDPOINT: https://api.eu1.honeycomb.io
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
           HONEYCOMB_DATASET: testacc
           TF_ACC: 1
