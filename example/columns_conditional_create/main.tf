@@ -1,37 +1,38 @@
 ####################################################
-# Example: Create only the missing columns
+# Example: Ensure required columns exist
 ####################################################
 
 variable "dataset" {
   type = string
 }
 
-# returns all columns in a dataset
-data "honeycombio_columns" "all" {
-  dataset = var.dataset
+variable "honeycomb_api_endpoint" {
+  type    = string
+  default = "https://api.honeycomb.io"
 }
 
-# A list of columns and their types that are necessary
+# A list of columns and their types
+#  See: https://docs.honeycomb.io/api/tag/Columns
 locals {
   required_columns = {
-    "db.system"              = "string",
-    "db.type"                = "string",
-    "duration_ms"            = "float",
-    "error"                  = "boolean",
-    "http.flavor"            = "string",
+    "db.system"   = "string",
+    "db.type"     = "string",
+    "duration_ms" = "float",
+    "error"       = "boolean",
+    "http.flavor" = "string",
   }
-
-  cols_to_create = setsubtract(keys(local.required_columns), data.honeycombio_columns.all.names)
 }
 
-resource "honeycombio_column" "required_columns" {
-  for_each = toset(local.cols_to_create)
+# Call the Columns API to ensure that the required columns exist
+resource "null_resource" "ensure_columns" {
+  for_each = local.required_columns
 
-  name    = each.key
-  type    = lookup(local.required_columns, each.key, "string")
-  dataset = var.dataset
-}
-
-output "columns_created" {
-  value = local.cols_to_create
+  provisioner "local-exec" {
+    command = <<-EOT
+curl -s ${var.honeycomb_api_endpoint}/1/columns/${var.dataset} \
+  -X POST \
+  -H "X-Honeycomb-Team: $${HONEYCOMB_API_KEY}" \
+  -d '{"key_name": "${each.key}", "type": "${each.value}"}'
+EOT
+  }
 }
