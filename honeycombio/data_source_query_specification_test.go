@@ -351,7 +351,7 @@ data "honeycombio_query_specification" "test" {
 }
 
 func TestAccDataSourceHoneycombioQuery_zerovalue(t *testing.T) {
-	properZeroValueJSON := `{"calculations":[{"op":"COUNT"}],"filters":[{"column":"duration_ms","op":">","value":0}],"time_range":7200}`
+	properZeroValueJSON := `{"calculations":[{"op":"COUNT"}],"filters":[{"column":"duration_ms","op":"\u003e","value":0}],"time_range":7200}`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
