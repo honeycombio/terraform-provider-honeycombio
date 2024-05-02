@@ -1,6 +1,8 @@
 package honeycombio
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -50,4 +52,14 @@ func testCheckOutputDoesNotContain(name, contains string) resource.TestCheckFunc
 
 		return nil
 	}
+}
+
+// MinifyJSON minifies a JSON string removing all whitespace and newlines
+func MinifyJSON(s string) (string, error) {
+	var buffer bytes.Buffer
+	err := json.Compact(&buffer, []byte(s))
+	if err != nil {
+		return "", err
+	}
+	return buffer.String(), nil
 }
