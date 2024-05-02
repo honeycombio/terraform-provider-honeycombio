@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccDataSourceHoneycombioQuery_EmptyDefaults(t *testing.T) {
@@ -22,14 +23,7 @@ output "query_json" {
 }
 `,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckOutput("query_json", `{
-  "calculations": [
-    {
-      "op": "COUNT"
-    }
-  ],
-  "time_range": 7200
-}`),
+					resource.TestCheckOutput("query_json", `{"calculations":[{"op":"COUNT"}],"time_range":7200}`),
 				),
 			},
 		},
@@ -37,21 +31,84 @@ output "query_json" {
 }
 
 func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
+	// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
+	expected, err := MinifyJSON(`
+{
+  "calculations": [
+    {
+      "op": "AVG",
+      "column": "duration_ms"
+    },
+    {
+      "op": "P99",
+      "column": "duration_ms"
+    }
+  ],
+  "filters": [
+    {
+      "column": "trace.parent_id",
+      "op": "does-not-exist"
+    },
+    {
+      "column": "duration_ms",
+      "op": "\u003e",
+      "value": 0
+    },
+    {
+      "column": "duration_ms",
+      "op": "\u003c",
+      "value": 100
+    },
+    {
+      "column": "app.tenant",
+      "op": "=",
+      "value": "ThatSpecialTenant"
+    },
+    {
+      "column": "app.database.shard",
+      "op": "not-in",
+      "value": [347338,837359]
+    },
+    {
+      "column": "app.region.name",
+      "op": "in",
+      "value": [
+        "us-west-1",
+        "us-west-2"
+      ]
+    }
+  ],
+  "filter_combination": "OR",
+  "breakdowns": ["column_1"],
+  "orders": [
+    {
+      "op": "AVG",
+      "column": "duration_ms"
+    },
+    {
+      "column": "column_1"
+    }
+  ],
+  "havings": [
+    {
+      "calculate_op": "P99",
+      "column": "duration_ms",
+      "op": "\u003e",
+      "value": 1000
+    }
+  ],
+  "limit": 250,
+  "time_range": 7200,
+  "start_time": 1577836800,
+  "granularity": 30
+}`)
+	require.NoError(t, err)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccQueryConfig,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckOutput("query_json", expectedJSON),
-				),
-			},
-		},
-	})
-}
-
-const testAccQueryConfig = `
+				Config: `
 data "honeycombio_query_specification" "test" {
     calculation {
         op     = "AVG"
@@ -120,83 +177,14 @@ data "honeycombio_query_specification" "test" {
 
 output "query_json" {
     value = data.honeycombio_query_specification.test.json
-}`
-
-// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
-const expectedJSON string = `{
-  "calculations": [
-    {
-      "op": "AVG",
-      "column": "duration_ms"
-    },
-    {
-      "op": "P99",
-      "column": "duration_ms"
-    }
-  ],
-  "filters": [
-    {
-      "column": "trace.parent_id",
-      "op": "does-not-exist"
-    },
-    {
-      "column": "duration_ms",
-      "op": "\u003e",
-      "value": 0
-    },
-    {
-      "column": "duration_ms",
-      "op": "\u003c",
-      "value": 100
-    },
-    {
-      "column": "app.tenant",
-      "op": "=",
-      "value": "ThatSpecialTenant"
-    },
-    {
-      "column": "app.database.shard",
-      "op": "not-in",
-      "value": [
-        347338,
-        837359
-      ]
-    },
-    {
-      "column": "app.region.name",
-      "op": "in",
-      "value": [
-        "us-west-1",
-        "us-west-2"
-      ]
-    }
-  ],
-  "filter_combination": "OR",
-  "breakdowns": [
-    "column_1"
-  ],
-  "orders": [
-    {
-      "op": "AVG",
-      "column": "duration_ms"
-    },
-    {
-      "column": "column_1"
-    }
-  ],
-  "havings": [
-    {
-      "calculate_op": "P99",
-      "column": "duration_ms",
-      "op": "\u003e",
-      "value": 1000
-    }
-  ],
-  "limit": 250,
-  "time_range": 7200,
-  "start_time": 1577836800,
-  "granularity": 30
-}`
+}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("query_json", expected),
+				),
+			},
+		},
+	})
+}
 
 func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
@@ -418,20 +406,22 @@ data "honeycombio_query_specification" "test" {
     op     = "in"
     value  = "foo,bar"
   }
+
   filter {
     column = "app.tenant"
     op     = "not-in"
     value  = "fzz,bzz"
   }
-}
-`,
+}`,
 			},
 		},
 	})
 }
 
 func TestAccDataSourceHoneycombioQuery_zerovalue(t *testing.T) {
-	properZeroValueJSON := `{
+	// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
+	expected, err := MinifyJSON(`
+{
   "calculations": [
     {
       "op": "COUNT"
@@ -445,7 +435,8 @@ func TestAccDataSourceHoneycombioQuery_zerovalue(t *testing.T) {
     }
   ],
   "time_range": 7200
-}`
+}`)
+	require.NoError(t, err)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
@@ -467,10 +458,9 @@ data "honeycombio_query_specification" "test" {
 
 output "query_json" {
   value = data.honeycombio_query_specification.test.json
-}
-`,
+}`,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckOutput("query_json", properZeroValueJSON),
+					resource.TestCheckOutput("query_json", expected),
 				),
 			},
 		},

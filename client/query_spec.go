@@ -60,7 +60,7 @@ type QuerySpec struct {
 
 // Encode returns the JSON string representation of the QuerySpec.
 func (qs *QuerySpec) Encode() (string, error) {
-	b, err := json.MarshalIndent(qs, "", "  ")
+	b, err := json.Marshal(qs)
 	if err != nil {
 		return "", err
 	}
