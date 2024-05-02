@@ -101,8 +101,7 @@ func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
   "time_range": 7200,
   "start_time": 1577836800,
   "granularity": 30
-}
-`)
+}`)
 	require.NoError(t, err)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
@@ -413,8 +412,7 @@ data "honeycombio_query_specification" "test" {
     op     = "not-in"
     value  = "fzz,bzz"
   }
-}
-`,
+}`,
 			},
 		},
 	})
@@ -460,8 +458,7 @@ data "honeycombio_query_specification" "test" {
 
 output "query_json" {
   value = data.honeycombio_query_specification.test.json
-}
-`,
+}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckOutput("query_json", expected),
 				),
