@@ -31,6 +31,7 @@ output "query_json" {
 }
 
 func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
+	// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
 	expected, err := MinifyJSON(`
 {
   "calculations": [
@@ -406,6 +407,7 @@ data "honeycombio_query_specification" "test" {
     op     = "in"
     value  = "foo,bar"
   }
+
   filter {
     column = "app.tenant"
     op     = "not-in"
@@ -430,8 +432,8 @@ func TestAccDataSourceHoneycombioQuery_zerovalue(t *testing.T) {
   "filters": [
     {
       "column": "duration_ms",
-       "op": "\u003e",
-       "value": 0
+      "op": "\u003e",
+      "value": 0
     }
   ],
   "time_range": 7200
