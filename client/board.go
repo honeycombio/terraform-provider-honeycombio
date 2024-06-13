@@ -57,6 +57,8 @@ type Board struct {
 	Links BoardLinks `json:"links,omitempty"`
 	// A list of queries displayed on the board, in order of appearance.
 	Queries []BoardQuery `json:"queries"`
+	// A list of SLO IDs to be added to the board
+	SLOs []string `json:"slos"`
 }
 
 // BoardStyle determines how a Board should be displayed within the Honeycomb UI.

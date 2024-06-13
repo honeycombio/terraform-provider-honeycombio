@@ -144,6 +144,21 @@ See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-sett
 					},
 				},
 			},
+			"slo": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "An SLO to added to the board.",
+				MaxItems:    6,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The ID of the SLO.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -200,8 +215,15 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 			"query_annotation_id": q.QueryAnnotationID,
 		}
 	}
-
 	d.Set("query", queries)
+
+	slos := make([]map[string]interface{}, len(b.SLOs))
+	for i, s := range b.SLOs {
+		slos[i] = map[string]interface{}{
+			"id": s,
+		}
+	}
+	d.Set("slo", slos)
 
 	return nil
 }
@@ -258,6 +280,12 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 		})
 	}
 
+	slos := []string{}
+	// Board SLOs don't currently have an order: the API returns them sorted by creation time
+	for _, s := range d.Get("slo").(*schema.Set).List() {
+		slos = append(slos, s.(map[string]interface{})["id"].(string))
+	}
+
 	board := &honeycombio.Board{
 		ID:           d.Id(),
 		Name:         d.Get("name").(string),
@@ -265,6 +293,7 @@ func expandBoard(d *schema.ResourceData) (*honeycombio.Board, error) {
 		Style:        honeycombio.BoardStyle(d.Get("style").(string)),
 		ColumnLayout: honeycombio.BoardColumnStyle(d.Get("column_layout").(string)),
 		Queries:      queries,
+		SLOs:         slos,
 	}
 
 	if board.Style == honeycombio.BoardStyleList && board.ColumnLayout != "" {
