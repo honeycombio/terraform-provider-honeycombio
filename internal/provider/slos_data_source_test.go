@@ -111,7 +111,7 @@ data "honeycombio_slos" "exact" {
 }
 `, dataset, testPrefix),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.honeycombio_slos.all", "ids.#", "3"),
+					resource.TestCheckResourceAttr("data.honeycombio_slos.all", "ids.#", "5"),
 					resource.TestCheckResourceAttr("data.honeycombio_slos.regex", "ids.#", "2"),
 					resource.TestCheckResourceAttr("data.honeycombio_slos.exact", "ids.#", "1"),
 				),

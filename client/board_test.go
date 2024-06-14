@@ -42,6 +42,24 @@ func TestBoards(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
+		Alias:      test.RandomStringWithPrefix("test.", 8),
+		Expression: "BOOL(1)",
+	})
+	require.NoError(t, err)
+	slo, err := c.SLOs.Create(ctx, dataset, &client.SLO{
+		Name:             test.RandomStringWithPrefix("test.", 8),
+		TimePeriodDays:   7,
+		TargetPerMillion: 990000,
+		SLI:              client.SLIRef{Alias: sli.Alias},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		//nolint:errcheck
+		c.SLOs.Delete(ctx, dataset, slo.ID)
+		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+	})
+
 	t.Run("Create", func(t *testing.T) {
 		data := &client.Board{
 			Name:         test.RandomStringWithPrefix("test.", 8),
@@ -57,6 +75,7 @@ func TestBoards(t *testing.T) {
 					GraphSettings: client.BoardGraphSettings{OmitMissingValues: true, UseUTCXAxis: true},
 				},
 			},
+			SLOs: []string{slo.ID},
 		}
 		b, err = c.Boards.Create(ctx, data)
 		require.NoError(t, err)
@@ -104,6 +123,7 @@ func TestBoards(t *testing.T) {
 			QueryID:       *newQuery.ID,
 			GraphSettings: client.BoardGraphSettings{UseUTCXAxis: true},
 		})
+		b.SLOs = []string{}
 
 		result, err := c.Boards.Update(ctx, b)
 		require.NoError(t, err)

@@ -7,6 +7,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func TestAccHoneycombioBoard_basic(t *testing.T) {
@@ -177,6 +181,146 @@ resource "honeycombio_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.graph_settings.0.log_scale", "false"),
 					// this check currently fails due to the bug
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.graph_settings.0.utc_xaxis", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccBoard_withSLOs(t *testing.T) {
+	ctx := context.Background()
+	dataset := testAccDataset()
+	c := testAccClient(t)
+
+	sli1, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
+		Alias:      "sli." + acctest.RandString(8),
+		Expression: "BOOL(1)",
+	})
+	require.NoError(t, err)
+	slo1, err := c.SLOs.Create(ctx, dataset, &client.SLO{
+		Name:             acctest.RandString(8) + " SLO",
+		TimePeriodDays:   14,
+		TargetPerMillion: 995000,
+		SLI:              client.SLIRef{Alias: sli1.Alias},
+	})
+	require.NoError(t, err)
+
+	sli2, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
+		Alias:      "sli." + acctest.RandString(8),
+		Expression: "BOOL(1)",
+	})
+	require.NoError(t, err)
+	slo2, err := c.SLOs.Create(ctx, dataset, &client.SLO{
+		Name:             acctest.RandString(8) + " SLO",
+		TimePeriodDays:   14,
+		TargetPerMillion: 995000,
+		SLI:              client.SLIRef{Alias: sli2.Alias},
+	})
+	require.NoError(t, err)
+
+	//nolint:errcheck
+	t.Cleanup(func() {
+		// remove SLOs, and SLIs at end of test run
+		c.SLOs.Delete(ctx, dataset, slo1.ID)
+		c.SLOs.Delete(ctx, dataset, slo2.ID)
+		c.DerivedColumns.Delete(ctx, dataset, sli1.ID)
+		c.DerivedColumns.Delete(ctx, dataset, sli2.ID)
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			// create a board with one SLO on it
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_board" "test" {
+  name          = "board with some SLOs"
+
+  query {
+    query_id = honeycombio_query.test.id
+  }
+
+  slo {
+    id = "%s"
+  }
+}
+`, dataset, slo1.ID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "slo.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "slo.0.id", slo1.ID),
+				),
+			},
+			{
+				// update that board to have two SLOs
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_board" "test" {
+  name          = "board with some SLOs"
+
+  query {
+    query_id = honeycombio_query.test.id
+  }
+
+  slo {
+    id = "%s"
+  }
+
+  slo {
+    id = "%s"
+  }
+}`, dataset, slo2.ID, slo1.ID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "slo.#", "2"),
+				),
+			},
+			{
+				// remove all SLOs from that board
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_board" "test" {
+  name          = "board with no SLOs"
+
+  query {
+    query_id = honeycombio_query.test.id
+  }
+}`, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "slo.#", "0"),
 				),
 			},
 		},
