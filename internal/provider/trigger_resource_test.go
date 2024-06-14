@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -18,31 +19,63 @@ import (
 func TestAcc_TriggerResource(t *testing.T) {
 	dataset := testAccDataset()
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccConfigBasicTriggerTest(dataset, "info"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
-					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", "Test trigger from terraform-provider-honeycombio"),
-					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "600"),
-					resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
-					resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "1"),
-					resource.TestCheckResourceAttrPair("honeycombio_trigger.test", "query_id", "honeycombio_query.test", "id"),
-				),
+	t.Run("trigger resource with Query ID", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: testAccConfigBasicTriggerTest(dataset, "info"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", "Test trigger from terraform-provider-honeycombio"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "600"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "1"),
+						resource.TestCheckResourceAttrPair("honeycombio_trigger.test", "query_id", "honeycombio_query.test", "id"),
+						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_json"),
+					),
+				},
+				// then update the PD Severity from info -> critical (the default)
+				{
+					Config: testAccConfigBasicTriggerTest(dataset, "critical"),
+				},
+				{
+					ResourceName:        "honeycombio_trigger.test",
+					ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+					ImportState:         true,
+				},
 			},
-			// then update the PD Severity from info -> critical (the default)
-			{
-				Config: testAccConfigBasicTriggerTest(dataset, "critical"),
+		})
+	})
+
+	t.Run("trigger resource with Query JSON", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: testAccConfigBasicTriggerTest_QuerySpec(dataset, "info"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", "Test trigger from terraform-provider-honeycombio"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "600"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "1"),
+						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_id"),
+					),
+				},
+				// then update the PD Severity from info -> critical (the default)
+				{
+					Config: testAccConfigBasicTriggerTest_QuerySpec(dataset, "critical"),
+				},
+				{
+					ResourceName:        "honeycombio_trigger.test",
+					ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+					ImportState:         true,
+				},
 			},
-			{
-				ResourceName:        "honeycombio_trigger.test",
-				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
-				ImportState:         true,
-			},
-		},
+		})
 	})
 }
 
@@ -461,6 +494,238 @@ func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing
 	})
 }
 
+func TestAcc_TriggerResourceValidatesQueryJSON(t *testing.T) {
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  query_id   = "jsdfjsdf"
+  query_json = "{}"
+}`,
+				ExpectError: regexp.MustCompile(`"query_id" cannot be specified when "query_json" is specified`),
+			},
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  calculation {
+    op = "AVG"
+    column = "duration_ms"
+  }
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`queries must contain a single calculation`),
+			},
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "HEATMAP"
+    column = "duration_ms"
+  }
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`queries cannot use HEATMAP calculations`),
+			},
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "CONCURRENCY"
+  }
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`queries cannot use CONCURRENCY calculations`),
+			},
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  order {
+    op    = "COUNT"
+    order = "ascending"
+  }
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`queries cannot use orders`),
+			},
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  limit = 10
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`queries cannot use limit`),
+			},
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  end_time   = 1454808600
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`queries cannot use start_time or end_time`),
+			},
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  granularity = 120
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`queries cannot use granularity`),
+			},
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  time_range = 1800
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = 7200
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`frequency must be at least equal to the query duration`),
+			},
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`frequency cannot be more than four times the query duration`),
+			},
+		},
+	})
+}
+
 func testAccConfigBasicTriggerTest(dataset, pdseverity string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
@@ -488,6 +753,51 @@ resource "honeycombio_trigger" "test" {
   description = "My nice description"
 
   query_id = honeycombio_query.test.id
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = data.honeycombio_query_specification.test.time_range / 2
+
+  recipient {
+    type   = "email"
+    target = "hello@example.com"
+  }
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[2]s"
+    }
+  }
+}`, dataset, pdseverity)
+}
+
+func testAccConfigBasicTriggerTest_QuerySpec(dataset, pdseverity string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+  time_range = 1200
+}
+
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "testacc-basic"
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger from terraform-provider-honeycombio"
+  dataset = "%[1]s"
+
+  description = "My nice description"
+
+  query_json = data.honeycombio_query_specification.test.json
 
   threshold {
     op    = ">"

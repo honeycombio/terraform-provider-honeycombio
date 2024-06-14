@@ -9,6 +9,7 @@ type TriggerResourceModel struct {
 	Description        types.String                     `tfsdk:"description"`
 	Disabled           types.Bool                       `tfsdk:"disabled"`
 	QueryID            types.String                     `tfsdk:"query_id"`
+	QueryJson          types.String                     `tfsdk:"query_json"`
 	AlertType          types.String                     `tfsdk:"alert_type"`
 	Frequency          types.Int64                      `tfsdk:"frequency"`
 	Threshold          []TriggerThresholdModel          `tfsdk:"threshold"`

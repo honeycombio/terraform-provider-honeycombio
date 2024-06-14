@@ -55,8 +55,9 @@ type Trigger struct {
 	// properties described with and validated by MatchesTriggerSubset.
 	// Additionally, time_range of the query can be at most 1 day and may not
 	// be greater than 4 times the frequency.
-	Query   *QuerySpec `json:"query,omitempty"`
-	QueryID string     `json:"query_id,omitempty"`
+	Query *QuerySpec `json:"query,omitempty"`
+	// The ID of the Query of the Trigger. Conflicts with Query
+	QueryID string `json:"query_id,omitempty"`
 	// Alert Type. Describes scheduling behavior for triggers.
 	// Defaults to "on_change"
 	AlertType TriggerAlertType `json:"alert_type,omitempty"`
