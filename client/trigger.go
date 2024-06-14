@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -55,8 +54,9 @@ type Trigger struct {
 	// properties described with and validated by MatchesTriggerSubset.
 	// Additionally, time_range of the query can be at most 1 day and may not
 	// be greater than 4 times the frequency.
-	Query   *QuerySpec `json:"query,omitempty"`
-	QueryID string     `json:"query_id,omitempty"`
+	Query *QuerySpec `json:"query,omitempty"`
+	// The ID of the Query of the Trigger. Conflicts with Query
+	QueryID string `json:"query_id,omitempty"`
 	// Alert Type. Describes scheduling behavior for triggers.
 	// Defaults to "on_change"
 	AlertType TriggerAlertType `json:"alert_type,omitempty"`
@@ -127,33 +127,6 @@ func TriggerThresholdOps() []TriggerThresholdOp {
 		TriggerThresholdOpLessThan,
 		TriggerThresholdOpLessThanOrEqual,
 	}
-}
-
-func (t *Trigger) MarshalJSON() ([]byte, error) {
-	// aliased type to avoid stack overflows due to recursion
-	type ATrigger Trigger
-
-	if t.QueryID != "" && t.Query != nil {
-		// we can't sent both to the API, so favour QueryID
-		// this doesn't work in the general case, but this
-		// client is now purpose-built for the Terraform provider
-		a := &ATrigger{
-			ID:                     t.ID,
-			Name:                   t.Name,
-			Description:            t.Description,
-			Disabled:               t.Disabled,
-			QueryID:                t.QueryID,
-			AlertType:              t.AlertType,
-			Threshold:              t.Threshold,
-			Frequency:              t.Frequency,
-			Recipients:             t.Recipients,
-			EvaluationScheduleType: t.EvaluationScheduleType,
-			EvaluationSchedule:     t.EvaluationSchedule,
-		}
-		return json.Marshal(&struct{ *ATrigger }{ATrigger: a})
-	}
-
-	return json.Marshal(&struct{ *ATrigger }{ATrigger: (*ATrigger)(t)})
 }
 
 func (s *triggers) List(ctx context.Context, dataset string) ([]Trigger, error) {

@@ -86,17 +86,12 @@ data "honeycombio_query_specification" "example" {
   }
 }
 
-resource "honeycombio_query" "example" {
-  dataset    = var.dataset
-  query_json = data.honeycombio_query_specification.example.json
-}
-
 resource "honeycombio_trigger" "example" {
   name        = "Requests are slower than usual"
   description = "Average duration of all requests for the last 10 minutes."
 
-  query_id = honeycombio_query.example.id
-  dataset  = var.dataset
+  query_json = data.honeycombio_query_specification.example.json
+  dataset    = var.dataset
 
   frequency = 600 // in seconds, 10 minutes
 
@@ -133,7 +128,10 @@ The following arguments are supported:
 
 * `name` - (Required) Name of the trigger.
 * `dataset` - (Required) The dataset this trigger is associated with.
-* `query_id` - (Required) The ID of the Query that the Trigger will execute.
+* `query_id` - (Optional) The ID of the Query that the Trigger will execute. Conflicts with `query_json`.
+* `query_json` - (Optional) The Query Specfication JSON for the Trigger to execute.
+Providing the Query Specification as JSON -- as opposed to a Query ID -- enables additional validation during the validate and plan stages.
+Conflicts with `query_id`.
 * `threshold` - (Required) A configuration block (described below) describing the threshold of the trigger.
 * `description` - (Optional) Description of the trigger.
 * `disabled` - (Optional) The state of the trigger. If true, the trigger will not be run. Defaults to false.
@@ -146,6 +144,8 @@ When the time is within the scheduled window the trigger will be run at the spec
 Outside of the window, the trigger will not be run.
 If no schedule is specified, the trigger will be run at the specified frequency at all times.
 * `recipient` - (Optional) Zero or more configuration blocks (described below) with the recipients to notify when the trigger fires.
+
+One of `query_id` or `query_json` are required.
 
 -> **NOTE** The query used in a Trigger must follow a strict subset: the query must contain *exactly one* calcuation and may only contain `calculation`, `filter`, `filter_combination` and `breakdowns` fields.
 The query's duration cannot be more than four times the trigger frequency (i.e. `duration <= frequency*4`).

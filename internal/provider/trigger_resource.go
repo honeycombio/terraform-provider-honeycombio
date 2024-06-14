@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"regexp"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -30,9 +32,10 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &triggerResource{}
-	_ resource.ResourceWithConfigure   = &triggerResource{}
-	_ resource.ResourceWithImportState = &triggerResource{}
+	_ resource.Resource                   = &triggerResource{}
+	_ resource.ResourceWithConfigure      = &triggerResource{}
+	_ resource.ResourceWithImportState    = &triggerResource{}
+	_ resource.ResourceWithValidateConfig = &triggerResource{}
 )
 
 func NewTriggerResource() resource.Resource {
@@ -95,8 +98,21 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Default:     booldefault.StaticBool(false),
 			},
 			"query_id": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The ID of the Query that the Trigger will execute.",
+			},
+			"query_json": schema.StringAttribute{
+				Optional: true,
+				Description: "The QuerySpec JSON for the query that the Trigger will execute. " +
+					"Providing the QuerySpec JSON directly allows for additional validation that the QuerySpec is valid as a Trigger Query." +
+					" While the JSON can be constructed manually, it is easiest to use the `honeycombio_query_specification` data source.",
+				PlanModifiers: []planmodifier.String{
+					modifiers.EquivalentQuerySpec(),
+				},
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("query_id")),
+					validation.ValidQuerySpec(),
+				},
 			},
 			"alert_type": schema.StringAttribute{
 				Optional:    true,
@@ -214,13 +230,31 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		Name:               plan.Name.ValueString(),
 		Description:        plan.Description.ValueString(),
 		Disabled:           plan.Disabled.ValueBool(),
-		QueryID:            plan.QueryID.ValueString(),
 		AlertType:          client.TriggerAlertType(plan.AlertType.ValueString()),
 		Threshold:          expandTriggerThreshold(plan.Threshold),
 		Frequency:          int(plan.Frequency.ValueInt64()),
 		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(plan.EvaluationSchedule),
 	}
+
+	specifiedByID := !plan.QueryID.IsNull()
+	if specifiedByID {
+		newTrigger.QueryID = plan.QueryID.ValueString()
+		newTrigger.Query = nil
+	} else {
+		newTrigger.QueryID = ""
+
+		var q client.QuerySpec
+		if err := json.Unmarshal([]byte(plan.QueryJson.ValueString()), &q); err != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("query_json"),
+				"Failed to unmarshal JSON",
+				err.Error(),
+			)
+		}
+		newTrigger.Query = &q
+	}
+
 	if plan.EvaluationSchedule != nil {
 		newTrigger.EvaluationScheduleType = client.TriggerEvaluationScheduleWindow
 	}
@@ -236,13 +270,30 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	state.Name = types.StringValue(trigger.Name)
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
-	state.QueryID = types.StringValue(trigger.QueryID)
 	state.AlertType = types.StringValue(string(trigger.AlertType))
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
+
+	if specifiedByID {
+		state.QueryID = types.StringValue(trigger.QueryID)
+		state.QueryJson = types.StringNull()
+	} else {
+		state.QueryID = types.StringNull()
+
+		json, err := trigger.Query.Encode()
+		if err != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("query_json"),
+				"failed to encode query_json",
+				err.Error(),
+			)
+		} else {
+			state.QueryJson = types.StringValue(json)
+		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -281,12 +332,30 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.Name = types.StringValue(trigger.Name)
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
-	state.QueryID = types.StringValue(trigger.QueryID)
 	state.AlertType = types.StringValue(string(trigger.AlertType))
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
 	state.Recipients = reconcileReadNotificationRecipientState(ctx, trigger.Recipients, state.Recipients, &resp.Diagnostics)
+
+	specifiedByID := !state.QueryID.IsNull()
+	if specifiedByID {
+		state.QueryID = types.StringValue(trigger.QueryID)
+		state.QueryJson = types.StringNull()
+	} else {
+		state.QueryID = types.StringNull()
+
+		json, err := trigger.Query.Encode()
+		if err != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("query_json"),
+				"failed to encode query_json",
+				err.Error(),
+			)
+		} else {
+			state.QueryJson = types.StringValue(json)
+		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -304,13 +373,31 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		Name:               plan.Name.ValueString(),
 		Description:        plan.Description.ValueString(),
 		Disabled:           plan.Disabled.ValueBool(),
-		QueryID:            plan.QueryID.ValueString(),
 		AlertType:          client.TriggerAlertType(plan.AlertType.ValueString()),
 		Frequency:          int(plan.Frequency.ValueInt64()),
 		Threshold:          expandTriggerThreshold(plan.Threshold),
 		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(plan.EvaluationSchedule),
 	}
+
+	specifiedByID := !plan.QueryID.IsNull()
+	if specifiedByID {
+		updatedTrigger.QueryID = plan.QueryID.ValueString()
+		updatedTrigger.Query = nil
+	} else {
+		updatedTrigger.QueryID = ""
+
+		var q client.QuerySpec
+		if err := json.Unmarshal([]byte(plan.QueryJson.ValueString()), &q); err != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("query_json"),
+				"Failed to unmarshal JSON",
+				err.Error(),
+			)
+		}
+		updatedTrigger.Query = &q
+	}
+
 	if updatedTrigger.EvaluationSchedule != nil {
 		updatedTrigger.EvaluationScheduleType = client.TriggerEvaluationScheduleWindow
 	} else {
@@ -333,13 +420,30 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	state.Name = types.StringValue(trigger.Name)
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
-	state.QueryID = types.StringValue(trigger.QueryID)
 	state.AlertType = types.StringValue(string(trigger.AlertType))
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
+
+	if specifiedByID {
+		state.QueryID = types.StringValue(trigger.QueryID)
+		state.QueryJson = types.StringNull()
+	} else {
+		state.QueryID = types.StringNull()
+
+		json, err := trigger.Query.Encode()
+		if err != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("query_json"),
+				"failed to encode query_json",
+				err.Error(),
+			)
+		} else {
+			state.QueryJson = types.StringValue(json)
+		}
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -385,8 +489,105 @@ func (r *triggerResource) ImportState(ctx context.Context, req resource.ImportSt
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.TriggerResourceModel{
 		ID:         types.StringValue(id),
 		Dataset:    types.StringValue(dataset),
+		QueryID:    types.StringNull(),
+		QueryJson:  types.StringUnknown(), // favor QueryJSON on import
 		Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
 	})...)
+}
+
+func (r *triggerResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data models.TriggerResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// exit early if we don't have QueryJSON
+	if data.QueryJson.IsNull() || data.QueryJson.IsUnknown() {
+		return
+	}
+
+	var q client.QuerySpec
+	if err := json.Unmarshal([]byte(data.QueryJson.ValueString()), &q); err != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("query_json"),
+			"Failed to unmarshal JSON",
+			err.Error(),
+		)
+		return
+	}
+
+	// validate calculations
+	if len(q.Calculations) != 1 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("query_json"),
+			"Trigger validation error",
+			"Trigger queries must contain a single calculation.",
+		)
+	} else {
+		if q.Calculations[0].Op == client.CalculationOpHeatmap {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("query_json"),
+				"Trigger validation error",
+				"Trigger queries cannot use HEATMAP calculations.",
+			)
+		}
+		if q.Calculations[0].Op == client.CalculationOpConcurrency {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("query_json"),
+				"Trigger validation error",
+				"Trigger queries cannot use CONCURRENCY calculations.",
+			)
+		}
+	}
+
+	// ensure unsupported fields are unset
+	if q.Orders != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("query_json"),
+			"Trigger validation error",
+			"Trigger queries cannot use orders.",
+		)
+	}
+	if q.Limit != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("query_json"),
+			"Trigger validation error",
+			"Trigger queries cannot use limit.",
+		)
+	}
+	if q.StartTime != nil || q.EndTime != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("query_json"),
+			"Trigger validation error",
+			"Trigger queries cannot use start_time or end_time.",
+		)
+	}
+	if q.Granularity != nil {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("query_json"),
+			"Trigger validation error",
+			"Trigger queries cannot use granularity.",
+		)
+	}
+
+	if q.TimeRange != nil {
+		frequency := int(data.Frequency.ValueInt64())
+		if *q.TimeRange < frequency {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("frequency"),
+				"Trigger validation error",
+				"The Trigger's frequency must be at least equal to the query duration.",
+			)
+		}
+		if *q.TimeRange > frequency*4 {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("frequency"),
+				"Trigger validation error",
+				"The Trigger's frequency cannot be more than four times the query duration.",
+			)
+		}
+	}
 }
 
 func expandTriggerThreshold(t []models.TriggerThresholdModel) *client.TriggerThreshold {
