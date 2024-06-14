@@ -1,3 +1,54 @@
+# 0.24.0 (Jun 14, 2024)
+
+NOTES:
+
+* This release includes support for placing SLOs on Boards: a feature under active development.
+SLO placement on Boards does not yet support a custom order and instead are placed by creation date.
+Ordered placement is a roadmap item for the feature and when that lands there will be a subsequent provider update.
+* This release re-introduces the `query_json` attribute on `r/trigger` enabling validation that a query meets the restrictions for use by a Trigger.
+This was a poor development experience and the hope is that the slight deviation from other resource construction provides a better experience -- especially for those using the provider in CI systems like HCP Terraform, Atlantis, et cetera.
+Triggers require one of `query_json` or `query_id`, but the recommendation going forward will be to use `query_json`.
+
+ENHANCEMENTS:
+
+* r/query: clean up generated queryspec output (#469)
+* r/board: add SLO support (#485)
+* r/trigger: re-introduce query_json for deeper validation (#487)
+
+BUGFIXES:
+
+* fix(client): unflake Marker List test (#459)
+* fix: update columns conditional creation example with an alternative (#468)
+
+HOUSEKEEPING:
+
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.6.1 to 1.7.0 (#456)
+* maint(deps): bump codecov/codecov-action from 4.1.0 to 4.1.1 (#457)
+* maint(deps): bump codecov/codecov-action from 4.1.1 to 4.2.0 (#458)
+* maint(deps): bump codecov/codecov-action from 4.2.0 to 4.3.0 (#460)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.7.0 to 1.8.0 (#462)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.22.1 to 0.22.2 (#462)
+* maint(deps): bump golang.org/x/net from 0.21.0 to 0.23.0 (#463)
+* maint(deps): bump golangci/golangci-lint-action from 4.0.0 to 5.1.0 (#466)
+* maint(ci): setup-go - re-enable cache (#467)
+* maint(deps): bump codecov/codecov-action from 4.3.0 to 4.3.1 (#470)
+* maint(deps): bump golangci/golangci-lint-action from 5.1.0 to 5.3.0 (#471)
+* maint(deps): bump golangci/golangci-lint-action from 5.3.0 to 6.0.0 (#472)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.22.2 to 0.23.0 (#473)
+* maint(deps): bump golangci/golangci-lint-action from 6.0.0 to 6.0.1 (#474)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.15.0 to 0.16.0 (#475)
+* maint(deps): bump github.com/hashicorp/go-retryablehttp from 0.7.5 to 0.7.6 (#476)
+* maint(deps): bump goreleaser/goreleaser-action from 5.0.0 to 5.1.0 (#477)
+* maint(deps): bump codecov/codecov-action from 4.3.1 to 4.4.0 (#478)
+* maint(deps): bump codecov/codecov-action from 4.4.0 to 4.4.1 (#480)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.33.0 to 2.34.0 (#479)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.7.0 to 1.8.0 (#479)
+* maint(deps): bump github.com/hashicorp/go-retryablehttp from 0.7.6 to 0.7.7 (#481)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.8.0 to 1.9.0 (#484)
+* maint(deps): bump goreleaser/goreleaser-action from 5.1.0 to 6.0.0 (#483)
+* maint(deps): bump codecov/codecov-action from 4.4.1 to 4.5.0 (#486)
+* maint(ci): add eu integration test flow (#461)
+
 # 0.23.0 (Mar 20, 2024)
 
 ENHANCEMENTS:
