@@ -88,6 +88,10 @@ resource "honeycombio_board" "overview" {
       utc_xaxis = true
     }
   }
+
+  slo {
+    id = var.slo_id
+  }
 }
 ```
 
