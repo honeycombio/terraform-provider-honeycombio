@@ -21,21 +21,19 @@ data "honeycombio_query_specification" "query" {
 // search for a trigger that already has a Slack recipient. If there is none,
 // this will fail during the plan phase.
 data "honeycombio_recipient" "slack" {
-  dataset = var.dataset
-  type    = "slack"
-  target  = "#honeycombio"
-}
+  type = "slack"
 
-resource "honeycombio_query" "trigger-query" {
-  dataset    = var.dataset
-  query_json = data.honeycombio_query_specification.query.json
+  detail_filter {
+    name  = "channel"
+    value = "#honeycombio"
+  }
 }
 
 resource "honeycombio_trigger" "trigger" {
   name = "Requests are slower than usual"
 
-  query_id = honeycombio_query.trigger-query.id
-  dataset  = var.dataset
+  query_json = data.honeycombio_query_specification.query.json
+  dataset    = var.dataset
 
   threshold {
     op    = ">"
@@ -50,4 +48,6 @@ resource "honeycombio_trigger" "trigger" {
     type   = "email"
     target = "hello@example.com"
   }
+
+  frequency = 1800
 }

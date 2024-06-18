@@ -1,0 +1,28 @@
+name: Validate Examples
+
+on:
+    workflow_dispatch:
+        push:
+
+jobs:
+    validate:
+        runs-on: ubuntu-latest
+        name: Validate examples
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Setup Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version-file: "go.mod"
+                  cache: true
+
+            - name: Build
+              run: go build -o tmp/providers/terraform-provider-honeycombio
+
+            - name: Validate examples
+              env:
+                  TF_IN_AUTOMATION: 1
+                  TF_CLI_CONFIG_FILE: ".terraformrc.local"
+              run: ./scripts/validate-examples example

@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# this script is used to ensure that all the provided examples pass validation
+
+cd "$1" || exit 1
+find . -type d -maxdepth 1 -print0 | while read -r -d '' dir; do
+  if ls "${dir}"/*.tf >/dev/null 2>&1; then
+    echo "Validating example ${dir#./}..."
+    cd "${dir}" || exit 1
+    if ! terraform init -backend=false -upgrade >/dev/null 2>&1; then
+      echo "terraform init failed for ${dir#./}:"
+      terraform init -backend=false -upgrade
+      exit 1
+    fi
+    if ! terraform validate -no-color; then
+      exit 1
+    fi
+    cd ..
+  fi
+done
