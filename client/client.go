@@ -237,8 +237,12 @@ func (c *Client) retryHTTPCheck(ctx context.Context, resp *http.Response, err er
 		return false, ctx.Err()
 	}
 
-	if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusBadGateway || resp.StatusCode == http.StatusGatewayTimeout {
-		return true, nil
+	if resp != nil {
+		if resp.StatusCode == http.StatusTooManyRequests ||
+			resp.StatusCode == http.StatusBadGateway ||
+			resp.StatusCode == http.StatusGatewayTimeout {
+			return true, nil
+		}
 	}
 
 	return false, nil
