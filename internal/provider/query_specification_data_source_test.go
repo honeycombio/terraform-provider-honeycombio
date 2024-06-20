@@ -1,18 +1,20 @@
-package honeycombio
+package provider
 
 import (
 	"fmt"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
-func TestAccDataSourceHoneycombioQuery_EmptyDefaults(t *testing.T) {
+func TestAcc_QuerySpecificationDataSource_EmptyDefaults(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -20,8 +22,7 @@ data "honeycombio_query_specification" "test" {}
 
 output "query_json" {
   value = data.honeycombio_query_specification.test.json
-}
-`,
+}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckOutput("query_json", `{"calculations":[{"op":"COUNT"}],"time_range":7200}`),
 				),
@@ -30,9 +31,9 @@ output "query_json" {
 	})
 }
 
-func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
+func TestAcc_QuerySpecificationDataSource_basic(t *testing.T) {
 	// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
-	expected, err := MinifyJSON(`
+	expected, err := test.MinifyJSON(`
 {
   "calculations": [
     {
@@ -105,7 +106,7 @@ func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
 	require.NoError(t, err)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -129,9 +130,9 @@ data "honeycombio_query_specification" "test" {
         value  = 0
     }
     filter {
-        column        = "duration_ms"
-        op            = "<"
-        value_integer = 100
+        column = "duration_ms"
+        op     = "<"
+        value  = 100
     }
     filter {
         column = "app.tenant"
@@ -169,7 +170,7 @@ data "honeycombio_query_specification" "test" {
         value        = 1000
     }
 
-    limit 	    = 250
+    limit       = 250
     time_range  = 7200
     start_time  = 1577836800
     granularity = 30
@@ -186,10 +187,10 @@ output "query_json" {
 	})
 }
 
-func TestAccDataSourceHoneycombioQuery_validationChecks(t *testing.T) {
+func TestAcc_QuerySpecificationDataSource_validationChecks(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: appendAllTestSteps(
 			testStepsQueryValidationChecks_calculation,
 			testStepsQueryValidationChecks_filter,
@@ -208,9 +209,8 @@ data "honeycombio_query_specification" "test" {
     op     = "COUNT"
     column = "we-should-not-specify-a-column-with-COUNT"
   }
-}
-`,
-		ExpectError: regexp.MustCompile("calculation op COUNT should not have an accompanying column"),
+}`,
+		ExpectError: regexp.MustCompile("column is not allowed with operator COUNT"),
 	},
 	{
 		Config: `
@@ -218,9 +218,8 @@ data "honeycombio_query_specification" "test" {
   calculation {
     op     = "AVG"
   }
-}
-`,
-		ExpectError: regexp.MustCompile("calculation op AVG is missing an accompanying column"),
+}`,
+		ExpectError: regexp.MustCompile("AVG requires a colum"),
 	},
 }
 
@@ -233,9 +232,8 @@ data "honeycombio_query_specification" "test" {
     op     = "exists"
     value  = "this-value-should-not-be-here"
   }
-}
-`,
-		ExpectError: regexp.MustCompile("filter operation exists must not contain a value"),
+}`,
+		ExpectError: regexp.MustCompile("exists does not take a value"),
 	},
 	{
 		Config: `
@@ -244,34 +242,8 @@ data "honeycombio_query_specification" "test" {
     column = "column"
     op     = ">"
   }
-}
-`,
-		ExpectError: regexp.MustCompile("filter operation > requires a value"),
-	},
-	{
-		Config: `
-data "honeycombio_query_specification" "test" {
-  filter {
-    column        = "column"
-    op            = ">"
-    value_string  = "1"
-    value_integer = 10
-  }
-}
-`,
-		ExpectError: regexp.MustCompile(multipleValuesError),
-	},
-	{
-		Config: `
-data "honeycombio_query_specification" "test" {
-  filter {
-    column        = "column"
-    op            = "in"
-    value_integer = 10
-  }
-}
-`,
-		ExpectError: regexp.MustCompile("value must be a string if filter op is 'in' or 'not-in'"),
+}`,
+		ExpectError: regexp.MustCompile("operator > requires a value"),
 	},
 }
 
@@ -283,15 +255,15 @@ data "honeycombio_query_specification" "test" {
 	return []resource.TestStep{
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, 0),
-			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
+			ExpectError: regexp.MustCompile("limit value must be between 1 and 1000"),
 		},
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, -5),
-			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
+			ExpectError: regexp.MustCompile("limit value must be between 1 and 1000"),
 		},
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, 1200),
-			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
+			ExpectError: regexp.MustCompile("limit value must be between 1 and 1000"),
 		},
 	}
 }
@@ -303,8 +275,7 @@ data "honeycombio_query_specification" "test" {
   time_range = 7200
   start_time = 1577836800
   end_time   = 1577844000
-}
-`,
+}`,
 		ExpectError: regexp.MustCompile("specify at most two of time_range, start_time and end_time"),
 	},
 	{
@@ -312,8 +283,7 @@ data "honeycombio_query_specification" "test" {
 data "honeycombio_query_specification" "test" {
   time_range  = 120
   granularity = 13
-}
-`,
+}`,
 		ExpectError: regexp.MustCompile("granularity can not be greater than time_range/10"),
 	},
 	{
@@ -321,8 +291,7 @@ data "honeycombio_query_specification" "test" {
 data "honeycombio_query_specification" "test" {
   time_range  = 60000
   granularity = 59
-}
-`,
+}`,
 		ExpectError: regexp.MustCompile("granularity can not be less than time_range/1000"),
 	},
 }
@@ -337,9 +306,8 @@ data "honeycombio_query_specification" "test" {
     op           = ">"
     value        = 1
   }
-}
-`,
-		ExpectError: regexp.MustCompile("calculate_op COUNT should not have an accompanying column"),
+}`,
+		ExpectError: regexp.MustCompile("COUNT should not have an accompanying column"),
 	},
 	{
 		Config: `
@@ -350,9 +318,8 @@ data "honeycombio_query_specification" "test" {
     op           = ">"
     value        = 1
   }
-}
-`,
-		ExpectError: regexp.MustCompile("calculate_op CONCURRENCY should not have an accompanying column"),
+}`,
+		ExpectError: regexp.MustCompile("CONCURRENCY should not have an accompanying column"),
 	},
 	{
 		Config: `
@@ -362,9 +329,8 @@ data "honeycombio_query_specification" "test" {
     op           = ">="
     value        = 1000
   }
-}
-`,
-		ExpectError: regexp.MustCompile("calculate_op P99 requires a column"),
+}`,
+		ExpectError: regexp.MustCompile("P99 requires a column"),
 	},
 	{
 		Config: `
@@ -375,9 +341,8 @@ data "honeycombio_query_specification" "test" {
     column       = "duration_ms"
     value        = "850"
   }
-}
-`,
-		ExpectError: regexp.MustCompile("having 0 without matching column in query"),
+}`,
+		ExpectError: regexp.MustCompile("P95 missing matching calculation"),
 	},
 }
 
@@ -389,10 +354,10 @@ func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {
 	return allSteps
 }
 
-func TestAccDataSourceHoneycombioQuery_filterOpInAndNotIn(t *testing.T) {
+func TestAcc_QuerySpecificationDataSource_filterOpInAndNotIn(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -418,9 +383,9 @@ data "honeycombio_query_specification" "test" {
 	})
 }
 
-func TestAccDataSourceHoneycombioQuery_zerovalue(t *testing.T) {
+func TestAcc_QuerySpecificationDataSource_zerovalue(t *testing.T) {
 	// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
-	expected, err := MinifyJSON(`
+	expected, err := test.MinifyJSON(`
 {
   "calculations": [
     {
@@ -440,7 +405,7 @@ func TestAccDataSourceHoneycombioQuery_zerovalue(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `

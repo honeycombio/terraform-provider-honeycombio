@@ -1,6 +1,10 @@
 package test
 
-import "math/rand"
+import (
+	"bytes"
+	"encoding/json"
+	"math/rand"
+)
 
 const alphaNumericChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -22,4 +26,14 @@ func RandomString(length int) string {
 //	RandomStringWithPrefix("test-", 10) => "test-abcde12345"
 func RandomStringWithPrefix(prefix string, length int) string {
 	return prefix + RandomString(length)
+}
+
+// MinifyJSON minifies a JSON string removing all whitespace and newlines
+func MinifyJSON(s string) (string, error) {
+	var buffer bytes.Buffer
+	err := json.Compact(&buffer, []byte(s))
+	if err != nil {
+		return "", err
+	}
+	return buffer.String(), nil
 }

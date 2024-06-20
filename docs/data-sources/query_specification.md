@@ -1,8 +1,9 @@
 # Data Source: honeycombio_query_specification
 
-Generates a [Query Specificaiton](https://docs.honeycomb.io/api/query-specification/) in JSON format.
+Generates a [Query Specification](https://docs.honeycomb.io/api/query-specification/) in JSON format for use with resources that expect a JSON-formatted Query Specification like [`honeycombio_query`](../resources/query.md).
 
-This is a data source which can be used to construct a JSON representation of a Honeycomb [Query Specification](https://docs.honeycomb.io/api/query-specification/). The `json` attribute contains a serialized JSON representation which can be passed to the `query_json` field of the [`honeycombio_query`](../resources/query.md) resource for use in boards and triggers.
+Using this data source to generate query specifications is optional.
+It is also valid to use literal JSON strings in your configuration or to use the file interpolation function to read a raw JSON query specification from a file.
 
 ## Example Usage
 
@@ -66,17 +67,13 @@ Each query configuration may have zero or more `filter` blocks, which each accep
 * `column` - (Required) The column to apply the filter to.
 * `op` - (Required) The operator to apply, see the supported list of filter operators at [Filter Operators](https://docs.honeycomb.io/api/query-specification/#filter-operators). Not all operators require a value.
 * `value` - (Optional) The value used for the filter. Not needed if op is `exists` or `not-exists`. Mutually exclusive with the other `value_*` options.
-* `value_string` - (Optional) Deprecated: use 'value' instead. The value used for the filter when the column is a string. Mutually exclusive with `value` and the other `value_*` options.
-* `value_integer` - (Optional) Deprecated: use 'value' instead. The value used for the filter when the column is an integer. Mutually exclusive with `value` and the other `value_*` options.
-* `value_float` - (Optional) Deprecated: use 'value' instead. The value used for the filter when the column is a float. Mutually exclusive with `value` and the other `value_*` options.
-* `value_boolean` - (Optional) Deprecated: use 'value' instead. The value used for the filter when the column is a boolean. Mutually exclusive with `value` and the other `value_*` options.
 
 * -> **NOTE** Filter op `in` and `not-in` expect an array of strings as value. Use the `value` attribute and pass the values in single string separated by `,` without additional spaces (similar to the query builder in the UI). For example: the list `foo`, `bar` becomes `foo,bar`.
 
 Each query configuration may have zero or more `order` blocks, which each accept the following arguments. An order term can refer to a `calculation` or a column set in `breakdowns`. When referring to a `calculation`, `op` and `column` must be the same as the calculation.
 
 * `op` - (Optional) The calculation operator to apply, see the supported list of calculation operators at [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators).
-* `column` - (Optional) Either a column present in `breakdown` or a column to `op` applies to.
+* `column` - (Optional) Either a column present in `breakdown` or a column that `op` applies to.
 * `order` - (Optional) The sort direction, if set must be `ascending` or `descending`.
 
 Each query configuration may have zero or more `having` blocks, which each accept the following arguments.

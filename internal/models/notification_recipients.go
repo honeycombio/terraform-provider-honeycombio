@@ -17,10 +17,12 @@ type NotificationRecipientDetailsModel struct {
 }
 
 var NotificationRecipientAttrType = map[string]attr.Type{
-	"id":                   types.StringType,
-	"type":                 types.StringType,
-	"target":               types.StringType,
-	"notification_details": types.ListType{ElemType: types.ObjectType{AttrTypes: NotificationRecipientDetailsAttrType}},
+	"id":     types.StringType,
+	"type":   types.StringType,
+	"target": types.StringType,
+	"notification_details": types.ListType{ElemType: types.ObjectType{
+		AttrTypes: NotificationRecipientDetailsAttrType,
+	}},
 }
 
 var NotificationRecipientDetailsAttrType = map[string]attr.Type{
