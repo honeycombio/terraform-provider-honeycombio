@@ -1,7 +1,7 @@
 # override installation to use a locally build provider in "tmp/providers"
 provider_installation {
   dev_overrides {
-    "honeycombio/honeycombio" = "./tmp/providers"
+    "honeycombio/honeycombio" = "/tmp/providers"
   }
 
   # For all other providers, install them directly from their origin provider
