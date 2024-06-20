@@ -25,17 +25,12 @@ data "honeycombio_query_specification" "example" {
   time_range = 1800
 }
 
-resource "honeycombio_query" "example" {
-  dataset    = var.dataset
-  query_json = data.honeycombio_query_specification.example.json
-}
-
 resource "honeycombio_trigger" "example" {
   name        = "Requests are slower than usual"
   description = "Average duration of all requests for the last 10 minutes."
 
-  query_id = honeycombio_query.example.id
-  dataset  = var.dataset
+  query_json = data.honeycombio_query_specification.example.json
+  dataset    = var.dataset
 
   frequency = 600 // in seconds, 10 minutes
 

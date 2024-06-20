@@ -21,17 +21,12 @@ data "honeycombio_query_specification" "query" {
     op     = "does-not-exist"
   }
   filter {
-    column       = "app.tenant"
-    op           = "="
-    value_string = "ThatSpecialTenant"
+    column = "app.tenant"
+    op     = "="
+    value  = "ThatSpecialTenant"
   }
 
   time_range = 900 // in seconds, 15 minutes
-}
-
-resource "honeycombio_query" "trigger-query" {
-  dataset    = var.dataset
-  query_json = data.honeycombio_query_specification.query.json
 }
 
 resource "honeycombio_trigger" "trigger" {
@@ -40,8 +35,8 @@ resource "honeycombio_trigger" "trigger" {
 
   disabled = false
 
-  query_id = honeycombio_query.trigger-query.id
-  dataset  = var.dataset
+  query_json = data.honeycombio_query_specification.query.json
+  dataset    = var.dataset
 
   frequency = 900 // in seconds, 15 minutes
 
