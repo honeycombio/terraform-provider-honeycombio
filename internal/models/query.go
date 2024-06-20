@@ -26,8 +26,6 @@ type QuerySpecificationModel struct {
 	Json              types.String                         `tfsdk:"json"` // Computed JSON query specification output
 }
 
-var QuerySpecificationBreakdownsAttrType = types.ListType{ElemType: types.StringType}
-
 type QuerySpecificationCalculationModel struct {
 	Column types.String `tfsdk:"column"`
 	Op     types.String `tfsdk:"op"`
