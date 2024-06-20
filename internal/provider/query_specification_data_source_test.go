@@ -1,4 +1,4 @@
-package honeycombio
+package provider
 
 import (
 	"fmt"
@@ -7,6 +7,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAccDataSourceHoneycombioQuery_EmptyDefaults(t *testing.T) {
@@ -32,7 +34,7 @@ output "query_json" {
 
 func TestAccDataSourceHoneycombioQuery_basic(t *testing.T) {
 	// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
-	expected, err := MinifyJSON(`
+	expected, err := test.MinifyJSON(`
 {
   "calculations": [
     {
@@ -394,7 +396,7 @@ data "honeycombio_query_specification" "test" {
 
 func TestAccDataSourceHoneycombioQuery_zerovalue(t *testing.T) {
 	// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
-	expected, err := MinifyJSON(`
+	expected, err := test.MinifyJSON(`
 {
   "calculations": [
     {
