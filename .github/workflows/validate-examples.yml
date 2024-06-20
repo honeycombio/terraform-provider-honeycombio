@@ -2,11 +2,11 @@ name: Validate Examples
 
 on:
     workflow_dispatch:
-        push:
-            paths-ignore:
-                - README.md
-                - CHANGELOG.md
-                - CONTRIBUTING.md
+    push:
+        paths-ignore:
+            - README.md
+            - CHANGELOG.md
+            - CONTRIBUTING.md
 
 jobs:
     validate:
@@ -14,7 +14,7 @@ jobs:
         name: Validate examples
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v5
 
             - name: Setup Go
               uses: actions/setup-go@v5
