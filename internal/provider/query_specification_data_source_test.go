@@ -129,9 +129,9 @@ data "honeycombio_query_specification" "test" {
         value  = 0
     }
     filter {
-        column        = "duration_ms"
-        op            = "<"
-        value_integer = 100
+        column = "duration_ms"
+        op     = "<"
+        value  = 100
     }
     filter {
         column = "app.tenant"
@@ -169,7 +169,7 @@ data "honeycombio_query_specification" "test" {
         value        = 1000
     }
 
-    limit 	    = 250
+    limit       = 250
     time_range  = 7200
     start_time  = 1577836800
     granularity = 30
@@ -210,7 +210,7 @@ data "honeycombio_query_specification" "test" {
   }
 }
 `,
-		ExpectError: regexp.MustCompile("calculation op COUNT should not have an accompanying column"),
+		ExpectError: regexp.MustCompile("column is not allowed with operator COUNT"),
 	},
 	{
 		Config: `
@@ -220,7 +220,7 @@ data "honeycombio_query_specification" "test" {
   }
 }
 `,
-		ExpectError: regexp.MustCompile("calculation op AVG is missing an accompanying column"),
+		ExpectError: regexp.MustCompile("AVG requires a colum"),
 	},
 }
 
@@ -235,7 +235,7 @@ data "honeycombio_query_specification" "test" {
   }
 }
 `,
-		ExpectError: regexp.MustCompile("filter operation exists must not contain a value"),
+		ExpectError: regexp.MustCompile("exists does not take a value"),
 	},
 	{
 		Config: `
@@ -246,32 +246,7 @@ data "honeycombio_query_specification" "test" {
   }
 }
 `,
-		ExpectError: regexp.MustCompile("filter operation > requires a value"),
-	},
-	{
-		Config: `
-data "honeycombio_query_specification" "test" {
-  filter {
-    column        = "column"
-    op            = ">"
-    value_string  = "1"
-    value_integer = 10
-  }
-}
-`,
-		ExpectError: regexp.MustCompile(multipleValuesError),
-	},
-	{
-		Config: `
-data "honeycombio_query_specification" "test" {
-  filter {
-    column        = "column"
-    op            = "in"
-    value_integer = 10
-  }
-}
-`,
-		ExpectError: regexp.MustCompile("value must be a string if filter op is 'in' or 'not-in'"),
+		ExpectError: regexp.MustCompile("operator > requires a value"),
 	},
 }
 
@@ -283,15 +258,15 @@ data "honeycombio_query_specification" "test" {
 	return []resource.TestStep{
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, 0),
-			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
+			ExpectError: regexp.MustCompile("limit value must be between 1 and 1000"),
 		},
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, -5),
-			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
+			ExpectError: regexp.MustCompile("limit value must be between 1 and 1000"),
 		},
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, 1200),
-			ExpectError: regexp.MustCompile(`expected limit to be in the range \(1 - 1000\)`),
+			ExpectError: regexp.MustCompile("limit value must be between 1 and 1000"),
 		},
 	}
 }
@@ -339,7 +314,7 @@ data "honeycombio_query_specification" "test" {
   }
 }
 `,
-		ExpectError: regexp.MustCompile("calculate_op COUNT should not have an accompanying column"),
+		ExpectError: regexp.MustCompile("COUNT should not have an accompanying column"),
 	},
 	{
 		Config: `
@@ -352,7 +327,7 @@ data "honeycombio_query_specification" "test" {
   }
 }
 `,
-		ExpectError: regexp.MustCompile("calculate_op CONCURRENCY should not have an accompanying column"),
+		ExpectError: regexp.MustCompile("CONCURRENCY should not have an accompanying column"),
 	},
 	{
 		Config: `
@@ -364,7 +339,7 @@ data "honeycombio_query_specification" "test" {
   }
 }
 `,
-		ExpectError: regexp.MustCompile("calculate_op P99 requires a column"),
+		ExpectError: regexp.MustCompile("P99 requires a column"),
 	},
 	{
 		Config: `
@@ -375,9 +350,8 @@ data "honeycombio_query_specification" "test" {
     column       = "duration_ms"
     value        = "850"
   }
-}
-`,
-		ExpectError: regexp.MustCompile("having 0 without matching column in query"),
+}`,
+		ExpectError: regexp.MustCompile("P95 missing matching calculation"),
 	},
 }
 

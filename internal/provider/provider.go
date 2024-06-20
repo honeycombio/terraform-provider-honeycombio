@@ -74,6 +74,7 @@ func (p *HoneycombioProvider) DataSources(ctx context.Context) []func() datasour
 		NewDerivedColumnsDataSource,
 		NewSLODataSource,
 		NewSLOsDataSource,
+		NewQuerySpecDataSource,
 	}
 }
 
