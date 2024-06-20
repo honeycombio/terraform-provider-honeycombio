@@ -2,7 +2,11 @@ name: Validate Examples
 
 on:
     workflow_dispatch:
-        push:
+    push:
+        paths-ignore:
+            - README.md
+            - CHANGELOG.md
+            - CONTRIBUTING.md
 
 jobs:
     validate:
@@ -10,7 +14,7 @@ jobs:
         name: Validate examples
         steps:
             - name: Checkout
-              uses: actions/checkout@v2
+              uses: actions/checkout@v4
 
             - name: Setup Go
               uses: actions/setup-go@v5
@@ -19,10 +23,10 @@ jobs:
                   cache: true
 
             - name: Build
-              run: go build -o tmp/providers/terraform-provider-honeycombio
+              run: go build -o /tmp/providers/terraform-provider-honeycombio
 
             - name: Validate examples
               env:
                   TF_IN_AUTOMATION: 1
-                  TF_CLI_CONFIG_FILE: ".terraformrc.local"
-              run: ./scripts/validate-examples example
+              run: |
+                  TF_CLI_CONFIG_FILE="$GITHUB_WORKSPACE/.terraformrc.local" ./scripts/validate-examples example
