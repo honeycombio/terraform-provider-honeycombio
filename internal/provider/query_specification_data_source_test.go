@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
@@ -14,7 +14,7 @@ import (
 func TestAcc_QuerySpecificationDataSource_EmptyDefaults(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -106,7 +106,7 @@ func TestAcc_QuerySpecificationDataSource_basic(t *testing.T) {
 	require.NoError(t, err)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -190,7 +190,7 @@ output "query_json" {
 func TestAcc_QuerySpecificationDataSource_validationChecks(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: appendAllTestSteps(
 			testStepsQueryValidationChecks_calculation,
 			testStepsQueryValidationChecks_filter,
@@ -357,7 +357,7 @@ func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {
 func TestAcc_QuerySpecificationDataSource_filterOpInAndNotIn(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -405,7 +405,7 @@ func TestAcc_QuerySpecificationDataSource_zerovalue(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
