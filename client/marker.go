@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 // Markers describes all the marker-related methods that the Honeycomb API
@@ -88,7 +90,7 @@ func (s *markers) Get(ctx context.Context, dataset string, id string) (*Marker, 
 			return &m, nil
 		}
 	}
-	return nil, DetailedError{
+	return nil, errors.DetailedError{
 		Status:  http.StatusNotFound,
 		Message: "Marker Not Found.",
 	}

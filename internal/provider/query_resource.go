@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/modifiers"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
@@ -41,7 +42,17 @@ func (*queryResource) Metadata(_ context.Context, req resource.MetadataRequest, 
 }
 
 func (r *queryResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	r.client = getClientFromResourceRequest(&req)
+	w := getClientFromResourceRequest(&req)
+	if w == nil {
+		return
+	}
+
+	c, err := w.V1Client()
+	if err != nil || c == nil {
+		resp.Diagnostics.AddError("Failed to configure client", err.Error())
+		return
+	}
+	r.client = c
 }
 
 func (*queryResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -131,7 +142,7 @@ func (r *queryResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
-	var detailedErr client.DetailedError
+	var detailedErr hnyerr.DetailedError
 	query, err := r.client.Queries.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {

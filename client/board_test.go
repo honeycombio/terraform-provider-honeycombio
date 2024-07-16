@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
@@ -139,7 +140,7 @@ func TestBoards(t *testing.T) {
 	t.Run("Fail to get deleted Board", func(t *testing.T) {
 		_, err := c.Boards.Get(ctx, b.ID)
 
-		var de client.DetailedError
+		var de errors.DetailedError
 		require.Error(t, err)
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

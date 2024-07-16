@@ -2,6 +2,7 @@ package honeycombio
 
 import (
 	"context"
+	"errors"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -23,6 +24,18 @@ func Provider(version string) *schema.Provider {
 			"api_key": {
 				Type:        schema.TypeString,
 				Description: "The Honeycomb API key to use. It can also be set via the `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variables.",
+				Optional:    true,
+				Sensitive:   true,
+			},
+			"api_key_id": { // unused in the provider but required to be set for the MuxServer
+				Type:        schema.TypeString,
+				Description: "The ID portion of the Honeycomb Management API key to use. It can also be set via the `HONEYCOMB_KEY_ID` environment variable.",
+				Optional:    true,
+				Sensitive:   false,
+			},
+			"api_key_secret": { // unused in the provider but required to be set for the MuxServer
+				Type:        schema.TypeString,
+				Description: "The secret portion of the Honeycomb Management API key to use. It can also be set via the `HONEYCOMB_KEY_SECRET` environment variable.",
 				Optional:    true,
 				Sensitive:   true,
 			},
@@ -79,28 +92,34 @@ func Provider(version string) *schema.Provider {
 			debug = v.(bool)
 		}
 
-		// API Key cannot be determined
-		if apiKey == "" {
-			return nil, diag.Errorf(
-				"Unknown Honeycomb API Key.\n\n" +
-					"The provider cannot create the Honeycomb client as there is an unknown configuration value for the Honeycomb API Key. " +
-					"Either target apply the source of the value first, set the value statically in the configuration, or use the HONEYCOMB_API_KEY environment variable.",
-			)
+		// if the API key is set, use it to create the client
+		// we now rely on the Framework version of the provider to validate the configuration
+		if apiKey != "" {
+			config := &honeycombio.Config{
+				APIKey:    apiKey,
+				APIUrl:    d.Get("api_url").(string),
+				UserAgent: provider.UserAgent("terraform-provider-honeycombio", version),
+				Debug:     debug,
+			}
+			c, err := honeycombio.NewClientWithConfig(config)
+			if err != nil {
+				return nil, diag.FromErr(err)
+			}
+			return c, nil
 		}
 
-		config := &honeycombio.Config{
-			APIKey:    apiKey,
-			APIUrl:    d.Get("api_url").(string),
-			UserAgent: provider.UserAgent("terraform-provider-honeycombio", version),
-			Debug:     debug,
-		}
-		c, err := honeycombio.NewClientWithConfig(config)
-		if err != nil {
-			return nil, diag.FromErr(err)
-		}
-
-		return c, nil
+		return nil, nil
 	}
 
 	return provider
+}
+
+func getConfiguredClient(meta any) (*honeycombio.Client, error) {
+	client, ok := meta.(*honeycombio.Client)
+	if !ok || client == nil {
+		return nil, errors.New("No v1 API client configured for this provider. " +
+			"Set the `api_key` attribute in the provider's configuration, " +
+			"or set the HONEYCOMB_API_KEY environment variable.")
+	}
+	return client, nil
 }

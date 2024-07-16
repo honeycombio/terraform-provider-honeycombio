@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 // MarkerSettings describes all the markerType-related methods that the Honeycomb API
@@ -75,7 +77,7 @@ func (s *markerSettings) Get(ctx context.Context, dataset string, id string) (*M
 			return &m, nil
 		}
 	}
-	return nil, DetailedError{
+	return nil, errors.DetailedError{
 		Status:  http.StatusNotFound,
 		Message: "Marker Setting Not Found.",
 	}

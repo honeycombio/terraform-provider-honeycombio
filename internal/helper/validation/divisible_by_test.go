@@ -53,7 +53,7 @@ func Test_BetweenValidator(t *testing.T) {
 				ConfigValue:    test.val,
 			}
 			response := validator.Int64Response{}
-			validation.Int64DivisibleBy(test.divisor).ValidateInt64(context.TODO(), request, &response)
+			validation.Int64DivisibleBy(test.divisor).ValidateInt64(context.Background(), request, &response)
 
 			if !response.Diagnostics.HasError() && test.expectError {
 				t.Fatal("expected error, got no error")

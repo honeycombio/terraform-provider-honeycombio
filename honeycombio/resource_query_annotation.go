@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func newQueryAnnotation() *schema.Resource {
@@ -54,11 +55,14 @@ func buildQueryAnnotation(d *schema.ResourceData) *honeycombio.QueryAnnotation {
 }
 
 func resourceQueryAnnotationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 	dataset := d.Get("dataset").(string)
 	queryAnnotation := buildQueryAnnotation(d)
 
-	queryAnnotation, err := client.QueryAnnotations.Create(ctx, dataset, queryAnnotation)
+	queryAnnotation, err = client.QueryAnnotations.Create(ctx, dataset, queryAnnotation)
 	if err != nil {
 		return diagFromErr(err)
 	}
@@ -68,11 +72,14 @@ func resourceQueryAnnotationCreate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceQueryAnnotationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 	dataset := d.Get("dataset").(string)
 	queryAnnotation := buildQueryAnnotation(d)
 
-	_, err := client.QueryAnnotations.Update(ctx, dataset, queryAnnotation)
+	_, err = client.QueryAnnotations.Update(ctx, dataset, queryAnnotation)
 	if err != nil {
 		return diagFromErr(err)
 	}
@@ -81,10 +88,13 @@ func resourceQueryAnnotationUpdate(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceQueryAnnotationDestroy(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 	dataset := d.Get("dataset").(string)
 
-	err := client.QueryAnnotations.Delete(ctx, dataset, d.Id())
+	err = client.QueryAnnotations.Delete(ctx, dataset, d.Id())
 	if err != nil {
 		return diagFromErr(err)
 	}
@@ -92,10 +102,13 @@ func resourceQueryAnnotationDestroy(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceQueryAnnotationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 	dataset := d.Get("dataset").(string)
 
-	var detailedErr honeycombio.DetailedError
+	var detailedErr hnyerr.DetailedError
 	queryAnnotation, err := client.QueryAnnotations.Get(ctx, dataset, d.Id())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {

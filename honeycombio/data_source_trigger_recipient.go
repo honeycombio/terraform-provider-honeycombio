@@ -35,7 +35,10 @@ func dataSourceHoneycombioSlackRecipient() *schema.Resource {
 }
 
 func dataSourceHoneycombioSlackRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 	dataset := d.Get("dataset").(string)
 
 	triggers, err := client.Triggers.List(ctx, dataset)

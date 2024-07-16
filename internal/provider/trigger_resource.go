@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/modifiers"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
@@ -214,8 +215,18 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	}
 }
 
-func (r *triggerResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
-	r.client = getClientFromResourceRequest(&req)
+func (r *triggerResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	w := getClientFromResourceRequest(&req)
+	if w == nil {
+		return
+	}
+
+	c, err := w.V1Client()
+	if err != nil || c == nil {
+		resp.Diagnostics.AddError("Failed to configure client", err.Error())
+		return
+	}
+	r.client = c
 }
 
 func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -305,7 +316,7 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	var detailedErr client.DetailedError
+	var detailedErr hnyerr.DetailedError
 	trigger, err := r.client.Triggers.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -455,7 +466,7 @@ func (r *triggerResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	var detailedErr client.DetailedError
+	var detailedErr hnyerr.DetailedError
 	err := r.client.Triggers.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if err != nil {
 		if errors.As(err, &detailedErr) {

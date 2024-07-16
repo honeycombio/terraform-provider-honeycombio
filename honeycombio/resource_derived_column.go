@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func newDerivedColumn() *schema.Resource {
@@ -61,12 +62,15 @@ func resourceDerivedColumnImport(ctx context.Context, d *schema.ResourceData, i 
 }
 
 func resourceDerivedColumnCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	derivedColumn := readDerivedColumn(d)
 
-	derivedColumn, err := client.DerivedColumns.Create(ctx, dataset, derivedColumn)
+	derivedColumn, err = client.DerivedColumns.Create(ctx, dataset, derivedColumn)
 	if err != nil {
 		return diagFromErr(err)
 	}
@@ -76,11 +80,14 @@ func resourceDerivedColumnCreate(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
-	var detailedErr honeycombio.DetailedError
+	var detailedErr hnyerr.DetailedError
 	derivedColumn, err := client.DerivedColumns.GetByAlias(ctx, dataset, d.Get("alias").(string))
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -101,12 +108,15 @@ func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceDerivedColumnUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	derivedColumn := readDerivedColumn(d)
 
-	derivedColumn, err := client.DerivedColumns.Update(ctx, dataset, derivedColumn)
+	derivedColumn, err = client.DerivedColumns.Update(ctx, dataset, derivedColumn)
 	if err != nil {
 		return diagFromErr(err)
 	}
@@ -116,11 +126,14 @@ func resourceDerivedColumnUpdate(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceDerivedColumnDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
-	err := client.DerivedColumns.Delete(ctx, dataset, d.Id())
+	err = client.DerivedColumns.Delete(ctx, dataset, d.Id())
 	if err != nil {
 		return diagFromErr(err)
 	}

@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func coerceValueToType(i string) interface{} {
@@ -57,7 +58,10 @@ func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*hone
 }
 
 func createRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	r, err := expandRecipient(t, d)
 	if err != nil {
@@ -74,9 +78,12 @@ func createRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
-	var detailedErr honeycombio.DetailedError
+	var detailedErr hnyerr.DetailedError
 	r, err := client.Recipients.Get(ctx, d.Id())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -113,7 +120,10 @@ func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}
 }
 
 func updateRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	r, err := expandRecipient(t, d)
 	if err != nil {
@@ -130,9 +140,12 @@ func updateRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func deleteRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
-	err := client.Recipients.Delete(ctx, d.Id())
+	err = client.Recipients.Delete(ctx, d.Id())
 	if err != nil {
 		return diagFromErr(err)
 	}
@@ -218,7 +231,7 @@ func diagFromErr(err error) diag.Diagnostics {
 		return nil
 	}
 
-	var detailedErr honeycombio.DetailedError
+	var detailedErr hnyerr.DetailedError
 	if errors.As(err, &detailedErr) {
 		return diagFromDetailedErr(detailedErr)
 	}
@@ -226,7 +239,7 @@ func diagFromErr(err error) diag.Diagnostics {
 	return diag.FromErr(err)
 }
 
-func diagFromDetailedErr(err honeycombio.DetailedError) diag.Diagnostics {
+func diagFromDetailedErr(err hnyerr.DetailedError) diag.Diagnostics {
 	diags := make(diag.Diagnostics, 0, len(err.Details)+1)
 	if len(err.Details) > 0 {
 		for _, d := range err.Details {

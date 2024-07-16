@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 )
 
@@ -53,11 +54,14 @@ func newDatasetDefinition() *schema.Resource {
 }
 
 func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
-	var detailedErr honeycombio.DetailedError
+	var detailedErr hnyerr.DetailedError
 	dd, err := client.DatasetDefinitions.Get(ctx, dataset)
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -82,14 +86,17 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	name := d.Get("name").(string)
 	value := d.Get("column").(string)
 
 	dd := expandDatasetDefinition(name, value)
-	_, err := client.DatasetDefinitions.Update(ctx, dataset, dd)
+	_, err = client.DatasetDefinitions.Update(ctx, dataset, dd)
 	if err != nil {
 		return diagFromErr(err)
 	}
@@ -98,14 +105,17 @@ func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	name := d.Get("name").(string)
 
 	// 'deleting' a definition is really resetting it
 	dd := expandDatasetDefinition(name, "")
-	_, err := client.DatasetDefinitions.Update(ctx, dataset, dd)
+	_, err = client.DatasetDefinitions.Update(ctx, dataset, dd)
 	if err != nil {
 		return diagFromErr(err)
 	}

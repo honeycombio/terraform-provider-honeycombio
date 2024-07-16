@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
@@ -95,7 +96,7 @@ func TestColumns(t *testing.T) {
 	t.Run("Fail to get deleted Column", func(t *testing.T) {
 		_, err := c.Columns.Get(ctx, dataset, column.ID)
 
-		var de client.DetailedError
+		var de errors.DetailedError
 		require.Error(t, err)
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

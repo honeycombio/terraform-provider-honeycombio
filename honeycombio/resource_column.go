@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
@@ -98,7 +99,10 @@ func resourceColumnImport(ctx context.Context, d *schema.ResourceData, i interfa
 }
 
 func resourceColumnCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
@@ -112,7 +116,10 @@ func resourceColumnCreate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceColumnRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	// if name is not set, try to get key_name.
@@ -123,7 +130,7 @@ func resourceColumnRead(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 
 	// we read by name here to facilitate importing by name instead of ID
-	var detailedErr honeycombio.DetailedError
+	var detailedErr hnyerr.DetailedError
 	column, err := client.Columns.GetByKeyName(ctx, dataset, columnName)
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -149,7 +156,10 @@ func resourceColumnRead(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func resourceColumnUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
@@ -163,11 +173,14 @@ func resourceColumnUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func resourceColumnDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
-	err := client.Columns.Delete(ctx, dataset, d.Id())
+	err = client.Columns.Delete(ctx, dataset, d.Id())
 	if err != nil {
 		return diagFromErr(err)
 	}

@@ -134,7 +134,10 @@ If you want to match multiple recipients, use the 'honeycombio_recipients' data 
 }
 
 func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	rcpts, err := client.Recipients.List(ctx)
 	if err != nil {

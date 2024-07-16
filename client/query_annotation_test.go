@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func TestQueryAnnotations(t *testing.T) {
@@ -81,7 +82,7 @@ func TestQueryAnnotations(t *testing.T) {
 	t.Run("Fail to Get deleted Query Annotation", func(t *testing.T) {
 		_, err := c.QueryAnnotations.Get(ctx, dataset, queryAnnotation.ID)
 
-		var de client.DetailedError
+		var de errors.DetailedError
 		require.Error(t, err)
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

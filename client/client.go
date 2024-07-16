@@ -19,6 +19,8 @@ import (
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
+
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 const (
@@ -221,7 +223,7 @@ func (c *Client) Do(ctx context.Context, method, path string, requestBody, respo
 	defer resp.Body.Close()
 
 	if !(resp.StatusCode >= 200 && resp.StatusCode <= 299) {
-		return errorFromResponse(resp)
+		return hnyerr.FromResponse(resp)
 	}
 	if responseBody != nil {
 		err = json.NewDecoder(resp.Body).Decode(responseBody)

@@ -47,7 +47,7 @@ func Test_QuerySpecValidator(t *testing.T) {
 				ConfigValue:    test.val,
 			}
 			response := validator.StringResponse{}
-			validation.ValidQuerySpec().ValidateString(context.TODO(), request, &response)
+			validation.ValidQuerySpec().ValidateString(context.Background(), request, &response)
 
 			if !response.Diagnostics.HasError() && test.expectError {
 				t.Fatal("expected error, got no error")

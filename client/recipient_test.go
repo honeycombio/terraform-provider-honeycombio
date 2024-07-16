@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
@@ -73,7 +74,7 @@ func TestRecipientsEmail(t *testing.T) {
 	t.Run("Fail to Get deleted Recipient", func(t *testing.T) {
 		_, err := c.Recipients.Get(ctx, rcpt.ID)
 
-		var de client.DetailedError
+		var de errors.DetailedError
 		require.Error(t, err)
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

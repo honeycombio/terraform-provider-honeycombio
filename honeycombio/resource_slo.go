@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
@@ -80,7 +81,10 @@ func resourceSLOImport(ctx context.Context, d *schema.ResourceData, i interface{
 }
 
 func resourceSLOCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	s, err := expandSLO(d)
@@ -98,11 +102,14 @@ func resourceSLOCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
-	var detailedErr honeycombio.DetailedError
+	var detailedErr hnyerr.DetailedError
 	s, err := client.SLOs.Get(ctx, dataset, d.Id())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -126,7 +133,10 @@ func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func resourceSLOUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	s, err := expandSLO(d)
@@ -144,11 +154,14 @@ func resourceSLOUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func resourceSLODelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
-	err := client.SLOs.Delete(ctx, dataset, d.Id())
+	err = client.SLOs.Delete(ctx, dataset, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

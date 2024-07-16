@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func TestDatasets(t *testing.T) {
@@ -55,7 +56,7 @@ func TestDatasets(t *testing.T) {
 	t.Run("Fail to Get bogus Dataset", func(t *testing.T) {
 		_, err := c.Datasets.Get(ctx, "does-not-exist")
 
-		var de client.DetailedError
+		var de errors.DetailedError
 		require.Error(t, err)
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

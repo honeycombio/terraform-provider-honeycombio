@@ -109,8 +109,18 @@ func (d *slosDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 	}
 }
 
-func (d *slosDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
-	d.client = getClientFromDatasourceRequest(&req)
+func (d *slosDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	w := getClientFromDatasourceRequest(&req)
+	if w == nil {
+		return
+	}
+
+	c, err := w.V1Client()
+	if err != nil || c == nil {
+		resp.Diagnostics.AddError("Failed to configure client", err.Error())
+		return
+	}
+	d.client = c
 }
 
 func (d *slosDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func newMarkerSetting() *schema.Resource {
@@ -52,7 +53,10 @@ func newMarkerSetting() *schema.Resource {
 }
 
 func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
@@ -72,9 +76,12 @@ func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
-	var detailedErr honeycombio.DetailedError
+	var detailedErr hnyerr.DetailedError
 	markerSetting, err := client.MarkerSettings.Get(ctx, d.Get("dataset").(string), d.Id())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -96,7 +103,10 @@ func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func resourceMarkerSettingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	markerType := d.Get("type").(string)
@@ -116,11 +126,14 @@ func resourceMarkerSettingUpdate(ctx context.Context, d *schema.ResourceData, me
 }
 
 func resourceMarkerSettingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
-	err := client.MarkerSettings.Delete(ctx, dataset, d.Id())
+	err = client.MarkerSettings.Delete(ctx, dataset, d.Id())
 	if err != nil {
 		return diagFromErr(err)
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
@@ -132,7 +133,7 @@ func TestTriggers(t *testing.T) {
 	t.Run("Fail to Get deleted Trigger", func(t *testing.T) {
 		_, err := c.Triggers.Get(ctx, dataset, trigger.ID)
 
-		var de client.DetailedError
+		var de hnyerr.DetailedError
 		require.Error(t, err)
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

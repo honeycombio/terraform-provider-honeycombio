@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
@@ -45,7 +46,17 @@ func (*burnAlertResource) Metadata(_ context.Context, req resource.MetadataReque
 }
 
 func (r *burnAlertResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	r.client = getClientFromResourceRequest(&req)
+	w := getClientFromResourceRequest(&req)
+	if w == nil {
+		return
+	}
+
+	c, err := w.V1Client()
+	if err != nil || c == nil {
+		resp.Diagnostics.AddError("Failed to configure client", err.Error())
+		return
+	}
+	r.client = c
 }
 
 func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -284,7 +295,7 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	// Read the burn alert, using the values from state
-	var detailedErr client.DetailedError
+	var detailedErr hnyerr.DetailedError
 	burnAlert, err := r.client.BurnAlerts.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -407,7 +418,7 @@ func (r *burnAlertResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 
 	// Delete the burn alert, using the values from state
-	var detailedErr client.DetailedError
+	var detailedErr hnyerr.DetailedError
 	err := r.client.BurnAlerts.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if err != nil {
 		if errors.As(err, &detailedErr) {
