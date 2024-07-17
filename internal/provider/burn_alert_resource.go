@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
@@ -295,7 +294,7 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	// Read the burn alert, using the values from state
-	var detailedErr hnyerr.DetailedError
+	var detailedErr client.DetailedError
 	burnAlert, err := r.client.BurnAlerts.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -418,7 +417,7 @@ func (r *burnAlertResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 
 	// Delete the burn alert, using the values from state
-	var detailedErr hnyerr.DetailedError
+	var detailedErr client.DetailedError
 	err := r.client.BurnAlerts.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if err != nil {
 		if errors.As(err, &detailedErr) {

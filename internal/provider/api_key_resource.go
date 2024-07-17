@@ -18,7 +18,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	hny "github.com/honeycombio/terraform-provider-honeycombio/client"
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
@@ -182,7 +183,7 @@ func (r *apiKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	var detailedErr hnyerr.DetailedError
+	var detailedErr hny.DetailedError
 	key, err := r.client.APIKeys.Get(ctx, state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -266,7 +267,7 @@ func (r *apiKeyResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	}
 
 	err := r.client.APIKeys.Delete(ctx, state.ID.ValueString())
-	var detailedErr hnyerr.DetailedError
+	var detailedErr client.DetailedError
 	if err != nil {
 		if errors.As(err, &detailedErr) {
 			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(

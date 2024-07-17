@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func newDerivedColumn() *schema.Resource {
@@ -87,7 +86,7 @@ func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta
 
 	dataset := d.Get("dataset").(string)
 
-	var detailedErr hnyerr.DetailedError
+	var detailedErr honeycombio.DetailedError
 	derivedColumn, err := client.DerivedColumns.GetByAlias(ctx, dataset, d.Get("alias").(string))
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {

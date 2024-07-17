@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func newMarker() *schema.Resource {
@@ -71,7 +70,7 @@ func resourceMarkerRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diagFromErr(err)
 	}
 
-	var detailedErr hnyerr.DetailedError
+	var detailedErr honeycombio.DetailedError
 	marker, err := client.Markers.Get(ctx, d.Get("dataset").(string), d.Id())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {

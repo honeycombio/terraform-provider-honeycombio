@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
+	hnyclient "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 const (
@@ -117,7 +117,7 @@ func TestClient_AuthInfo(t *testing.T) {
 			UserAgent:    testUserAgent,
 		})
 
-		var de errors.DetailedError
+		var de hnyclient.DetailedError
 		require.ErrorAs(t, err, &de)
 		assert.Equal(t, http.StatusUnauthorized, de.Status)
 	})

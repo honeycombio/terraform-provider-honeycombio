@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-querystring/query"
 	"github.com/hashicorp/jsonapi"
 
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
+	hnyclient "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 type PaginationLinks struct {
@@ -89,7 +89,7 @@ func (p *Pager[T]) Next(ctx context.Context) ([]*T, error) {
 	}
 
 	if r.StatusCode != http.StatusOK {
-		return nil, hnyerr.FromResponse(r)
+		return nil, hnyclient.FromResponse(r)
 	}
 	pagination, err := parsePagination(r)
 	if err != nil {

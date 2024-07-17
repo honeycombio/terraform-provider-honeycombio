@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func newDataset() *schema.Resource {
@@ -86,7 +85,7 @@ func resourceDatasetRead(ctx context.Context, d *schema.ResourceData, meta inter
 		return diagFromErr(err)
 	}
 
-	var detailedErr hnyerr.DetailedError
+	var detailedErr honeycombio.DetailedError
 	dataset, err := client.Datasets.Get(ctx, d.Id())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {

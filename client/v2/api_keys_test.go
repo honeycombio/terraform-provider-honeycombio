@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
+	hnyclient "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
@@ -69,7 +69,7 @@ func TestClient_APIKeys(t *testing.T) {
 
 	// verify that the key was deleted
 	_, err = c.APIKeys.Get(ctx, k.ID)
-	var de errors.DetailedError
+	var de hnyclient.DetailedError
 	require.ErrorAs(t, err, &de)
 	assert.True(t, de.IsNotFound())
 }

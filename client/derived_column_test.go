@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
-	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
@@ -46,7 +45,7 @@ func TestDerivedColumns(t *testing.T) {
 		}
 		_, err = c.DerivedColumns.Create(ctx, dataset, data)
 
-		var de errors.DetailedError
+		var de client.DetailedError
 		require.Error(t, err)
 		require.ErrorAs(t, err, &de)
 		assert.Equal(t, http.StatusConflict, de.Status)
@@ -98,7 +97,7 @@ func TestDerivedColumns(t *testing.T) {
 	t.Run("Fail to Get Deleted DC", func(t *testing.T) {
 		_, err := c.DerivedColumns.Get(ctx, dataset, derivedColumn.ID)
 
-		var de errors.DetailedError
+		var de client.DetailedError
 		require.Error(t, err)
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

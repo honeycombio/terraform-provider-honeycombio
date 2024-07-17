@@ -7,13 +7,13 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
+	hnyclient "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 // DetailedErrorDiagnostic is a Diagnostic which nicely wraps a client.DetailedError
 type DetailedErrorDiagnostic struct {
 	summary string
-	e       *hnyerr.DetailedError
+	e       *hnyclient.DetailedError
 }
 
 // compile-time check that DetailedErrorDiagnostic implements diag.Diagnostic
@@ -21,7 +21,7 @@ var _ diag.Diagnostic = DetailedErrorDiagnostic{}
 
 // NewDetailedErrorDiagnostic creates a new DetailedErrorDiagnostic
 // taking a context-specific summary of the action and a DetailedError.
-func NewDetailedErrorDiagnostic(summary string, e *hnyerr.DetailedError) DetailedErrorDiagnostic {
+func NewDetailedErrorDiagnostic(summary string, e *hnyclient.DetailedError) DetailedErrorDiagnostic {
 	return DetailedErrorDiagnostic{
 		e:       e,
 		summary: summary,
@@ -40,7 +40,7 @@ func AddDiagnosticOnError(diag *diag.Diagnostics, summary string, err error) boo
 		return false
 	}
 
-	var detailedErr *hnyerr.DetailedError
+	var detailedErr *hnyclient.DetailedError
 	if errors.As(err, &detailedErr) {
 		diag.Append(DetailedErrorDiagnostic{
 			summary: "Error " + summary,

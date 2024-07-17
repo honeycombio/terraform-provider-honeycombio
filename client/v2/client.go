@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/jsonapi"
 
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
+	hnyclient "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 const (
@@ -158,7 +158,7 @@ func (c *Client) AuthInfo(ctx context.Context) (*AuthMetadata, error) {
 		return nil, err
 	}
 	if r.StatusCode != http.StatusOK {
-		return nil, hnyerr.FromResponse(r)
+		return nil, hnyclient.FromResponse(r)
 	}
 
 	auth := new(AuthMetadata)

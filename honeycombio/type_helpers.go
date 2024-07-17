@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func coerceValueToType(i string) interface{} {
@@ -83,7 +82,7 @@ func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}
 		return diagFromErr(err)
 	}
 
-	var detailedErr hnyerr.DetailedError
+	var detailedErr honeycombio.DetailedError
 	r, err := client.Recipients.Get(ctx, d.Id())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
@@ -231,7 +230,7 @@ func diagFromErr(err error) diag.Diagnostics {
 		return nil
 	}
 
-	var detailedErr hnyerr.DetailedError
+	var detailedErr honeycombio.DetailedError
 	if errors.As(err, &detailedErr) {
 		return diagFromDetailedErr(detailedErr)
 	}
@@ -239,7 +238,7 @@ func diagFromErr(err error) diag.Diagnostics {
 	return diag.FromErr(err)
 }
 
-func diagFromDetailedErr(err hnyerr.DetailedError) diag.Diagnostics {
+func diagFromDetailedErr(err honeycombio.DetailedError) diag.Diagnostics {
 	diags := make(diag.Diagnostics, 0, len(err.Details)+1)
 	if len(err.Details) > 0 {
 		for _, d := range err.Details {

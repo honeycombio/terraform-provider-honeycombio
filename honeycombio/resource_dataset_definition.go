@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 )
 
@@ -61,7 +60,7 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 
 	dataset := d.Get("dataset").(string)
 
-	var detailedErr hnyerr.DetailedError
+	var detailedErr honeycombio.DetailedError
 	dd, err := client.DatasetDefinitions.Get(ctx, dataset)
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {

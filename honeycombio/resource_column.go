@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
@@ -130,7 +129,7 @@ func resourceColumnRead(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 
 	// we read by name here to facilitate importing by name instead of ID
-	var detailedErr hnyerr.DetailedError
+	var detailedErr honeycombio.DetailedError
 	column, err := client.Columns.GetByKeyName(ctx, dataset, columnName)
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {

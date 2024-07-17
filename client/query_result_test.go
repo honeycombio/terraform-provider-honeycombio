@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
-	"github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 )
 
 func TestQueryResults(t *testing.T) {
@@ -55,7 +54,7 @@ func TestQueryResults(t *testing.T) {
 	t.Run("Fail to Get bogus Query Result", func(t *testing.T) {
 		err := c.QueryResults.Get(ctx, dataset, &client.QueryResult{ID: "abcd1234"})
 
-		var de errors.DetailedError
+		var de client.DetailedError
 		require.Error(t, err)
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
-	hnyerr "github.com/honeycombio/terraform-provider-honeycombio/client/errors"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
@@ -190,7 +189,7 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diagFromErr(err)
 	}
 
-	var detailedErr hnyerr.DetailedError
+	var detailedErr honeycombio.DetailedError
 	b, err := client.Boards.Get(ctx, d.Id())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
