@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/jsonapi"
 )
 
+// DetailedError is an RFC7807 'Problem Detail' formatted error message.
 type DetailedError struct {
 	// The HTTP status code of the error.
 	Status int `json:"status,omitempty"`
@@ -81,7 +82,7 @@ func (e DetailedError) Error() string {
 	return e.Message
 }
 
-func FromResponse(r *http.Response) error {
+func ErrorFromResponse(r *http.Response) error {
 	if r == nil {
 		return errors.New("invalid response")
 	}

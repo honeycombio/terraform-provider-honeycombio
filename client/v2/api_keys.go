@@ -41,7 +41,7 @@ func (a *apiKeys) Create(ctx context.Context, k *APIKey) (*APIKey, error) {
 		return nil, err
 	}
 	if r.StatusCode != http.StatusCreated {
-		return nil, hnyclient.FromResponse(r)
+		return nil, hnyclient.ErrorFromResponse(r)
 	}
 
 	key := new(APIKey)
@@ -61,7 +61,7 @@ func (a *apiKeys) Get(ctx context.Context, id string) (*APIKey, error) {
 		return nil, err
 	}
 	if r.StatusCode != http.StatusOK {
-		return nil, hnyclient.FromResponse(r)
+		return nil, hnyclient.ErrorFromResponse(r)
 	}
 
 	key := new(APIKey)
@@ -81,7 +81,7 @@ func (a *apiKeys) Update(ctx context.Context, k *APIKey) (*APIKey, error) {
 		return nil, err
 	}
 	if r.StatusCode != http.StatusOK {
-		return nil, hnyclient.FromResponse(r)
+		return nil, hnyclient.ErrorFromResponse(r)
 	}
 
 	key := new(APIKey)
@@ -101,7 +101,7 @@ func (a *apiKeys) Delete(ctx context.Context, id string) error {
 		return err
 	}
 	if r.StatusCode != http.StatusNoContent {
-		return hnyclient.FromResponse(r)
+		return hnyclient.ErrorFromResponse(r)
 	}
 	return nil
 }

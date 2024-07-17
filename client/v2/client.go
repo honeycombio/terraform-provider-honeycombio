@@ -158,7 +158,7 @@ func (c *Client) AuthInfo(ctx context.Context) (*AuthMetadata, error) {
 		return nil, err
 	}
 	if r.StatusCode != http.StatusOK {
-		return nil, hnyclient.FromResponse(r)
+		return nil, hnyclient.ErrorFromResponse(r)
 	}
 
 	auth := new(AuthMetadata)

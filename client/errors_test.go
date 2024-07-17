@@ -12,6 +12,50 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
+func TestClient_ParseDetailedError(t *testing.T) {
+	t.Parallel()
+
+	var de client.DetailedError
+	ctx := context.Background()
+	c := newTestClient(t)
+
+	t.Run("Post with no body should fail with 400 unparseable", func(t *testing.T) {
+		err := c.Do(ctx, "POST", "/1/boards/", nil, nil)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
+		assert.Equal(t, http.StatusBadRequest, de.Status)
+		assert.Equal(t, fmt.Sprintf("%s/problems/unparseable", c.EndpointURL()), de.Type)
+		assert.Equal(t, "The request body could not be parsed.", de.Title)
+		assert.Equal(t, "could not parse request body", de.Message)
+	})
+
+	t.Run("Get into non-existent dataset should fail with 404 'Dataset not found'", func(t *testing.T) {
+		_, err := c.Markers.Get(ctx, "non-existent-dataset", "abcd1234")
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
+		assert.Equal(t, http.StatusNotFound, de.Status)
+		assert.Equal(t, fmt.Sprintf("%s/problems/not-found", c.EndpointURL()), de.Type)
+		assert.Equal(t, "The requested resource cannot be found.", de.Title)
+		assert.Equal(t, "Dataset not found", de.Message)
+	})
+
+	t.Run("Creating a dataset without a name should return a validation error", func(t *testing.T) {
+		createDatasetRequest := &client.Dataset{}
+		_, err := c.Datasets.Create(ctx, createDatasetRequest)
+		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
+		assert.Equal(t, http.StatusUnprocessableEntity, de.Status)
+		assert.Equal(t, fmt.Sprintf("%s/problems/validation-failed", c.EndpointURL()), de.Type)
+		assert.Equal(t, "The provided input is invalid.", de.Title)
+		assert.Equal(t, "The provided input is invalid.", de.Message)
+		assert.Len(t, de.Details, 1)
+		assert.Equal(t, "missing", de.Details[0].Code)
+		assert.Equal(t, "name", de.Details[0].Field)
+		assert.Equal(t, "cannot be blank", de.Details[0].Description)
+		assert.Equal(t, "missing name - cannot be blank", de.Error())
+	})
+}
+
 func TestErrors_DetailedError_Error(t *testing.T) {
 	t.Parallel()
 
@@ -146,48 +190,4 @@ func TestErrors_ErrorTypeDetail_String(t *testing.T) {
 			assert.Equal(t, testCase.expectedOutput, actualOutput)
 		})
 	}
-}
-
-func TestClient_Errors(t *testing.T) {
-	t.Parallel()
-
-	var de client.DetailedError
-	ctx := context.Background()
-	c := newTestClient(t)
-
-	t.Run("Post with no body should fail with 400 unparseable", func(t *testing.T) {
-		err := c.Do(ctx, "POST", "/1/boards/", nil, nil)
-		require.Error(t, err)
-		require.ErrorAs(t, err, &de)
-		assert.Equal(t, http.StatusBadRequest, de.Status)
-		assert.Equal(t, fmt.Sprintf("%s/problems/unparseable", c.EndpointURL()), de.Type)
-		assert.Equal(t, "The request body could not be parsed.", de.Title)
-		assert.Equal(t, "could not parse request body", de.Message)
-	})
-
-	t.Run("Get into non-existent dataset should fail with 404 'Dataset not found'", func(t *testing.T) {
-		_, err := c.Markers.Get(ctx, "non-existent-dataset", "abcd1234")
-		require.Error(t, err)
-		require.ErrorAs(t, err, &de)
-		assert.Equal(t, http.StatusNotFound, de.Status)
-		assert.Equal(t, fmt.Sprintf("%s/problems/not-found", c.EndpointURL()), de.Type)
-		assert.Equal(t, "The requested resource cannot be found.", de.Title)
-		assert.Equal(t, "Dataset not found", de.Message)
-	})
-
-	t.Run("Creating a dataset without a name should return a validation error", func(t *testing.T) {
-		createDatasetRequest := &client.Dataset{}
-		_, err := c.Datasets.Create(ctx, createDatasetRequest)
-		require.Error(t, err)
-		require.ErrorAs(t, err, &de)
-		assert.Equal(t, http.StatusUnprocessableEntity, de.Status)
-		assert.Equal(t, fmt.Sprintf("%s/problems/validation-failed", c.EndpointURL()), de.Type)
-		assert.Equal(t, "The provided input is invalid.", de.Title)
-		assert.Equal(t, "The provided input is invalid.", de.Message)
-		assert.Len(t, de.Details, 1)
-		assert.Equal(t, "missing", de.Details[0].Code)
-		assert.Equal(t, "name", de.Details[0].Field)
-		assert.Equal(t, "cannot be blank", de.Details[0].Description)
-		assert.Equal(t, "missing name - cannot be blank", de.Error())
-	})
 }

@@ -89,7 +89,7 @@ func (p *Pager[T]) Next(ctx context.Context) ([]*T, error) {
 	}
 
 	if r.StatusCode != http.StatusOK {
-		return nil, hnyclient.FromResponse(r)
+		return nil, hnyclient.ErrorFromResponse(r)
 	}
 	pagination, err := parsePagination(r)
 	if err != nil {
