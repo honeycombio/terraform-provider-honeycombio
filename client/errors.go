@@ -117,6 +117,7 @@ func ErrorFromResponse(r *http.Response) error {
 					// TODO: field when we have it via pointer
 				}
 			}
+			detailedError.Details = details
 		}
 		return detailedError
 	default:

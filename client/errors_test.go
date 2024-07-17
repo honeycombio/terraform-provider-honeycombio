@@ -1,11 +1,14 @@
 package client_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
+	"github.com/hashicorp/jsonapi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -187,6 +190,86 @@ func TestErrors_ErrorTypeDetail_String(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			actualOutput := testCase.input.String()
+			assert.Equal(t, testCase.expectedOutput, actualOutput)
+		})
+	}
+}
+
+func TestErrors_JSONAPI(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name           string
+		code           int
+		body           jsonapi.ErrorsPayload
+		expectedOutput client.DetailedError
+	}{
+		{
+			name: "single error",
+			code: http.StatusConflict,
+			body: jsonapi.ErrorsPayload{
+				Errors: []*jsonapi.ErrorObject{
+					{
+						Status: "409",
+						Title:  "Conflict",
+						Detail: "The resource already exists.",
+						Code:   "/errors/conflict",
+					},
+				},
+			},
+			expectedOutput: client.DetailedError{
+				Status:  409,
+				Type:    "/errors/conflict",
+				Message: "The resource already exists.",
+				Title:   "Conflict",
+			},
+		},
+		{
+			name: "multi error",
+			code: http.StatusUnprocessableEntity,
+			body: jsonapi.ErrorsPayload{
+				Errors: []*jsonapi.ErrorObject{
+					{
+						Status: "422",
+						Code:   "/errors/validation-failed",
+						Title:  "The provided input is invalid.",
+					},
+					{
+						Status: "422",
+						Code:   "/errors/validation-failed",
+						Title:  "The provided input is invalid.",
+					},
+				},
+			},
+			expectedOutput: client.DetailedError{
+				Status: 422,
+				Title:  "The provided input is invalid.",
+				Details: []client.ErrorTypeDetail{
+					{
+						Code: "/errors/validation-failed",
+					},
+					{
+						Code: "/errors/validation-failed",
+					},
+				},
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			resp := &httptest.ResponseRecorder{
+				Code: testCase.code,
+				HeaderMap: http.Header{
+					"Content-Type": []string{jsonapi.MediaType},
+				},
+			}
+
+			buf := bytes.NewBuffer(nil)
+			jsonapi.MarshalErrors(buf, testCase.body.Errors)
+			resp.Body = bytes.NewBuffer(buf.Bytes())
+
+			actualOutput := client.ErrorFromResponse(resp.Result())
 			assert.Equal(t, testCase.expectedOutput, actualOutput)
 		})
 	}
