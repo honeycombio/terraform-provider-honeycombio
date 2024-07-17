@@ -200,7 +200,17 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 }
 
 func (d *querySpecDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	d.client = getClientFromDatasourceRequest(&req)
+	w := getClientFromDatasourceRequest(&req)
+	if w == nil {
+		return
+	}
+
+	c, err := w.V1Client()
+	if err != nil || c == nil {
+		resp.Diagnostics.AddError("Failed to configure client", err.Error())
+		return
+	}
+	d.client = c
 }
 
 func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

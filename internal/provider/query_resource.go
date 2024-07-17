@@ -41,7 +41,17 @@ func (*queryResource) Metadata(_ context.Context, req resource.MetadataRequest, 
 }
 
 func (r *queryResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	r.client = getClientFromResourceRequest(&req)
+	w := getClientFromResourceRequest(&req)
+	if w == nil {
+		return
+	}
+
+	c, err := w.V1Client()
+	if err != nil || c == nil {
+		resp.Diagnostics.AddError("Failed to configure client", err.Error())
+		return
+	}
+	r.client = c
 }
 
 func (*queryResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {

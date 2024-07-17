@@ -221,7 +221,7 @@ func (c *Client) Do(ctx context.Context, method, path string, requestBody, respo
 	defer resp.Body.Close()
 
 	if !(resp.StatusCode >= 200 && resp.StatusCode <= 299) {
-		return errorFromResponse(resp)
+		return ErrorFromResponse(resp)
 	}
 	if responseBody != nil {
 		err = json.NewDecoder(resp.Body).Decode(responseBody)

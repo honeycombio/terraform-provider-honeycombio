@@ -70,8 +70,18 @@ func (d *derivedColumnDataSource) Schema(_ context.Context, _ datasource.SchemaR
 	}
 }
 
-func (d *derivedColumnDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
-	d.client = getClientFromDatasourceRequest(&req)
+func (d *derivedColumnDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	w := getClientFromDatasourceRequest(&req)
+	if w == nil {
+		return
+	}
+
+	c, err := w.V1Client()
+	if err != nil || c == nil {
+		resp.Diagnostics.AddError("Failed to configure client", err.Error())
+		return
+	}
+	d.client = c
 }
 
 func (d *derivedColumnDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {

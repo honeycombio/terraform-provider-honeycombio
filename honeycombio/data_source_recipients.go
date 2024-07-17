@@ -73,7 +73,10 @@ func dataSourceHoneycombioRecipients() *schema.Resource {
 }
 
 func dataSourceHoneycombioRecipientsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	rcpts, err := client.Recipients.List(ctx)
 	if err != nil {

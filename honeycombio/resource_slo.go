@@ -80,7 +80,10 @@ func resourceSLOImport(ctx context.Context, d *schema.ResourceData, i interface{
 }
 
 func resourceSLOCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	s, err := expandSLO(d)
@@ -98,7 +101,10 @@ func resourceSLOCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
@@ -126,7 +132,10 @@ func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func resourceSLOUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	s, err := expandSLO(d)
@@ -144,11 +153,14 @@ func resourceSLOUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func resourceSLODelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
-	err := client.SLOs.Delete(ctx, dataset, d.Id())
+	err = client.SLOs.Delete(ctx, dataset, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}

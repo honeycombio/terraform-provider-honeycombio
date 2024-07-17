@@ -63,7 +63,7 @@ func TestValidation_PrecisionAtMost(t *testing.T) {
 				ConfigValue:    test.value,
 			}
 			response := validator.Float64Response{}
-			validation.Float64PrecisionAtMost(test.maxPrecision).ValidateFloat64(context.TODO(), request, &response)
+			validation.Float64PrecisionAtMost(test.maxPrecision).ValidateFloat64(context.Background(), request, &response)
 
 			if !response.Diagnostics.HasError() && test.expectError {
 				t.Fatal("expected error, got no error")

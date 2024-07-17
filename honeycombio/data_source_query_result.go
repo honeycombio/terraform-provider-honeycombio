@@ -53,10 +53,13 @@ func dataSourceHoneycombioQueryResult() *schema.Resource {
 
 func dataSourceHoneycombioQueryResultRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	var querySpec honeycombio.QuerySpec
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 	dataset := d.Get("dataset").(string)
 
-	err := json.Unmarshal([]byte(d.Get("query_json").(string)), &querySpec)
+	err = json.Unmarshal([]byte(d.Get("query_json").(string)), &querySpec)
 	if err != nil {
 		return diag.FromErr(err)
 	}

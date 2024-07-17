@@ -53,7 +53,10 @@ func newDatasetDefinition() *schema.Resource {
 }
 
 func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 
@@ -82,14 +85,17 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 }
 
 func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	name := d.Get("name").(string)
 	value := d.Get("column").(string)
 
 	dd := expandDatasetDefinition(name, value)
-	_, err := client.DatasetDefinitions.Update(ctx, dataset, dd)
+	_, err = client.DatasetDefinitions.Update(ctx, dataset, dd)
 	if err != nil {
 		return diagFromErr(err)
 	}
@@ -98,14 +104,17 @@ func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData
 }
 
 func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	dataset := d.Get("dataset").(string)
 	name := d.Get("name").(string)
 
 	// 'deleting' a definition is really resetting it
 	dd := expandDatasetDefinition(name, "")
-	_, err := client.DatasetDefinitions.Update(ctx, dataset, dd)
+	_, err = client.DatasetDefinitions.Update(ctx, dataset, dd)
 	if err != nil {
 		return diagFromErr(err)
 	}

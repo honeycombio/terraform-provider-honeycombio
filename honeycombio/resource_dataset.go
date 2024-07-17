@@ -60,7 +60,10 @@ func newDataset() *schema.Resource {
 }
 
 func resourceDatasetCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	data := &honeycombio.Dataset{
 		Name:            d.Get("name").(string),
@@ -77,7 +80,10 @@ func resourceDatasetCreate(ctx context.Context, d *schema.ResourceData, meta int
 }
 
 func resourceDatasetRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	var detailedErr honeycombio.DetailedError
 	dataset, err := client.Datasets.Get(ctx, d.Id())
@@ -103,7 +109,10 @@ func resourceDatasetRead(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 func resourceDatasetUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	data := &honeycombio.Dataset{
 		Name:            d.Get("name").(string),

@@ -164,7 +164,10 @@ See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-sett
 }
 
 func resourceBoardCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	b, err := expandBoard(d)
 	if err != nil {
@@ -181,7 +184,10 @@ func resourceBoardCreate(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	var detailedErr honeycombio.DetailedError
 	b, err := client.Boards.Get(ctx, d.Id())
@@ -229,7 +235,10 @@ func resourceBoardRead(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func resourceBoardUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	b, err := expandBoard(d)
 	if err != nil {
@@ -246,9 +255,12 @@ func resourceBoardUpdate(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 func resourceBoardDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
-	err := client.Boards.Delete(ctx, d.Id())
+	err = client.Boards.Delete(ctx, d.Id())
 	if err != nil {
 		return diagFromErr(err)
 	}

@@ -57,7 +57,10 @@ func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*hone
 }
 
 func createRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	r, err := expandRecipient(t, d)
 	if err != nil {
@@ -74,7 +77,10 @@ func createRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	var detailedErr honeycombio.DetailedError
 	r, err := client.Recipients.Get(ctx, d.Id())
@@ -113,7 +119,10 @@ func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}
 }
 
 func updateRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
 	r, err := expandRecipient(t, d)
 	if err != nil {
@@ -130,9 +139,12 @@ func updateRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 }
 
 func deleteRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client := meta.(*honeycombio.Client)
+	client, err := getConfiguredClient(meta)
+	if err != nil {
+		return diagFromErr(err)
+	}
 
-	err := client.Recipients.Delete(ctx, d.Id())
+	err = client.Recipients.Delete(ctx, d.Id())
 	if err != nil {
 		return diagFromErr(err)
 	}

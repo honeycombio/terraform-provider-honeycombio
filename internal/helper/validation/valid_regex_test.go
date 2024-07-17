@@ -44,7 +44,7 @@ func Test_IsValidRegexValidator(t *testing.T) {
 				ConfigValue:    test.val,
 			}
 			response := validator.StringResponse{}
-			validation.IsValidRegExp().ValidateString(context.TODO(), request, &response)
+			validation.IsValidRegExp().ValidateString(context.Background(), request, &response)
 
 			if !response.Diagnostics.HasError() && test.expectError {
 				t.Fatal("expected error, got no error")
