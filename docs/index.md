@@ -62,7 +62,7 @@ At least one of the v1 or v2 API key configuration is required.
 ### v1 APIs
 
 v1 APIs require Configuration Keys.
-Their permissions can be managed in _Team settings_.
+Their permissions can be managed in _Envirionment settings_.
 Most resources and data sources call v1 APIs today.
 
 The key can be set with the `api_key` argument or via the `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variable.
@@ -72,6 +72,7 @@ The key can be set with the `api_key` argument or via the `HONEYCOMB_API_KEY` or
 ### v2 APIs
 
 v2 APIs require a Mangement Key.
+Their permissions can be managed in _Team settings_.
 Resources and data sources that call v2 APIs will be noted along with the scope required to use the resource or data source.
 
 The key pair can be set with the `api_key_id` and `api_key_secret` arguments, or via the `HONEYCOMB_KEY_ID` and `HONEYCOMB_KEY_SECRET` environment variables.

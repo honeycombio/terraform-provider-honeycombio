@@ -34,7 +34,7 @@ The following arguments are supported:
 * `disabled` - (Optional) Whether the API key is disabled. Defaults to `false`.
 * `permissions` - (Optional) A configuration block (described below) setting what actions the API key can perform.
 
-Each API key configuration may contain a single `permissions` blocj, which accepts the following arguments:
+Each API key configuration may contain a single `permissions` block, which accepts the following arguments:
 
 * `create_datasets` - (Optional) Allow this key to create missing datasets when sending telemetry. Defaults to `false`.
 

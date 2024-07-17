@@ -27,7 +27,7 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 //
-// This resource is not implemeting ResourceWithImportState because importing keys
+// This resource is not implementing ResourceWithImportState because importing keys
 // won't give us the secret portion of the key which is arguably the whole reason
 // for the resource.
 var (
