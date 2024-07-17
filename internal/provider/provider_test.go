@@ -165,6 +165,30 @@ resource "honeycombio_api_key" "test" {
 		})
 	})
 
+	t.Run("fails when only half of v2 configuration is set", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					PreConfig: func() {
+						t.Setenv("HONEYCOMB_API_KEY", "")
+						t.Setenv("HONEYCOMB_KEY_SECRET", "")
+					},
+					Config: `
+# TODO: replace with v2-client data source
+resource "honeycombio_api_key" "test" {
+  name = "test"
+  type = "ingest"
+
+  environment_id = "1"
+}`,
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile(`provider requires both a Honeycomb API Key ID and Secret`),
+				},
+			},
+		})
+	})
+
 	t.Run("fails when no clients configured", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,

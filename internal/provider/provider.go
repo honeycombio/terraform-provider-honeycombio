@@ -161,10 +161,12 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 	} else if (keyID != "" && keySecret == "") || (keyID == "" && keySecret != "") {
 		resp.Diagnostics.AddError(
 			"Unable to initialize Honeycomb provider",
-			"The provider requires both a Honeycomb API Key ID and Secret pair. "+
+			"The provider requires both a Honeycomb API Key ID and Secret. "+
 				"Set them both in the configuration or via the HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET"+
-				"environment variables.",
+				"environment variables. "+
+				"If you believe both are already set, ensure the values are not empty.",
 		)
+		return
 	}
 
 	if !initv1Client && !initv2Client {
