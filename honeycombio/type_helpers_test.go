@@ -30,12 +30,12 @@ func Test_coerceValueToType(t *testing.T) {
 		{
 			name:     "int",
 			input:    "300",
-			expected: 300,
+			expected: int64(300),
 		},
 		{
 			name:     "zero",
 			input:    "0",
-			expected: 0,
+			expected: int64(0),
 		},
 		{
 			name:     "stringy number",

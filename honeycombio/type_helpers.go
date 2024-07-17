@@ -19,7 +19,7 @@ func coerceValueToType(i string) interface{} {
 
 	// Plugin SDK assumes 64bit so we'll do the same
 	if v, err := strconv.ParseInt(i, 10, 64); err == nil {
-		return int(v)
+		return v
 	} else if v, err := strconv.ParseFloat(i, 64); err == nil {
 		return v
 	} else if v, err := strconv.ParseBool(i); err == nil {
