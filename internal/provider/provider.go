@@ -79,6 +79,7 @@ func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.R
 		NewTriggerResource,
 		NewQueryResource,
 		NewAPIKeyResource,
+		NewEnvironmentResource,
 	}
 }
 
@@ -87,6 +88,8 @@ func (p *HoneycombioProvider) DataSources(ctx context.Context) []func() datasour
 		NewAuthMetadataDataSource,
 		NewDerivedColumnDataSource,
 		NewDerivedColumnsDataSource,
+		NewEnvironmentDataSource,
+		NewEnvironmentsDataSource,
 		NewSLODataSource,
 		NewSLOsDataSource,
 		NewQuerySpecDataSource,

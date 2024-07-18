@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
-type SLODetailFilter struct {
+type DetailFilter struct {
 	Type       string
 	Value      *string
 	ValueRegex *regexp.Regexp
 }
 
-func NewDetailSLOFilter(filterType, v, r string) (*SLODetailFilter, error) {
+func NewDetailFilter(filterType, v, r string) (*DetailFilter, error) {
 	if filterType != "name" {
 		return nil, fmt.Errorf("only name is supported as a filter type")
 	}
@@ -34,23 +33,23 @@ func NewDetailSLOFilter(filterType, v, r string) (*SLODetailFilter, error) {
 		valRegexp = regexp.MustCompile(r)
 	}
 
-	return &SLODetailFilter{
+	return &DetailFilter{
 		Type:       filterType,
 		Value:      value,
 		ValueRegex: valRegexp,
 	}, nil
 }
 
-func (f *SLODetailFilter) Match(s client.SLO) bool {
+func (f *DetailFilter) MatchName(name string) bool {
 	// nil filter fails open
 	if f == nil {
 		return true
 	}
 	if f.Value != nil {
-		return s.Name == *f.Value
+		return name == *f.Value
 	}
 	if f.ValueRegex != nil {
-		return f.ValueRegex.MatchString(s.Name)
+		return f.ValueRegex.MatchString(name)
 	}
 	return true
 }
