@@ -15,6 +15,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/log"
 )
 
@@ -203,12 +204,7 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 			Debug:     debug,
 			UserAgent: userAgent,
 		})
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Unable to create Honeycomb API Client",
-				"An unexpected error occurred when creating the Honeycomb API client.\n\n "+
-					"Honeycomb Client Error: "+err.Error(),
-			)
+		if helper.AddDiagnosticOnError(&resp.Diagnostics, "Unable to create Honeycomb API V1 Client", err) {
 			return
 		}
 		cc.v1client = client
@@ -222,12 +218,7 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 			Debug:        debug,
 			UserAgent:    userAgent,
 		})
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Unable to create Honeycomb API V2 Client",
-				"An unexpected error occurred when creating the Honeycomb API V2 client.\n\n "+
-					"Honeycomb V2 Client Error: "+err.Error(),
-			)
+		if helper.AddDiagnosticOnError(&resp.Diagnostics, "Unable to create Honeycomb API V2 Client", err) {
 			return
 		}
 		cc.v2client = v2client
