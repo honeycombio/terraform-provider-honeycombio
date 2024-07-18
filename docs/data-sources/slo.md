@@ -1,9 +1,7 @@
 # Data Source: honeycombio_slo
 
 The `honeycombio_slo` data source retrieves the details of a single SLO for a dataset.
-
--> **Note** Terraform will fail unless an SLO is returned by the search. Ensure that your search is specific enough to return an SLO.
-If you want to match multiple SLOs, use the `honeycombio_slos` data source instead.
+If you want to retreive multiple SLOs, use the `honeycombio_slos` data source instead.
 
 ## Example Usage
 

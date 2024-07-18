@@ -1,12 +1,10 @@
 # Data Source: honeycombio_environment
 
 The `honeycombio_environment` data source retrieves the details of a single Environment.
+If you want to retreive multiple Environments, use the `honeycombio_environments` data source instead.
 
 -> **NOTE** This data source requires the provider be configured with a Management Key with `environments:read` in the configured scopes.
 
--> **Note** Terraform will fail unless a single Environment is returned by the search.
-Ensure that your search is specific enough to return an Environment.
-If you want to match multiple Environments, use the `honeycombio_environments` data source instead.
 
 ## Example Usage
 
