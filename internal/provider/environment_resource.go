@@ -26,6 +26,7 @@ import (
 var (
 	_ resource.Resource                = &environmentResource{}
 	_ resource.ResourceWithConfigure   = &environmentResource{}
+	_ resource.ResourceWithModifyPlan  = &environmentResource{}
 	_ resource.ResourceWithImportState = &environmentResource{}
 )
 
@@ -126,6 +127,17 @@ func (r *environmentResource) ImportState(ctx context.Context, req resource.Impo
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.EnvironmentResourceModel{
 		ID: types.StringValue(req.ID),
 	})...)
+}
+
+func (r *environmentResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		// If the entire plan is null, the resource is planned for destruction -- let's add a warning
+		resp.Diagnostics.AddWarning(
+			"Resource Destruction Warning",
+			"Appling this plan will delete the Environment and all of its contents. "+
+				"This is an irreversible operation.",
+		)
+	}
 }
 
 func (r *environmentResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
