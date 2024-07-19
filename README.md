@@ -31,8 +31,32 @@ terraform {
 }
 ```
 
-Set the API key used by Terraform setting the `HONEYCOMB_API_KEY` environment variable.
 You can override the default API Endpoint (`https://api.honeycomb.io`) by setting the `HONEYCOMB_API_ENDPOINT` environment variable.
+
+The Honeycomb provider requires an API key to communicate with the Honeycomb APIs.
+The provider can make calls to v1 and v2 APIs and requires specific key configurations for each.
+For more information about API Keys, check out [Best Practices for API Keys](https://docs.honeycomb.io/get-started/best-practices/api-keys/).
+
+A single instance of the provider can be configured with both key types.
+At least one of the v1 or v2 API key configuration is required.
+
+### v1 APIs
+
+v1 APIs require Configuration Keys.
+Their permissions can be managed in _Environment settings_.
+Most resources and data sources call v1 APIs today.
+
+The key can be set with the `api_key` argument or via the `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variable.
+
+`HONEYCOMB_API_KEY` environment variable will take priority over the `HONEYCOMBIO_APIKEY` environment variable.
+
+### v2 APIs
+
+v2 APIs require a Mangement Key.
+Their permissions can be managed in _Team settings_.
+Resources and data sources that call v2 APIs will be noted along with the scope required to use the resource or data source.
+
+The key pair can be set with the `api_key_id` and `api_key_secret` arguments, or via the `HONEYCOMB_KEY_ID` and `HONEYCOMB_KEY_SECRET` environment variables.
 
 ### Configuring the provider for Honeycomb EU
 
