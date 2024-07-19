@@ -134,7 +134,7 @@ func (r *environmentResource) ModifyPlan(ctx context.Context, req resource.Modif
 		// If the entire plan is null, the resource is planned for destruction -- let's add a warning
 		resp.Diagnostics.AddWarning(
 			"Resource Destruction Warning",
-			"Appling this plan will delete the Environment and all of its contents. "+
+			"Applying this plan will delete the Environment and all of its contents. "+
 				"This is an irreversible operation.",
 		)
 	}
