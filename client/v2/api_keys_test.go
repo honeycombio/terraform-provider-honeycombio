@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"math"
-	"os"
 	"testing"
 	"time"
 
@@ -18,15 +17,14 @@ import (
 func TestClient_APIKeys(t *testing.T) {
 	ctx := context.Background()
 	c := newTestClient(t)
-	// TODO: use the environments API
-	testEnvironmentID := os.Getenv("HONEYCOMB_ENVIRONMENT_ID")
+	env := newTestEnvironment(ctx, t, c)
 
 	// create a new key
 	k, err := c.APIKeys.Create(ctx, &APIKey{
 		Name:    helper.ToPtr("test key"),
 		KeyType: "ingest",
 		Environment: &Environment{
-			ID: testEnvironmentID,
+			ID: env.ID,
 		},
 		Permissions: &APIKeyPermissions{
 			CreateDatasets: true,
@@ -77,8 +75,7 @@ func TestClient_APIKeys(t *testing.T) {
 func TestClient_APIKeys_Pagination(t *testing.T) {
 	ctx := context.Background()
 	c := newTestClient(t)
-	// TODO: use the environments API
-	testEnvironmentID := os.Getenv("HONEYCOMB_ENVIRONMENT_ID")
+	env := newTestEnvironment(ctx, t, c)
 
 	// create a bunch of keys
 	numKeys := int(math.Floor(1.5 * float64(defaultPageSize)))
@@ -88,7 +85,7 @@ func TestClient_APIKeys_Pagination(t *testing.T) {
 			Name:    helper.ToPtr(fmt.Sprintf("test.%d", i)),
 			KeyType: "ingest",
 			Environment: &Environment{
-				ID: testEnvironmentID,
+				ID: env.ID,
 			},
 		})
 		require.NoError(t, err)

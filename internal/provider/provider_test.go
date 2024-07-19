@@ -11,10 +11,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
 	"github.com/honeycombio/terraform-provider-honeycombio/honeycombio"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func init() {
@@ -68,9 +71,6 @@ func testAccPreCheckV2API(t *testing.T) func() {
 		if _, ok := os.LookupEnv("HONEYCOMB_KEY_SECRET"); !ok {
 			t.Fatalf("environment variable HONEYCOMB_KEY_SECRET must be set to run acceptance tests")
 		}
-		if _, ok := os.LookupEnv("HONEYCOMB_ENVIRONMENT_ID"); !ok {
-			t.Fatalf("environment variable HONEYCOMB_ENVIRONMENT_ID must be set to run acceptance tests")
-		}
 	}
 }
 
@@ -78,9 +78,30 @@ func testAccDataset() string {
 	return os.Getenv("HONEYCOMB_DATASET")
 }
 
-func testAccEnvironment() string {
-	// TODO: replace with looking up the environment by name or doing a create at test start
-	return os.Getenv("HONEYCOMB_ENVIRONMENT_ID")
+// newTestEnvirionment creates a new Environment with a random name and description
+// for testing purposes.
+// The Environment is automatically deleted when the test completes.
+func testAccEnvironment(ctx context.Context, t *testing.T, c *v2client.Client) *v2client.Environment {
+	t.Helper()
+
+	env, err := c.Environments.Create(ctx, &v2client.Environment{
+		Name:        test.RandomStringWithPrefix("test.", 20),
+		Description: helper.ToPtr(test.RandomString(50)),
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		// disable deletion protection and delete the Environment
+		c.Environments.Update(context.Background(), &v2client.Environment{
+			ID: env.ID,
+			Settings: &v2client.EnvironmentSettings{
+				DeleteProtected: helper.ToPtr(false),
+			},
+		})
+		c.Environments.Delete(ctx, env.ID)
+	})
+
+	return env
 }
 
 func testAccClient(t *testing.T) *client.Client {
@@ -112,15 +133,9 @@ func TestAcc_Configuration(t *testing.T) {
 					Config: `
 data "honeycombio_datasets" "all" {}
 
-# TODO: replace with v2-client data source
-resource "honeycombio_api_key" "test" {
-  name = "test"
-  type = "ingest"
-
-  environment_id = "1"
-}`,
-					PlanOnly:           true,
-					ExpectNonEmptyPlan: true,
+data "honeycombio_environments" "all" {}
+`,
+					PlanOnly: true,
 				},
 			},
 		})
@@ -150,16 +165,8 @@ resource "honeycombio_api_key" "test" {
 					PreConfig: func() {
 						t.Setenv("HONEYCOMB_API_KEY", "")
 					},
-					Config: `
-# TODO: replace with v2-client data source
-resource "honeycombio_api_key" "test" {
-  name = "test"
-  type = "ingest"
-
-  environment_id = "1"
-}`,
-					PlanOnly:           true,
-					ExpectNonEmptyPlan: true,
+					Config:   `data "honeycombio_environments" "all" {}`,
+					PlanOnly: true,
 				},
 			},
 		})
@@ -174,14 +181,7 @@ resource "honeycombio_api_key" "test" {
 						t.Setenv("HONEYCOMB_API_KEY", "")
 						t.Setenv("HONEYCOMB_KEY_SECRET", "")
 					},
-					Config: `
-# TODO: replace with v2-client data source
-resource "honeycombio_api_key" "test" {
-  name = "test"
-  type = "ingest"
-
-  environment_id = "1"
-}`,
+					Config:      `data "honeycombio_environments" "all" {}`,
 					PlanOnly:    true,
 					ExpectError: regexp.MustCompile(`provider requires both a Honeycomb API Key ID and Secret`),
 				},
@@ -216,14 +216,7 @@ resource "honeycombio_api_key" "test" {
 						t.Setenv("HONEYCOMB_KEY_ID", "")
 						t.Setenv("HONEYCOMB_KEY_SECRET", "")
 					},
-					Config: `
-# TODO: replace with v2-client data source
-resource "honeycombio_api_key" "test" {
-  name = "test"
-  type = "ingest"
-
-  environment_id = "1"
-}`,
+					Config:      `data "honeycombio_environments" "all" {}`,
 					ExpectError: regexp.MustCompile(`No v2 API client configured`),
 				},
 			},
