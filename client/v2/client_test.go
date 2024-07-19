@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	hnyclient "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 const (
@@ -135,4 +137,30 @@ func newTestClient(t *testing.T) *Client {
 	require.NoError(t, err, "failed to create test client")
 
 	return c
+}
+
+// newTestEnvironment creates a new Environment with a random name and description
+// for testing purposes.
+// The Environment is automatically deleted when the test completes.
+func newTestEnvironment(ctx context.Context, t *testing.T, c *Client) *Environment {
+	t.Helper()
+
+	env, err := c.Environments.Create(ctx, &Environment{
+		Name:        test.RandomStringWithPrefix("test.", 20),
+		Description: helper.ToPtr(test.RandomString(50)),
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		// disable deletion protection and delete the Environment
+		c.Environments.Update(context.Background(), &Environment{
+			ID: env.ID,
+			Settings: &EnvironmentSettings{
+				DeleteProtected: helper.ToPtr(false),
+			},
+		})
+		c.Environments.Delete(ctx, env.ID)
+	})
+
+	return env
 }

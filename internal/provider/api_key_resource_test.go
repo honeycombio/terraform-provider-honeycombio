@@ -11,8 +11,9 @@ import (
 
 func TestAcc_APIKeyResource(t *testing.T) {
 	t.Parallel()
-
-	envID := testAccEnvironment()
+	ctx := context.Background()
+	c := testAccV2Client(t)
+	env := testAccEnvironment(ctx, t, c)
 
 	t.Run("happy path", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
@@ -20,27 +21,27 @@ func TestAcc_APIKeyResource(t *testing.T) {
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
-					Config: testAccConfigBasicAPIKeyTest("test key", "false", envID),
+					Config: testAccConfigBasicAPIKeyTest("test key", "false", env.ID),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureAPIKeyExists(t, "honeycombio_api_key.test"),
 						resource.TestCheckResourceAttrSet("honeycombio_api_key.test", "id"),
 						resource.TestCheckResourceAttrSet("honeycombio_api_key.test", "secret"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "name", "test key"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "type", "ingest"),
-						resource.TestCheckResourceAttr("honeycombio_api_key.test", "environment_id", envID),
+						resource.TestCheckResourceAttr("honeycombio_api_key.test", "environment_id", env.ID),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "disabled", "false"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "permissions.0.create_datasets", "true"),
 					),
 				},
 				{ // now update the name and disabled state
-					Config: testAccConfigBasicAPIKeyTest("updated test key", "true", envID),
+					Config: testAccConfigBasicAPIKeyTest("updated test key", "true", env.ID),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureAPIKeyExists(t, "honeycombio_api_key.test"),
 						resource.TestCheckResourceAttrSet("honeycombio_api_key.test", "id"),
 						resource.TestCheckResourceAttrSet("honeycombio_api_key.test", "secret"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "name", "updated test key"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "type", "ingest"),
-						resource.TestCheckResourceAttr("honeycombio_api_key.test", "environment_id", envID),
+						resource.TestCheckResourceAttr("honeycombio_api_key.test", "environment_id", env.ID),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "disabled", "true"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "permissions.0.create_datasets", "true"),
 					),
@@ -61,14 +62,14 @@ resource "honeycombio_api_key" "test" {
   type = "ingest"
 
   environment_id = "%s"
-}`, envID),
+}`, env.ID),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureAPIKeyExists(t, "honeycombio_api_key.test"),
 						resource.TestCheckResourceAttrSet("honeycombio_api_key.test", "id"),
 						resource.TestCheckResourceAttrSet("honeycombio_api_key.test", "secret"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "name", "test key"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "type", "ingest"),
-						resource.TestCheckResourceAttr("honeycombio_api_key.test", "environment_id", envID),
+						resource.TestCheckResourceAttr("honeycombio_api_key.test", "environment_id", env.ID),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test", "disabled", "false"),
 					),
 				},
