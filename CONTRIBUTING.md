@@ -16,12 +16,6 @@ Hashicorp has a lot of documentation on creating Terraform providers categorized
 This might help when getting started, but are not a pre-requisite to contribute.
 Feel free to just open an issue and we can guide you along the way.
 
-### What's in progress and what's next?
-
-We maintain [an activity board](https://github.com/honeycombio/terraform-provider-honeycombio/projects/1) with all the work that is currently being worked on and/or considered.
-Hopefully this can give a sense of what is next to come.
-The board is intended to create an overview across of project -- not a strict plan of action.
-
 ## Contributing changes
 
 As there are currently no Honeycomb SDKs, this repostiory contains an embedded API Client for the [Honeycomb API](https://docs.honeycomb.io/api)
