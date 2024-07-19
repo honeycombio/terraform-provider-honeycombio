@@ -271,7 +271,7 @@ func (r *apiKeyResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	if err != nil {
 		if errors.As(err, &detailedErr) {
 			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
-				"Error Reading Honeycomb API Key",
+				"Error Deleting Honeycomb API Key",
 				&detailedErr,
 			))
 		} else {

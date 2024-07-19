@@ -5,9 +5,16 @@ import (
 )
 
 type Environment struct {
-	ID   string `jsonapi:"primary,environments"`
-	Name string `jsonapi:"attr,name"`
-	Slug string `jsonapi:"attr,slug"`
+	ID          string               `jsonapi:"primary,environments"`
+	Name        string               `jsonapi:"attr,name"`
+	Slug        string               `jsonapi:"attr,slug"`
+	Description *string              `jsonapi:"attr,description,omitempty"`
+	Color       *string              `jsonapi:"attr,color,omitempty"`
+	Settings    *EnvironmentSettings `jsonapi:"attr,settings,omitempty"`
+}
+
+type EnvironmentSettings struct {
+	DeleteProtected *bool `json:"delete_protected" jsonapi:"attr,delete_protected,omitempty"`
 }
 
 type Team struct {

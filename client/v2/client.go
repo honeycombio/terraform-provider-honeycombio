@@ -45,7 +45,8 @@ type Client struct {
 	http *retryablehttp.Client
 
 	// API handlers here
-	APIKeys APIKeys
+	APIKeys      APIKeys
+	Environments Environments
 }
 
 func NewClient() (*Client, error) {
@@ -124,6 +125,7 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 
 	// bind API handlers here
 	client.APIKeys = &apiKeys{client: client, authinfo: authinfo}
+	client.Environments = &environments{client: client, authinfo: authinfo}
 
 	return client, nil
 }

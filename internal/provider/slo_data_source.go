@@ -10,6 +10,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -25,16 +26,6 @@ func NewSLODataSource() datasource.DataSource {
 // sloDataSource is the data source implementation.
 type sloDataSource struct {
 	client *client.Client
-}
-
-type sloDataSourceModel struct {
-	ID               types.String  `tfsdk:"id"`
-	Dataset          types.String  `tfsdk:"dataset"`
-	Name             types.String  `tfsdk:"name"`
-	Description      types.String  `tfsdk:"description"`
-	SLI              types.String  `tfsdk:"sli"`
-	TargetPercentage types.Float64 `tfsdk:"target_percentage"`
-	TimePeriod       types.Int64   `tfsdk:"time_period"`
 }
 
 func (d *sloDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -102,8 +93,7 @@ func (d *sloDataSource) Configure(_ context.Context, req datasource.ConfigureReq
 }
 
 func (d *sloDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data sloDataSourceModel
-
+	var data models.SLODataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return

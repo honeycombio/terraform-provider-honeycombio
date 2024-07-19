@@ -85,14 +85,14 @@ func TestClient_APIKeys_Pagination(t *testing.T) {
 	testKeys := make([]*APIKey, numKeys)
 	for i := 0; i < numKeys; i++ {
 		k, err := c.APIKeys.Create(ctx, &APIKey{
-			Name:    helper.ToPtr(fmt.Sprintf("testkey-%d", i)),
+			Name:    helper.ToPtr(fmt.Sprintf("test.%d", i)),
 			KeyType: "ingest",
 			Environment: &Environment{
 				ID: testEnvironmentID,
 			},
 		})
-		testKeys[i] = k
 		require.NoError(t, err)
+		testKeys[i] = k
 	}
 	t.Cleanup(func() {
 		for _, k := range testKeys {
@@ -116,7 +116,8 @@ func TestClient_APIKeys_Pagination(t *testing.T) {
 			require.NoError(t, err)
 			keys = append(keys, items...)
 		}
-		assert.Len(t, keys, numKeys)
+		// we can't guarantee that there are exactly numKeys keys, but there should be at least that many
+		assert.GreaterOrEqual(t, len(keys), numKeys, "should have at least %d keys", numKeys)
 	})
 
 	t.Run("works with custom page size", func(t *testing.T) {

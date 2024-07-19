@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
@@ -21,9 +22,8 @@ func TestAcc_SLODataSource(t *testing.T) {
 		Description: "test SLI",
 		Expression:  "BOOL(1)",
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
+
 	slo, err := c.SLOs.Create(ctx, dataset, &client.SLO{
 		Name:             acctest.RandString(4) + "_slo",
 		Description:      "test SLO",
@@ -31,9 +31,7 @@ func TestAcc_SLODataSource(t *testing.T) {
 		TargetPerMillion: 995000,
 		SLI:              client.SLIRef{Alias: sli.Alias},
 	})
-	if err != nil {
-		t.Error(err)
-	}
+	require.NoError(t, err)
 
 	//nolint:errcheck
 	t.Cleanup(func() {
@@ -46,7 +44,11 @@ func TestAcc_SLODataSource(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSLODataSourceConfig(dataset, slo.ID),
+				Config: fmt.Sprintf(`
+data "honeycombio_slo" "test" {
+  id      = "%s"
+  dataset = "%s"
+}`, slo.ID, dataset),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "name", slo.Name),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "description", slo.Description),
@@ -57,13 +59,4 @@ func TestAcc_SLODataSource(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccSLODataSourceConfig(dataset, id string) string {
-	return fmt.Sprintf(`
-data "honeycombio_slo" "test" {
-  id      = "%s"
-  dataset = "%s"
-}
-`, id, dataset)
 }
