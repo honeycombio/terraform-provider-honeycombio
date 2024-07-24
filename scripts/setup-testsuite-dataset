@@ -44,7 +44,7 @@ create_dataset_if_missing () {
       log "error creating dataset \"$name\""
     fi
 
-    log "created dataset \"$name}\""
+    log "created dataset \"${name}\""
   fi
 }
 

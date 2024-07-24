@@ -11,21 +11,15 @@ import (
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
 	dataset := testAccDataset()
 	col1Name := test.RandomStringWithPrefix("test.", 8)
 	col2Name := test.RandomStringWithPrefix("test.", 8)
+	col3Name := test.RandomStringWithPrefix("test.", 8)
 
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
-		Steps: []resource.TestStep{
-			{
-				Config: fmt.Sprintf(`
+	config := fmt.Sprintf(`
 resource "honeycombio_column" "column_1" {
   dataset = "%[1]s"
   name    = "%[2]s"
@@ -34,6 +28,11 @@ resource "honeycombio_column" "column_1" {
 resource "honeycombio_column" "column_2" {
   dataset = "%[1]s"
   name    = "%[3]s"
+}
+
+resource "honeycombio_column" "column_3" {
+  dataset = "%[1]s"
+  name    = "%[4]s"
 }
 
 resource "honeycombio_derived_column" "log10_duration" {
@@ -63,7 +62,21 @@ resource "honeycombio_dataset_definition" "route" {
   name   = "route"
   column = honeycombio_column.column_2.key_name
 }
-`, dataset, col1Name, col2Name),
+
+resource "honeycombio_dataset_definition" "error" {
+  dataset = "%[1]s"
+
+  name   = "error"
+  column = honeycombio_column.column_3.key_name
+}
+`, dataset, col1Name, col2Name, col3Name)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.name", "name", "name"),
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.name", "column", col1Name),
@@ -76,31 +89,42 @@ resource "honeycombio_dataset_definition" "route" {
 					resource.TestCheckResourceAttr("honeycombio_dataset_definition.route", "column_type", "column"),
 				),
 			},
+			{
+				// remove the 'error' definition and ensure reading the definitions still works
+				PreConfig: func() {
+					ctx := context.Background()
+					client := testAccClient(t)
+					client.DatasetDefinitions.Update(ctx, dataset, &honeycombio.DatasetDefinition{
+						Error: &honeycombio.DefinitionColumn{Name: ""},
+					})
+				},
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.error", "name", "error"),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.error", "column", col3Name),
+					resource.TestCheckResourceAttr("honeycombio_dataset_definition.error", "column_type", "column"),
+				),
+			},
 		},
-		CheckDestroy: resource.ComposeTestCheckFunc(
+		CheckDestroy: func(s *terraform.State) error {
 			// ensure that after destroying ('deleting') the above definitions
 			// they have been reset to their default values
-			testAccCheckDatasetDefinitionResetToDefault(t, dataset, "name"),
-			testAccCheckDatasetDefinitionResetToDefault(t, dataset, "duration_ms"),
-			testAccCheckDatasetDefinitionResetToDefault(t, dataset, "route"),
-		),
+			client := testAccClient(t)
+			dd, err := client.DatasetDefinitions.Get(context.Background(), dataset)
+			if err != nil {
+				return fmt.Errorf("could not lookup dataset definitions: %w", err)
+			}
+			for _, defn := range []string{"name", "duration_ms", "route", "error"} {
+				column := extractDatasetDefinitionColumnByName(dd, defn)
+				if column == nil {
+					continue // definition was removed and does not have default
+				}
+				if slices.Contains(honeycombio.DatasetDefinitionDefaults()[defn], column.Name) {
+					continue // definition was removed and reset to default
+				}
+				return fmt.Errorf("definition %q was not reset to default: %v", defn, column)
+			}
+			return nil
+		},
 	})
-}
-
-func testAccCheckDatasetDefinitionResetToDefault(t *testing.T, dataset string, name string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		client := testAccClient(t)
-		dd, err := client.DatasetDefinitions.Get(context.Background(), dataset)
-		if err != nil {
-			return fmt.Errorf("could not lookup dataset definitions: %w", err)
-		}
-
-		// defaults would be nil or one of the values in `DatasetDefinitionColumnDefaults`
-		column := extractDatasetDefinitionColumnByName(dd, name)
-		if column != nil {
-			assert.True(t, slices.Contains(honeycombio.DatasetDefinitionDefaults()[name], column.Name))
-		}
-
-		return nil
-	}
 }

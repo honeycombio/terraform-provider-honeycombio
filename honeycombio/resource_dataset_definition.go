@@ -75,6 +75,12 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 
 	name := d.Get("name").(string)
 	column := extractDatasetDefinitionColumnByName(dd, name)
+	if column == nil {
+		// Definition used to be set but was removed without TF knowning about it,
+		// so we're trying to read a definition that has a "null" value.
+		d.SetId("")
+		return nil
+	}
 
 	d.SetId(strconv.Itoa(hashcode.String(fmt.Sprintf("%s-%s", dataset, name))))
 	d.Set("name", name)
