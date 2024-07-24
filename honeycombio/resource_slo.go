@@ -54,7 +54,7 @@ the column evaluation should consistently return nil, true, or false, as these a
 				Type:         schema.TypeFloat,
 				Required:     true,
 				Description:  "The percentage of qualified events that you expect to succeed during the `time_period`.",
-				ValidateFunc: validation.FloatBetween(1.00000, 99.9999),
+				ValidateFunc: validation.FloatBetween(0.00000, 99.9999),
 			},
 			"time_period": {
 				Type:         schema.TypeInt,
