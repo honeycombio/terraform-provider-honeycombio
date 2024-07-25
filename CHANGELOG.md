@@ -1,3 +1,34 @@
+# 0.25.0 (Jul 25, 2024)
+
+NOTES:
+
+This release includes new resources for managing your team's Environments and
+Ingest API Keys. These resources operate against new team-level APIs, which
+require a new team-level Management API Key for authentication. See the new
+setup instructions for "v2 APIs" in the README.
+
+[Best Practices for API Keys](https://docs.honeycomb.io/get-started/best-practices/api-keys/) has more information on the types of API keys and when to use them.
+
+ENHANCEMENTS:
+
+* r/api_key: new resource for managing Ingest API Keys (#496)
+* r/environment: new resource for managing Environments (#501)
+
+BUGFIXES:
+* fix(slos): Reflect OpenAPI validation of SLOs (#506)
+* fix: client - guard against nil resp during retry check (#491)
+* fix: incorrect conversion between integer types (#500)
+* fix: read of null definition causes panic  (#505)
+
+HOUSEKEEPING:
+
+* maint(deps): bump the hashicorp group with 3 updates by @dependabot in https://github.com/honeycombio/terraform-provider-honeycombio/pull/495
+* chore(go): add missing toolchain directive by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/498
+* chore: cleanup static environment ID in favour of new functionality by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/502
+* chore: d/query_specification - migrate to Plugin Framework by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/493
+* feat: validate examples by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/492
+* chore: refresh README and CONTRIBUTING docs by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/503
+
 # 0.24.0 (Jun 14, 2024)
 
 NOTES:
