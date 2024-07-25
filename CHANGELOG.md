@@ -15,19 +15,19 @@ ENHANCEMENTS:
 * r/environment: new resource for managing Environments (#501)
 
 BUGFIXES:
-* fix(slos): Reflect OpenAPI validation of SLOs (#506)
+* fix: Reflect OpenAPI validation of SLOs (#506)
 * fix: client - guard against nil resp during retry check (#491)
 * fix: incorrect conversion between integer types (#500)
 * fix: read of null definition causes panic  (#505)
 
 HOUSEKEEPING:
 
-* maint(deps): bump the hashicorp group with 3 updates by @dependabot in https://github.com/honeycombio/terraform-provider-honeycombio/pull/495
-* chore(go): add missing toolchain directive by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/498
-* chore: cleanup static environment ID in favour of new functionality by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/502
-* chore: d/query_specification - migrate to Plugin Framework by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/493
-* feat: validate examples by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/492
-* chore: refresh README and CONTRIBUTING docs by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/503
+* chore: validate examples (#492)
+* chore: d/query_specification - migrate to Plugin Framework (#493)
+* maint(deps): bump the hashicorp group with 3 updates (#495)
+* chore: add missing toolchain directive (#498)
+* chore: cleanup static environment ID in favour of new functionality (#502)
+* chore: refresh README and CONTRIBUTING docs (#503)
 
 # 0.24.0 (Jun 14, 2024)
 
