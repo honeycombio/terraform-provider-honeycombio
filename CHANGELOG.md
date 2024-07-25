@@ -4,8 +4,8 @@ NOTES:
 
 This release includes new resources for managing your team's Environments and
 Ingest API Keys. These resources operate against new team-level APIs, which
-require a new team-level Management API Key for authentication. See the new
-setup instructions for "v2 APIs" in the README.
+require a new team-level Management API Key for authentication. See the [new
+setup instructions for "v2 APIs"](https://github.com/honeycombio/terraform-provider-honeycombio/blob/main/README.md#v2-apis) in the README.
 
 [Best Practices for API Keys](https://docs.honeycomb.io/get-started/best-practices/api-keys/) has more information on the types of API keys and when to use them.
 
