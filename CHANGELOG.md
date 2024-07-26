@@ -1,3 +1,34 @@
+# 0.25.0 (Jul 25, 2024)
+
+NOTES:
+
+This release includes new resources for managing your team's Environments and
+Ingest API Keys. These resources operate against new team-level APIs, which
+require a new team-level Management API Key for authentication. See the [new
+setup instructions for "v2 APIs"](https://github.com/honeycombio/terraform-provider-honeycombio/blob/main/README.md#v2-apis) in the README.
+
+[Best Practices for API Keys](https://docs.honeycomb.io/get-started/best-practices/api-keys/) has more information on the types of API keys and when to use them.
+
+ENHANCEMENTS:
+
+* r/api_key: new resource for managing Ingest API Keys (#496)
+* r/environment: new resource for managing Environments (#501)
+
+BUGFIXES:
+* fix: Reflect OpenAPI validation of SLOs (#506)
+* fix: client - guard against nil resp during retry check (#491)
+* fix: incorrect conversion between integer types (#500)
+* fix: read of null definition causes panic  (#505)
+
+HOUSEKEEPING:
+
+* chore: validate examples (#492)
+* chore: d/query_specification - migrate to Plugin Framework (#493)
+* maint(deps): bump the hashicorp group with 3 updates (#495)
+* chore: add missing toolchain directive (#498)
+* chore: cleanup static environment ID in favour of new functionality (#502)
+* chore: refresh README and CONTRIBUTING docs (#503)
+
 # 0.24.0 (Jun 14, 2024)
 
 NOTES:
