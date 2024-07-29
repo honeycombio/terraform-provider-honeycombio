@@ -208,7 +208,7 @@ func (c *Client) retryHTTPCheck(
 	case http.StatusTooManyRequests:
 		// TODO: use new retry header timestamps to determine when to retry
 		return true, nil
-	case http.StatusBadGateway, http.StatusGatewayTimeout:
+	case http.StatusBadGateway, http.StatusGatewayTimeout, http.StatusInternalServerError:
 		return true, nil
 	default:
 		return false, nil
