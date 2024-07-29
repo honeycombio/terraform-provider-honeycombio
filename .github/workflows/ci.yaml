@@ -39,6 +39,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: hnytf-testacc-us
     env:
       TERRAFORM_VERSION: "1.0.11"
     steps:
@@ -92,6 +94,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    concurrency:
+      group: hnytf-testacc-eu
     env:
       TERRAFORM_VERSION: "1.0.11"
     steps:
