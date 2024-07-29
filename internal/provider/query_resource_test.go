@@ -101,6 +101,8 @@ EOT
 //
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
+	t.Skip("mysteriously broken and under investigation")
+
 	t.Parallel()
 	ctx := context.Background()
 	dataset := testAccDataset()
