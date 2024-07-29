@@ -399,7 +399,8 @@ func TestAcc_QuerySpecificationDataSource_zerovalue(t *testing.T) {
       "value": 0
     }
   ],
-  "time_range": 7200
+  "time_range": 7200,
+  "granularity": 0
 }`)
 	require.NoError(t, err)
 
@@ -419,6 +420,8 @@ data "honeycombio_query_specification" "test" {
     op     = ">"
     value  = 0
   }
+
+  granularity = 0
 }
 
 output "query_json" {

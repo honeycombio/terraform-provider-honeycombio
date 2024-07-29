@@ -403,7 +403,7 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 				"granularity can not be greater than time_range/10",
 			)
 		}
-		if *querySpec.Granularity < (*querySpec.TimeRange / 1000) {
+		if *querySpec.Granularity != 0 && *querySpec.Granularity < (*querySpec.TimeRange/1000) {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("granularity"),
 				"invalid granularity",
