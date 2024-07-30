@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
@@ -21,53 +22,53 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 		{
 			Type: honeycombio.RecipientTypeEmail,
 			Details: honeycombio.RecipientDetails{
-				EmailAddress: "acctest@example.org",
+				EmailAddress: test.RandomEmail(),
 			},
 		},
 		{
 			Type: honeycombio.RecipientTypeEmail,
 			Details: honeycombio.RecipientDetails{
-				EmailAddress: "acctest2@example.org",
+				EmailAddress: test.RandomEmail(),
 			},
 		},
 		{
 			Type: honeycombio.RecipientTypeSlack,
 			Details: honeycombio.RecipientDetails{
-				SlackChannel: "#acctest",
+				SlackChannel: test.RandomStringWithPrefix("#test.", 12),
 			},
 		},
 		{
 			Type: honeycombio.RecipientTypeSlack,
 			Details: honeycombio.RecipientDetails{
-				SlackChannel: "#tmp-acctest",
+				SlackChannel: test.RandomStringWithPrefix("#test.", 12),
 			},
 		},
 		{
 			Type: honeycombio.RecipientTypePagerDuty,
 			Details: honeycombio.RecipientDetails{
-				PDIntegrationKey:  "6f05176bf1c7a1adb6ee516521770ec4",
-				PDIntegrationName: "My Important Service",
+				PDIntegrationKey:  test.RandomString(32),
+				PDIntegrationName: test.RandomStringWithPrefix("test.", 20),
 			},
 		},
 		{
 			Type: honeycombio.RecipientTypePagerDuty,
 			Details: honeycombio.RecipientDetails{
-				PDIntegrationKey:  "6f05176bf1b7a1adb6ee516521770ac0",
-				PDIntegrationName: "My Other Important Service",
+				PDIntegrationKey:  test.RandomString(32),
+				PDIntegrationName: test.RandomStringWithPrefix("test.", 20),
 			},
 		},
 		{
 			Type: honeycombio.RecipientTypeWebhook,
 			Details: honeycombio.RecipientDetails{
-				WebhookName:   "My Notifications Hook",
-				WebhookSecret: "s0s3kret!",
+				WebhookName:   test.RandomStringWithPrefix("test.", 16),
+				WebhookSecret: test.RandomString(20),
 				WebhookURL:    "https://my.webhook.dev.corp.io",
 			},
 		},
 		{
 			Type: honeycombio.RecipientTypeMSTeams,
 			Details: honeycombio.RecipientDetails{
-				WebhookName: "My Teams Channel",
+				WebhookName: test.RandomStringWithPrefix("test.", 16),
 				WebhookURL:  "https://outlook.office.com/webhook/12345",
 			},
 		},
@@ -92,57 +93,57 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccRecipientWithDeprecatedTarget("email", "acctest@example.org"),
-				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "address", "acctest@example.org"),
+				Config: testAccRecipientWithDeprecatedTarget("email", testRecipients[0].Details.EmailAddress),
+				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "address", testRecipients[0].Details.EmailAddress),
 			},
 			{
-				Config: testAccRecipientWithDeprecatedTarget("slack", "#acctest"),
-				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "channel", "#acctest"),
+				Config: testAccRecipientWithDeprecatedTarget("slack", testRecipients[2].Details.SlackChannel),
+				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "channel", testRecipients[2].Details.SlackChannel),
 			},
 			{
 				Config:      testAccRecipientWithDeprecatedTarget("email", "another@example.org"),
 				ExpectError: regexp.MustCompile("your recipient query returned no results."),
 			},
 			{
-				Config: testAccRecipientWithFilterValue("email", "address", "acctest2@example.org"),
-				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "address", "acctest2@example.org"),
+				Config: testAccRecipientWithFilterValue("email", "address", testRecipients[1].Details.EmailAddress),
+				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "address", testRecipients[1].Details.EmailAddress),
 			},
 			{
 				Config:      testAccRecipientWithFilterValue("email", "address", "another@example.org"),
 				ExpectError: regexp.MustCompile("your recipient query returned no results."),
 			},
 			{
-				Config: testAccRecipientWithFilterValue("pagerduty", "integration_name", "My Important Service"),
+				Config: testAccRecipientWithFilterValue("pagerduty", "integration_name", testRecipients[4].Details.PDIntegrationName),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "integration_name", "My Important Service"),
-					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "integration_key", "6f05176bf1c7a1adb6ee516521770ec4"),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "integration_name", testRecipients[4].Details.PDIntegrationName),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "integration_key", testRecipients[4].Details.PDIntegrationKey),
 				),
 			},
 			{
 				Config: testAccRecipientWithFilterRegex("webhook", "url", ".*dev.corp.io"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "name", "My Notifications Hook"),
-					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "secret", "s0s3kret!"),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "name", testRecipients[6].Details.WebhookName),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "secret", testRecipients[6].Details.WebhookSecret),
 					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", "https://my.webhook.dev.corp.io"),
 				),
 			},
 			{
-				Config: testAccRecipientWithFilterValue("msteams", "name", "My Teams Channel"),
+				Config: testAccRecipientWithFilterValue("msteams", "name", testRecipients[7].Details.WebhookName),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "name", "My Teams Channel"),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "name", testRecipients[7].Details.WebhookName),
 					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", "https://outlook.office.com/webhook/12345"),
 				),
 			},
 			{
-				Config: testAccRecipientWithFilterValue("slack", "channel", "#tmp-acctest"),
-				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "channel", "#tmp-acctest"),
+				Config: testAccRecipientWithFilterValue("slack", "channel", testRecipients[3].Details.SlackChannel),
+				Check:  resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "channel", testRecipients[3].Details.SlackChannel),
 			},
 			{
-				Config:      testAccRecipientWithFilterRegex("email", "address", "^acctest*"),
+				Config:      testAccRecipientWithFilterRegex("email", "address", ".*@example.com"),
 				ExpectError: regexp.MustCompile("your recipient query returned more than one result. Please try a more specific search criteria."),
 			},
 			{
-				Config:      testAccRecipientWithFilterRegex("pagerduty", "integration_name", "^.*Important Service$"),
+				Config:      testAccRecipientWithFilterRegex("pagerduty", "integration_name", ".*"),
 				ExpectError: regexp.MustCompile("your recipient query returned more than one result. Please try a more specific search criteria."),
 			},
 		},
@@ -154,8 +155,7 @@ func testAccRecipientWithDeprecatedTarget(recipientType, target string) string {
 data "honeycombio_recipient" "test" {
   type   = "%s"
   target = "%s"
-}
-`, recipientType, target)
+}`, recipientType, target)
 }
 
 func testAccRecipientWithFilterValue(recipientType, filterName, filterValue string) string {
@@ -167,8 +167,7 @@ data "honeycombio_recipient" "test" {
     name  = "%s"
     value = "%s"
   }
-}
-`, recipientType, filterName, filterValue)
+}`, recipientType, filterName, filterValue)
 }
 
 func testAccRecipientWithFilterRegex(recipientType, filterName, filterRegex string) string {
@@ -180,6 +179,5 @@ data "honeycombio_recipient" "test" {
     name        = "%s"
     value_regex = "%s"
   }
-}
-`, recipientType, filterName, filterRegex)
+}`, recipientType, filterName, filterRegex)
 }

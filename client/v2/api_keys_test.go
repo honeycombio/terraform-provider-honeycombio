@@ -12,6 +12,7 @@ import (
 
 	hnyclient "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestClient_APIKeys(t *testing.T) {
@@ -20,8 +21,9 @@ func TestClient_APIKeys(t *testing.T) {
 	env := newTestEnvironment(ctx, t, c)
 
 	// create a new key
+	keyName := test.RandomStringWithPrefix("test.", 10)
 	k, err := c.APIKeys.Create(ctx, &APIKey{
-		Name:    helper.ToPtr("test key"),
+		Name:    helper.ToPtr(keyName),
 		KeyType: "ingest",
 		Environment: &Environment{
 			ID: env.ID,
@@ -33,7 +35,7 @@ func TestClient_APIKeys(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, k.ID)
 	assert.NotEmpty(t, k.Secret)
-	assert.Equal(t, "test key", *k.Name)
+	assert.Equal(t, keyName, *k.Name)
 	assert.False(t, *k.Disabled)
 	assert.True(t, k.Permissions.CreateDatasets)
 
@@ -50,14 +52,15 @@ func TestClient_APIKeys(t *testing.T) {
 	assert.WithinDuration(t, k.Timestamps.UpdatedAt, key.Timestamps.UpdatedAt, 5*time.Second)
 
 	// update the key's name and disable it
+	keyName = test.RandomStringWithPrefix("test.", 10)
 	key, err = c.APIKeys.Update(ctx, &APIKey{
 		ID:       k.ID,
-		Name:     helper.ToPtr("new name"),
+		Name:     helper.ToPtr(keyName),
 		Disabled: helper.ToPtr(true),
 	})
 	require.NoError(t, err)
 	assert.Equal(t, k.ID, key.ID)
-	assert.Equal(t, "new name", *key.Name)
+	assert.Equal(t, keyName, *key.Name)
 	assert.True(t, *key.Disabled)
 	assert.WithinDuration(t, time.Now(), key.Timestamps.UpdatedAt, time.Second)
 

@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
@@ -427,7 +428,7 @@ func TestAcc_BurnAlertResource_HandlesRecipientChangedOutsideOfTerraform(t *test
 	dataset, sloID := burnAlertAccTestSetup(t)
 
 	// setup a slack recipient to be used in the burn alert, and modified outside of terraform
-	channel := "#" + acctest.RandString(8)
+	channel := test.RandomStringWithPrefix("#test.", 8)
 	rcpt, err := c.Recipients.Create(ctx, &client.Recipient{
 		Type: client.RecipientTypeSlack,
 		Details: client.RecipientDetails{
@@ -653,7 +654,7 @@ func testAccConfigBurnAlertDefault_basic(exhaustionMinutes int, dataset, sloID, 
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
-  integration_name = "testacc-basic"
+  integration_name = "test.pd-basic"
 }
 
 resource "honeycombio_burn_alert" "test" {
@@ -683,16 +684,16 @@ resource "honeycombio_burn_alert" "test" {
 
   recipient {
     type   = "email"
-    target = "test@example.com"
+    target = "%s[3]s"
   }
-}`, dataset, sloID)
+}`, dataset, sloID, test.RandomEmail())
 }
 
 func testAccConfigBurnAlertExhaustionTime_basic(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
-  integration_name = "testacc-basic"
+  integration_name = "test.pd-basic"
 }
 
 resource "honeycombio_burn_alert" "test" {
@@ -724,16 +725,16 @@ resource "honeycombio_burn_alert" "test" {
 
   recipient {
     type   = "email"
-    target = "test@example.com"
+    target = "%[3]s"
   }
-}`, dataset, sloID)
+}`, dataset, sloID, test.RandomEmail())
 }
 
 func testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
-  integration_name = "testacc-basic"
+  integration_name = "test.pd-basic"
 }
 
 resource "honeycombio_burn_alert" "test" {
@@ -758,7 +759,7 @@ func testAccConfigBurnAlertBudgetRate_trailingZeros(dataset, sloID string) strin
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
-  integration_name = "testacc-basic"
+  integration_name = "test.pd-basic"
 }
 
 resource "honeycombio_burn_alert" "test" {
@@ -790,9 +791,9 @@ resource "honeycombio_burn_alert" "test" {
 
   recipient {
     type   = "email"
-    target = "test@example.com"
+    target = "%[3]s"
   }
-}`, dataset, sloID)
+}`, dataset, sloID, test.RandomEmail())
 }
 
 func testAccConfigBurnAlertBudgetRate_validateUnknownOrVariableAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
@@ -804,7 +805,7 @@ variable "exhaustion_minutes" {
 
 resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
-  integration_name = "testacc-basic"
+  integration_name = "test.pd-basic"
 }
 
 resource "honeycombio_burn_alert" "test" {
@@ -840,23 +841,22 @@ resource "honeycombio_burn_alert" "test" {
 
 func testAccConfigBurnAlertWithDynamicRecipient(dataset, sloID string) string {
 	return fmt.Sprintf(`
-
 variable "recipients" {
-	type = list(object({
-		type   = string
-		target = string
-		}))
+  type = list(object({
+    type   = string
+    target = string
+  }))
 
-	default = [
-		{
-			"type": "email",
-			"target": "test1@example.com"
-		},
-		{
-			"type": "email",
-			"target": "test2@example.com"
-		}
-	]
+  default = [
+    {
+      "type": "email",
+      "target": "%[3]s"
+    },
+    {
+      "type": "email",
+      "target": "%[4]s"
+    }
+  ]
 }
 
 resource "honeycombio_burn_alert" "test" {
@@ -866,12 +866,12 @@ resource "honeycombio_burn_alert" "test" {
   slo_id  = "%[2]s"
 
   dynamic "recipient" {
-	for_each = var.recipients
+    for_each = var.recipients
 
-	content {
-		type   = recipient.value.type
-    	target = recipient.value.target
-	}
+    content {
+      type   = recipient.value.type
+      target = recipient.value.target
+    }
   }
-}`, dataset, sloID)
+}`, dataset, sloID, test.RandomEmail(), test.RandomEmail())
 }

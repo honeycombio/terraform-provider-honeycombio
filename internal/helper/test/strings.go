@@ -23,9 +23,15 @@ func RandomString(length int) string {
 //
 // Example:
 //
-//	RandomStringWithPrefix("test-", 10) => "test-abcde12345"
+//	RandomStringWithPrefix("test.", 10) => "test.abcde12345"
 func RandomStringWithPrefix(prefix string, length int) string {
 	return prefix + RandomString(length)
+}
+
+// RandomEmail generates a random email address for testing purposes
+// in the "@example.com" domain.
+func RandomEmail() string {
+	return RandomStringWithPrefix("test.", 10) + "@example.com"
 }
 
 // MinifyJSON minifies a JSON string removing all whitespace and newlines

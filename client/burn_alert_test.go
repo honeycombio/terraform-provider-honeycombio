@@ -21,7 +21,7 @@ func TestBurnAlerts(t *testing.T) {
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
-	testAlertEmail := test.RandomString(8) + "@example.com"
+	testAlertEmail := test.RandomEmail()
 
 	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
 		Alias:      test.RandomStringWithPrefix("test.", 8),

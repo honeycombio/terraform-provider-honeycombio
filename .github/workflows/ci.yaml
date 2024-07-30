@@ -84,6 +84,16 @@ jobs:
           TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
         run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./internal/... ./honeycombio/...
 
+      - name: Cleanup Dangling Resources
+        if: ${{ always() }}
+        timeout-minutes: 5
+        env:
+          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+          HONEYCOMB_KEY_ID: ${{ secrets.HONEYCOMB_KEY_ID }}
+          HONEYCOMB_KEY_SECRET: ${{ secrets.HONEYCOMB_KEY_SECRET }}
+          HONEYCOMB_DATASET: testacc
+        run: make sweep
+
       - name: Generate Coverage Report
         uses: codecov/codecov-action@v4.5.0
         with:
@@ -141,6 +151,17 @@ jobs:
           TF_ACC: 1
           TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
         run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./internal/... ./honeycombio/...
+
+      - name: Cleanup Dangling Resources
+        if: ${{ always() }}
+        timeout-minutes: 5
+        env:
+          HONEYCOMB_API_ENDPOINT: https://api.eu1.honeycomb.io
+          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
+          HONEYCOMB_KEY_ID: ${{ secrets.HONEYCOMB_KEY_ID_EU }}
+          HONEYCOMB_KEY_SECRET: ${{ secrets.HONEYCOMB_KEY_SECRET_EU }}
+          HONEYCOMB_DATASET: testacc
+        run: make sweep
 
       - name: Generate Coverage Report
         uses: codecov/codecov-action@v4.5.0
