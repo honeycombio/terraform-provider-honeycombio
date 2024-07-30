@@ -46,14 +46,14 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 		{
 			Type: honeycombio.RecipientTypePagerDuty,
 			Details: honeycombio.RecipientDetails{
-				PDIntegrationKey:  test.RandomStringWithPrefix("test.", 27), // 32 char key
+				PDIntegrationKey:  test.RandomString(32),
 				PDIntegrationName: test.RandomStringWithPrefix("test.", 20),
 			},
 		},
 		{
 			Type: honeycombio.RecipientTypePagerDuty,
 			Details: honeycombio.RecipientDetails{
-				PDIntegrationKey:  test.RandomStringWithPrefix("test.", 27), // 32 char key
+				PDIntegrationKey:  test.RandomString(32),
 				PDIntegrationName: test.RandomStringWithPrefix("test.", 20),
 			},
 		},
@@ -61,7 +61,7 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 			Type: honeycombio.RecipientTypeWebhook,
 			Details: honeycombio.RecipientDetails{
 				WebhookName:   test.RandomStringWithPrefix("test.", 16),
-				WebhookSecret: test.RandomStringWithPrefix("test.", 20),
+				WebhookSecret: test.RandomString(20),
 				WebhookURL:    "https://my.webhook.dev.corp.io",
 			},
 		},

@@ -734,7 +734,7 @@ resource "honeycombio_trigger" "test" {
 
 func testAccConfigBasicTriggerTest(dataset, name, pdseverity string) string {
 	email := test.RandomEmail()
-	pdKey := test.RandomStringWithPrefix("test.", 27) // 32 char key
+	pdKey := test.RandomString(32)
 	pdName := test.RandomStringWithPrefix("test.", 20)
 
 	return fmt.Sprintf(`
@@ -788,7 +788,7 @@ resource "honeycombio_trigger" "test" {
 
 func testAccConfigBasicTriggerTest_QuerySpec(dataset, name, pdseverity string) string {
 	email := test.RandomEmail()
-	pdKey := test.RandomStringWithPrefix("test.", 27) // 32 char key
+	pdKey := test.RandomString(32)
 	pdName := test.RandomStringWithPrefix("test.", 20)
 
 	return fmt.Sprintf(`
