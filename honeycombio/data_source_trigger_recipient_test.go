@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
@@ -18,8 +19,9 @@ func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
 	dataset := testAccDataset()
 	c := testAccClient(t)
 
+	randomEmail := test.RandomEmail()
 	trigger, err := c.Triggers.Create(ctx, dataset, &honeycombio.Trigger{
-		Name: "test trigger",
+		Name: test.RandomStringWithPrefix("test.", 12),
 		Query: &honeycombio.QuerySpec{
 			Calculations: []honeycombio.CalculationSpec{
 				{Op: honeycombio.CalculationOpCount},
@@ -32,7 +34,7 @@ func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
 		Recipients: []honeycombio.NotificationRecipient{
 			{
 				Type:   honeycombio.RecipientTypeEmail,
-				Target: "acctest@example.com",
+				Target: randomEmail,
 			},
 		},
 	})
@@ -47,11 +49,11 @@ func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTriggerRecipient(dataset, "email", "acctest@example.com"),
+				Config: testAccTriggerRecipient(dataset, "email", randomEmail),
 			},
 			{
-				Config:      testAccTriggerRecipient(dataset, "email", "another@example.com"),
-				ExpectError: regexp.MustCompile("could not find a trigger recipient in .* with type = \"email\" and target = \"another@example.com\""),
+				Config:      testAccTriggerRecipient(dataset, "email", "random@corp.net"),
+				ExpectError: regexp.MustCompile("could not find a trigger recipient in .* with type = \"email\" and target = \"random@corp.net\""),
 			},
 			{
 				Config:      testAccTriggerRecipient(dataset, "slack", "honeycombio"),

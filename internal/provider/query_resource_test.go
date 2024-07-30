@@ -20,7 +20,7 @@ func TestAcc_QueryResource(t *testing.T) {
 	dataset := testAccDataset()
 	c := testAccClient(t)
 	col, err := c.Columns.Create(ctx, dataset, &client.Column{
-		KeyName: test.RandomStringWithPrefix("test-", 10),
+		KeyName: test.RandomStringWithPrefix("test.", 10),
 		Type:    client.ToPtr(client.ColumnTypeFloat),
 	})
 	require.NoError(t, err)
@@ -108,7 +108,7 @@ func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
 	dataset := testAccDataset()
 	c := testAccClient(t)
 	col, err := c.Columns.Create(ctx, dataset, &client.Column{
-		KeyName: test.RandomStringWithPrefix("test-", 10),
+		KeyName: test.RandomStringWithPrefix("test.", 10),
 		Type:    client.ToPtr(client.ColumnTypeFloat),
 	})
 	require.NoError(t, err)

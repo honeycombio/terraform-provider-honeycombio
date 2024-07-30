@@ -26,7 +26,7 @@ func TestRecipientsEmail(t *testing.T) {
 		data := &client.Recipient{
 			Type: client.RecipientTypeEmail,
 			Details: client.RecipientDetails{
-				EmailAddress: test.RandomString(8) + "@example.com",
+				EmailAddress: test.RandomEmail(),
 			},
 		}
 		now := time.Now()
@@ -56,7 +56,7 @@ func TestRecipientsEmail(t *testing.T) {
 	})
 
 	t.Run("Update", func(t *testing.T) {
-		rcpt.Details.EmailAddress = "hnytest2@example.com"
+		rcpt.Details.EmailAddress = test.RandomEmail()
 		now := time.Now()
 		result, err := c.Recipients.Update(ctx, rcpt)
 

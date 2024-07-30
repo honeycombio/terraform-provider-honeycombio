@@ -9,15 +9,16 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAcc_TriggerResource(t *testing.T) {
 	dataset := testAccDataset()
+	name := test.RandomStringWithPrefix("test.", 20)
 
 	t.Run("trigger resource with Query ID", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
@@ -25,10 +26,10 @@ func TestAcc_TriggerResource(t *testing.T) {
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
-					Config: testAccConfigBasicTriggerTest(dataset, "info"),
+					Config: testAccConfigBasicTriggerTest(dataset, name, "info"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
-						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", "Test trigger from terraform-provider-honeycombio"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "600"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "1"),
@@ -38,7 +39,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 				},
 				// then update the PD Severity from info -> critical (the default)
 				{
-					Config: testAccConfigBasicTriggerTest(dataset, "critical"),
+					Config: testAccConfigBasicTriggerTest(dataset, name, "critical"),
 				},
 				{
 					ResourceName:        "honeycombio_trigger.test",
@@ -55,10 +56,10 @@ func TestAcc_TriggerResource(t *testing.T) {
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
-					Config: testAccConfigBasicTriggerTest_QuerySpec(dataset, "info"),
+					Config: testAccConfigBasicTriggerTest_QuerySpec(dataset, name, "info"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
-						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", "Test trigger from terraform-provider-honeycombio"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "600"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "1"),
@@ -67,7 +68,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 				},
 				// then update the PD Severity from info -> critical (the default)
 				{
-					Config: testAccConfigBasicTriggerTest_QuerySpec(dataset, "critical"),
+					Config: testAccConfigBasicTriggerTest_QuerySpec(dataset, name, "critical"),
 				},
 				{
 					ResourceName:        "honeycombio_trigger.test",
@@ -87,7 +88,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
 	dataset := testAccDataset()
 
-	config := testAccConfigBasicTriggerTest(dataset, "info")
+	config := testAccConfigBasicTriggerTest(dataset, test.RandomStringWithPrefix("test.", 20), "info")
 
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -125,18 +126,19 @@ func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
 	ctx := context.Background()
 	c := testAccClient(t)
 	dataset := testAccDataset()
+	name := test.RandomStringWithPrefix("test.", 20)
 
 	testRecipients := []client.Recipient{
 		{
 			Type: client.RecipientTypeEmail,
 			Details: client.RecipientDetails{
-				EmailAddress: acctest.RandString(8) + "@example.com",
+				EmailAddress: test.RandomEmail(),
 			},
 		},
 		{
 			Type: client.RecipientTypeSlack,
 			Details: client.RecipientDetails{
-				SlackChannel: "#" + acctest.RandString(8),
+				SlackChannel: test.RandomStringWithPrefix("#test.", 8),
 			},
 		},
 	}
@@ -160,14 +162,14 @@ func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccConfigTriggerRecipientByID(dataset, testRecipients[0].ID, 3),
+				Config: testAccConfigTriggerRecipientByID(dataset, name, testRecipients[0].ID, 3),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.id", testRecipients[0].ID),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "3"),
 				),
 			},
 			{
-				Config: testAccConfigTriggerRecipientByID(dataset, testRecipients[1].ID, 5),
+				Config: testAccConfigTriggerRecipientByID(dataset, name, testRecipients[1].ID, 5),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.id", testRecipients[1].ID),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "5"),
@@ -179,6 +181,10 @@ func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
 
 func TestAcc_TriggerResourceRecipientOrderingStable(t *testing.T) {
 	dataset := testAccDataset()
+	email1 := test.RandomEmail()
+	email2 := test.RandomEmail()
+	slack1 := test.RandomStringWithPrefix("#test.", 8)
+	slack2 := test.RandomStringWithPrefix("#test.", 8)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
@@ -214,22 +220,22 @@ resource "honeycombio_trigger" "test" {
 
   recipient {
     type   = "slack"
-    target = "#test2"
+    target = "%[2]s"
   }
 
   recipient {
     type   = "slack"
-    target = "#test"
+    target = "%[3]s"
   }
 
   recipient {
     type   = "email"
-    target = "bob@example.com"
+    target = "%[4]s"
   }
 
   recipient {
     type   = "email"
-    target = "alice@example.com"
+    target = "%[5]s"
   }
 
   recipient {
@@ -237,7 +243,7 @@ resource "honeycombio_trigger" "test" {
     target = "trigger fired"
   }
 }
-`, dataset),
+`, dataset, slack1, slack2, email1, email2),
 			},
 			{
 				// now remove two recipients and add a new one
@@ -270,25 +276,25 @@ resource "honeycombio_trigger" "test" {
 
   recipient {
     type   = "slack"
-    target = "#test"
+    target = "%[2]s"
   }
 
   recipient {
     type   = "email"
-    target = "bob@example.com"
+    target = "%[3]s"
   }
 
   recipient {
     type   = "email"
-    target = "alice@example.com"
+    target = "%[4]s"
   }
 
   recipient {
     type   = "slack"
-    target = "#a-new-channel"
+    target = "%[5]s"
   }
 }
-`, dataset),
+`, dataset, slack1, email2, email1, test.RandomStringWithPrefix("#test.", 8)),
 			},
 		},
 	})
@@ -460,7 +466,7 @@ func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing
 	dataset := testAccDataset()
 
 	// setup a slack recipient to be used in the trigger, and modified outside of terraform
-	channel := "#" + acctest.RandString(8)
+	channel := test.RandomStringWithPrefix("#test.", 8)
 	rcpt, err := c.Recipients.Create(ctx, &client.Recipient{
 		Type: client.RecipientTypeSlack,
 		Details: client.RecipientDetails{
@@ -726,7 +732,11 @@ resource "honeycombio_trigger" "test" {
 	})
 }
 
-func testAccConfigBasicTriggerTest(dataset, pdseverity string) string {
+func testAccConfigBasicTriggerTest(dataset, name, pdseverity string) string {
+	email := test.RandomEmail()
+	pdKey := test.RandomStringWithPrefix("test.", 27) // 32 char key
+	pdName := test.RandomStringWithPrefix("test.", 20)
+
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
   calculation {
@@ -742,12 +752,12 @@ resource "honeycombio_query" "test" {
 }
 
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
-  integration_name = "testacc-basic"
+  integration_key  = "%[5]s"
+  integration_name = "%[6]s"
 }
 
 resource "honeycombio_trigger" "test" {
-  name    = "Test trigger from terraform-provider-honeycombio"
+  name    = "%[2]s"
   dataset = "%[1]s"
 
   description = "My nice description"
@@ -763,20 +773,24 @@ resource "honeycombio_trigger" "test" {
 
   recipient {
     type   = "email"
-    target = "hello@example.com"
+    target = "%[4]s"
   }
 
   recipient {
     id = honeycombio_pagerduty_recipient.test.id
 
     notification_details {
-      pagerduty_severity = "%[2]s"
+      pagerduty_severity = "%[3]s"
     }
   }
-}`, dataset, pdseverity)
+}`, dataset, name, pdseverity, email, pdKey, pdName)
 }
 
-func testAccConfigBasicTriggerTest_QuerySpec(dataset, pdseverity string) string {
+func testAccConfigBasicTriggerTest_QuerySpec(dataset, name, pdseverity string) string {
+	email := test.RandomEmail()
+	pdKey := test.RandomStringWithPrefix("test.", 27) // 32 char key
+	pdName := test.RandomStringWithPrefix("test.", 20)
+
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
   calculation {
@@ -787,12 +801,12 @@ data "honeycombio_query_specification" "test" {
 }
 
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
-  integration_name = "testacc-basic"
+  integration_key  = "%[5]s"
+  integration_name = "%[6]s"
 }
 
 resource "honeycombio_trigger" "test" {
-  name    = "Test trigger from terraform-provider-honeycombio"
+  name    = "%[2]s"
   dataset = "%[1]s"
 
   description = "My nice description"
@@ -808,20 +822,20 @@ resource "honeycombio_trigger" "test" {
 
   recipient {
     type   = "email"
-    target = "hello@example.com"
+    target = "%[4]s"
   }
 
   recipient {
     id = honeycombio_pagerduty_recipient.test.id
 
     notification_details {
-      pagerduty_severity = "%[2]s"
+      pagerduty_severity = "%[3]s"
     }
   }
-}`, dataset, pdseverity)
+}`, dataset, name, pdseverity, email, pdKey, pdName)
 }
 
-func testAccConfigTriggerRecipientByID(dataset, recipientID string, exceededLimit int) string {
+func testAccConfigTriggerRecipientByID(dataset, name, recipientID string, exceededLimit int) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
   calculation {
@@ -838,20 +852,20 @@ resource "honeycombio_query" "test" {
 }
 
 resource "honeycombio_trigger" "test" {
-  name    = "Test trigger with changing recipient id"
+  name    = "%[2]s"
   dataset = "%[1]s"
   query_id = honeycombio_query.test.id
 
   threshold {
     op             = ">"
     value          = 100
-    exceeded_limit = %[3]d
+    exceeded_limit = %[4]d
   }
 
   recipient {
-    id = "%[2]s"
+    id = "%[3]s"
   }
-}`, dataset, recipientID, exceededLimit)
+}`, dataset, name, recipientID, exceededLimit)
 }
 
 func testAccConfigTriggerWithSlackRecipient(dataset, channel string) string {

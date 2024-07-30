@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestQueryAnnotations(t *testing.T) {
@@ -33,7 +34,7 @@ func TestQueryAnnotations(t *testing.T) {
 
 	t.Run("Create", func(t *testing.T) {
 		data := &client.QueryAnnotation{
-			Name:        "Query created by a test",
+			Name:        test.RandomStringWithPrefix("test.", 20),
 			Description: "This derived column is created by a test",
 			QueryID:     *query.ID,
 		}
@@ -62,7 +63,7 @@ func TestQueryAnnotations(t *testing.T) {
 		// change all the fields to test
 		data := &client.QueryAnnotation{
 			ID:          queryAnnotation.ID,
-			Name:        "This is a new name for the query created by a test",
+			Name:        test.RandomStringWithPrefix("test.", 20),
 			Description: "This is a new description",
 			QueryID:     *query.ID,
 		}
