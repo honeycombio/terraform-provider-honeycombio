@@ -85,6 +85,7 @@ jobs:
         run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./internal/... ./honeycombio/...
 
       - name: Cleanup Dangling Resources
+        if: always()
         timeout-minutes: 5
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
@@ -152,6 +153,7 @@ jobs:
         run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./internal/... ./honeycombio/...
 
       - name: Cleanup Dangling Resources
+        if: always()
         timeout-minutes: 5
         env:
           HONEYCOMB_API_ENDPOINT: https://api.eu1.honeycomb.io
