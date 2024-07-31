@@ -96,11 +96,12 @@ jobs:
           HONEYCOMB_DATASET: testacc
         run: make sweep
 
-      - name: Test Summary
+      - name: Generate Test Summary
         if: always()
         uses: test-summary/action@v2
         with:
           paths: "*-report.xml"
+          show: "fail, skip"
 
       - name: Generate Coverage Report
         uses: codecov/codecov-action@v4.5.0
@@ -173,11 +174,12 @@ jobs:
           HONEYCOMB_DATASET: testacc
         run: make sweep
 
-      - name: Test Summary
+      - name: Generate Test Summary
         if: always()
         uses: test-summary/action@v2
         with:
           paths: "*-report.xml"
+          show: "fail, skip"
 
       - name: Generate Coverage Report
         uses: codecov/codecov-action@v4.5.0
