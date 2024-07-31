@@ -57,7 +57,9 @@ jobs:
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
           HONEYCOMB_DATASET: testacc
-        run: ./scripts/setup-testsuite-dataset
+        run: |
+          go install github.com/jstemmer/go-junit-report/v2@latest
+          ./scripts/setup-testsuite-dataset
 
       - name: Run client acceptance tests
         timeout-minutes: 10
@@ -66,7 +68,14 @@ jobs:
           HONEYCOMB_KEY_ID: ${{ secrets.HONEYCOMB_KEY_ID }}
           HONEYCOMB_KEY_SECRET: ${{ secrets.HONEYCOMB_KEY_SECRET }}
           HONEYCOMB_DATASET: testacc
-        run: go test -v -coverprofile=client-coverage.txt -covermode=atomic ./client/...
+        run: |
+          go test -v ./client/... \
+            -coverprofile=client-coverage.txt \
+            -covermode=atomic | \
+            go-junit-report \
+            -set-exit-code \
+            -iocopy \
+            -out client-report.xml
 
       - uses: hashicorp/setup-terraform@v3
         with:
@@ -82,7 +91,14 @@ jobs:
           HONEYCOMB_DATASET: testacc
           TF_ACC: 1
           TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
-        run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./internal/... ./honeycombio/...
+        run: |
+          go test -v ./internal/... ./honeycombio/... \
+            -coverprofile=tf-coverage.txt \
+            -covermode=atomic | \
+            go-junit-report \
+            -set-exit-code \
+            -iocopy \
+            -out provider-report.xml
 
       - name: Cleanup Dangling Resources
         if: ${{ always() }}
@@ -93,6 +109,13 @@ jobs:
           HONEYCOMB_KEY_SECRET: ${{ secrets.HONEYCOMB_KEY_SECRET }}
           HONEYCOMB_DATASET: testacc
         run: make sweep
+
+      - name: Generate Test Summary
+        if: always()
+        uses: test-summary/action@v2
+        with:
+          paths: "*-report.xml"
+          show: "fail, skip"
 
       - name: Generate Coverage Report
         uses: codecov/codecov-action@v4.5.0
@@ -123,7 +146,9 @@ jobs:
           HONEYCOMB_API_ENDPOINT: https://api.eu1.honeycomb.io
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
           HONEYCOMB_DATASET: testacc
-        run: ./scripts/setup-testsuite-dataset
+        run: |
+          go install github.com/jstemmer/go-junit-report/v2@latest
+          ./scripts/setup-testsuite-dataset
 
       - name: Run client acceptance tests
         timeout-minutes: 10
@@ -133,7 +158,14 @@ jobs:
           HONEYCOMB_KEY_ID: ${{ secrets.HONEYCOMB_KEY_ID_EU }}
           HONEYCOMB_KEY_SECRET: ${{ secrets.HONEYCOMB_KEY_SECRET_EU }}
           HONEYCOMB_DATASET: testacc
-        run: go test -v -coverprofile=client-coverage.txt -covermode=atomic ./client/...
+        run: |
+          go test -v ./client/... \
+            -coverprofile=client-coverage.txt \
+            -covermode=atomic | \
+            go-junit-report \
+            -set-exit-code \
+            -iocopy \
+            -out client-report.xml
 
       - uses: hashicorp/setup-terraform@v3
         with:
@@ -150,7 +182,14 @@ jobs:
           HONEYCOMB_DATASET: testacc
           TF_ACC: 1
           TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
-        run: go test -v -coverprofile=tf-coverage.txt -covermode=atomic ./internal/... ./honeycombio/...
+        run: |
+          go test -v ./internal/... ./honeycombio/... \
+            -coverprofile=tf-coverage.txt \
+            -covermode=atomic | \
+            go-junit-report \
+            -set-exit-code \
+            -iocopy \
+            -out provider-report.xml
 
       - name: Cleanup Dangling Resources
         if: ${{ always() }}
@@ -162,6 +201,13 @@ jobs:
           HONEYCOMB_KEY_SECRET: ${{ secrets.HONEYCOMB_KEY_SECRET_EU }}
           HONEYCOMB_DATASET: testacc
         run: make sweep
+
+      - name: Generate Test Summary
+        if: always()
+        uses: test-summary/action@v2
+        with:
+          paths: "*-report.xml"
+          show: "fail, skip"
 
       - name: Generate Coverage Report
         uses: codecov/codecov-action@v4.5.0
