@@ -107,7 +107,7 @@ func TestClient_APIKeys_Pagination(t *testing.T) {
 
 		items, err := pager.Next(ctx)
 		require.NoError(t, err)
-		assert.Len(t, items, defaultPageSize+1, "incorrect number of items")
+		assert.Len(t, items, defaultPageSize, "incorrect number of items")
 		assert.True(t, pager.HasNext(), "should have more pages")
 		keys = append(keys, items...)
 
