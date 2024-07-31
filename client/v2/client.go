@@ -94,7 +94,7 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 		},
 	}
 	client.http = &retryablehttp.Client{
-		Backoff:      retryablehttp.DefaultBackoff,
+		Backoff:      client.retryHTTPBackoff,
 		CheckRetry:   client.retryHTTPCheck,
 		ErrorHandler: retryablehttp.PassthroughErrorHandler,
 		HTTPClient:   config.HTTPClient,
@@ -195,22 +195,43 @@ func (c *Client) newRequest(
 	return req, err
 }
 
+// retryHTTPCheck is a retryablehttp.CheckRetry function that will
+// retry on a 420 or any 5xx status code
 func (c *Client) retryHTTPCheck(
 	ctx context.Context,
 	r *http.Response,
-	_ error,
+	err error,
 ) (bool, error) {
-	if r == nil || ctx.Err() != nil {
+	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
-
-	switch r.StatusCode {
-	case http.StatusTooManyRequests:
-		// TODO: use new retry header timestamps to determine when to retry
-		return true, nil
-	case http.StatusBadGateway, http.StatusGatewayTimeout, http.StatusInternalServerError:
-		return true, nil
-	default:
-		return false, nil
+	if err != nil {
+		return true, err
 	}
+	if r != nil {
+		if r.StatusCode == http.StatusTooManyRequests || r.StatusCode >= 500 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// retryHTTPBackoff is a retryablehttp.Backoff function that will
+// use a linear backoff for all status codes except 429, which will
+// attempt to use the rate limit headers to determine the backoff time
+func (c *Client) retryHTTPBackoff(
+	min, max time.Duration,
+	attemptNum int,
+	r *http.Response,
+) time.Duration {
+	if r != nil && r.StatusCode == http.StatusTooManyRequests {
+		return rateLimitBackoff(min, max, r)
+	}
+
+	// if we've not been rate limited, use a linear backoff
+	// but increase the minimum and maximum backoff times
+	// and hand it off to retryablehttp.LinearJitterBackoff
+	min = 500 * time.Millisecond
+	max = 950 * time.Millisecond
+	return retryablehttp.LinearJitterBackoff(min, max, attemptNum, r)
 }
