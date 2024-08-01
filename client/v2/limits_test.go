@@ -92,6 +92,21 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 			time.Second,
 		)
 	})
+
+	t.Run("reset value is fuzzed with jitter", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		w.Header().Add(HeaderRateLimit, "limit=100, remaining=50, reset=60")
+		w.Header().Add(HeaderRetryAfter, now.Add(2*time.Minute).UTC().Format(time.RFC3339))
+		w.WriteHeader(http.StatusTooManyRequests)
+
+		reset := 60 * time.Second
+		min = 100 * time.Millisecond
+		max = 500 * time.Millisecond
+		r := rateLimitBackoff(min, max, w.Result())
+
+		assert.Greater(t, r, reset+min, "expected backoff to be greater than min")
+		assert.LessOrEqual(t, r, reset+max, "expected backoff to be less or equal to max")
+	})
 }
 
 func TestClient_parseRateLimitHeader(t *testing.T) {
