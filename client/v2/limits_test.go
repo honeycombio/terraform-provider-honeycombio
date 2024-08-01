@@ -109,7 +109,7 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 
 	t.Run("without supported rate limit header jitter is between min and max", func(t *testing.T) {
 		w := httptest.NewRecorder()
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusTooManyRequests)
 
 		min = 200 * time.Millisecond
 		max = 900 * time.Millisecond
