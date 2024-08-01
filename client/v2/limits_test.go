@@ -100,16 +100,27 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 
 		min = 100 * time.Millisecond
 		max = 500 * time.Millisecond
-		r := rateLimitBackoff(min, max, w.Result())
+		assert.Greater(t,
+			rateLimitBackoff(min, max, w.Result()),
+			60*time.Second,
+			"expected backoff to be 60sec+jitter",
+		)
+	})
 
-		if assert.Greater(t, r, 60*time.Second, "expected backoff to be 60sec+") {
-			assert.WithinRange(t,
-				time.Now().Add(r-60*time.Second),
-				time.Now().Add(min),
-				time.Now().Add(max),
-				"jitter not applied correctly",
-			)
-		}
+	t.Run("without supported rate limit header jitter is between min and max", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		w.WriteHeader(http.StatusTooManyRequests)
+
+		min = 200 * time.Millisecond
+		max = 900 * time.Millisecond
+
+		now := time.Now().UTC()
+		assert.WithinRange(t,
+			now.Add(rateLimitBackoff(min, max, w.Result())),
+			now.Add(min),
+			now.Add(max),
+			"expected backoff to be between min and max",
+		)
 	})
 }
 
