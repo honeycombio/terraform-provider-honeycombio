@@ -52,7 +52,7 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 			expectedValue: 2 * time.Minute,
 		},
 		{
-			name:          "negative retry-after header",
+			name:          "negative reset value in ratelimit header",
 			headerName:    HeaderRateLimit,
 			headerValue:   "limit=100, remaining=-1, reset=-10",
 			expectedValue: min,
@@ -96,14 +96,20 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 	t.Run("reset value is fuzzed with jitter", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		w.Header().Add(HeaderRateLimit, "limit=100, remaining=50, reset=60")
-		w.Header().Add(HeaderRetryAfter, now.Add(2*time.Minute).UTC().Format(time.RFC3339))
 		w.WriteHeader(http.StatusTooManyRequests)
 
 		min = 100 * time.Millisecond
 		max = 500 * time.Millisecond
 		r := rateLimitBackoff(min, max, w.Result())
 
-		assert.GreaterOrEqual(t, r, min, "expected backoff to be >=min")
+		if assert.Greater(t, r, 60*time.Second, "expected backoff to be 60sec+") {
+			assert.WithinRange(t,
+				time.Now().Add(r-60*time.Second),
+				time.Now().Add(min),
+				time.Now().Add(max),
+				"jitter not applied correctly",
+			)
+		}
 	})
 }
 
