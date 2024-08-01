@@ -196,7 +196,7 @@ func (c *Client) newRequest(
 }
 
 // retryHTTPCheck is a retryablehttp.CheckRetry function that will
-// retry on a 420 or any 5xx status code
+// retry on a 429 or any 5xx status code
 func (c *Client) retryHTTPCheck(
 	ctx context.Context,
 	r *http.Response,
