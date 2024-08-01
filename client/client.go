@@ -236,6 +236,9 @@ func (c *Client) retryHTTPCheck(ctx context.Context, resp *http.Response, err er
 	if ctx.Err() != nil {
 		return false, ctx.Err()
 	}
+	if err != nil {
+		return true, err
+	}
 
 	if resp != nil {
 		if resp.StatusCode == http.StatusTooManyRequests ||
