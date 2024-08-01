@@ -113,9 +113,9 @@ func TestClient_parseRateLimitHeader(t *testing.T) {
 	t.Parallel()
 
 	type expect struct {
-		limit     int
-		remaining int
-		reset     int
+		limit     int64
+		remaining int64
+		reset     int64
 	}
 	tests := []struct {
 		name      string
@@ -142,9 +142,50 @@ func TestClient_parseRateLimitHeader(t *testing.T) {
 			},
 		},
 		{
-			name:      "valid but missing reset",
+			name:   "valid, no spacing",
+			header: "limit=250,remaining=199,reset=120",
+			expect: expect{
+				limit:     250,
+				remaining: 199,
+				reset:     120,
+			},
+		},
+		{
+			name:   "mixed up member order",
+			header: "remaining=50, limit=100, reset=60",
+			expect: expect{
+				limit:     100,
+				remaining: 50,
+				reset:     60,
+			},
+		},
+		{
+			name:   "additional key, otherwise valid",
+			header: "limit=100, remaining=50, reset=120, foo=bar",
+			expect: expect{
+				limit:     100,
+				remaining: 50,
+				reset:     120,
+			},
+		},
+		{
+			name:      "missing member",
 			header:    "limit=100, remaining=50",
 			expectErr: true,
+		},
+		{
+			name:      "wrong type value of member",
+			header:    "limit=100, remaining=50, reset=now",
+			expectErr: true,
+		},
+		{
+			name:   "additional key, otherwise valid",
+			header: "limit=100, remaining=50, reset=120, foo=bar",
+			expect: expect{
+				limit:     100,
+				remaining: 50,
+				reset:     120,
+			},
 		},
 	}
 	for _, tc := range tests {
