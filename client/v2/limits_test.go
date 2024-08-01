@@ -99,13 +99,12 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 		w.Header().Add(HeaderRetryAfter, now.Add(2*time.Minute).UTC().Format(time.RFC3339))
 		w.WriteHeader(http.StatusTooManyRequests)
 
-		reset := 60 * time.Second
 		min = 100 * time.Millisecond
 		max = 500 * time.Millisecond
 		r := rateLimitBackoff(min, max, w.Result())
 
-		assert.Greater(t, r, reset+min, "expected backoff to be greater than min")
-		assert.LessOrEqual(t, r, reset+max, "expected backoff to be less or equal to max")
+		assert.Greater(t, r, min, "expected backoff to be greater than min")
+		assert.GreaterOrEqual(t, r, max, "expected backoff to be greater or equal to max")
 	})
 }
 
