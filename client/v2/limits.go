@@ -32,27 +32,35 @@ func init() {
 
 // rateLimitBackoff calculates the backoff time for a rate limited request
 // based on the possible response headers.
+// The function will first try to get the reset time from the rate limit header.
 //
-// If the rate limit header is not present, the function will return a random
-// backoff time between min and max.
+// If the rate limit header is not present, or the reset time is in the past,
+// the function will return a random backoff time between min and max.
 func rateLimitBackoff(min, max time.Duration, r *http.Response) time.Duration {
 	// calculate some jitter for a little extra fuzziness to avoid thundering herds
 	jitter := time.Duration(rnd.Float64() * float64(max-min))
 
 	// try to get the next reset from the response headers
+	var reset time.Duration
 	if v := r.Header.Get(HeaderRateLimit); v != "" {
 		// we currently only care about the reset time
-		_, _, reset, err := parseRateLimitHeader(v)
+		_, _, resetSeconds, err := parseRateLimitHeader(v)
 		if err == nil {
-			min = time.Duration(reset) * time.Second
+			reset = time.Duration(resetSeconds) * time.Second
 		}
 	} else if v := r.Header.Get(HeaderRetryAfter); v != "" {
 		// if we can't get the ratelimit header, try the retry-after header
 		retryTime, err := time.Parse(time.RFC3339, v)
 		if err == nil {
-			min = time.Until(retryTime)
+			reset = time.Until(retryTime)
 		}
 	}
+
+	// only update min if the time to wait is longer
+	if reset > 0 && reset > min {
+		min = reset
+	}
+
 	return min + jitter
 }
 

@@ -40,16 +40,28 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 			expectedValue: min,
 		},
 		{
-			name:          "ratelimit header",
+			name:          "valid ratelimit header",
 			headerName:    HeaderRateLimit,
 			headerValue:   "limit=100, remaining=50, reset=60",
 			expectedValue: 60 * time.Second,
 		},
 		{
-			name:          "retry-after header",
+			name:          "valid retry-after header",
 			headerName:    HeaderRetryAfter,
 			headerValue:   now.Add(2 * time.Minute).UTC().Format(time.RFC3339),
 			expectedValue: 2 * time.Minute,
+		},
+		{
+			name:          "negative retry-after header",
+			headerName:    HeaderRateLimit,
+			headerValue:   "limit=100, remaining=-1, reset=-10",
+			expectedValue: min,
+		},
+		{
+			name:          "retry-after in the past",
+			headerName:    HeaderRetryAfter,
+			headerValue:   now.Add(-2 * time.Minute).UTC().Format(time.RFC3339),
+			expectedValue: min,
 		},
 	}
 	for _, tc := range tests {
@@ -66,6 +78,20 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 			)
 		})
 	}
+
+	t.Run("ratelimit header takes precedence", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		w.Header().Add(HeaderRateLimit, "limit=100, remaining=50, reset=60")
+		w.Header().Add(HeaderRetryAfter, now.Add(2*time.Minute).UTC().Format(time.RFC3339))
+		w.WriteHeader(http.StatusTooManyRequests)
+
+		r := rateLimitBackoff(min, max, w.Result())
+		assert.WithinDuration(t,
+			now.Add(60*time.Second),
+			now.Add(r),
+			time.Second,
+		)
+	})
 }
 
 func TestClient_parseRateLimitHeader(t *testing.T) {
