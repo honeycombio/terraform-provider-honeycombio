@@ -23,13 +23,6 @@ const (
 	HeaderRetryAfter = "Retry-After"
 )
 
-var rng *rand.Rand
-
-func init() {
-	// initialize the random number generator
-	rng = rand.New(rand.NewSource(time.Now().UnixNano()))
-}
-
 // rateLimitBackoff calculates the backoff time for a rate limited request
 // based on the possible response headers.
 // The function will first try to get the reset time from the rate limit header.
@@ -38,7 +31,7 @@ func init() {
 // the function will return a random backoff time between min and max.
 func rateLimitBackoff(min, max time.Duration, r *http.Response) time.Duration {
 	// calculate some jitter for a little extra fuzziness to avoid thundering herds
-	jitter := time.Duration(rng.Float64() * float64(max-min))
+	jitter := time.Duration(rand.Float64() * float64(max-min))
 
 	var reset time.Duration
 	if v := r.Header.Get(HeaderRateLimit); v != "" {
