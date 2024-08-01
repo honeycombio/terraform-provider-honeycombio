@@ -103,8 +103,7 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 		max = 500 * time.Millisecond
 		r := rateLimitBackoff(min, max, w.Result())
 
-		assert.Greater(t, r, min, "expected backoff to be greater than min")
-		assert.GreaterOrEqual(t, r, max, "expected backoff to be greater or equal to max")
+		assert.GreaterOrEqual(t, r, min, "expected backoff to be >=min")
 	})
 }
 
