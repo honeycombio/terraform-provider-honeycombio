@@ -10,7 +10,6 @@ import (
 )
 
 func TestAcc_APIKeyResource(t *testing.T) {
-	t.Parallel()
 	ctx := context.Background()
 	c := testAccV2Client(t)
 	env := testAccEnvironment(ctx, t, c)
