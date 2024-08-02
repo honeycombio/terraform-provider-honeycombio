@@ -10,6 +10,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
+)
+
+const (
+	// SweeperTargetPrefix is the prefix used to identify resources which
+	// will be deleted by the sweepers
+	SweeperTargetPrefix = "test."
 )
 
 // TestMain is responsible for parsing the special test flags and invoking the sweepers
@@ -20,11 +27,48 @@ func TestMain(m *testing.M) {
 }
 
 func init() {
+	resource.AddTestSweepers("environments", getEnvironmentSweeper("environments"))
 	resource.AddTestSweepers("recipients", getRecipientSweeper("recipients"))
 }
 
-// getRecipientSweeper returns a Sweeper that deletes recipients with names
-// starting with "test." or "#test."
+func getEnvironmentSweeper(name string) *resource.Sweeper {
+	return &resource.Sweeper{
+		Name: name,
+		F: func(_ string) error {
+			ctx := context.Background()
+			c, err := v2client.NewClient()
+			if err != nil {
+				return fmt.Errorf("could not initialize client: %w", err)
+			}
+			pager, err := c.Environments.List(ctx)
+			if err != nil {
+				return fmt.Errorf("could not list environments: %w", err)
+			}
+
+			envs := make([]*v2client.Environment, 0)
+			for pager.HasNext() {
+				items, err := pager.Next(ctx)
+				if err != nil {
+					return fmt.Errorf("error listing environments: %w", err)
+				}
+				envs = append(envs, items...)
+			}
+
+			for _, e := range envs {
+				if strings.HasPrefix(e.Name, SweeperTargetPrefix) {
+					log.Printf("[DEBUG] deleting environment %s (%s)", e.Name, e.ID)
+					err = c.Environments.Delete(ctx, e.ID)
+					if err != nil {
+						log.Printf("[ERROR] could not delete environment %s: %s", e.ID, err)
+					}
+				}
+			}
+
+			return nil
+		},
+	}
+}
+
 func getRecipientSweeper(name string) *resource.Sweeper {
 	return &resource.Sweeper{
 		Name: name,
@@ -55,7 +99,8 @@ func getRecipientSweeper(name string) *resource.Sweeper {
 					continue
 				}
 
-				if strings.HasPrefix(name, "test.") || strings.HasPrefix(name, "#test.") {
+				if strings.HasPrefix(name, "#"+SweeperTargetPrefix) || // slack channels have a leading #
+					strings.HasPrefix(name, SweeperTargetPrefix) {
 					log.Printf("[DEBUG] deleting %s recipient \"%s\" (%s)", r.Type, name, r.ID)
 					err = c.Recipients.Delete(ctx, r.ID)
 					if err != nil {
