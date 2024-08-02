@@ -15,7 +15,6 @@ import (
 )
 
 func TestAcc_QueryResource(t *testing.T) {
-	t.Parallel()
 	ctx := context.Background()
 	dataset := testAccDataset()
 	c := testAccClient(t)
@@ -103,7 +102,6 @@ EOT
 func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
 	t.Skip("mysteriously broken and under investigation")
 
-	t.Parallel()
 	ctx := context.Background()
 	dataset := testAccDataset()
 	c := testAccClient(t)
@@ -144,7 +142,6 @@ func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
 // TestAcc_QueryResourceEquivalentQuerySpecSupressed tests the  behavior of the
 // resource when an equivalent query is suppressed by the plan modifier.
 func TestAcc_QueryResourceEquivalentQuerySpecSupressed(t *testing.T) {
-	t.Parallel()
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{

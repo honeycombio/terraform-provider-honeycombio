@@ -123,8 +123,6 @@ func testAccV2Client(t *testing.T) *v2client.Client {
 // TestAcc_Configuration verifies that the provider is correctly
 // configured with the supported configuration permutations.
 func TestAcc_Configuration(t *testing.T) {
-	// t.Parallel() - not parallelized due to environment variable manipulation
-
 	t.Run("v1 and v2 clients", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,

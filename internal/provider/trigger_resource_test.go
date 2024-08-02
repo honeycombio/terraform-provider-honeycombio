@@ -501,8 +501,6 @@ func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing
 }
 
 func TestAcc_TriggerResourceValidatesQueryJSON(t *testing.T) {
-	t.Parallel()
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
