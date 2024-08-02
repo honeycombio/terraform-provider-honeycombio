@@ -1,10 +1,11 @@
 # Resource: honeycombio_query
 
-Creates a query in a dataset.
+Creates a Query scoped to a Dataset or Environment.
 
-Queries can be used by triggers and boards, or be executed via the [Query Data API](https://docs.honeycomb.io/api/query-results/).
+Queries can be used by Triggers and Boards, or be executed via the [Query Data API](https://docs.honeycomb.io/api/query-results/).
 
--> **Note** Queries can only be created or read. Any changes will result in a new query object being created, and destroying it does nothing.
+-> **Note** Queries are immutable and can not be deleted -- only created or read.
+  Any changes will result in a new query object being created.
 
 ## Example Usage
 
@@ -13,31 +14,57 @@ variable "dataset" {
   type = string
 }
 
-data "honeycombio_query_specification" "test_query" {
+resource "honeycombio_derived_column" "duration_ms_log10" {
+  alias       = "duration_ms_log10"
+  expression  = "LOG10($duration_ms)"
+  description = "LOG10 of duration_ms"
+
+  dataset = var.dataset
+}
+
+data "honeycombio_query_specification" "example" {
   calculation {
-    op     = "AVG"
+    op     = "P90"
     column = "duration_ms"
+  }
+
+  calculation {
+    op     = "HEATMAP"
+    column = $honeycombio_derived_column.duration_ms_log10.alias
   }
 
   filter {
     column = "duration_ms"
-    op     = ">"
-    value  = "200"
+    op     = "exists"
+  }
+
+  lifecycle {
+    replace_triggered_by = [
+      // re-create the query if the derived column is changed
+      // to ensure we're using the latest definition
+      honeycombio_derived_column.duration_ms_log10
+    ]
   }
 }
 
-resource "honeycombio_query" "test_query" {
+resource "honeycombio_query" "example" {
   dataset    = var.dataset
-  query_json = data.honeycombio_query_specification.test_query.json
+  query_json = data.honeycombio_query_specification.example.json
 }
 ```
+
+-> **Note** If you are referencing a [Derived Column](derived_column.md) in your query and want to ensure you are always using the latest definition
+  of the derived column you should use the [replace_triggered_by](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#replace_triggered_by)
+  lifecycle argument as shown in the example above.
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset this query is added to. Use `__all__` for Environment-wide queries.
-* `query_json` - (Required) A JSON object describing the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification). While the JSON can be constructed manually, it is easiest to use the [`honeycombio_query_specification`](../data-sources/query_specification.md) data source.
+* `dataset` - (Required) The dataset this query is scoped to.
+  Use `__all__` for Environment-wide queries.
+* `query_json` - (Required) A JSON object describing the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification).
+  While the JSON can be constructed manually, using the [`honeycombio_query_specification`](../data-sources/query_specification.md) data source provides deeper validation.
 
 ## Attribute Reference
 
