@@ -57,6 +57,12 @@ func getEnvironmentSweeper(name string) *resource.Sweeper {
 			for _, e := range envs {
 				if strings.HasPrefix(e.Name, SweeperTargetPrefix) {
 					log.Printf("[DEBUG] deleting environment %s (%s)", e.Name, e.ID)
+					c.Environments.Update(ctx, &v2client.Environment{
+						ID: e.ID,
+						Settings: &v2client.EnvironmentSettings{
+							DeleteProtected: client.ToPtr(false),
+						},
+					})
 					err = c.Environments.Delete(ctx, e.ID)
 					if err != nil {
 						log.Printf("[ERROR] could not delete environment %s: %s", e.ID, err)
