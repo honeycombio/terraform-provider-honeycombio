@@ -43,7 +43,7 @@ func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*hone
 		r.Details.PDIntegrationName = d.Get("integration_name").(string)
 	case honeycombio.RecipientTypeSlack:
 		r.Details.SlackChannel = d.Get("channel").(string)
-	case honeycombio.RecipientTypeMSTeams:
+	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow:
 		r.Details.WebhookName = d.Get("name").(string)
 		r.Details.WebhookURL = d.Get("url").(string)
 	case honeycombio.RecipientTypeWebhook:
@@ -104,7 +104,7 @@ func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}
 		d.Set("integration_name", r.Details.PDIntegrationName)
 	case honeycombio.RecipientTypeSlack:
 		d.Set("channel", r.Details.SlackChannel)
-	case honeycombio.RecipientTypeMSTeams:
+	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow:
 		d.Set("name", r.Details.WebhookName)
 		d.Set("url", r.Details.WebhookURL)
 	case honeycombio.RecipientTypeWebhook:
@@ -201,7 +201,7 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 			return f.ValueRegex.MatchString(r.Details.SlackChannel)
 		case honeycombio.RecipientTypePagerDuty:
 			return f.ValueRegex.MatchString(r.Details.PDIntegrationName)
-		case honeycombio.RecipientTypeWebhook, honeycombio.RecipientTypeMSTeams:
+		case honeycombio.RecipientTypeWebhook, honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow:
 			return f.ValueRegex.MatchString(r.Details.WebhookName) || f.ValueRegex.MatchString(r.Details.WebhookURL)
 		}
 	} else if f.Value != nil {
@@ -212,7 +212,7 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 			return (r.Details.SlackChannel == *f.Value)
 		case honeycombio.RecipientTypePagerDuty:
 			return (r.Details.PDIntegrationName == *f.Value)
-		case honeycombio.RecipientTypeWebhook, honeycombio.RecipientTypeMSTeams:
+		case honeycombio.RecipientTypeWebhook, honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow:
 			return (r.Details.WebhookName == *f.Value) || (r.Details.WebhookURL == *f.Value)
 		}
 	}

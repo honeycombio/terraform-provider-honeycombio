@@ -19,13 +19,14 @@ func newMSTeamsRecipient() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
-		Description: "Honeycomb MSTeams Recipient allows you to define and manage an MSTeams recipient that can be used by Triggers or BurnAlerts notifications.",
+		DeprecationMessage: "MSTeams Recipient is deprecated. Please use MSTeams Workflow Recipient resource instead.",
+		Description:        "Honeycomb MSTeams Recipient allows you to define and manage an MSTeams recipient that can be used by Triggers or BurnAlerts notifications.",
 
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The name of the MSTeams Integration to create",
+				Description: "The name of the recipient.",
 			},
 			"url": {
 				Type:         schema.TypeString,

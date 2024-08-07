@@ -102,11 +102,18 @@ func TestRecipientsWebhooksandMSTeams(t *testing.T) {
 				WebhookURL:  "https://corp.office.com/webhook",
 			},
 		},
+		{
+			Type: client.RecipientTypeMSTeamsWorkflow,
+			Details: client.RecipientDetails{
+				WebhookName: test.RandomStringWithPrefix("test.", 10),
+				WebhookURL:  "https://mycorp.westus.logic.azure.com/workflows/12345",
+			},
+		},
 	}
 
 	for _, tr := range testRcpts {
 		r, err := c.Recipients.Create(ctx, &tr)
-		require.NoError(t, err)
+		require.NoError(t, err, "failed to create %s recipient", tr.Type)
 		t.Cleanup(func() {
 			_ = c.Recipients.Delete(ctx, r.ID)
 		})

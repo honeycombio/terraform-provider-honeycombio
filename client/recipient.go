@@ -77,12 +77,13 @@ type RecipientType string
 
 // Declaration of recipient types
 const (
-	RecipientTypeEmail     RecipientType = "email"
-	RecipientTypePagerDuty RecipientType = "pagerduty"
-	RecipientTypeSlack     RecipientType = "slack"
-	RecipientTypeWebhook   RecipientType = "webhook"
-	RecipientTypeMarker    RecipientType = "marker"
-	RecipientTypeMSTeams   RecipientType = "msteams"
+	RecipientTypeEmail           RecipientType = "email"
+	RecipientTypePagerDuty       RecipientType = "pagerduty"
+	RecipientTypeSlack           RecipientType = "slack"
+	RecipientTypeWebhook         RecipientType = "webhook"
+	RecipientTypeMarker          RecipientType = "marker"
+	RecipientTypeMSTeams         RecipientType = "msteams"
+	RecipientTypeMSTeamsWorkflow RecipientType = "msteams_workflow"
 )
 
 // PagerDutySeverity holds all the possible PD Severity types
@@ -111,6 +112,7 @@ func RecipientTypes() []RecipientType {
 		RecipientTypeSlack,
 		RecipientTypeWebhook,
 		RecipientTypeMSTeams,
+		RecipientTypeMSTeamsWorkflow,
 	}
 }
 
