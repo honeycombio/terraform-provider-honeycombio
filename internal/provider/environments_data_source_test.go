@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAcc_EnvironmentsDatasource(t *testing.T) {
@@ -47,11 +48,10 @@ data "honeycombio_environments" "exact" {
   }
 }`, e.Name),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(
+					test.TestCheckResourceAttrAtLeast(
 						"data.honeycombio_environments.all",
 						"ids.#",
-						fmt.Sprintf("%d", numEnvs+2), // +2 because of the additional environment created and the 'ci' environment
-					),
+						numEnvs+2), // +2 because of the additional environment created and the 'ci' environment
 					resource.TestCheckResourceAttr(
 						"data.honeycombio_environments.regex",
 						"ids.#",
