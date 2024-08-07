@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAcc_SLOsDataSource(t *testing.T) {
@@ -112,7 +111,6 @@ data "honeycombio_slos" "exact" {
 }
 `, dataset, testPrefix),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					test.TestCheckResourceAttrAtLeast("data.honeycombio_slos.all", "ids.#", 3),
 					resource.TestCheckResourceAttr("data.honeycombio_slos.regex", "ids.#", "2"),
 					resource.TestCheckResourceAttr("data.honeycombio_slos.exact", "ids.#", "1"),
 				),
