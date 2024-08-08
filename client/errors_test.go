@@ -206,22 +206,29 @@ func TestErrors_JSONAPI(t *testing.T) {
 	}{
 		{
 			name: "single error",
-			code: http.StatusConflict,
+			code: http.StatusUnauthorized,
 			body: jsonapi.ErrorsPayload{
 				Errors: []*jsonapi.ErrorObject{
 					{
-						Status: "409",
-						Title:  "Conflict",
-						Detail: "The resource already exists.",
-						Code:   "/errors/conflict",
+						Status: "401",
+						Title:  "invalid API key",
+						Code:   "unauthenticated/invalid-key",
+						Source: &jsonapi.ErrorSource{
+							Header: "Authorization",
+						},
 					},
 				},
 			},
 			expectedOutput: client.DetailedError{
-				Status:  409,
-				Type:    "/errors/conflict",
-				Message: "The resource already exists.",
-				Title:   "Conflict",
+				Status: 401,
+				Type:   "unauthenticated/invalid-key",
+				Title:  "invalid API key",
+				Details: []client.ErrorTypeDetail{
+					{
+						Description: "invalid API key",
+						Field:       "Authorization header",
+					},
+				},
 			},
 		},
 		{
@@ -231,25 +238,35 @@ func TestErrors_JSONAPI(t *testing.T) {
 				Errors: []*jsonapi.ErrorObject{
 					{
 						Status: "422",
-						Code:   "/errors/validation-failed",
-						Title:  "The provided input is invalid.",
+						Code:   "validation-failed/invalid",
+						Title:  "field is invalid",
+						Detail: "must be no greater than 10",
+						Source: &jsonapi.ErrorSource{
+							Pointer: "/data/attributes/age",
+						},
 					},
 					{
 						Status: "422",
-						Code:   "/errors/validation-failed",
-						Title:  "The provided input is invalid.",
+						Code:   "validation-failed/invalid",
+						Title:  "field is invalid",
+						Detail: "the length must be between 1 and 10",
+						Source: &jsonapi.ErrorSource{
+							Pointer: "/data/attributes/name",
+						},
 					},
 				},
 			},
 			expectedOutput: client.DetailedError{
 				Status: 422,
-				Title:  "The provided input is invalid.",
+				Title:  "field is invalid",
 				Details: []client.ErrorTypeDetail{
 					{
-						Code: "/errors/validation-failed",
+						Description: "must be no greater than 10",
+						Field:       "/data/attributes/age",
 					},
 					{
-						Code: "/errors/validation-failed",
+						Description: "the length must be between 1 and 10",
+						Field:       "/data/attributes/name",
 					},
 				},
 			},

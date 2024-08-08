@@ -122,6 +122,14 @@ func TestClient_AuthInfo(t *testing.T) {
 		var de hnyclient.DetailedError
 		require.ErrorAs(t, err, &de)
 		assert.Equal(t, http.StatusUnauthorized, de.Status)
+		assert.Equal(t, "", de.Message)
+		assert.Equal(t, "invalid API key", de.Title)
+		assert.Equal(t, "unauthenticated/invalid-key", de.Type)
+		if assert.Len(t, de.Details, 1) {
+			assert.Equal(t, "Authorization header", de.Details[0].Field)
+			assert.Equal(t, "invalid API key", de.Details[0].Description)
+		}
+		assert.Equal(t, "Authorization header - invalid API key", de.Error())
 	})
 }
 
