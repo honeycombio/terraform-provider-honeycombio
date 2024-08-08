@@ -206,22 +206,28 @@ func TestErrors_JSONAPI(t *testing.T) {
 	}{
 		{
 			name: "single error",
-			code: http.StatusConflict,
+			code: http.StatusUnauthorized,
 			body: jsonapi.ErrorsPayload{
 				Errors: []*jsonapi.ErrorObject{
 					{
-						Status: "409",
-						Title:  "limit reached",
-						Code:   "failed-precondition/limit-reached",
+						Status: "401",
+						Title:  "invalid API key",
+						Code:   "unauthenticated/invalid-key",
+						Source: &jsonapi.ErrorSource{
+							Header: "Authorization",
+						},
 					},
 				},
 			},
 			expectedOutput: client.DetailedError{
-				Status: 409,
-				Type:   "failed-precondition/limit-reached",
-				Title:  "limit reached",
+				Status: 401,
+				Type:   "unauthenticated/invalid-key",
+				Title:  "invalid API key",
 				Details: []client.ErrorTypeDetail{
-					{Description: "limit reached"},
+					{
+						Description: "invalid API key",
+						Field:       "Authorization header",
+					},
 				},
 			},
 		},
