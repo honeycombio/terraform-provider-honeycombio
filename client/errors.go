@@ -104,17 +104,22 @@ func ErrorFromResponse(r *http.Response) error {
 			Status: r.StatusCode,
 			Title:  errPayload.Errors[0].Title,
 		}
+
 		if len(errPayload.Errors) == 1 {
-			// If there's only one error we don't need to build up details
-			detailedError.Message = errPayload.Errors[0].Detail
+			// format the detailed error a bit differently if there's only one error
 			detailedError.Type = errPayload.Errors[0].Code
+			detailedError.Details = []ErrorTypeDetail{
+				{
+					Description: errPayload.Errors[0].Title,
+					Field:       parseJSONAPIErrorSource(errPayload.Errors[0].Source),
+				},
+			}
 		} else {
 			details := make([]ErrorTypeDetail, len(errPayload.Errors))
 			for i, e := range errPayload.Errors {
 				details[i] = ErrorTypeDetail{
-					Code:        e.Code,
 					Description: e.Detail,
-					// TODO: field when we have it via pointer
+					Field:       parseJSONAPIErrorSource(e.Source),
 				}
 			}
 			detailedError.Details = details
@@ -136,4 +141,26 @@ func ErrorFromResponse(r *http.Response) error {
 		}
 		return detailedError
 	}
+}
+
+// parseJSONAPIErrorSource returns a string representation of the
+// source of a JSON:API Error Source
+func parseJSONAPIErrorSource(e *jsonapi.ErrorSource) string {
+	if e == nil {
+		return ""
+	}
+
+	// the JSON:API specification states that only one of these
+	// fields should be populated so we return the first that is not empty
+	if e.Pointer != "" {
+		return e.Pointer
+	}
+	if e.Parameter != "" { // not currently in use server-side
+		return "parameter " + e.Parameter
+	}
+	if e.Header != "" {
+		return e.Header + " header"
+	}
+
+	return ""
 }
