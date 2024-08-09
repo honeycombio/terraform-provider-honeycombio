@@ -104,7 +104,7 @@ func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}
 		d.Set("integration_name", r.Details.PDIntegrationName)
 	case honeycombio.RecipientTypeSlack:
 		d.Set("channel", r.Details.SlackChannel)
-	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow:
+	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow: //nolint:staticcheck
 		d.Set("name", r.Details.WebhookName)
 		d.Set("url", r.Details.WebhookURL)
 	case honeycombio.RecipientTypeWebhook:
@@ -201,7 +201,9 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 			return f.ValueRegex.MatchString(r.Details.SlackChannel)
 		case honeycombio.RecipientTypePagerDuty:
 			return f.ValueRegex.MatchString(r.Details.PDIntegrationName)
-		case honeycombio.RecipientTypeWebhook, honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow: //nolint:staticcheck
+		case honeycombio.RecipientTypeWebhook,
+			honeycombio.RecipientTypeMSTeams, //nolint:staticcheck
+			honeycombio.RecipientTypeMSTeamsWorkflow:
 			return f.ValueRegex.MatchString(r.Details.WebhookName) || f.ValueRegex.MatchString(r.Details.WebhookURL)
 		}
 	} else if f.Value != nil {
@@ -212,7 +214,9 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 			return (r.Details.SlackChannel == *f.Value)
 		case honeycombio.RecipientTypePagerDuty:
 			return (r.Details.PDIntegrationName == *f.Value)
-		case honeycombio.RecipientTypeWebhook, honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow: //nolink:staticcheck
+		case honeycombio.RecipientTypeWebhook,
+			honeycombio.RecipientTypeMSTeams, //nolint:staticcheck
+			honeycombio.RecipientTypeMSTeamsWorkflow:
 			return (r.Details.WebhookName == *f.Value) || (r.Details.WebhookURL == *f.Value)
 		}
 	}
