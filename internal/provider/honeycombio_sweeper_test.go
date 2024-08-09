@@ -98,7 +98,9 @@ func getRecipientSweeper(name string) *resource.Sweeper {
 					name = r.Details.SlackChannel
 				case client.RecipientTypePagerDuty:
 					name = r.Details.PDIntegrationName
-				case client.RecipientTypeWebhook, client.RecipientTypeMSTeams:
+				case client.RecipientTypeWebhook,
+					client.RecipientTypeMSTeams, //nolint:staticcheck
+					client.RecipientTypeMSTeamsWorkflow:
 					name = r.Details.WebhookName
 				default:
 					log.Printf("[ERROR] unknown recipient type: %s", r.Type)
