@@ -175,7 +175,7 @@ func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceD
 		d.Set("address", rcpt.Details.EmailAddress)
 	case honeycombio.RecipientTypeSlack:
 		d.Set("channel", rcpt.Details.SlackChannel)
-	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow:
+	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow: //nolint:staticcheck
 		d.Set("name", rcpt.Details.WebhookName)
 		d.Set("url", rcpt.Details.WebhookURL)
 	case honeycombio.RecipientTypeWebhook:

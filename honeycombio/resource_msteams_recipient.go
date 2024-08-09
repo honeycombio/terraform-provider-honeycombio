@@ -52,10 +52,12 @@ func resourceMSTeamsRecipientCreate(ctx context.Context, d *schema.ResourceData,
 }
 
 func resourceMSTeamsRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	//nolint:staticcheck
 	return readRecipient(ctx, d, meta, honeycombio.RecipientTypeMSTeams)
 }
 
 func resourceMSTeamsRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	//nolint:staticcheck
 	return updateRecipient(ctx, d, meta, honeycombio.RecipientTypeMSTeams)
 }
 
