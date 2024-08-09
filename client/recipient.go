@@ -75,13 +75,18 @@ type NotificationRecipientDetails struct {
 // RecipientType holds all the possible recipient types.
 type RecipientType string
 
+func (t RecipientType) String() string {
+	return string(t)
+}
+
 // Declaration of recipient types
 const (
-	RecipientTypeEmail           RecipientType = "email"
-	RecipientTypePagerDuty       RecipientType = "pagerduty"
-	RecipientTypeSlack           RecipientType = "slack"
-	RecipientTypeWebhook         RecipientType = "webhook"
-	RecipientTypeMarker          RecipientType = "marker"
+	RecipientTypeEmail     RecipientType = "email"
+	RecipientTypePagerDuty RecipientType = "pagerduty"
+	RecipientTypeSlack     RecipientType = "slack"
+	RecipientTypeWebhook   RecipientType = "webhook"
+	RecipientTypeMarker    RecipientType = "marker"
+	// Deprecated: new recipients must use RecipientTypeMSTeamsWorkflow instead
 	RecipientTypeMSTeams         RecipientType = "msteams"
 	RecipientTypeMSTeamsWorkflow RecipientType = "msteams_workflow"
 )

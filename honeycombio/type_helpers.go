@@ -242,10 +242,16 @@ func diagFromDetailedErr(err honeycombio.DetailedError) diag.Diagnostics {
 	diags := make(diag.Diagnostics, 0, len(err.Details)+1)
 	if len(err.Details) > 0 {
 		for _, d := range err.Details {
+			detail := d.Code + " - "
+			if d.Field != "" {
+				detail += d.Field + " "
+			}
+			detail += d.Description
+
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  err.Title,
-				Detail:   d.Code + " - " + d.Description,
+				Detail:   detail,
 			})
 		}
 	} else {

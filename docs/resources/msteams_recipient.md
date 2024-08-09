@@ -3,6 +3,7 @@
 `honeycombio_msteams_recipient` allows you to define and manage an MSTeams recipient that can be used by Triggers or BurnAlerts notifications.
 
 -> **NOTE** Microsoft has deprecated Teams Incoming Webhooks.
+  This resource will no longer allow creation of new recipients.
   It is recommended you recreate your Teams recipients with the `honeycombio_msteams_workflow_recipient` resource.
 
 ## Example Usage
