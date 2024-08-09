@@ -44,7 +44,7 @@ func newMSTeamsRecipient() *schema.Resource {
 func resourceMSTeamsRecipientCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	return diag.Diagnostics{diag.Diagnostic{
 		Severity: diag.Error,
-		Summary:  "Net-new MSTeams recipient creation is no longer allowed.",
+		Summary:  "Creating new MSTeams recipients is no longer possible.",
 		Detail: "Microsoft has deprecated the Incoming Webhook feature, and as a result, " +
 			" we are no longer able to create new MSTeams recipients. " +
 			"Use the `honeycombio_msteams_workflow_recipient` resource instead.",
