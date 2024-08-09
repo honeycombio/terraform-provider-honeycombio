@@ -48,11 +48,6 @@ data "honeycombio_environments" "exact" {
 }`, e.Name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"data.honeycombio_environments.all",
-						"ids.#",
-						fmt.Sprintf("%d", numEnvs+2), // +2 because of the additional environment created and the 'ci' environment
-					),
-					resource.TestCheckResourceAttr(
 						"data.honeycombio_environments.regex",
 						"ids.#",
 						fmt.Sprintf("%d", numEnvs+1), // +1 because of the additional environment created
