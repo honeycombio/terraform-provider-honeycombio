@@ -66,10 +66,10 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 			},
 		},
 		{
-			Type: honeycombio.RecipientTypeMSTeams,
+			Type: honeycombio.RecipientTypeMSTeamsWorkflow,
 			Details: honeycombio.RecipientDetails{
 				WebhookName: test.RandomStringWithPrefix("test.", 16),
-				WebhookURL:  "https://outlook.office.com/webhook/12345",
+				WebhookURL:  "https://mycorp.westus.logic.azure.com/workflows/12345",
 			},
 		},
 	}
@@ -131,7 +131,7 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 				Config: testAccRecipientWithFilterValue("msteams", "name", testRecipients[7].Details.WebhookName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "name", testRecipients[7].Details.WebhookName),
-					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", "https://outlook.office.com/webhook/12345"),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", "https://mycorp.westus.logic.azure.com/workflows/12345"),
 				),
 			},
 			{

@@ -54,19 +54,20 @@ resource "honeycombio_trigger" "example" {
 
 The following arguments are supported:
 
-* `type` - (Required) The type of recipient, allowed types are `email`, `pagerduty`, `msteams`, `slack` and `webhook`.
+* `type` - (Required) The type of recipient, allowed types are `email`, `pagerduty`, `msteams`, `msteams_workflow`, `slack` and `webhook`.
 * `dataset` - (Optional) Deprecated: recipients are now a Team-level construct. Any provided value will be ignored.
 * `detail_filter` - (Optional) a block to further filter recipients as described below.
 * `target` - (Optional) Deprecated: use `detail_filter` instead. The target of the recipient, this has another meaning depending on the type of recipient (see the table below).
 
-Type      | Target
-----------|-------------------------
-email     | an email address
-marker    | name of the marker
-msteams   | name of the integration
-pagerduty | _N/A_
-slack     | name of the channel
-webhook   | name of the webhook
+Type             | Target
+-----------------|-------------------------
+email            | an email address
+marker           | name of the marker
+msteams          | name of the integration
+msteams_workflow | name of the integration
+pagerduty        | _N/A_
+slack            | name of the channel
+webhook          | name of the webhook
 
 To further filter the recipient results, a `detail_filter` block can be provided which accepts the following arguments:
 
@@ -85,6 +86,6 @@ In addition to all arguments above, the following attributes are exported:
 * `channel` - The Slack recipient's channel -- if of type `slack`.
 * `name` - The webhook recipient's name -- if of type `webhook` or `msteams`.
 * `secret` - (Sensitive) The webhook recipient's secret -- if of type `webhook`.
-* `url` - The webhook recipient's URL - if of type `webhook` or `msteams`.
+* `url` - The webhook recipient's URL - if of type `webhook`, `msteams` or `msteams_workflow`.
 * `integration_key` - (Sensitive) The PagerDuty recipient's integration key -- if of type `pagerduty`.
 * `integration_name` - The PagerDuty recipient's inregration name -- if of type `pagerduty`.

@@ -43,7 +43,7 @@ func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*hone
 		r.Details.PDIntegrationName = d.Get("integration_name").(string)
 	case honeycombio.RecipientTypeSlack:
 		r.Details.SlackChannel = d.Get("channel").(string)
-	case honeycombio.RecipientTypeMSTeams:
+	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow: //nolint:staticcheck
 		r.Details.WebhookName = d.Get("name").(string)
 		r.Details.WebhookURL = d.Get("url").(string)
 	case honeycombio.RecipientTypeWebhook:
@@ -104,7 +104,7 @@ func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}
 		d.Set("integration_name", r.Details.PDIntegrationName)
 	case honeycombio.RecipientTypeSlack:
 		d.Set("channel", r.Details.SlackChannel)
-	case honeycombio.RecipientTypeMSTeams:
+	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow: //nolint:staticcheck
 		d.Set("name", r.Details.WebhookName)
 		d.Set("url", r.Details.WebhookURL)
 	case honeycombio.RecipientTypeWebhook:
@@ -201,7 +201,9 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 			return f.ValueRegex.MatchString(r.Details.SlackChannel)
 		case honeycombio.RecipientTypePagerDuty:
 			return f.ValueRegex.MatchString(r.Details.PDIntegrationName)
-		case honeycombio.RecipientTypeWebhook, honeycombio.RecipientTypeMSTeams:
+		case honeycombio.RecipientTypeWebhook,
+			honeycombio.RecipientTypeMSTeams, //nolint:staticcheck
+			honeycombio.RecipientTypeMSTeamsWorkflow:
 			return f.ValueRegex.MatchString(r.Details.WebhookName) || f.ValueRegex.MatchString(r.Details.WebhookURL)
 		}
 	} else if f.Value != nil {
@@ -212,7 +214,9 @@ func (f *recipientFilter) IsMatch(r honeycombio.Recipient) bool {
 			return (r.Details.SlackChannel == *f.Value)
 		case honeycombio.RecipientTypePagerDuty:
 			return (r.Details.PDIntegrationName == *f.Value)
-		case honeycombio.RecipientTypeWebhook, honeycombio.RecipientTypeMSTeams:
+		case honeycombio.RecipientTypeWebhook,
+			honeycombio.RecipientTypeMSTeams, //nolint:staticcheck
+			honeycombio.RecipientTypeMSTeamsWorkflow:
 			return (r.Details.WebhookName == *f.Value) || (r.Details.WebhookURL == *f.Value)
 		}
 	}
@@ -242,10 +246,16 @@ func diagFromDetailedErr(err honeycombio.DetailedError) diag.Diagnostics {
 	diags := make(diag.Diagnostics, 0, len(err.Details)+1)
 	if len(err.Details) > 0 {
 		for _, d := range err.Details {
+			detail := d.Code + " - "
+			if d.Field != "" {
+				detail += d.Field + " "
+			}
+			detail += d.Description
+
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  err.Title,
-				Detail:   d.Code + " - " + d.Description,
+				Detail:   detail,
 			})
 		}
 	} else {

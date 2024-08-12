@@ -86,37 +86,61 @@ func TestRecipientsWebhooksandMSTeams(t *testing.T) {
 	ctx := context.Background()
 	c := newTestClient(t)
 
-	testRcpts := []client.Recipient{
+	testCases := []struct {
+		rcpt      client.Recipient
+		expectErr bool
+	}{
 		{
-			Type: client.RecipientTypeWebhook,
-			Details: client.RecipientDetails{
-				WebhookName:   test.RandomStringWithPrefix("test.", 10),
-				WebhookURL:    "https://example.com",
-				WebhookSecret: "secret",
+			rcpt: client.Recipient{
+				Type: client.RecipientTypeWebhook,
+				Details: client.RecipientDetails{
+					WebhookName:   test.RandomStringWithPrefix("test.", 10),
+					WebhookURL:    "https://example.com",
+					WebhookSecret: "secret",
+				},
 			},
 		},
 		{
-			Type: client.RecipientTypeMSTeams,
-			Details: client.RecipientDetails{
-				WebhookName: test.RandomStringWithPrefix("test.", 10),
-				WebhookURL:  "https://corp.office.com/webhook",
+			rcpt: client.Recipient{
+				Type: client.RecipientTypeMSTeams,
+				Details: client.RecipientDetails{
+					WebhookName: test.RandomStringWithPrefix("test.", 10),
+					WebhookURL:  "https://corp.office.com/webhook",
+				},
+			},
+			expectErr: true, // creation of new MSTeams recipients is not allowed
+		},
+		{
+			rcpt: client.Recipient{
+				Type: client.RecipientTypeMSTeamsWorkflow,
+				Details: client.RecipientDetails{
+					WebhookName: test.RandomStringWithPrefix("test.", 10),
+					WebhookURL:  "https://mycorp.westus.logic.azure.com/workflows/12345",
+				},
 			},
 		},
 	}
 
-	for _, tr := range testRcpts {
-		r, err := c.Recipients.Create(ctx, &tr)
-		require.NoError(t, err)
-		t.Cleanup(func() {
-			_ = c.Recipients.Delete(ctx, r.ID)
+	for _, tc := range testCases {
+		tr := tc.rcpt
+		t.Run(tr.Type.String(), func(t *testing.T) {
+			r, err := c.Recipients.Create(ctx, &tr)
+			t.Cleanup(func() {
+				_ = c.Recipients.Delete(ctx, r.ID)
+			})
+
+			if tc.expectErr {
+				require.Error(t, err, "expected error creating %s recipient", tr.Type)
+				return
+			}
+			require.NoError(t, err, "failed to create %s recipient", tr.Type)
+			r, err = c.Recipients.Get(ctx, r.ID)
+			require.NoError(t, err)
+
+			assert.Equal(t, tr.Type, r.Type)
+			assert.Equal(t, tr.Details.WebhookName, r.Details.WebhookName)
+			assert.Equal(t, tr.Details.WebhookURL, r.Details.WebhookURL)
+			assert.Equal(t, tr.Details.WebhookSecret, r.Details.WebhookSecret)
 		})
-
-		r, err = c.Recipients.Get(ctx, r.ID)
-		require.NoError(t, err)
-
-		assert.Equal(t, tr.Type, r.Type)
-		assert.Equal(t, tr.Details.WebhookName, r.Details.WebhookName)
-		assert.Equal(t, tr.Details.WebhookURL, r.Details.WebhookURL)
-		assert.Equal(t, tr.Details.WebhookSecret, r.Details.WebhookSecret)
 	}
 }

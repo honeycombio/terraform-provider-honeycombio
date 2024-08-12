@@ -75,6 +75,10 @@ type NotificationRecipientDetails struct {
 // RecipientType holds all the possible recipient types.
 type RecipientType string
 
+func (t RecipientType) String() string {
+	return string(t)
+}
+
 // Declaration of recipient types
 const (
 	RecipientTypeEmail     RecipientType = "email"
@@ -82,7 +86,9 @@ const (
 	RecipientTypeSlack     RecipientType = "slack"
 	RecipientTypeWebhook   RecipientType = "webhook"
 	RecipientTypeMarker    RecipientType = "marker"
-	RecipientTypeMSTeams   RecipientType = "msteams"
+	// Deprecated: new recipients must use RecipientTypeMSTeamsWorkflow instead
+	RecipientTypeMSTeams         RecipientType = "msteams"
+	RecipientTypeMSTeamsWorkflow RecipientType = "msteams_workflow"
 )
 
 // PagerDutySeverity holds all the possible PD Severity types
@@ -111,6 +117,7 @@ func RecipientTypes() []RecipientType {
 		RecipientTypeSlack,
 		RecipientTypeWebhook,
 		RecipientTypeMSTeams,
+		RecipientTypeMSTeamsWorkflow,
 	}
 }
 
