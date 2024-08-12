@@ -1,3 +1,34 @@
+# 0.26.0 (Aug 12, 2024)
+
+NOTES:
+
+This release deprecates `r/msteams_recipient` in favor of the new `r/msteams_workflow_recipient` in line with Microsoft's deprecation of O365 Connectors.
+New instances of `r/msteams_recipient` can no longer be created and we recommend you migrate your integration to the Workflow-based solution as soon as possible.
+
+ENHANCEMENTS:
+
+* feat(client): V2 API client ratelimit improvements (#519)
+* chore(r/query): add doc note about using latest derived column definition (#521)
+* r/msteams_workflow_recipient: new resource for managing MS Teams Workflow integrations (#524)
+* chore(client): improve V2 API error reporting (#526)
+
+BUGFIXES:
+
+* fix: temporarily disable broken r/query test (#510)
+* fix: allow auto ('0') granularity (#514)
+* fix(limits): separately test min-max vs header+jitter cases (#520)
+* fix: environments data source test flake (#525)
+
+HOUSEKEEPING:
+
+* chore(ci): limit integration test concurrency (#513)
+* maint(deps): bump golangci/golangci-lint-action from 6.0.1 to 6.1.0 (#515)
+* chore(ci): add recipients sweeper (#516)
+* chore(ci): display test summary output (#517)
+* chore(ci): add environment sweeper (#522)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.10.0 to 1.11.0 (#523)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.9.0 to 1.10.0 (#527)
+
 # 0.25.0 (Jul 25, 2024)
 
 NOTES:
