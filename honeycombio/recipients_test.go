@@ -62,7 +62,7 @@ resource "honeycombio_msteams_recipient" "test" {
 					// create the recipient with v0.25.0 of the provider
 					ExternalProviders: map[string]resource.ExternalProvider{
 						"honeycombio": {
-							VersionConstraint: "0.25.0", // last version before the depreciation
+							VersionConstraint: "0.25.0", // last version before the deprecation
 							Source:            "honeycombio/honeycombio",
 						},
 					},
