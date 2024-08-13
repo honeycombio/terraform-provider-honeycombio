@@ -246,6 +246,8 @@ const (
 	FilterOpSmallerThanOrEqual FilterOp = "<="
 	FilterOpStartsWith         FilterOp = "starts-with"
 	FilterOpDoesNotStartWith   FilterOp = "does-not-start-with"
+	FilterOpEndsWith           FilterOp = "ends-with"
+	FilterOpDoesNotEndWith     FilterOp = "does-not-end-with"
 	FilterOpExists             FilterOp = "exists"
 	FilterOpDoesNotExist       FilterOp = "does-not-exist"
 	FilterOpContains           FilterOp = "contains"
@@ -265,6 +267,8 @@ func FilterOps() []FilterOp {
 		FilterOpSmallerThanOrEqual,
 		FilterOpStartsWith,
 		FilterOpDoesNotStartWith,
+		FilterOpEndsWith,
+		FilterOpDoesNotEndWith,
 		FilterOpExists,
 		FilterOpDoesNotExist,
 		FilterOpContains,
