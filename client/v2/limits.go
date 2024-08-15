@@ -32,10 +32,10 @@ const (
 // The function will first try to get the reset time from the rate limit header.
 //
 // If the rate limit header is not present, or the reset time is in the past,
-// the function will return a random backoff time between min and max.
-func rateLimitBackoff(min, max time.Duration, r *http.Response) time.Duration {
+// the function will return a random backoff time between mini and maxi.
+func rateLimitBackoff(mini, maxi time.Duration, r *http.Response) time.Duration {
 	// calculate some jitter for a little extra fuzziness to avoid thundering herds
-	jitter := time.Duration(rand.Float64() * float64(max-min))
+	jitter := time.Duration(rand.Float64() * float64(maxi-mini))
 
 	var reset time.Duration
 	if v := r.Header.Get(HeaderRateLimit); v != "" {
@@ -57,10 +57,10 @@ func rateLimitBackoff(min, max time.Duration, r *http.Response) time.Duration {
 	}
 
 	// only update min if the time to wait is longer
-	if reset > min {
-		min = reset
+	if reset > mini {
+		mini = reset
 	}
-	return min + jitter
+	return mini + jitter
 }
 
 // parseRateLimitHeader parses the rate limit header into its constituent parts.

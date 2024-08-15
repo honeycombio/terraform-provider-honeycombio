@@ -206,7 +206,7 @@ func TestBurnAlerts(t *testing.T) {
 			results, err := c.BurnAlerts.ListForSLO(ctx, dataset, slo.ID)
 			require.NoError(t, err, "failed to list burn alerts for SLO")
 
-			assert.NotZero(t, len(results))
+			assert.NotEmpty(t, results)
 			assert.Equal(t, burnAlert.ID, results[0].ID, "newly created BurnAlert not in list of SLO's burn alerts")
 		})
 
