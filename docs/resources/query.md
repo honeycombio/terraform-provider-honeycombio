@@ -38,6 +38,12 @@ data "honeycombio_query_specification" "example" {
     op     = "exists"
   }
 
+}
+
+resource "honeycombio_query" "example" {
+  dataset    = var.dataset
+  query_json = data.honeycombio_query_specification.example.json
+
   lifecycle {
     replace_triggered_by = [
       // re-create the query if the derived column is changed
@@ -45,11 +51,6 @@ data "honeycombio_query_specification" "example" {
       honeycombio_derived_column.duration_ms_log10
     ]
   }
-}
-
-resource "honeycombio_query" "example" {
-  dataset    = var.dataset
-  query_json = data.honeycombio_query_specification.example.json
 }
 ```
 
