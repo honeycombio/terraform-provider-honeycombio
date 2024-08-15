@@ -14,8 +14,8 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 	t.Parallel()
 
 	now := time.Now().UTC()
-	// init min and max to zero to remove jitter
-	min, max := time.Duration(0), time.Duration(0)
+	// init mini and maxi to zero to remove jitter
+	mini, maxi := time.Duration(0), time.Duration(0)
 
 	tests := []struct {
 		name          string
@@ -25,19 +25,19 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 	}{
 		{
 			name:          "no header",
-			expectedValue: min,
+			expectedValue: mini,
 		},
 		{
 			name:          "invalid ratelimit header",
 			headerName:    HeaderRateLimit,
 			headerValue:   "foobar",
-			expectedValue: min,
+			expectedValue: mini,
 		},
 		{
 			name:          "invalid retry-after header",
 			headerName:    HeaderRetryAfter,
 			headerValue:   "three hours from now",
-			expectedValue: min,
+			expectedValue: mini,
 		},
 		{
 			name:          "valid ratelimit header",
@@ -55,13 +55,13 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 			name:          "negative reset value in ratelimit header",
 			headerName:    HeaderRateLimit,
 			headerValue:   "limit=100, remaining=-1, reset=-10",
-			expectedValue: min,
+			expectedValue: mini,
 		},
 		{
 			name:          "retry-after in the past",
 			headerName:    HeaderRetryAfter,
 			headerValue:   now.Add(-2 * time.Minute).UTC().Format(time.RFC3339),
-			expectedValue: min,
+			expectedValue: mini,
 		},
 	}
 	for _, tc := range tests {
@@ -70,7 +70,7 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 			w.Header().Add(tc.headerName, tc.headerValue)
 			w.WriteHeader(http.StatusTooManyRequests)
 
-			r := rateLimitBackoff(min, max, w.Result())
+			r := rateLimitBackoff(mini, maxi, w.Result())
 			assert.WithinDuration(t,
 				now.Add(tc.expectedValue),
 				now.Add(r),
@@ -85,7 +85,7 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 		w.Header().Add(HeaderRetryAfter, now.Add(2*time.Minute).UTC().Format(time.RFC3339))
 		w.WriteHeader(http.StatusTooManyRequests)
 
-		r := rateLimitBackoff(min, max, w.Result())
+		r := rateLimitBackoff(mini, maxi, w.Result())
 		assert.WithinDuration(t,
 			now.Add(60*time.Second),
 			now.Add(r),
@@ -98,10 +98,10 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 		w.Header().Add(HeaderRateLimit, "limit=100, remaining=50, reset=60")
 		w.WriteHeader(http.StatusTooManyRequests)
 
-		min = 100 * time.Millisecond
-		max = 500 * time.Millisecond
+		mini = 100 * time.Millisecond
+		maxi = 500 * time.Millisecond
 		assert.Greater(t,
-			rateLimitBackoff(min, max, w.Result()),
+			rateLimitBackoff(mini, maxi, w.Result()),
 			60*time.Second,
 			"expected backoff to be 60sec+jitter",
 		)
@@ -111,14 +111,14 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 		w := httptest.NewRecorder()
 		w.WriteHeader(http.StatusTooManyRequests)
 
-		min = 200 * time.Millisecond
-		max = 900 * time.Millisecond
+		mini = 200 * time.Millisecond
+		maxi = 900 * time.Millisecond
 
 		now := time.Now().UTC()
 		assert.WithinRange(t,
-			now.Add(rateLimitBackoff(min, max, w.Result())),
-			now.Add(min),
-			now.Add(max),
+			now.Add(rateLimitBackoff(mini, maxi, w.Result())),
+			now.Add(mini),
+			now.Add(maxi),
 			"expected backoff to be between min and max",
 		)
 	})

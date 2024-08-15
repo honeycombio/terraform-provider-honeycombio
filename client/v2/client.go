@@ -220,18 +220,18 @@ func (c *Client) retryHTTPCheck(
 // use a linear backoff for all status codes except 429, which will
 // attempt to use the rate limit headers to determine the backoff time
 func (c *Client) retryHTTPBackoff(
-	min, max time.Duration,
+	mini, maxi time.Duration,
 	attemptNum int,
 	r *http.Response,
 ) time.Duration {
 	if r != nil && r.StatusCode == http.StatusTooManyRequests {
-		return rateLimitBackoff(min, max, r)
+		return rateLimitBackoff(mini, maxi, r)
 	}
 
 	// if we've not been rate limited, use a linear backoff
 	// but increase the minimum and maximum backoff times
 	// and hand it off to retryablehttp.LinearJitterBackoff
-	min = 500 * time.Millisecond
-	max = 950 * time.Millisecond
-	return retryablehttp.LinearJitterBackoff(min, max, attemptNum, r)
+	mini = 500 * time.Millisecond
+	maxi = 950 * time.Millisecond
+	return retryablehttp.LinearJitterBackoff(mini, maxi, attemptNum, r)
 }

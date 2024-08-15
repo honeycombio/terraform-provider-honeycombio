@@ -55,9 +55,9 @@ func (validator precisionAtMostValidator) ValidateFloat64(ctx context.Context, r
 }
 
 // Float64PrecisionAtMost returns an AttributeValidator which ensures that any configured
-// attribute value has a precision which is at most the given max
-func Float64PrecisionAtMost(max int64) validator.Float64 {
+// attribute value has a precision which is at most the given value
+func Float64PrecisionAtMost(v int64) validator.Float64 {
 	return precisionAtMostValidator{
-		max: max,
+		max: v,
 	}
 }
