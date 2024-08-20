@@ -171,9 +171,11 @@ const (
 	CalculationOpP01           CalculationOp = "P01"
 	CalculationOpP05           CalculationOp = "P05"
 	CalculationOpP10           CalculationOp = "P10"
+	CalculationOpP20           CalculationOp = "P20"
 	CalculationOpP25           CalculationOp = "P25"
 	CalculationOpP50           CalculationOp = "P50"
 	CalculationOpP75           CalculationOp = "P75"
+	CalculationOpP80           CalculationOp = "P80"
 	CalculationOpP90           CalculationOp = "P90"
 	CalculationOpP95           CalculationOp = "P95"
 	CalculationOpP99           CalculationOp = "P99"
@@ -208,9 +210,11 @@ func HavingCalculationOps() []CalculationOp {
 		CalculationOpP01,
 		CalculationOpP05,
 		CalculationOpP10,
+		CalculationOpP20,
 		CalculationOpP25,
 		CalculationOpP50,
 		CalculationOpP75,
+		CalculationOpP80,
 		CalculationOpP90,
 		CalculationOpP95,
 		CalculationOpP99,
