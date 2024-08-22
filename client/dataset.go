@@ -21,8 +21,8 @@ type Datasets interface {
 
 	// Creates a new dataset.
 	//
-	// Will return DatasetExistsErr along with the dataset if
-	// a dataset with that name already exists in the Environment.
+	// Will return DatasetExistsErr if a dataset with that name already exists
+	// in the Environment.
 	Create(ctx context.Context, dataset *Dataset) (*Dataset, error)
 
 	// Update an existing dataset. Missing (optional) fields will set to their
@@ -86,6 +86,10 @@ func (s datasets) Create(ctx context.Context, d *Dataset) (*Dataset, error) {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusOK {
+		// the API doesn't consider this an error, but we do
+		return nil, DatasetExistsErr
+	}
 	if resp.StatusCode > 299 {
 		return nil, ErrorFromResponse(resp)
 	}
@@ -94,13 +98,6 @@ func (s datasets) Create(ctx context.Context, d *Dataset) (*Dataset, error) {
 	err = json.NewDecoder(resp.Body).Decode(&dataset)
 	if err != nil {
 		return nil, err
-	}
-
-	// If the dataset already exists, the API returns a 200 OK.
-	// We'll return DatasetExistsErr along with the dataset in this case,
-	// and let the caller decide what to do.
-	if resp.StatusCode == http.StatusOK {
-		return &dataset, DatasetExistsErr
 	}
 	return &dataset, err
 }

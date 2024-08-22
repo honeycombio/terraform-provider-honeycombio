@@ -106,12 +106,9 @@ func TestDatasets(t *testing.T) {
 			c.Datasets.Delete(ctx, ds.Slug)
 		})
 
-		dup, err := c.Datasets.Create(ctx, &client.Dataset{
+		_, err = c.Datasets.Create(ctx, &client.Dataset{
 			Name: name,
 		})
 		require.ErrorIs(t, err, client.DatasetExistsErr)
-		// verify the dataset is the one that we already created
-		require.NotNil(t, dup)
-		assert.Equal(t, ds, dup)
 	})
 }
