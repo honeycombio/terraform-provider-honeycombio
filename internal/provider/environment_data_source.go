@@ -15,8 +15,8 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource              = &sloDataSource{}
-	_ datasource.DataSourceWithConfigure = &sloDataSource{}
+	_ datasource.DataSource              = &environmentDataSource{}
+	_ datasource.DataSourceWithConfigure = &environmentDataSource{}
 )
 
 func NewEnvironmentDataSource() datasource.DataSource {

@@ -27,8 +27,44 @@ func TestMain(m *testing.M) {
 }
 
 func init() {
+	resource.AddTestSweepers("datasets", getDatasetSweeper("datasets"))
 	resource.AddTestSweepers("environments", getEnvironmentSweeper("environments"))
 	resource.AddTestSweepers("recipients", getRecipientSweeper("recipients"))
+}
+
+func getDatasetSweeper(name string) *resource.Sweeper {
+	return &resource.Sweeper{
+		Name: name,
+		F: func(_ string) error {
+			ctx := context.Background()
+			c, err := client.NewClient()
+			if err != nil {
+				return fmt.Errorf("could not initialize client: %w", err)
+			}
+			datasets, err := c.Datasets.List(ctx)
+			if err != nil {
+				return fmt.Errorf("could not list datasets: %w", err)
+			}
+
+			for _, ds := range datasets {
+				if strings.HasPrefix(ds.Name, SweeperTargetPrefix) {
+					log.Printf("[DEBUG] deleting dataset %s (%s)", ds.Name, ds.Slug)
+					c.Datasets.Update(ctx, &client.Dataset{
+						Slug: ds.Slug,
+						Settings: client.DatasetSettings{
+							DeleteProtected: client.ToPtr(false),
+						},
+					})
+					err = c.Datasets.Delete(ctx, ds.Slug)
+					if err != nil {
+						log.Printf("[ERROR] could not delete dataset %s: %s", ds.Slug, err)
+					}
+				}
+			}
+
+			return nil
+		},
+	}
 }
 
 func getEnvironmentSweeper(name string) *resource.Sweeper {

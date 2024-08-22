@@ -24,7 +24,7 @@ func (m deletionProtectionModifier) PlanModifyBool(ctx context.Context, req plan
 	if req.State.Raw.IsNull() && !req.PlanValue.ValueBool() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("").AtName("delete_protected"),
-			"Environment validation error",
+			"Validation error",
 			"Delete protection cannot be disabled at creation.",
 		)
 	}

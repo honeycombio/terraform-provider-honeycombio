@@ -16,14 +16,11 @@ func TestAcc_EnvironmentsDatasource(t *testing.T) {
 	const numEnvs = 15
 
 	// create a bunch of environments
-	testEnvs := make([]*v2client.Environment, numEnvs+1)
+	testEnvs := make([]*v2client.Environment, numEnvs)
 	for i := 0; i < numEnvs; i++ {
 		e := testAccEnvironment(ctx, t, c)
 		testEnvs[i] = e
 	}
-	// one additional with a different prefix for filter testing
-	e := testAccEnvironment(ctx, t, c)
-	testEnvs[numEnvs] = e
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheckV2API(t),
@@ -45,12 +42,12 @@ data "honeycombio_environments" "exact" {
     name  = "name"
     value = "%s"
   }
-}`, e.Name),
+}`, testEnvs[0].Name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.honeycombio_environments.regex",
 						"ids.#",
-						fmt.Sprintf("%d", numEnvs+1), // +1 because of the additional environment created
+						fmt.Sprintf("%d", numEnvs),
 					),
 					resource.TestCheckResourceAttr("data.honeycombio_environments.exact", "ids.#", "1"),
 				),

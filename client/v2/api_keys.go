@@ -40,6 +40,8 @@ func (a *apiKeys) Create(ctx context.Context, k *APIKey) (*APIKey, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer r.Body.Close()
+
 	if r.StatusCode != http.StatusCreated {
 		return nil, hnyclient.ErrorFromResponse(r)
 	}
@@ -60,6 +62,8 @@ func (a *apiKeys) Get(ctx context.Context, id string) (*APIKey, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer r.Body.Close()
+
 	if r.StatusCode != http.StatusOK {
 		return nil, hnyclient.ErrorFromResponse(r)
 	}
@@ -80,6 +84,8 @@ func (a *apiKeys) Update(ctx context.Context, k *APIKey) (*APIKey, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer r.Body.Close()
+
 	if r.StatusCode != http.StatusOK {
 		return nil, hnyclient.ErrorFromResponse(r)
 	}
@@ -100,6 +106,8 @@ func (a *apiKeys) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+	defer r.Body.Close()
+
 	if r.StatusCode != http.StatusNoContent {
 		return hnyclient.ErrorFromResponse(r)
 	}
