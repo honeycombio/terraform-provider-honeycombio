@@ -86,20 +86,19 @@ func (s datasets) Create(ctx context.Context, d *Dataset) (*Dataset, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		// the API doesn't consider this an error, but we do
+	switch resp.StatusCode {
+	case http.StatusOK: // the API doesn't consider this an error, but we do
 		return nil, DatasetExistsErr
-	}
-	if resp.StatusCode > 299 {
+	case http.StatusCreated:
+		var dataset Dataset
+		err = json.NewDecoder(resp.Body).Decode(&dataset)
+		if err != nil {
+			return nil, err
+		}
+		return &dataset, err
+	default:
 		return nil, ErrorFromResponse(resp)
 	}
-
-	var dataset Dataset
-	err = json.NewDecoder(resp.Body).Decode(&dataset)
-	if err != nil {
-		return nil, err
-	}
-	return &dataset, err
 }
 
 func (s datasets) Update(ctx context.Context, d *Dataset) (*Dataset, error) {
