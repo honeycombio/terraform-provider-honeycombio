@@ -21,7 +21,7 @@ type Datasets interface {
 
 	// Creates a new dataset.
 	//
-	// Will return DatasetExistsErr if a dataset with that name already exists
+	// Will return ErrDatasetExists if a dataset with that name already exists
 	// in the Environment.
 	Create(ctx context.Context, dataset *Dataset) (*Dataset, error)
 
