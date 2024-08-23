@@ -38,8 +38,8 @@ type datasets struct {
 	client *Client
 }
 
-// DatasetExistsErr is returned by Create when the dataset already exists.
-var DatasetExistsErr = fmt.Errorf("dataset already exists")
+// ErrDatasetExists is returned by Create when the dataset already exists.
+var ErrDatasetExists = fmt.Errorf("dataset already exists")
 
 // Compile-time proof of interface implementation by type datasets.
 var _ Datasets = (*datasets)(nil)
@@ -88,7 +88,7 @@ func (s datasets) Create(ctx context.Context, d *Dataset) (*Dataset, error) {
 
 	switch resp.StatusCode {
 	case http.StatusOK: // the API doesn't consider this an error, but we do
-		return nil, DatasetExistsErr
+		return nil, ErrDatasetExists
 	case http.StatusCreated:
 		var dataset Dataset
 		err = json.NewDecoder(resp.Body).Decode(&dataset)

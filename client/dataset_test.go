@@ -109,6 +109,6 @@ func TestDatasets(t *testing.T) {
 		_, err = c.Datasets.Create(ctx, &client.Dataset{
 			Name: name,
 		})
-		require.ErrorIs(t, err, client.DatasetExistsErr)
+		require.ErrorIs(t, err, client.ErrDatasetExists)
 	})
 }

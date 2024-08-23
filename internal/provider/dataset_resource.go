@@ -161,7 +161,7 @@ func (r *datasetResource) Create(ctx context.Context, req resource.CreateRequest
 		Description:     plan.Description.ValueString(),
 		ExpandJSONDepth: int(plan.ExpandJSONDepth.ValueInt32()),
 	})
-	if errors.Is(err, client.DatasetExistsErr) {
+	if errors.Is(err, client.ErrDatasetExists) {
 		resp.Diagnostics.AddError("Error Creating Honeycomb Dataset", "Dataset \""+plan.Name.ValueString()+"\" already exists")
 		return
 	} else if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Dataset", err) {
