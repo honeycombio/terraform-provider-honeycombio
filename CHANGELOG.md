@@ -1,3 +1,32 @@
+# 0.27.0 (Aug 23, 2024)
+
+NOTES:
+
+**This release contains breaking and behavioural changes**
+
+* `r/dataset`: will now attempt to *delete* datasets on destroy.
+  However, they come with delete protection (`delete_protection`) enabled by default and it must be disabled for the destroy to succeed.
+  This behaviour matches `r/envionment` as introduced in v0.25.0
+* `r/dataset`: will now error on create if a Dataset with that name already exists in the Environment.
+  Previously, the dataset would be silently imported into state, but given deletion is now possible on destroy this behaviour has to changed to be more standard.
+  The end-user can choose to either adjust the name or import the existing Dataset.
+* client: if the Datasets API returns an HTTP '200 OK' -- as opposed to '201 Created' -- on create the `Datasets.Create` method will now return `ErrDatasetExists`.
+
+ENHANCEMENTS:
+
+* *New Datasource*: `honeycombio_dataset` (#535)
+* feat: ends/does-not-end-with filters (#530)
+* feat: add P20 and P80 calculations (#534)
+* feat: full lifecycle support for datasets (#535)
+
+BUGFIXES:
+
+* chore(r/query): improve doc for derived_column (#531)
+
+HOUSEKEEPING:
+
+* chore: address new linter errors (#532)
+
 # 0.26.0 (Aug 12, 2024)
 
 NOTES:
