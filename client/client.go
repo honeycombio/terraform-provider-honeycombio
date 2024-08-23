@@ -191,29 +191,11 @@ func (c *Client) IsClassic(ctx context.Context) bool {
 //
 // Attempts to return a DetailedError if the response status code is not 2xx,
 // but can return a generic error.
-func (c *Client) Do(ctx context.Context, method, path string, requestBody, responseBody interface{}) error {
-	var body io.Reader
-
-	if requestBody != nil {
-		buf := new(bytes.Buffer)
-		err := json.NewEncoder(buf).Encode(requestBody)
-		if err != nil {
-			return err
-		}
-		body = buf
-	}
-
-	requestURL, err := c.apiURL.Parse(path)
+func (c *Client) Do(ctx context.Context, method, path string, requestBody, responseBody any) error {
+	req, err := c.newRequest(ctx, method, path, requestBody)
 	if err != nil {
 		return err
 	}
-
-	req, err := retryablehttp.NewRequestWithContext(ctx, method, requestURL.String(), body)
-	if err != nil {
-		return err
-	}
-	req.Header = c.headers
-
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
@@ -228,6 +210,30 @@ func (c *Client) Do(ctx context.Context, method, path string, requestBody, respo
 	}
 
 	return err
+}
+
+func (c *Client) newRequest(ctx context.Context, method, path string, body any) (*retryablehttp.Request, error) {
+	var bodyReader io.Reader
+	if body != nil {
+		buf := bytes.NewBuffer(nil)
+		if err := json.NewEncoder(buf).Encode(body); err != nil {
+			return nil, err
+		}
+		bodyReader = buf
+	}
+
+	url, err := c.apiURL.Parse(path)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := retryablehttp.NewRequestWithContext(ctx, method, url.String(), bodyReader)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = c.headers
+
+	return req, nil
 }
 
 // retryHTTPCheck provides a callback for Client.CheckRetry which

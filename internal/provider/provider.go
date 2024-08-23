@@ -77,6 +77,7 @@ func (p *HoneycombioProvider) Schema(_ context.Context, _ provider.SchemaRequest
 func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewBurnAlertResource,
+		NewDatasetResource,
 		NewTriggerResource,
 		NewQueryResource,
 		NewAPIKeyResource,
@@ -87,6 +88,8 @@ func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.R
 func (p *HoneycombioProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewAuthMetadataDataSource,
+		NewDatasetDataSource,
+		NewDatasetsDataSource,
 		NewDerivedColumnDataSource,
 		NewDerivedColumnsDataSource,
 		NewEnvironmentDataSource,

@@ -68,15 +68,17 @@ func (e *environments) Create(ctx context.Context, env *Environment) (*Environme
 	if err != nil {
 		return nil, err
 	}
+	defer r.Body.Close()
+
 	if r.StatusCode != http.StatusCreated {
 		return nil, hnyclient.ErrorFromResponse(r)
 	}
 
-	envrion := new(Environment)
-	if err := jsonapi.UnmarshalPayload(r.Body, envrion); err != nil {
+	environ := new(Environment)
+	if err := jsonapi.UnmarshalPayload(r.Body, environ); err != nil {
 		return nil, err
 	}
-	return envrion, nil
+	return environ, nil
 }
 
 func (e *environments) Get(ctx context.Context, id string) (*Environment, error) {
@@ -88,15 +90,17 @@ func (e *environments) Get(ctx context.Context, id string) (*Environment, error)
 	if err != nil {
 		return nil, err
 	}
+	defer r.Body.Close()
+
 	if r.StatusCode != http.StatusOK {
 		return nil, hnyclient.ErrorFromResponse(r)
 	}
 
-	envrion := new(Environment)
-	if err := jsonapi.UnmarshalPayload(r.Body, envrion); err != nil {
+	environ := new(Environment)
+	if err := jsonapi.UnmarshalPayload(r.Body, environ); err != nil {
 		return nil, err
 	}
-	return envrion, nil
+	return environ, nil
 }
 
 func (e *environments) Update(ctx context.Context, env *Environment) (*Environment, error) {
@@ -108,15 +112,17 @@ func (e *environments) Update(ctx context.Context, env *Environment) (*Environme
 	if err != nil {
 		return nil, err
 	}
+	defer r.Body.Close()
+
 	if r.StatusCode != http.StatusOK {
 		return nil, hnyclient.ErrorFromResponse(r)
 	}
 
-	envrion := new(Environment)
-	if err := jsonapi.UnmarshalPayload(r.Body, envrion); err != nil {
+	environ := new(Environment)
+	if err := jsonapi.UnmarshalPayload(r.Body, environ); err != nil {
 		return nil, err
 	}
-	return envrion, nil
+	return environ, nil
 }
 
 func (e *environments) Delete(ctx context.Context, id string) error {
@@ -128,6 +134,8 @@ func (e *environments) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+	defer r.Body.Close()
+
 	if r.StatusCode != http.StatusNoContent {
 		return hnyclient.ErrorFromResponse(r)
 	}

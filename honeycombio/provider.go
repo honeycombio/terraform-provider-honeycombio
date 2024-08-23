@@ -51,7 +51,6 @@ func Provider(version string) *schema.Provider {
 			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"honeycombio_datasets":          dataSourceHoneycombioDatasets(),
 			"honeycombio_column":            dataSourceHoneycombioColumn(),
 			"honeycombio_columns":           dataSourceHoneycombioColumns(),
 			"honeycombio_query_result":      dataSourceHoneycombioQueryResult(),
@@ -62,7 +61,6 @@ func Provider(version string) *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"honeycombio_board":                      newBoard(),
 			"honeycombio_column":                     newColumn(),
-			"honeycombio_dataset":                    newDataset(),
 			"honeycombio_dataset_definition":         newDatasetDefinition(),
 			"honeycombio_derived_column":             newDerivedColumn(),
 			"honeycombio_marker":                     newMarker(),
