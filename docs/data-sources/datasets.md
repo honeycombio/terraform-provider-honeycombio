@@ -1,6 +1,6 @@
 # Data Source: honeycombio_datasets
 
-The Datasets data source data source retrieves the Environment's Datasets.
+The Datasets data source retrieves the Environment's Datasets.
 
 ## Example Usage
 
