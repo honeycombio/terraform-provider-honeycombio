@@ -2,7 +2,7 @@
 
 Creates a Honeycomb Environment.
 
--> **NOTE** This resource requires the provider be configured with a Management Key with `environments:write` in the configured scopes.
+-> This resource requires the provider be configured with a Management Key with `environments:write` in the configured scopes.
 
 ## Example Usage
 

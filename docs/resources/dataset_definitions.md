@@ -2,7 +2,7 @@
 
 Dataset Definitions define the fields in your Dataset that have special meaning.
 
--> **Note** Some Dataset Definitions are automatically set when a dataset is created or first receives an event.
+-> Some Dataset Definitions are automatically set when a dataset is created or first receives an event.
 
 ## Example Usage
 

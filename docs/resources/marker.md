@@ -2,7 +2,8 @@
 
 Creates a marker. For more information about markers, check out [Annotate the timeline with Markers](https://docs.honeycomb.io/working-with-your-data/customizing-your-query/markers/).
 
--> **Note** Destroying or replacing this resource will not delete the previously created marker. This is intentional to preserve the markers. At this time, it is not possible to remove markers using this provider.
+-> Destroying or replacing this resource will not delete the previously created marker.
+This is intentional to preserve the markers.
 
 ## Example Usage
 

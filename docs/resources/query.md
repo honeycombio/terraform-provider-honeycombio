@@ -4,7 +4,7 @@ Creates a Query scoped to a Dataset or Environment.
 
 Queries can be used by Triggers and Boards, or be executed via the [Query Data API](https://docs.honeycomb.io/api/query-results/).
 
--> **Note** Queries are immutable and can not be deleted -- only created or read.
+-> Queries are immutable and can not be deleted -- only created or read.
   Any changes will result in a new query object being created.
 
 ## Example Usage

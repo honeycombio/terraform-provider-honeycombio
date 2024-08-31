@@ -3,7 +3,7 @@
 Creates a Honeycomb API Key.
 For more information about API Keys, check out [Best Practices for API Keys](https://docs.honeycomb.io/get-started/best-practices/api-keys/).
 
--> **NOTE** This resource requires the provider be configured with a Management Key with `api-keys:write` in the configured scopes.
+-> This resource requires the provider be configured with a Management Key with `api-keys:write` in the configured scopes.
 
 ## Example Usage
 

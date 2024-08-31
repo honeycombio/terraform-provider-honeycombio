@@ -2,7 +2,7 @@
 
 The `honeycombio_column` data source retrieves the details of a single column in a dataset.
 
--> **Note** Terraform will fail unless a column is returned by the search. Ensure that your search is specific enough to return a column.
+~> **Warning** Terraform will fail unless a column is returned by the search. Ensure that your search is specific enough to return a column.
 If you want to match multiple columns, use the `honeycombio_columns` data source instead.
 
 ## Example Usage
