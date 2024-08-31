@@ -406,6 +406,63 @@ resource "honeycombio_trigger" "test" {
 			},
 		},
 	})
+
+	t.Run("handles dynamic evaluation schedule block", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+locals {
+  business_hour = {
+    start_time = "14:00"
+    end_time   = "22:00"
+    days_of_week = [
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+    ]
+  }
+}
+
+variable "enable_evaluation_schedule_business_hour" {
+  type    = bool
+  default = true
+}
+
+data "honeycombio_query_specification" "test" {}
+
+resource "honeycombio_trigger" "test" {
+  name     = "test"
+  dataset  = "%s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  frequency = 1800
+
+  threshold {
+    exceeded_limit = 1
+    op             = ">"
+    value          = "0"
+  }
+
+  dynamic "evaluation_schedule" {
+    for_each = var.enable_evaluation_schedule_business_hour ? [true] : []
+
+    content {
+      start_time   = local.business_hour.start_time
+      end_time     = local.business_hour.end_time
+      days_of_week = local.business_hour.days_of_week
+    }
+  }
+}`, testAccDataset()),
+				},
+			},
+		})
+	})
 }
 
 func TestAcc_TriggerResourcePagerDutyUnsetSeverity(t *testing.T) {

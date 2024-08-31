@@ -10,6 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -241,10 +243,13 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		Description:        plan.Description.ValueString(),
 		Disabled:           plan.Disabled.ValueBool(),
 		AlertType:          client.TriggerAlertType(plan.AlertType.ValueString()),
-		Threshold:          expandTriggerThreshold(plan.Threshold),
+		Threshold:          expandTriggerThreshold(ctx, plan.Threshold, &resp.Diagnostics),
 		Frequency:          int(plan.Frequency.ValueInt64()),
 		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
-		EvaluationSchedule: expandTriggerEvaluationSchedule(plan.EvaluationSchedule),
+		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	specifiedByID := !plan.QueryID.IsNull()
@@ -265,7 +270,7 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		newTrigger.Query = &q
 	}
 
-	if plan.EvaluationSchedule != nil {
+	if !plan.EvaluationSchedule.IsNull() {
 		newTrigger.EvaluationScheduleType = client.TriggerEvaluationScheduleWindow
 	}
 
@@ -281,9 +286,9 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
 	state.AlertType = types.StringValue(string(trigger.AlertType))
-	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
+	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
-	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
+	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
 
@@ -343,9 +348,9 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
 	state.AlertType = types.StringValue(string(trigger.AlertType))
-	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
+	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
-	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
+	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
 	state.Recipients = reconcileReadNotificationRecipientState(ctx, trigger.Recipients, state.Recipients, &resp.Diagnostics)
 
 	specifiedByID := !state.QueryID.IsNull()
@@ -385,9 +390,12 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		Disabled:           plan.Disabled.ValueBool(),
 		AlertType:          client.TriggerAlertType(plan.AlertType.ValueString()),
 		Frequency:          int(plan.Frequency.ValueInt64()),
-		Threshold:          expandTriggerThreshold(plan.Threshold),
+		Threshold:          expandTriggerThreshold(ctx, plan.Threshold, &resp.Diagnostics),
 		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
-		EvaluationSchedule: expandTriggerEvaluationSchedule(plan.EvaluationSchedule),
+		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
+	}
+	if resp.Diagnostics.HasError() {
+		return
 	}
 
 	specifiedByID := !plan.QueryID.IsNull()
@@ -432,8 +440,8 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	state.Disabled = types.BoolValue(trigger.Disabled)
 	state.AlertType = types.StringValue(string(trigger.AlertType))
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
-	state.Threshold = flattenTriggerThreshold(trigger.Threshold)
-	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(trigger)
+	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)
+	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
 
@@ -497,11 +505,13 @@ func (r *triggerResource) ImportState(ctx context.Context, req resource.ImportSt
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.TriggerResourceModel{
-		ID:         types.StringValue(id),
-		Dataset:    types.StringValue(dataset),
-		QueryID:    types.StringNull(),
-		QueryJson:  types.StringUnknown(), // favor QueryJSON on import
-		Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
+		ID:                 types.StringValue(id),
+		Dataset:            types.StringValue(dataset),
+		QueryID:            types.StringNull(),
+		QueryJson:          types.StringUnknown(), // favor QueryJSON on import
+		Recipients:         types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
+		Threshold:          types.ListUnknown(types.ObjectType{AttrTypes: models.TriggerThresholdAttrType}),
+		EvaluationSchedule: types.ListUnknown(types.ObjectType{AttrTypes: models.TriggerEvaluationScheduleAttrType}),
 	})...)
 }
 
@@ -600,8 +610,18 @@ func (r *triggerResource) ValidateConfig(ctx context.Context, req resource.Valid
 	}
 }
 
-func expandTriggerThreshold(t []models.TriggerThresholdModel) *client.TriggerThreshold {
-	if len(t) != 1 {
+func expandTriggerThreshold(
+	ctx context.Context,
+	l types.List,
+	diags *diag.Diagnostics,
+) *client.TriggerThreshold {
+	if l.IsNull() || l.IsUnknown() {
+		return nil
+	}
+
+	var t []models.TriggerThresholdModel
+	diags.Append(l.ElementsAs(ctx, &t, false)...)
+	if diags.HasError() {
 		return nil
 	}
 
@@ -612,48 +632,90 @@ func expandTriggerThreshold(t []models.TriggerThresholdModel) *client.TriggerThr
 	}
 }
 
-func flattenTriggerThreshold(t *client.TriggerThreshold) []models.TriggerThresholdModel {
-	return []models.TriggerThresholdModel{{
-		Op:            types.StringValue(string(t.Op)),
-		Value:         types.Float64Value(t.Value),
-		ExceededLimit: types.Int64Value(int64(t.ExceededLimit)),
-	}}
-}
-
-func expandTriggerEvaluationSchedule(s []models.TriggerEvaluationScheduleModel) *client.TriggerEvaluationSchedule {
-	if s != nil {
-		days := make([]string, len(s[0].DaysOfWeek))
-		for i, d := range s[0].DaysOfWeek {
-			days[i] = d.ValueString()
-		}
-
-		return &client.TriggerEvaluationSchedule{
-			Window: client.TriggerEvaluationWindow{
-				StartTime:  s[0].StartTime.ValueString(),
-				EndTime:    s[0].EndTime.ValueString(),
-				DaysOfWeek: days,
-			},
-		}
+func flattenTriggerThreshold(
+	ctx context.Context,
+	t *client.TriggerThreshold,
+	diags *diag.Diagnostics,
+) types.List {
+	if t == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: models.TriggerThresholdAttrType})
 	}
 
-	return nil
+	thresholdObj, d := types.ObjectValue(models.TriggerThresholdAttrType, map[string]attr.Value{
+		"op":             types.StringValue(string(t.Op)),
+		"value":          types.Float64Value(t.Value),
+		"exceeded_limit": types.Int64Value(int64(t.ExceededLimit)),
+	})
+	diags.Append(d...)
+
+	result, d := types.ListValueFrom(
+		ctx,
+		types.ObjectType{AttrTypes: models.TriggerThresholdAttrType},
+		[]attr.Value{thresholdObj},
+	)
+	diags.Append(d...)
+
+	return result
 }
 
-func flattenTriggerEvaluationSchedule(t *client.Trigger) []models.TriggerEvaluationScheduleModel {
-	if t.EvaluationScheduleType == client.TriggerEvaluationScheduleWindow {
-		days := make([]basetypes.StringValue, len(t.EvaluationSchedule.Window.DaysOfWeek))
-		for i, d := range t.EvaluationSchedule.Window.DaysOfWeek {
-			days[i] = types.StringValue(d)
-		}
-
-		return []models.TriggerEvaluationScheduleModel{
-			{
-				StartTime:  types.StringValue(t.EvaluationSchedule.Window.StartTime),
-				EndTime:    types.StringValue(t.EvaluationSchedule.Window.EndTime),
-				DaysOfWeek: days,
-			},
-		}
+func expandTriggerEvaluationSchedule(
+	ctx context.Context,
+	l types.List,
+	diags *diag.Diagnostics,
+) *client.TriggerEvaluationSchedule {
+	if l.IsNull() || l.IsUnknown() {
+		return nil
 	}
 
-	return nil
+	var s []models.TriggerEvaluationScheduleModel
+	diags.Append(l.ElementsAs(ctx, &s, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	days := make([]string, len(s[0].DaysOfWeek))
+	for i, d := range s[0].DaysOfWeek {
+		days[i] = d.ValueString()
+	}
+
+	return &client.TriggerEvaluationSchedule{
+		Window: client.TriggerEvaluationWindow{
+			StartTime:  s[0].StartTime.ValueString(),
+			EndTime:    s[0].EndTime.ValueString(),
+			DaysOfWeek: days,
+		},
+	}
+}
+
+func flattenTriggerEvaluationSchedule(
+	ctx context.Context,
+	w *client.TriggerEvaluationSchedule,
+	diags *diag.Diagnostics,
+) types.List {
+	if w == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: models.TriggerEvaluationScheduleAttrType})
+	}
+
+	days := make([]basetypes.StringValue, len(w.Window.DaysOfWeek))
+	for i, d := range w.Window.DaysOfWeek {
+		days[i] = types.StringValue(d)
+	}
+	daysObj, d := types.ListValueFrom(ctx, types.StringType, days)
+	diags.Append(d...)
+
+	scheduleObj, d := types.ObjectValue(models.TriggerEvaluationScheduleAttrType, map[string]attr.Value{
+		"days_of_week": daysObj,
+		"start_time":   types.StringValue(w.Window.StartTime),
+		"end_time":     types.StringValue(w.Window.EndTime),
+	})
+	diags.Append(d...)
+
+	result, d := types.ListValueFrom(
+		ctx,
+		types.ObjectType{AttrTypes: models.TriggerEvaluationScheduleAttrType},
+		[]attr.Value{scheduleObj},
+	)
+	diags.Append(d...)
+
+	return result
 }
