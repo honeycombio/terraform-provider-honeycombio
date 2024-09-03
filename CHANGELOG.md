@@ -1,3 +1,14 @@
+# 0.27.1 (Sep 03, 2024)
+
+ENHANCEMENTS:
+
+* chore(docs): standardize use of notes (#538)
+* feat: slack channel regex accepts channel id (#540)
+
+BUGFIXES:
+
+* fix(r/trigger): handle dynamic evaluation schedule (#539)
+
 # 0.27.0 (Aug 23, 2024)
 
 NOTES:
