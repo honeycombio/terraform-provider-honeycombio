@@ -14,7 +14,7 @@ resource "honeycombio_slack_recipient" "alerts" {
 
 The following arguments are supported:
 
-* `channel` - (Required) The Slack channel or username to send the notification to. Must begin with `#` or `@`.
+* `channel` - (Required) The Slack channel or username to send the notification to. Must begin with `#` or `@` or be a valid channel id e.g. `CABC123DEF.
 
 ## Attribute Reference
 
