@@ -28,7 +28,7 @@ func newSlackRecipient() *schema.Resource {
 			"channel": {
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "The Slack channel or username to send the notification to. Must begin with `#` or `@`.",
+				Description:  "The Slack channel or username to send the notification to. Must begin with `#` or `@` or be a valid channel id e.g. `CABC123DEF.",
 				ValidateFunc: validation.StringMatch(channelRegex, "channel must begin with `#` or `@` or be a valid channel id e.g. `CABC123DEF`"),
 			},
 		},
