@@ -2,7 +2,7 @@
 
 The Environments data source retrieves the Team's environments.
 
--> **NOTE** This data source requires the provider be configured with a Management Key with `environments:read` in the configured scopes.
+-> This data source requires the provider be configured with a Management Key with `environments:read` in the configured scopes.
 
 ## Example Usage
 

@@ -3,7 +3,7 @@
 The `honeycombio_environment` data source retrieves the details of a single Environment.
 If you want to retrieve multiple Environments, use the `honeycombio_environments` data source instead.
 
--> **NOTE** This data source requires the provider be configured with a Management Key with `environments:read` in the configured scopes.
+-> This data source requires the provider be configured with a Management Key with `environments:read` in the configured scopes.
 
 
 ## Example Usage

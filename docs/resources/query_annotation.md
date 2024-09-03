@@ -2,7 +2,7 @@
 
 Creates a query annotation in a dataset.
 
--> **Note** A query annotation points to a specific query. Any change to the query will result in a new query ID and the annotation will no longer apply.
+-> A query annotation points to a specific query. Any change to the query will result in a new query ID and the annotation will no longer apply.
 If you use the "honeycombio_query_specification" to determine the `query_id` parameter (as in the example below), Terraform will destroy the old query annotation and create a new one.
 If this is wrong for your use case, please open an issue in [honeycombio/terraform-provider-honeycombio](https://github.com/honeycombio/terraform-provider-honeycombio).
 
