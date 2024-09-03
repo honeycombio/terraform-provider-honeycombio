@@ -3,7 +3,7 @@
 The `query_result` data source allows you to execute Honeycomb queries via the [Query Data API](https://docs.honeycomb.io/api/query-results/).
 As this data source is a wrapper around the Query Data API all of its [documented restrictions](https://docs.honeycomb.io/api/query-results/#api-restrictions) apply.
 
-~> **NOTE:** Use of this data source requires a Honeycomb Enterprise plan.
+-> Use of this data source requires a Honeycomb Enterprise plan.
 
 ## Example Usage
 

@@ -2,7 +2,7 @@
 
 Creates a Dataset in an Environment.
 
--> **Note**: prior to version 0.27.0 of the provider, datasets were *not* deleted on destroy but left in place and only removed from state.
+~> **Warning** Prior to version 0.27.0 of the provider, datasets were *not* deleted on destroy but left in place and only removed from state.
 
 ## Example Usage
 

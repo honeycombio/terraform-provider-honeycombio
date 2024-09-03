@@ -1,6 +1,7 @@
 # Resource: honeycombio_marker_setting
 
-Creates a marker setting. For more information about marker settings, check out the [Marker Settings API](https://docs.honeycomb.io/api/marker-settings/).
+Creates a marker setting.
+For more information on marker settings, check out the [Marker Settings API](https://docs.honeycomb.io/api/marker-settings/).
 
 ## Example Usage
 

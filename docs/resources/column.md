@@ -3,9 +3,7 @@
 Provides a Honeycomb Column resource.
 This can be used to create, update, and delete columns in a dataset.
 
--> **Note**: deleting a column is a destructive and irreversible operation which also removes the data in the column.
-
--> **Note**: prior to version 0.13.0 of the provider, columns were *not* deleted on destroy but left in place and only removed from state.
+~> **Warning** Deleting a column is a destructive and irreversible operation which also removes the data in the column.
 
 ## Example Usage
 

@@ -2,7 +2,7 @@
 
 Search the triggers of a dataset for a trigger recipient. The ID of the existing trigger recipient can be used when adding trigger recipients to new triggers.
 
--> **Deprecated** Use the `honeycombio_recipient` data source instead.
+!> **Deprecated** Use the `honeycombio_recipient` data source instead.
 
 ## Example Usage
 
