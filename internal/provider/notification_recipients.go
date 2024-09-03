@@ -241,7 +241,6 @@ func notificationRecipientDetailsToList(ctx context.Context, details *client.Not
 		diags.Append(d...)
 		result, d = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, []attr.Value{objVal})
 		diags.Append(d...)
-
 	} else {
 		result = types.ListNull(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType})
 	}
