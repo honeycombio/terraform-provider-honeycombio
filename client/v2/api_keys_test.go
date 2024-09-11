@@ -83,7 +83,7 @@ func TestClient_APIKeys_Pagination(t *testing.T) {
 	// create a bunch of keys
 	numKeys := int(math.Floor(1.5 * float64(defaultPageSize)))
 	testKeys := make([]*APIKey, numKeys)
-	for i := 0; i < numKeys; i++ {
+	for i := range numKeys {
 		k, err := c.APIKeys.Create(ctx, &APIKey{
 			Name:    helper.ToPtr(fmt.Sprintf("test.%d", i)),
 			KeyType: "ingest",
