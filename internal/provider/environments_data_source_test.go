@@ -17,7 +17,7 @@ func TestAcc_EnvironmentsDatasource(t *testing.T) {
 
 	// create a bunch of environments
 	testEnvs := make([]*v2client.Environment, numEnvs)
-	for i := 0; i < numEnvs; i++ {
+	for i := range numEnvs {
 		e := testAccEnvironment(ctx, t, c)
 		testEnvs[i] = e
 	}

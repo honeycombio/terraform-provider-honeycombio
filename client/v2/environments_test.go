@@ -89,7 +89,7 @@ func TestClient_Environments_Pagination(t *testing.T) {
 	// create a bunch of environments
 	numEnvs := int(math.Floor(1.5 * float64(defaultPageSize)))
 	testEnvs := make([]*Environment, numEnvs)
-	for i := 0; i < numEnvs; i++ {
+	for i := range numEnvs {
 		e, err := c.Environments.Create(ctx, &Environment{
 			Name: test.RandomStringWithPrefix("test.", 20),
 		})

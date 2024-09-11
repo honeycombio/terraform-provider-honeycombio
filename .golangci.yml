@@ -20,7 +20,7 @@ linters:
     enable:
         - durationcheck
         - errcheck
-        - exportloopref
+        - copyloopvar
         - forcetypeassert
         - goimports
         - gosimple
