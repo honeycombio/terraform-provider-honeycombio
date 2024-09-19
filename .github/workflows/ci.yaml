@@ -24,8 +24,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
-          check-latest: true
-      - run: go version
+          cache: true
 
       - name: Lint
         uses: golangci/golangci-lint-action@v6.1.0
@@ -52,7 +51,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
-          check-latest: true
+          cache: true
 
       - name: Setup test environment
         env:
@@ -140,7 +139,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: "go.mod"
-          check-latest: true
+          cache: true
 
       - name: Setup test environment
         env:
