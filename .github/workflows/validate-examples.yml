@@ -20,7 +20,7 @@ jobs:
               uses: actions/setup-go@v5
               with:
                   go-version-file: "go.mod"
-                  cache: true
+                  check-latest: true
 
             - name: Build
               run: go build -o /tmp/providers/terraform-provider-honeycombio
