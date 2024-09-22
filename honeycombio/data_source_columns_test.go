@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
@@ -60,11 +61,11 @@ output "all" {
   value = data.honeycombio_columns.all.names
 }`, dataset, testFilterPrefix),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testCheckOutputContains("all", testColumns[0].KeyName),
-					testCheckOutputContains("all", testColumns[1].KeyName),
-					testCheckOutputContains("all", testColumns[2].KeyName),
-					testCheckOutputContains("all", testColumns[3].KeyName),
-					testCheckOutputContains("all", testColumns[4].KeyName),
+					testCheckAllOutputContains(testColumns[0].KeyName),
+					testCheckAllOutputContains(testColumns[1].KeyName),
+					testCheckAllOutputContains(testColumns[2].KeyName),
+					testCheckAllOutputContains(testColumns[3].KeyName),
+					testCheckAllOutputContains(testColumns[4].KeyName),
 					resource.TestCheckResourceAttr("data.honeycombio_columns.filtered",
 						"names.#",
 						fmt.Sprintf("%d", numColumns),
@@ -78,4 +79,26 @@ output "all" {
 			},
 		},
 	})
+}
+
+func testCheckAllOutputContains(contains string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		const name = "all"
+
+		ms := s.RootModule()
+		rs, ok := ms.Outputs[name]
+		if !ok {
+			return fmt.Errorf("Not found: %s", name)
+		}
+
+		output := rs.Value.([]interface{})
+
+		for _, value := range output {
+			if value.(string) == contains {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("Output '%s' did not contain %#v, got %#v", name, contains, output)
+	}
 }
