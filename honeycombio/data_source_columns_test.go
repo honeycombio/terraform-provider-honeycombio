@@ -3,15 +3,15 @@ package honeycombio
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAccDataSourceHoneycombioColumns_basic(t *testing.T) {
@@ -19,28 +19,19 @@ func TestAccDataSourceHoneycombioColumns_basic(t *testing.T) {
 	c := testAccClient(t)
 	dataset := testAccDataset()
 
-	testprefix := acctest.RandString(4)
-
-	testColumns := []honeycombio.Column{
-		{
-			KeyName:     testprefix + "_test_column1",
-			Description: "test column1",
-		},
-		{
-			KeyName:     testprefix + "_test_column2",
-			Description: "test column2",
-		},
-	}
-
-	for i, column := range testColumns {
-		col, err := c.Columns.Create(ctx, dataset, &column)
+	const numColumns = 5
+	testFilterPrefix := test.RandomStringWithPrefix("test.", 5)
+	testColumns := make([]*honeycombio.Column, 0, numColumns)
+	for range numColumns {
+		col, err := c.Columns.Create(ctx, dataset, &honeycombio.Column{
+			KeyName:     test.RandomStringWithPrefix(testFilterPrefix+".", 10),
+			Description: test.RandomString(20),
+			Type:        honeycombio.ToPtr(honeycombio.ColumnTypeFloat),
+		})
 		require.NoError(t, err)
-		// update ID for removal later
-		testColumns[i].ID = col.ID
+		testColumns = append(testColumns, col)
 	}
-	//nolint:errcheck
 	t.Cleanup(func() {
-		// remove Columns at the of the test run
 		for _, col := range testColumns {
 			c.Columns.Delete(ctx, dataset, col.ID)
 		}
@@ -51,32 +42,63 @@ func TestAccDataSourceHoneycombioColumns_basic(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceColumnsConfig([]string{"dataset = \"" + testAccDataset() + "\""}),
-				Check: resource.ComposeTestCheckFunc(
-					testCheckOutputContains("names", testColumns[0].KeyName),
+				Config: fmt.Sprintf(`
+data "honeycombio_columns" "all" {
+  dataset = "%[1]s"
+}
+
+data "honeycombio_columns" "filtered" {
+  dataset     = "%[1]s"
+  starts_with = "%[2]s"
+}
+
+data "honeycombio_columns" "none" {
+  dataset     = "%[1]s"
+  starts_with = "does-not-exist"
+}
+
+output "all" {
+  value = data.honeycombio_columns.all.names
+}`, dataset, testFilterPrefix),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testCheckAllOutputContains(testColumns[0].KeyName),
+					testCheckAllOutputContains(testColumns[1].KeyName),
+					testCheckAllOutputContains(testColumns[2].KeyName),
+					testCheckAllOutputContains(testColumns[3].KeyName),
+					testCheckAllOutputContains(testColumns[4].KeyName),
+					resource.TestCheckResourceAttr("data.honeycombio_columns.filtered",
+						"names.#",
+						fmt.Sprintf("%d", numColumns),
+					),
+					resource.TestCheckResourceAttr("data.honeycombio_columns.none",
+						"names.#",
+						"0",
+					),
 				),
-			},
-			{
-				Config: testAccDataSourceColumnsConfig([]string{"dataset = \"" + testAccDataset() + "\"", "starts_with = \"" + testprefix + "\""}),
-				Check:  resource.TestCheckResourceAttr("data.honeycombio_columns.test", "names.#", "2"),
-			},
-			{
-				Config: testAccDataSourceColumnsConfig([]string{"dataset = \"" + testAccDataset() + "\"", "starts_with = \"foo\""}),
-				Check: resource.ComposeTestCheckFunc(
-					testCheckOutputDoesNotContain("names", testColumns[0].KeyName),
-				),
+				PlanOnly: true,
 			},
 		},
 	})
 }
 
-func testAccDataSourceColumnsConfig(filters []string) string {
-	return fmt.Sprintf(`
-data "honeycombio_columns" "test" {
-	%s
-}
+func testCheckAllOutputContains(contains string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		const name = "all"
 
-output "names" {
-  value = data.honeycombio_columns.test.names
-}`, strings.Join(filters, "\n"))
+		ms := s.RootModule()
+		rs, ok := ms.Outputs[name]
+		if !ok {
+			return fmt.Errorf("Not found: %s", name)
+		}
+
+		output := rs.Value.([]interface{})
+
+		for _, value := range output {
+			if value.(string) == contains {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("Output '%s' did not contain %#v, got %#v", name, contains, output)
+	}
 }
