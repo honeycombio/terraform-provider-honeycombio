@@ -29,7 +29,7 @@ func TestMarkers(t *testing.T) {
 		data := &client.Marker{
 			Message:   fmt.Sprintf("Test run at %v", time.Now()),
 			Type:      test.RandomStringWithPrefix("test.", 8),
-			URL:       "http://example.com",
+			URL:       test.RandomURL(),
 			StartTime: time.Now().Unix(),
 		}
 		m, err = c.Markers.Create(ctx, dataset, data)

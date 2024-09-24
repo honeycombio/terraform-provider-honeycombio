@@ -62,14 +62,14 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 			Details: honeycombio.RecipientDetails{
 				WebhookName:   test.RandomStringWithPrefix("test.", 16),
 				WebhookSecret: test.RandomString(20),
-				WebhookURL:    "https://my.webhook.dev.corp.io",
+				WebhookURL:    test.RandomURLWithDomain("dev.corp.io"),
 			},
 		},
 		{
 			Type: honeycombio.RecipientTypeMSTeamsWorkflow,
 			Details: honeycombio.RecipientDetails{
 				WebhookName: test.RandomStringWithPrefix("test.", 16),
-				WebhookURL:  "https://mycorp.westus.logic.azure.com/workflows/12345",
+				WebhookURL:  test.RandomURL(),
 			},
 		},
 	}
@@ -124,14 +124,14 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "name", testRecipients[6].Details.WebhookName),
 					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "secret", testRecipients[6].Details.WebhookSecret),
-					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", "https://my.webhook.dev.corp.io"),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", testRecipients[6].Details.WebhookURL),
 				),
 			},
 			{
 				Config: testAccRecipientWithFilterValue("msteams", "name", testRecipients[7].Details.WebhookName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "name", testRecipients[7].Details.WebhookName),
-					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", "https://mycorp.westus.logic.azure.com/workflows/12345"),
+					resource.TestCheckResourceAttr("data.honeycombio_recipient.test", "url", testRecipients[7].Details.WebhookURL),
 				),
 			},
 			{

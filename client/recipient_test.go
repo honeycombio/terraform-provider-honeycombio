@@ -95,7 +95,7 @@ func TestRecipientsWebhooksandMSTeams(t *testing.T) {
 				Type: client.RecipientTypeWebhook,
 				Details: client.RecipientDetails{
 					WebhookName:   test.RandomStringWithPrefix("test.", 10),
-					WebhookURL:    "https://example.com",
+					WebhookURL:    test.RandomURL(),
 					WebhookSecret: "secret",
 				},
 			},
@@ -105,7 +105,7 @@ func TestRecipientsWebhooksandMSTeams(t *testing.T) {
 				Type: client.RecipientTypeMSTeams,
 				Details: client.RecipientDetails{
 					WebhookName: test.RandomStringWithPrefix("test.", 10),
-					WebhookURL:  "https://corp.office.com/webhook",
+					WebhookURL:  test.RandomURL(),
 				},
 			},
 			expectErr: true, // creation of new MSTeams recipients is not allowed
@@ -115,7 +115,7 @@ func TestRecipientsWebhooksandMSTeams(t *testing.T) {
 				Type: client.RecipientTypeMSTeamsWorkflow,
 				Details: client.RecipientDetails{
 					WebhookName: test.RandomStringWithPrefix("test.", 10),
-					WebhookURL:  "https://mycorp.westus.logic.azure.com/workflows/12345",
+					WebhookURL:  test.RandomURL(),
 				},
 			},
 		},
