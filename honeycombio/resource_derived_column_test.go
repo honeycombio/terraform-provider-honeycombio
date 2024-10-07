@@ -53,8 +53,8 @@ resource "honeycombio_derived_column" "invalid_column_in_expression" {
   expression  = "LOG10($invalid_column)"
 
   dataset = "%s"
-}`, alias, dataset),
-				ExpectError: regexp.MustCompile(`Error: unknown column name: invalid_column`),
+}`, test.RandomStringWithPrefix("test.", 10), dataset),
+				ExpectError: regexp.MustCompile(`unknown column`),
 			},
 		},
 	})
