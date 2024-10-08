@@ -23,8 +23,8 @@ func TestAccHoneycombMSTeamsRecipient(t *testing.T) {
 					Config: fmt.Sprintf(`
 resource "honeycombio_msteams_workflow_recipient" "test" {
   name = "%s"
-  url  = "https://example.com"
-}`, test.RandomStringWithPrefix("test.", 10)),
+  url  = "%s"
+}`, test.RandomStringWithPrefix("test.", 10), test.RandomURL()),
 				},
 			},
 		})
@@ -39,7 +39,7 @@ resource "honeycombio_msteams_workflow_recipient" "test" {
 					Config: `
 resource "honeycombio_msteams_recipient" "test" {
   name = "test"
-  url  = "https://example.com"
+  url  = "https://nope.example.com"
 }`,
 					ExpectError: regexp.MustCompile(`Creating new MSTeams recipients is no longer possible`),
 				},

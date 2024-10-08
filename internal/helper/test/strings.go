@@ -3,6 +3,7 @@ package test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 )
 
@@ -42,4 +43,14 @@ func MinifyJSON(s string) (string, error) {
 		return "", err
 	}
 	return buffer.String(), nil
+}
+
+// RandomURL generates a random URL in 'example.com' for testing purposes.
+func RandomURL() string {
+	return RandomURLWithDomain("example.com")
+}
+
+// RandomURLWithDomain generates a random URL in the provided domain.
+func RandomURLWithDomain(domain string) string {
+	return fmt.Sprintf("https://%s.%s/%s", RandomString(10), domain, RandomString(10))
 }

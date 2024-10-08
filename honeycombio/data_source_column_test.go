@@ -4,15 +4,14 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAccDataSourceHoneycombioColumn_basic(t *testing.T) {
@@ -20,59 +19,53 @@ func TestAccDataSourceHoneycombioColumn_basic(t *testing.T) {
 	c := testAccClient(t)
 	dataset := testAccDataset()
 
-	testColumns := []honeycombio.Column{
-		{
-			KeyName:     acctest.RandString(4) + "_test_column3",
-			Description: "test column3",
-			Type:        honeycombio.ToPtr(honeycombio.ColumnType("float")),
-		},
-	}
-
-	for i, column := range testColumns {
-		col, err := c.Columns.Create(ctx, dataset, &column)
-		require.NoError(t, err)
-		// update ID for removal later
-		testColumns[i].ID = col.ID
-
-	}
-	//nolint:errcheck
+	col, err := c.Columns.Create(ctx, dataset, &honeycombio.Column{
+		KeyName:     test.RandomStringWithPrefix("test.", 10),
+		Description: test.RandomString(20),
+		Type:        honeycombio.ToPtr(honeycombio.ColumnTypeFloat),
+	})
+	require.NoError(t, err)
 	t.Cleanup(func() {
-		// remove Columns at the of the test run
-		for _, col := range testColumns {
-			c.Columns.Delete(ctx, dataset, col.ID)
-		}
+		c.Columns.Delete(ctx, dataset, col.ID)
 	})
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
-			// match by name and return a single column with the right type
 			{
-				Config: testAccDataSourceColumnConfig([]string{"dataset = \"" + testAccDataset() + "\"", "name = \"" + testColumns[0].KeyName + "\""}),
-				Check:  resource.TestCheckResourceAttr("data.honeycombio_column.test", "type", "float"),
-			},
-			// test a failed match
-			{
-				Config:      testAccDataSourceColumnConfig([]string{"dataset = \"" + testAccDataset() + "\"", "name = \"test_column5\""}),
-				ExpectError: regexp.MustCompile("404 Not Found"),
+				Config: fmt.Sprintf(`
+data "honeycombio_column" "test" {
+  dataset = "%s"
+  name    = "%s"
+}`, dataset, col.KeyName),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.honeycombio_column.test", "name", col.KeyName),
+					resource.TestCheckResourceAttr("data.honeycombio_column.test", "description", col.Description),
+					resource.TestCheckResourceAttr("data.honeycombio_column.test", "type", "float"),
+					resource.TestCheckResourceAttr("data.honeycombio_column.test", "hidden", "false"),
+					resource.TestCheckResourceAttrSet("data.honeycombio_column.test", "last_written_at"),
+					resource.TestCheckResourceAttrSet("data.honeycombio_column.test", "created_at"),
+					resource.TestCheckResourceAttrSet("data.honeycombio_column.test", "updated_at"),
+				),
+				PlanOnly: true,
 			},
 		},
 	})
-}
 
-func testAccDataSourceColumnConfig(filters []string) string {
-	return fmt.Sprintf(`
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
 data "honeycombio_column" "test" {
-	%s
-}
-
-output "type" {
-  value = data.honeycombio_column.test.type
-}
-
-output "description" {
-  value = data.honeycombio_column.test.description
-}
-`, strings.Join(filters, "\n"))
+  dataset = "%s"
+  name    = "does-not-exist"
+}`, dataset),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?i)not found`),
+			},
+		},
+	})
 }

@@ -20,7 +20,7 @@ func TestAcc_DatasetsDatasource(t *testing.T) {
 
 	// create a bunch of datasets
 	testDatasets := make([]*client.Dataset, numDatasets)
-	for i := 0; i < numDatasets; i++ {
+	for i := range numDatasets {
 		d, err := c.Datasets.Create(ctx, &client.Dataset{
 			Name:        test.RandomStringWithPrefix("test.ds.", 20),
 			Description: test.RandomString(70),

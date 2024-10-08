@@ -27,7 +27,7 @@ jobs:
           cache: true
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v6.1.0
+        uses: golangci/golangci-lint-action@v6.1.1
         with:
           version: latest
 
@@ -118,7 +118,7 @@ jobs:
           show: "fail, skip"
 
       - name: Generate Coverage Report
-        uses: codecov/codecov-action@v4.5.0
+        uses: codecov/codecov-action@v4.6.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -210,6 +210,6 @@ jobs:
           show: "fail, skip"
 
       - name: Generate Coverage Report
-        uses: codecov/codecov-action@v4.5.0
+        uses: codecov/codecov-action@v4.6.0
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
