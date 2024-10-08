@@ -18,7 +18,7 @@ Feel free to just open an issue and we can guide you along the way.
 
 ## Contributing changes
 
-As there are currently no Honeycomb SDKs, this repostiory contains an embedded API Client for the [Honeycomb API](https://docs.honeycomb.io/api)
+As there are currently no Honeycomb SDKs, this repository contains an embedded API Client for the [Honeycomb API](https://docs.honeycomb.io/api)
 in the `client/` directory in the root of the repository.
 
 The provider currently has a mix of the older [Plugin SDKv2](https://developer.hashicorp.com/terraform/plugin/sdkv2)
@@ -54,7 +54,7 @@ HONEYCOMB_API_KEY=<your API key> HONEYCOMB_DATASET=<dataset> ./scripts/setup-tes
 ```
 
 Finally, **run the full testsuite**!
-There is a `.env` file checked into the root of the repostiory which can be used to store the relevant environment variables required for the tests:
+There is a `.env` file checked into the root of the repository which can be used to store the relevant environment variables required for the tests:
 
 - `HONEYCOMB_API_KEY`: a Configuration Key for a Honeycomb Team
 - `HONEYCOMB_DATASET`: name of the test dataset to run tests against
@@ -71,7 +71,7 @@ HONEYCOMB_API_KEY=<CONFIGURATION KEY> HONEYCOMB_KEY_ID=<MGMT KEY ID> HONEYCOMB_K
 It can be handy to run terraform with a local version of the provider during development.
 
 The best way to do this is with a [Development Override](https://developer.hashicorp.com/terraform/cli/config/config-file#development-overrides-for-provider-developers).
-There is already a `.terraformrc.local` file checked into the root of the repostiory which may be a helpful starting point.
+There is already a `.terraformrc.local` file checked into the root of the repository which may be a helpful starting point.
 
 ### Enabling log output
 

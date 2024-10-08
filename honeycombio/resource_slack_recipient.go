@@ -11,7 +11,7 @@ import (
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-var channelRegex = regexp.MustCompile(`^#.*|^@.*|^(C|D|G)[A-Z0-9]{6,}$`)
+var channelRegex = regexp.MustCompile(`^#.*|^@.*|^(C|D|G|U)[A-Z0-9]{6,}$`)
 
 func newSlackRecipient() *schema.Resource {
 	return &schema.Resource{
