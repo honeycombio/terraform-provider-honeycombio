@@ -22,17 +22,14 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource              = &querySpecDataSource{}
-	_ datasource.DataSourceWithConfigure = &querySpecDataSource{}
+	_ datasource.DataSource = &querySpecDataSource{}
 )
 
 func NewQuerySpecDataSource() datasource.DataSource {
 	return &querySpecDataSource{}
 }
 
-type querySpecDataSource struct {
-	client *client.Client
-}
+type querySpecDataSource struct{}
 
 func (d *querySpecDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_query_specification"
@@ -197,20 +194,6 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 			},
 		},
 	}
-}
-
-func (d *querySpecDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	w := getClientFromDatasourceRequest(&req)
-	if w == nil {
-		return
-	}
-
-	c, err := w.V1Client()
-	if err != nil || c == nil {
-		resp.Diagnostics.AddError("Failed to configure client", err.Error())
-		return
-	}
-	d.client = c
 }
 
 func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
