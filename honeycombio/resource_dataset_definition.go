@@ -151,6 +151,10 @@ func extractDatasetDefinitionColumnByName(dd *honeycombio.DatasetDefinition, nam
 		return dd.LinkTraceID
 	case "link_span_id":
 		return dd.LinkSpanID
+	case "log_message":
+		return dd.LogMessage
+	case "log_severity":
+		return dd.LogSeverity
 	case "status":
 		return dd.Status
 	case "trace_id":
@@ -188,6 +192,10 @@ func expandDatasetDefinition(name, value string) *honeycombio.DatasetDefinition 
 		definition.LinkTraceID = &honeycombio.DefinitionColumn{Name: value}
 	case "link_span_id":
 		definition.LinkSpanID = &honeycombio.DefinitionColumn{Name: value}
+	case "log_message":
+		definition.LogMessage = &honeycombio.DefinitionColumn{Name: value}
+	case "log_severity":
+		definition.LogSeverity = &honeycombio.DefinitionColumn{Name: value}
 	case "status":
 		definition.Status = &honeycombio.DefinitionColumn{Name: value}
 	case "trace_id":

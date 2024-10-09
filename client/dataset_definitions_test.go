@@ -39,8 +39,9 @@ func TestDatasetDefinitions(t *testing.T) {
 		{KeyName: "request.user.username", Type: client.ToPtr(client.ColumnTypeString)},
 		{KeyName: "trace.link.trace_id", Type: client.ToPtr(client.ColumnTypeString)},
 		{KeyName: "trace.link.span_id", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "body", Type: client.ToPtr(client.ColumnTypeString)},
+		{KeyName: "severity", Type: client.ToPtr(client.ColumnTypeString)},
 	} {
-		//nolint:errcheck
 		// ignore errors, we don't care if the column already exists
 		c.Columns.Create(ctx, dataset, &col)
 	}
@@ -55,7 +56,6 @@ func TestDatasetDefinitions(t *testing.T) {
 	require.NoError(t, err)
 
 	// reset all defs and remove test helpers at end of test run
-	//nolint:errcheck
 	t.Cleanup(func() {
 		c.DatasetDefinitions.ResetAll(ctx, dataset)
 		c.Columns.Delete(ctx, dataset, testCol.ID)
@@ -79,6 +79,8 @@ func TestDatasetDefinitions(t *testing.T) {
 		assert.Contains(t, definitionDefaults["annotation_type"], result.AnnotationType.Name)
 		assert.Contains(t, definitionDefaults["link_trace_id"], result.LinkTraceID.Name)
 		assert.Contains(t, definitionDefaults["link_span_id"], result.LinkSpanID.Name)
+		assert.Contains(t, definitionDefaults["log_message"], result.LogMessage.Name)
+		assert.Contains(t, definitionDefaults["log_severity"], result.LogSeverity.Name)
 		assert.Contains(t, definitionDefaults["status"], result.Status.Name)
 		assert.Contains(t, definitionDefaults["trace_id"], result.TraceID.Name)
 		assert.Contains(t, definitionDefaults["user"], result.User.Name)
