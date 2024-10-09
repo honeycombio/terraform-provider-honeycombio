@@ -33,6 +33,8 @@ Definition Name    | Description
 `annotation_type`  | Metadata: Annotation Type
 `link_span_id`     | Metadata: Link Span ID
 `link_trace_id`    | Metadata: Link Trace ID
+`log_message`      | Log Event Message
+`log_severity`     | Log Event Severity
 `name`             | Name
 `parent_id`        | Parent Span ID
 `route`            | Route

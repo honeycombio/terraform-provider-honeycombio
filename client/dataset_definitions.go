@@ -47,6 +47,8 @@ type DatasetDefinition struct {
 	AnnotationType *DefinitionColumn `json:"annotation_type,omitempty"`
 	LinkTraceID    *DefinitionColumn `json:"link_trace_id,omitempty"`
 	LinkSpanID     *DefinitionColumn `json:"link_span_id,omitempty"`
+	LogMessage     *DefinitionColumn `json:"log_message,omitempty"`
+	LogSeverity    *DefinitionColumn `json:"log_severity,omitempty"`
 	Status         *DefinitionColumn `json:"status,omitempty"`
 	TraceID        *DefinitionColumn `json:"trace_id,omitempty"`
 	User           *DefinitionColumn `json:"user,omitempty"`
@@ -72,6 +74,8 @@ func DatasetDefinitionFields() []string {
 		"annotation_type",
 		"link_trace_id",
 		"link_span_id",
+		"log_message",
+		"log_severity",
 		"status",
 		"trace_id",
 		"user",
@@ -92,6 +96,8 @@ func DatasetDefinitionDefaults() map[string][]string {
 		"annotation_type": {"meta.annotation_type"},
 		"link_trace_id":   {"trace.link.trace_id"},
 		"link_span_id":    {"trace.link.span_id", "trace.span_id"},
+		"log_message":     {"body"},
+		"log_severity":    {"severity"},
 		"status":          {"response.status_code", "http.status_code", "elb_status_code"},
 		"trace_id":        {"http.status_code", "trace.trace_id", "traceId"},
 		"user":            {"user.id", "user.email", "request.user.id", "request.user.username"},
@@ -117,6 +123,8 @@ func (s *datasetDefinitions) ResetAll(ctx context.Context, dataset string) error
 		AnnotationType: EmptyDatasetDefinition(),
 		LinkTraceID:    EmptyDatasetDefinition(),
 		LinkSpanID:     EmptyDatasetDefinition(),
+		LogMessage:     EmptyDatasetDefinition(),
+		LogSeverity:    EmptyDatasetDefinition(),
 		Status:         EmptyDatasetDefinition(),
 		TraceID:        EmptyDatasetDefinition(),
 		User:           EmptyDatasetDefinition(),
