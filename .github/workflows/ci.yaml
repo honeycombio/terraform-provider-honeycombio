@@ -107,7 +107,7 @@ jobs:
         with:
           payload: |
             {
-              "username": "Terraform Provider CI"
+              "username": "Terraform Provider CI",
               "text": "The scheduled test suite run failed for the US region.\nPlease Investigate.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>",
               "icon_emoji": ":terraform-fall-down:"
             }
@@ -212,7 +212,7 @@ jobs:
         with:
           payload: |
             {
-              "username": "Terraform Provider CI"
+              "username": "Terraform Provider CI",
               "text": "The scheduled test suite run failed in the EU region.\nPlease Investigate.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>",
               "icon_emoji": ":terraform-fall-down:"
             }
