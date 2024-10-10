@@ -102,13 +102,13 @@ jobs:
 
       - name: Notify if scheduled run fails
         id: slack-notify
-        #if: ${{ failure() && github.event_name == 'schedule' }}
+        if: ${{ failure() && github.event_name == 'schedule' }}
         uses: slackapi/slack-github-action@v1.27.0
         with:
           payload: |
             {
               "username": "Terraform Provider CI",
-              "text": ":rotating_light: The scheduled test suite run failed for the US region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs/${{ github.job }}|View Failed Job>",
+              "text": ":rotating_light: The scheduled test suite run failed for the US region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>",
               "icon_emoji": ":terraform-fall-down:"
             }
         env:
@@ -213,7 +213,7 @@ jobs:
           payload: |
             {
               "username": "Terraform Provider CI",
-              "text": ":rotating_light: The scheduled test suite run failed for the EU region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs/${{ github.job }}|View Failed Job>",
+              "text": ":rotating_light: The scheduled test suite run failed for the EU region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>",
               "icon_emoji": ":terraform-fall-down:"
             }
         env:
