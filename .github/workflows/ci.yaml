@@ -108,7 +108,7 @@ jobs:
           payload: |
             {
               "username": "Terraform Provider CI",
-              "text": ":rotating_light: The scheduled test suite run failed for the US region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>",
+              "text": ":rotating_light: The scheduled test suite run failed for the US region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs/${{ github.job }}|View Failed Job>",
               "icon_emoji": ":terraform-fall-down:"
             }
         env:
@@ -213,7 +213,7 @@ jobs:
           payload: |
             {
               "username": "Terraform Provider CI",
-              "text": ":rotating_light: The scheduled test suite run failed for the EU region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>",
+              "text": ":rotating_light: The scheduled test suite run failed for the EU region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/jobs/${{ github.job }}|View Failed Job>",
               "icon_emoji": ":terraform-fall-down:"
             }
         env:
