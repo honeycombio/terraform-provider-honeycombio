@@ -100,6 +100,20 @@ jobs:
             -iocopy \
             -out provider-report.xml
 
+      - name: Notify if scheduled run fails
+        id: slack-notify
+        #if: ${{ failure() && github.event_name == 'schedule' }}
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "username": "Terraform Provider CI"
+              "text": "The scheduled test suite run failed for the US region.\nPlease Investigate.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>",
+              "icon_emoji": ":terraform-fall-down:"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
       - name: Cleanup Dangling Resources
         if: ${{ always() }}
         timeout-minutes: 5
@@ -191,6 +205,20 @@ jobs:
             -iocopy \
             -out provider-report.xml
 
+      - name: Notify if scheduled run fails
+        id: slack-notify
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          payload: |
+            {
+              "username": "Terraform Provider CI"
+              "text": "The scheduled test suite run failed in the EU region.\nPlease Investigate.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow Run>",
+              "icon_emoji": ":terraform-fall-down:"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
       - name: Cleanup Dangling Resources
         if: ${{ always() }}
         timeout-minutes: 5
@@ -203,7 +231,7 @@ jobs:
         run: make sweep
 
       - name: Generate Test Summary
-        if: always()
+        if: ${{ always() }}
         uses: test-summary/action@v2
         with:
           paths: "*-report.xml"
