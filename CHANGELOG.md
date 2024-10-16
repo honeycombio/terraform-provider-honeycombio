@@ -1,3 +1,26 @@
+# 0.27.2 (Oct 17, 2024)
+
+ENHANCEMENTS:
+
+* fix(r/derived_column): tidy up test (#547)
+* feat(d/query_specification): local-only datasource (#558)
+* chore: r/dataset_definition - add log_severity and log_message (#559)
+
+BUGFIXES:
+
+* fix(d/column): fix failing d/column test and tidy up (#548)
+* fix: generate random URLs for webhook-like recipients (#549)
+* fix: column-related test flakes (#554)
+* fix: slack channel regex for user ids (#557)
+
+HOUSEKEEPING:
+
+* chore: bump Go to 1.22 (#542)
+* maint(deps): bump the hashicorp group with 2 updates (#545)
+* chore(go): fix go version (#546)
+* maint(deps): bump golangci/golangci-lint-action from 6.1.0 to 6.1.1 (#551)
+* maint(deps): bump codecov/codecov-action from 4.5.0 to 4.6.0 (#550)
+
 # 0.27.1 (Sep 03, 2024)
 
 ENHANCEMENTS:
