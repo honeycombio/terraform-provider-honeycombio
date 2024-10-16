@@ -1,3 +1,26 @@
+# 0.27.2 (Oct 17, 2024)
+
+ENHANCEMENTS:
+
+* fix(r/derived_column): tidy up test by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/547
+* feat(d/query_specification): local-only datasource by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/558
+* chore: r/dataset_definition - add log_severity and log_message by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/559
+
+BUGFIXES:
+
+* fix(d/column): fix failing d/column test and tidy up by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/548
+* fix: generate random URLs for webhook-like recipients by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/549
+* fix: column-related test flakes by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/554
+* fix: slack channel regex for user ids by @brookesargent in https://github.com/honeycombio/terraform-provider-honeycombio/pull/557
+
+HOUSEKEEPING:
+
+* chore: bump Go to 1.22 by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/542
+* maint(deps): bump the hashicorp group with 2 updates by @dependabot in https://github.com/honeycombio/terraform-provider-honeycombio/pull/545
+* chore(go): fix go version by @jharley in https://github.com/honeycombio/terraform-provider-honeycombio/pull/546
+* maint(deps): bump golangci/golangci-lint-action from 6.1.0 to 6.1.1 by @dependabot in https://github.com/honeycombio/terraform-provider-honeycombio/pull/551
+* maint(deps): bump codecov/codecov-action from 4.5.0 to 4.6.0 by @dependabot in https://github.com/honeycombio/terraform-provider-honeycombio/pull/550
+
 # 0.27.1 (Sep 03, 2024)
 
 ENHANCEMENTS:
