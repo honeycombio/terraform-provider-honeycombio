@@ -572,6 +572,10 @@ func testAccEnsureAttributesCorrectBudgetRate(burnAlert *client.BurnAlert, budge
 			return fmt.Errorf("incorrect alert_type: %s", burnAlert.AlertType)
 		}
 
+		if burnAlert.Description != "test budget rate burn alert" {
+			return fmt.Errorf("incorrect description: %s", burnAlert.Description)
+		}
+
 		if burnAlert.BudgetRateWindowMinutes == nil {
 			return fmt.Errorf("incorrect budget_rate_window_minutes: expected not to be nil")
 		}
@@ -741,6 +745,7 @@ resource "honeycombio_burn_alert" "test" {
   alert_type                   = "budget_rate"
   budget_rate_window_minutes   = %[1]d
   budget_rate_decrease_percent = %[2]s
+  description = "test budget rate burn alert"
 
   dataset = "%[3]s"
   slo_id  = "%[4]s"
