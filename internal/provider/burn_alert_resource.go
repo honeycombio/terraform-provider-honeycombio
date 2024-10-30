@@ -245,7 +245,7 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 		AlertType:   client.BurnAlertAlertType(plan.AlertType.ValueString()),
 		Recipients:  expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		SLO:         client.SLORef{ID: plan.SLOID.ValueString()},
-		Description: string(plan.Description.ValueString()),
+		Description: plan.Description.ValueString(),
 	}
 
 	// Process any attributes that could be nil and add them to the create request
@@ -331,6 +331,7 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	state.AlertType = types.StringValue(string(burnAlert.AlertType))
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)
 	state.Recipients = reconcileReadNotificationRecipientState(ctx, burnAlert.Recipients, state.Recipients, &resp.Diagnostics)
+	state.Description = types.StringValue(burnAlert.Description)
 
 	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {
@@ -360,10 +361,11 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 
 	// Get attributes from config and construct the update request
 	updateRequest := &client.BurnAlert{
-		ID:         plan.ID.ValueString(),
-		AlertType:  client.BurnAlertAlertType(plan.AlertType.ValueString()),
-		Recipients: expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
-		SLO:        client.SLORef{ID: plan.SLOID.ValueString()},
+		ID:          plan.ID.ValueString(),
+		AlertType:   client.BurnAlertAlertType(plan.AlertType.ValueString()),
+		Recipients:  expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
+		SLO:         client.SLORef{ID: plan.SLOID.ValueString()},
+		Description: plan.Description.ValueString(),
 	}
 
 	// Process any attributes that could be nil and add them to the update request
@@ -399,6 +401,7 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)
+	state.Description = types.StringValue(burnAlert.Description)
 
 	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {
