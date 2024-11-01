@@ -272,7 +272,7 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 	state.ID = types.StringValue(burnAlert.ID)
 	state.AlertType = types.StringValue(string(burnAlert.AlertType))
 	state.Dataset = plan.Dataset
-	state.Description = plan.Description
+	state.Description = types.StringValue(burnAlert.Description)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)

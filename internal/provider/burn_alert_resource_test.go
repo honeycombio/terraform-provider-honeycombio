@@ -39,12 +39,12 @@ func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 			// Create - basic
 			{
 				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "info"),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID, nil),
 			},
 			// Update - PD Severity from info -> critical (the default)
 			{
 				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "critical"),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "critical", sloID),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "critical", sloID, nil),
 			},
 			// Import
 			{
@@ -57,7 +57,7 @@ func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 			// Update - exhaustion time to exhaustion time
 			{
 				Config: testAccConfigBurnAlertDefault_basic(updatedExhaustionMinutes, dataset, sloID, "info"),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, updatedExhaustionMinutes, "info", sloID),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, updatedExhaustionMinutes, "info", sloID, nil),
 			},
 			// Update - exhaustion time to budget rate
 			{
@@ -88,12 +88,12 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasic(t *testing.T) {
 			// Create - basic
 			{
 				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "info"),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID, nil),
 			},
 			// Update - PD Severity from info -> critical (the default)
 			{
 				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "critical"),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "critical", sloID),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "critical", sloID, nil),
 			},
 			// Import
 			{
@@ -106,7 +106,7 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasic(t *testing.T) {
 			// Update - exhaustion time to exhaustion time
 			{
 				Config: testAccConfigBurnAlertDefault_basic(updatedExhaustionMinutes, dataset, sloID, "info"),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, updatedExhaustionMinutes, "info", sloID),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, updatedExhaustionMinutes, "info", sloID, nil),
 			},
 			// Update - exhaustion time to budget rate
 			{
@@ -161,7 +161,57 @@ func TestAcc_BurnAlertResource_budgetRateBasic(t *testing.T) {
 			// Update - budget rate to exhaustion time
 			{
 				Config: testAccConfigBurnAlertExhaustionTime_basic(exhaustionTime, dataset, sloID, "info"),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionTime, "info", sloID),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionTime, "info", sloID, nil),
+			},
+		},
+	})
+}
+
+func TestAcc_BurnAlertResource_Description(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+
+	// Create
+	exhaustionMinutes := 240
+	description := "pithy quote"
+
+	// Update
+	updatedExhaustionMinutes := 480
+	budgetRateWindowMinutes := 60
+	budgetRateDecreasePercent := 0.0001
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			// Create - basic
+			{
+				Config: testAccConfigBurnAlertDefault_basicWithDescription(exhaustionMinutes, dataset, sloID, description, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID, &description),
+			},
+			// Update - PD Severity from info -> critical (the default)
+			{
+				Config: testAccConfigBurnAlertDefault_basicWithDescription(exhaustionMinutes, dataset, sloID, "", "critical"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "critical", sloID, &description),
+			},
+			// Import
+			{
+				ResourceName:            "honeycombio_burn_alert.test",
+				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"recipient"},
+			},
+			// Update - exhaustion time to exhaustion time
+			{
+				Config: testAccConfigBurnAlertDefault_basic(updatedExhaustionMinutes, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, updatedExhaustionMinutes, "info", sloID, &description),
+			},
+			// Update - exhaustion time to budget rate
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, "info", sloID),
 			},
 		},
 	})
@@ -261,7 +311,7 @@ func TestAcc_BurnAlertResource_Import_validateImportID(t *testing.T) {
 			// Create resource for importing
 			{
 				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "info"),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID, nil),
 			},
 			// Import with invalid import ID
 			{
@@ -384,7 +434,7 @@ func TestAcc_BurnAlertResource_validateUnknownOrVariableAttributesExhaustionTime
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigBurnAlertBudgetRate_validateUnknownOrVariableAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, 90, "info", sloID),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, 90, "info", sloID, nil),
 			},
 		},
 	})
@@ -405,7 +455,7 @@ func TestAcc_BurnAlertResource_recreateOnNotFound(t *testing.T) {
 			{
 				Config: testAccConfigBurnAlertExhaustionTime_basic(exhaustionMinutes, dataset, sloID, "info"),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
+					testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID, nil),
 					func(_ *terraform.State) error {
 						// the final 'check' deletes the Burn Alert directly via the API leaving it behind in the state
 						err := testAccClient(t).BurnAlerts.Delete(context.Background(), dataset, burnAlert.ID)
@@ -481,7 +531,13 @@ func TestAcc_BurnAlertResource_HandlesDynamicRecipientBlock(t *testing.T) {
 }
 
 // Checks that the exhaustion time burn alert exists, has the correct attributes, and has the correct state
-func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.BurnAlert, exhaustionMinutes int, pagerdutySeverity, sloID string) resource.TestCheckFunc {
+func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.BurnAlert, exhaustionMinutes int, pagerdutySeverity, sloID string, description *string) resource.TestCheckFunc {
+
+	descriptionCheck := resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "description")
+	if description != nil {
+		descriptionCheck = resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", *description)
+	}
+
 	return resource.ComposeAggregateTestCheckFunc(
 		// Check that the burn alert exists
 		testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
@@ -491,11 +547,13 @@ func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.Bur
 
 		// Check that the burn alert has the correct values in state
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", sloID),
+		descriptionCheck,
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "alert_type", "exhaustion_time"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes", fmt.Sprintf("%d", exhaustionMinutes)),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.#", "1"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.pagerduty_severity", pagerdutySeverity),
+
 		// Budget rate attributes should not be set
 		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "budget_rate_window_minutes"),
 		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "budget_rate_decrease_percent"),
@@ -675,6 +733,30 @@ resource "honeycombio_burn_alert" "test" {
     }
   }
 }`, exhaustionMinutes, dataset, sloID, pdseverity)
+}
+
+func testAccConfigBurnAlertDefault_basicWithDescription(exhaustionMinutes int, dataset, sloID, description, pdseverity string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "test.pd-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = %[1]d
+
+  dataset            = "%[2]s"
+  slo_id             = "%[3]s"
+  description 	     = "%[4]s"
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[5]s"
+    }
+  }
+}`, exhaustionMinutes, dataset, sloID, description, pdseverity)
 }
 
 func testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
