@@ -177,7 +177,7 @@ func TestBurnAlerts(t *testing.T) {
 			assert.NotNil(t, burnAlert.CreatedAt, "created at is empty")
 			assert.NotNil(t, burnAlert.UpdatedAt, "updated at is empty")
 			assert.Equal(t, testCase.alertType, burnAlert.AlertType)
-			assert.Equal(t, testCase.Description, burnAlert.Description)
+			assert.Equal(t, testCase.createRequest.Description, burnAlert.Description)
 
 			// copy dynamic fields before asserting equality
 			data.AlertType = burnAlert.AlertType
