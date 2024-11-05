@@ -55,6 +55,7 @@ func TestBurnAlerts(t *testing.T) {
 	var defaultBurnAlert *client.BurnAlert
 	exhaustionMinutes24Hours := 24 * 60
 	defaultBurnAlertCreateRequest := client.BurnAlert{
+		Description:       "default burn alert",
 		ExhaustionMinutes: &exhaustionMinutes24Hours,
 		SLO:               client.SLORef{ID: slo.ID},
 		Recipients: []client.NotificationRecipient{
@@ -67,6 +68,7 @@ func TestBurnAlerts(t *testing.T) {
 	exhaustionMinutes1Hour := 60
 	defaultBurnAlertUpdateRequest := client.BurnAlert{
 		ExhaustionMinutes: &exhaustionMinutes1Hour,
+		Description:       "updated default burn alert",
 		SLO:               client.SLORef{ID: slo.ID},
 		Recipients: []client.NotificationRecipient{
 			{
@@ -80,6 +82,7 @@ func TestBurnAlerts(t *testing.T) {
 	exhaustionMinutes0Minutes := 0
 	exhaustionTimeBurnAlertCreateRequest := client.BurnAlert{
 		AlertType:         client.BurnAlertAlertTypeExhaustionTime,
+		Description:       "exhaustion time burn alert",
 		ExhaustionMinutes: &exhaustionMinutes0Minutes,
 		SLO:               client.SLORef{ID: slo.ID},
 		Recipients: []client.NotificationRecipient{
@@ -92,6 +95,7 @@ func TestBurnAlerts(t *testing.T) {
 	exhaustionMinutes4Hours := 4 * 60
 	exhaustionTimeBurnAlertUpdateRequest := client.BurnAlert{
 		AlertType:         client.BurnAlertAlertTypeExhaustionTime,
+		Description:       "updated exhaustion time burn alert",
 		ExhaustionMinutes: &exhaustionMinutes4Hours,
 		SLO:               client.SLORef{ID: slo.ID},
 		Recipients: []client.NotificationRecipient{
@@ -107,6 +111,7 @@ func TestBurnAlerts(t *testing.T) {
 	budgetRateDecreaseThresholdPerMillion1Percent := 10000
 	budgetRateBurnAlertCreateRequest := client.BurnAlert{
 		AlertType:                             client.BurnAlertAlertTypeBudgetRate,
+		Description:                           "budget rate burn alert",
 		BudgetRateWindowMinutes:               &budgetRateWindowMinutes1Hour,
 		BudgetRateDecreaseThresholdPerMillion: &budgetRateDecreaseThresholdPerMillion1Percent,
 		SLO:                                   client.SLORef{ID: slo.ID},
@@ -121,6 +126,7 @@ func TestBurnAlerts(t *testing.T) {
 	budgetRateDecreaseThresholdPerMillion5Percent := 10000
 	budgetRateBurnAlertUpdateRequest := client.BurnAlert{
 		AlertType:                             client.BurnAlertAlertTypeBudgetRate,
+		Description:                           "updated budget rate burn alert",
 		BudgetRateWindowMinutes:               &budgetRateWindowMinutes2Hours,
 		BudgetRateDecreaseThresholdPerMillion: &budgetRateDecreaseThresholdPerMillion5Percent,
 		SLO:                                   client.SLORef{ID: slo.ID},
@@ -134,6 +140,7 @@ func TestBurnAlerts(t *testing.T) {
 
 	testCases := map[string]struct {
 		alertType     client.BurnAlertAlertType
+		Description   string
 		createRequest client.BurnAlert
 		updateRequest client.BurnAlert
 		burnAlert     *client.BurnAlert
@@ -170,6 +177,7 @@ func TestBurnAlerts(t *testing.T) {
 			assert.NotNil(t, burnAlert.CreatedAt, "created at is empty")
 			assert.NotNil(t, burnAlert.UpdatedAt, "updated at is empty")
 			assert.Equal(t, testCase.alertType, burnAlert.AlertType)
+			assert.Equal(t, testCase.createRequest.Description, burnAlert.Description)
 
 			// copy dynamic fields before asserting equality
 			data.AlertType = burnAlert.AlertType

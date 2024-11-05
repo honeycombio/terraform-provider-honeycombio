@@ -19,6 +19,8 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
+const testBADescription = "burn alert description"
+
 func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
@@ -213,7 +215,7 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
-	config := testAccConfigBurnAlertDefault_basic(60, dataset, sloID, "info")
+	config := testAccConfigBurnAlert_withoutDescription(60, dataset, sloID, "info")
 
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -491,11 +493,13 @@ func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.Bur
 
 		// Check that the burn alert has the correct values in state
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", sloID),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", testBADescription),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "alert_type", "exhaustion_time"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes", fmt.Sprintf("%d", exhaustionMinutes)),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.#", "1"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.pagerduty_severity", pagerdutySeverity),
+
 		// Budget rate attributes should not be set
 		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "budget_rate_window_minutes"),
 		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "budget_rate_decrease_percent"),
@@ -513,6 +517,7 @@ func testAccEnsureSuccessBudgetRateAlert(t *testing.T, burnAlert *client.BurnAle
 
 		// Check that the burn alert has the correct values in state
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", sloID),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", testBADescription),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "alert_type", "budget_rate"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "budget_rate_window_minutes", fmt.Sprintf("%d", budgetRateWindowMinutes)),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "budget_rate_decrease_percent", helper.FloatToPercentString(budgetRateDecreasePercent)),
@@ -650,6 +655,28 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 	return dataset, slo.ID
 }
 
+func testAccConfigBurnAlert_withoutDescription(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "test.pd-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = %[1]d
+
+  dataset            = "%[2]s"
+  slo_id             = "%[3]s"
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[4]s"
+    }
+  }
+}`, exhaustionMinutes, dataset, sloID, pdseverity)
+}
+
 func testAccConfigBurnAlertDefault_basic(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
@@ -662,7 +689,8 @@ resource "honeycombio_burn_alert" "test" {
 
   dataset            = "%[2]s"
   slo_id             = "%[3]s"
-
+  description        = "%[5]s"
+  
   recipient {
     id = honeycombio_pagerduty_recipient.test.id
 
@@ -670,7 +698,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[4]s"
     }
   }
-}`, exhaustionMinutes, dataset, sloID, pdseverity)
+}`, exhaustionMinutes, dataset, sloID, pdseverity, testBADescription)
 }
 
 func testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
@@ -698,6 +726,7 @@ resource "honeycombio_pagerduty_recipient" "test" {
 
 resource "honeycombio_burn_alert" "test" {
   alert_type         = "exhaustion_time"
+  description        = "%[5]s"
   exhaustion_minutes = %[1]d
 
   dataset = "%[2]s"
@@ -710,7 +739,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[4]s"
     }
   }
-}`, exhaustionMinutes, dataset, sloID, pdseverity)
+}`, exhaustionMinutes, dataset, sloID, pdseverity, testBADescription)
 }
 
 func testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
@@ -739,6 +768,7 @@ resource "honeycombio_pagerduty_recipient" "test" {
 
 resource "honeycombio_burn_alert" "test" {
   alert_type                   = "budget_rate"
+  description                  = "%[6]s"
   budget_rate_window_minutes   = %[1]d
   budget_rate_decrease_percent = %[2]s
 
@@ -752,7 +782,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[5]s"
     }
   }
-}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, pdseverity)
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, pdseverity, testBADescription)
 }
 
 func testAccConfigBurnAlertBudgetRate_trailingZeros(dataset, sloID string) string {
@@ -764,6 +794,7 @@ resource "honeycombio_pagerduty_recipient" "test" {
 
 resource "honeycombio_burn_alert" "test" {
   alert_type                   = "budget_rate"
+  description				   = "%[3]s"
   budget_rate_window_minutes   = 60
   budget_rate_decrease_percent = 5.00000
 
@@ -777,7 +808,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "info"
     }
   }
-}`, dataset, sloID)
+}`, dataset, sloID, testBADescription)
 }
 
 func testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID string) string {
@@ -813,6 +844,7 @@ resource "honeycombio_burn_alert" "test" {
 
   dataset = "%[1]s"
   slo_id  = "%[2]s"
+  description = "%[3]s"
 
   recipient {
     id = honeycombio_pagerduty_recipient.test.id
@@ -821,7 +853,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "info"
     }
   }
-}`, dataset, sloID)
+}`, dataset, sloID, testBADescription)
 }
 
 func testAccConfigBurnAlertWithSlackRecipient(dataset, sloID, channel string) string {
@@ -831,12 +863,13 @@ resource "honeycombio_burn_alert" "test" {
 
   dataset = "%[1]s"
   slo_id  = "%[2]s"
+  description = "%[4]s"
 
   recipient {
     type   = "slack"
     target = "%[3]s"
   }
-}`, dataset, sloID, channel)
+}`, dataset, sloID, channel, testBADescription)
 }
 
 func testAccConfigBurnAlertWithDynamicRecipient(dataset, sloID string) string {
