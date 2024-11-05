@@ -55,7 +55,7 @@ resource "honeycombio_trigger" "example" {
 ```
 
 ### Example with PagerDuty Recipient and Severity
-```
+```hcl
 variable "dataset" {
   type = string
 }
