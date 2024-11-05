@@ -215,7 +215,7 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
-	config := testAccConfigBurnAlert_wihoutDescription(60, dataset, sloID, "info")
+	config := testAccConfigBurnAlert_withoutDescription(60, dataset, sloID, "info")
 
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
