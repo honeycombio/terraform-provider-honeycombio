@@ -830,6 +830,7 @@ resource "honeycombio_burn_alert" "test" {
 
   dataset = "%[1]s"
   slo_id  = "%[2]s"
+  description = "%[3]s"
 
   recipient {
     id = honeycombio_pagerduty_recipient.test.id
@@ -838,7 +839,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "info"
     }
   }
-}`, dataset, sloID)
+}`, dataset, sloID, createDescription)
 }
 
 func testAccConfigBurnAlertWithSlackRecipient(dataset, sloID, channel string) string {
@@ -848,12 +849,13 @@ resource "honeycombio_burn_alert" "test" {
 
   dataset = "%[1]s"
   slo_id  = "%[2]s"
+  description = "%[4]s"
 
   recipient {
     type   = "slack"
     target = "%[3]s"
   }
-}`, dataset, sloID, channel)
+}`, dataset, sloID, channel, createDescription)
 }
 
 func testAccConfigBurnAlertWithDynamicRecipient(dataset, sloID string) string {
