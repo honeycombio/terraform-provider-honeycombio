@@ -655,7 +655,7 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 	return dataset, slo.ID
 }
 
-func testAccConfigBurnAlert_wihoutDescription(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
+func testAccConfigBurnAlert_withoutDescription(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
