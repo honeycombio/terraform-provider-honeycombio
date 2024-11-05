@@ -218,7 +218,7 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
-	config := testAccConfigBurnAlertDefault_basic(60, dataset, sloID, "info")
+	config := testAccConfigBurnAlert_wihoutDescription(60, dataset, sloID, "info")
 
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -661,6 +661,29 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 	})
 
 	return dataset, slo.ID
+}
+
+func testAccConfigBurnAlert_wihoutDescription(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "test.pd-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = %[1]d
+
+  dataset            = "%[2]s"
+  slo_id             = "%[3]s"
+  
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[4]s"
+    }
+  }
+}`, exhaustionMinutes, dataset, sloID, pdseverity)
 }
 
 func testAccConfigBurnAlertDefault_basic(exhaustionMinutes int, dataset, sloID, pdseverity string) string {

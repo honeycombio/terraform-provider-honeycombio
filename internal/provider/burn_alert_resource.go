@@ -105,7 +105,9 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"description": schema.StringAttribute{
 				Description: "A description for this Burn Alert.",
+				Computed:    true,
 				Optional:    true,
+				Default:     stringdefault.StaticString(""),
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(1023),
 				},
