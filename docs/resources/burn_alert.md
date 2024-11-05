@@ -52,7 +52,7 @@ resource "honeycombio_burn_alert" "example_alert" {
   alert_type                   = "budget_rate"
   budget_rate_window_minutes   = 480
   budget_rate_decrease_percent = 1
-  description                  =  "Budget rate burn alert description"
+  description                  =  "my example description"
 
   dataset = var.dataset
   slo_id  = var.slo_id
