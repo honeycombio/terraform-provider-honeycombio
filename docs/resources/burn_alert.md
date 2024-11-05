@@ -20,6 +20,7 @@ variable "slo_id" {
 resource "honeycombio_burn_alert" "example_alert" {
   alert_type         = "exhaustion_time"
   exhaustion_minutes = 480
+  description        = "Exhaustion burn alert description"
 
   dataset = var.dataset
   slo_id  = var.slo_id
@@ -51,6 +52,7 @@ resource "honeycombio_burn_alert" "example_alert" {
   alert_type                   = "budget_rate"
   budget_rate_window_minutes   = 480
   budget_rate_decrease_percent = 1
+  description                  =  "Budget rate burn alert description"
 
   dataset = var.dataset
   slo_id  = var.slo_id
@@ -84,6 +86,7 @@ data "honeycombio_recipient" "pd_prod" {
 
 resource "honeycombio_burn_alert" "example_alert" {
   exhaustion_minutes = 60
+  description        = "Burn alert description"
   dataset            = var.dataset
   slo_id             = var.slo_id
 
@@ -103,6 +106,7 @@ resource "honeycombio_burn_alert" "example_alert" {
 The following arguments are supported:
 * `slo_id` - (Required) ID of the SLO this burn alert is associated with.
 * `dataset` - (Required) The dataset this burn alert is associated with.
+* `description` - (Optional) Instructions on how to respond to the burn alert, e.g. run book link, next steps.
 * `alert_type` - (Optional) Type of the burn alert. Valid values are `exhaustion_time` and `budget_rate`. 
    Defaults to `exhaustion_time`.
 * `budget_rate_window_minutes` - (Optional) The time period, in minutes, over which a budget rate will be calculated. 
