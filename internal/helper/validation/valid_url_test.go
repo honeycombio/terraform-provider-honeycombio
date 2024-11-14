@@ -12,8 +12,9 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 )
 
-func Test_IsValidRegexValidator(t *testing.T) {
+func Test_IsURLWithHTTPorHTTPS(t *testing.T) {
 	t.Parallel()
+	ctx := context.Background()
 
 	type testCase struct {
 		val         types.String
@@ -26,11 +27,26 @@ func Test_IsValidRegexValidator(t *testing.T) {
 		"null": {
 			val: types.StringNull(),
 		},
-		"valid regex": {
-			val: types.StringValue("^[a-z]+$"),
+		"valid http": {
+			val: types.StringValue("http://sub.example.com/a/b/c/d?e=f#g"),
 		},
-		"invalid regex": {
-			val:         types.StringValue("^[a-z+$"),
+		"valid https": {
+			val: types.StringValue("https://sub.example.com/a/b/c/d?e=f#g"),
+		},
+		"empty": {
+			val:         types.StringValue(""),
+			expectError: true,
+		},
+		"garbage": {
+			val:         types.StringValue("not-a-url"),
+			expectError: true,
+		},
+		"missing host": {
+			val:         types.StringValue("http:///a/b/c/d?e=f#g"),
+			expectError: true,
+		},
+		"invalid scheme": {
+			val:         types.StringValue("ftp://sub.example.com/"),
 			expectError: true,
 		},
 	}
@@ -38,13 +54,14 @@ func Test_IsValidRegexValidator(t *testing.T) {
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
+
 			request := validator.StringRequest{
 				Path:           path.Root("test"),
 				PathExpression: path.MatchRoot("test"),
 				ConfigValue:    test.val,
 			}
 			response := validator.StringResponse{}
-			validation.IsValidRegExp().ValidateString(context.Background(), request, &response)
+			validation.IsURLWithHTTPorHTTPS().ValidateString(ctx, request, &response)
 
 			assert.Equal(t,
 				test.expectError,

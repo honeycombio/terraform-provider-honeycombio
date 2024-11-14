@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 )
@@ -64,13 +65,11 @@ func TestValidation_PrecisionAtMost(t *testing.T) {
 			response := validator.Float64Response{}
 			validation.Float64PrecisionAtMost(test.maxPrecision).ValidateFloat64(context.Background(), request, &response)
 
-			if !response.Diagnostics.HasError() && test.expectError {
-				t.Fatal("expected error, got no error")
-			}
-
-			if response.Diagnostics.HasError() && !test.expectError {
-				t.Fatalf("got unexpected error: %s", response.Diagnostics)
-			}
+			assert.Equal(t,
+				test.expectError,
+				response.Diagnostics.HasError(),
+				"unexpected error: %s", response.Diagnostics,
+			)
 		})
 	}
 }

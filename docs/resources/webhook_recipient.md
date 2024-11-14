@@ -17,7 +17,7 @@ resource "honeycombio_webhook_recipient" "prod" {
 The following arguments are supported:
 
 * `name` - (Required) The name of the Webhook Integration to create.
-* `secret` - (Required) The secret to include when sending the notification to the webhook.
+* `secret` - (Optional) The secret to include when sending the notification to the webhook.
 * `url` - (Required) The URL of the endpoint to send the notification to.
 
 ## Attribute Reference

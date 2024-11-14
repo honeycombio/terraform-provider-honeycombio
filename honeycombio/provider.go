@@ -71,7 +71,6 @@ func Provider(version string) *schema.Provider {
 			"honeycombio_msteams_recipient":          newMSTeamsRecipient(), // deprecated
 			"honeycombio_msteams_workflow_recipient": newMSTeamsWorkflowRecipient(),
 			"honeycombio_slack_recipient":            newSlackRecipient(),
-			"honeycombio_webhook_recipient":          newWebhookRecipient(),
 			"honeycombio_slo":                        newSLO(),
 		},
 	}
