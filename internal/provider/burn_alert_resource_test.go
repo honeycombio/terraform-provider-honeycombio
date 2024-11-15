@@ -482,6 +482,52 @@ func TestAcc_BurnAlertResource_HandlesDynamicRecipientBlock(t *testing.T) {
 	})
 }
 
+func TestAcc_BurnAlertResource_HandlesDescriptionSetToEmptyString(t *testing.T) {
+	ctx := context.Background()
+	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+
+	config := fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = 240
+
+  dataset = "%s"
+  slo_id  = "%s"
+
+  recipient {
+    type   = "email"
+    target = "%s"
+  }
+}`, dataset, sloID, test.RandomEmail())
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", ""),
+				),
+			},
+			{
+				PreConfig: func() {
+					// add a description to the burn alert outside of Terraform
+					burnAlert.Description = "test description"
+					_, err := testAccClient(t).BurnAlerts.Update(ctx, dataset, burnAlert)
+					require.NoError(t, err, "failed to update burn alert")
+				},
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", ""),
+				),
+			},
+		},
+	})
+}
+
 // Checks that the exhaustion time burn alert exists, has the correct attributes, and has the correct state
 func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.BurnAlert, exhaustionMinutes int, pagerdutySeverity, sloID string) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
@@ -529,7 +575,7 @@ func testAccEnsureSuccessBudgetRateAlert(t *testing.T, burnAlert *client.BurnAle
 	)
 }
 
-func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.BurnAlert) resource.TestCheckFunc {
+func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.BurnAlert) resource.TestCheckFunc { //nolint:unparam
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
