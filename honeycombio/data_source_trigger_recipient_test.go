@@ -39,7 +39,6 @@ func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	//nolint:errcheck
 	t.Cleanup(func() {
 		c.Triggers.Delete(ctx, dataset, trigger.ID)
 	})

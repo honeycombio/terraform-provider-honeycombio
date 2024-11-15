@@ -131,7 +131,6 @@ func createRandomTestColumns(
 	})
 	require.NoError(t, err)
 
-	//nolint:errcheck
 	t.Cleanup(func() {
 		c.Columns.Delete(ctx, dataset, floatCol.ID)
 		c.Columns.Delete(ctx, dataset, col1.ID)

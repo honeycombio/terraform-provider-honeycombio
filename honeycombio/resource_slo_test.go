@@ -112,7 +112,6 @@ func sloAccTestSetup(t *testing.T) (string, string) {
 	})
 	require.NoError(t, err)
 
-	//nolint:errcheck
 	t.Cleanup(func() {
 		// remove SLI DC at end of test run
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)

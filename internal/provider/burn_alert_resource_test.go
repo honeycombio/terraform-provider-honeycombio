@@ -439,7 +439,6 @@ func TestAcc_BurnAlertResource_HandlesRecipientChangedOutsideOfTerraform(t *test
 	})
 	require.NoError(t, err, "failed to create test recipient")
 	t.Cleanup(func() {
-		//nolint:errcheck
 		c.Recipients.Delete(ctx, rcpt.ID)
 	})
 
@@ -575,7 +574,7 @@ func testAccEnsureSuccessBudgetRateAlert(t *testing.T, burnAlert *client.BurnAle
 	)
 }
 
-func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.BurnAlert) resource.TestCheckFunc { //nolint:unparam
+func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.BurnAlert) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -691,7 +690,6 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 		SLI:              client.SLIRef{Alias: sli.Alias},
 	})
 	require.NoError(t, err)
-	//nolint:errcheck
 	t.Cleanup(func() {
 		// remove SLO, SLI DC at end of test run
 		c.SLOs.Delete(ctx, dataset, slo.ID)

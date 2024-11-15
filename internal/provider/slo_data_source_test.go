@@ -33,7 +33,6 @@ func TestAcc_SLODataSource(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	//nolint:errcheck
 	t.Cleanup(func() {
 		c.SLOs.Delete(ctx, dataset, slo.ID)
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
