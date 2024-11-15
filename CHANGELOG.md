@@ -1,3 +1,25 @@
+# 0.28.0 (Nov 15, 2024)
+
+ENHANCEMENTS:
+
+* feat(r/burn_alert): add description support (#563)
+
+BUGFIXES:
+
+* fix(docs): incorrect formatting trigger example (#566)
+* fix(client): retry on server errors (#571)
+
+HOUSEKEEPING:
+
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.13.0 to 0.14.0 (#562)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.24.0 to 0.25.0 (#564)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.16.0 to 0.17.0 (#564)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.12.0 to 1.13.0 (#565)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.34.0 to 2.35.0 (#565)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.14.0 to 0.15.0 (#565)
+* maint(deps): bump goreleaser/goreleaser-action from 6.0.0 to 6.1.0 (#567)
+* chore: migrate r/webhook_recipient to Framework (#568)
+
 # 0.27.2 (Oct 17, 2024)
 
 ENHANCEMENTS:
