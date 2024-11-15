@@ -575,7 +575,7 @@ func testAccEnsureSuccessBudgetRateAlert(t *testing.T, burnAlert *client.BurnAle
 	)
 }
 
-func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.BurnAlert) resource.TestCheckFunc {
+func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.BurnAlert) resource.TestCheckFunc { //nolint:unparam
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
