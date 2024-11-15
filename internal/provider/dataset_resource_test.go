@@ -195,8 +195,7 @@ resource "honeycombio_dataset" "test" {
 }`, name),
 			},
 		},
-	},
-	)
+	})
 }
 
 func testAccConfigBasicDatasetTest(name, description string, jsonDepth int, protected bool) string {

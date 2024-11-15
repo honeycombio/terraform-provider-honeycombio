@@ -80,6 +80,7 @@ func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.R
 		NewDatasetResource,
 		NewTriggerResource,
 		NewQueryResource,
+		NewWebhookRecipientResource,
 		NewAPIKeyResource,
 		NewEnvironmentResource,
 	}

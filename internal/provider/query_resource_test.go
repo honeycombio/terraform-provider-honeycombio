@@ -139,7 +139,7 @@ func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
 	})
 }
 
-// TestAcc_QueryResourceEquivalentQuerySpecSupressed tests the  behavior of the
+// TestAcc_QueryResourceEquivalentQuerySpecSupressed tests the behavior of the
 // resource when an equivalent query is suppressed by the plan modifier.
 func TestAcc_QueryResourceEquivalentQuerySpecSupressed(t *testing.T) {
 	dataset := testAccDataset()
