@@ -80,7 +80,6 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 		// update ID for removal later
 		testRecipients[i].ID = rcpt.ID
 	}
-	//nolint:errcheck
 	t.Cleanup(func() {
 		// remove Recipients at the of the test run
 		for _, r := range testRecipients {

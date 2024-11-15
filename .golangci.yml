@@ -5,6 +5,7 @@ issues:
         - path: '(.+)_test\.go'
           linters:
               - errcheck
+              - unparam
           # disabling both of these for the SDKv2-based code as it's idomatic for the SDK
         - path: honeycombio/*
           text: "Error return value of `d.Set` is not checked"

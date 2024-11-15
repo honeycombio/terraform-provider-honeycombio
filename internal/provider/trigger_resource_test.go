@@ -152,7 +152,6 @@ func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
 	t.Cleanup(func() {
 		// remove recipients at the of the test run
 		for _, col := range testRecipients {
-			//nolint:errcheck
 			c.DerivedColumns.Delete(ctx, dataset, col.ID)
 		}
 	})
@@ -532,7 +531,6 @@ func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing
 	})
 	require.NoError(t, err, "failed to create test recipient")
 	t.Cleanup(func() {
-		//nolint:errcheck
 		c.Recipients.Delete(ctx, rcpt.ID)
 	})
 

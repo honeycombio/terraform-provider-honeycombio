@@ -41,7 +41,6 @@ func TestAcc_DerivedColumnsDataSource(t *testing.T) {
 	t.Cleanup(func() {
 		// remove DCs at the of the test run
 		for _, col := range testColumns {
-			//nolint:errcheck
 			c.DerivedColumns.Delete(ctx, dataset, col.ID)
 		}
 	})

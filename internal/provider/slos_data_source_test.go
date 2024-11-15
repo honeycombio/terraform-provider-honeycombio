@@ -73,7 +73,6 @@ func TestAcc_SLOsDataSource(t *testing.T) {
 		testData[i].SLO.ID = slo.ID
 	}
 
-	//nolint:errcheck
 	t.Cleanup(func() {
 		// remove SLOs at the of the test run
 		for _, tc := range testData {

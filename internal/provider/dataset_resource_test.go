@@ -209,7 +209,7 @@ resource "honeycombio_dataset" "test" {
 }`, name, description, jsonDepth, protected)
 }
 
-func testAccEnsureDatasetExists(t *testing.T, name string) resource.TestCheckFunc { //nolint:unparam
+func testAccEnsureDatasetExists(t *testing.T, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[name]
 		if !ok {

@@ -27,7 +27,6 @@ func TestBoards(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		//nolint:errcheck
 		c.Columns.Delete(ctx, dataset, column.ID)
 	})
 
@@ -55,7 +54,6 @@ func TestBoards(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		//nolint:errcheck
 		c.SLOs.Delete(ctx, dataset, slo.ID)
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})

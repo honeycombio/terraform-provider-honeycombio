@@ -218,7 +218,6 @@ func TestAccBoard_withSLOs(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	//nolint:errcheck
 	t.Cleanup(func() {
 		// remove SLOs, and SLIs at end of test run
 		c.SLOs.Delete(ctx, dataset, slo1.ID)
@@ -384,7 +383,6 @@ resource "honeycombio_board" "test" {
 }`, dataset)
 }
 
-//nolint:unparam
 func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]

@@ -86,12 +86,7 @@ func resourceSLOCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 
 	dataset := d.Get("dataset").(string)
-	s, err := expandSLO(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	s, err = client.SLOs.Create(ctx, dataset, s)
+	s, err := client.SLOs.Create(ctx, dataset, expandSLO(d))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -138,12 +133,7 @@ func resourceSLOUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 	}
 
 	dataset := d.Get("dataset").(string)
-	s, err := expandSLO(d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-
-	s, err = client.SLOs.Update(ctx, dataset, s)
+	s, err := client.SLOs.Update(ctx, dataset, expandSLO(d))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -167,9 +157,8 @@ func resourceSLODelete(ctx context.Context, d *schema.ResourceData, meta interfa
 	return nil
 }
 
-//nolint:unparam
-func expandSLO(d *schema.ResourceData) (*honeycombio.SLO, error) {
-	s := &honeycombio.SLO{
+func expandSLO(d *schema.ResourceData) *honeycombio.SLO {
+	return &honeycombio.SLO{
 		ID:               d.Id(),
 		Name:             d.Get("name").(string),
 		Description:      d.Get("description").(string),
@@ -177,5 +166,4 @@ func expandSLO(d *schema.ResourceData) (*honeycombio.SLO, error) {
 		TargetPerMillion: helper.FloatToPPM(d.Get("target_percentage").(float64)),
 		SLI:              honeycombio.SLIRef{Alias: d.Get("sli").(string)},
 	}
-	return s, nil
 }

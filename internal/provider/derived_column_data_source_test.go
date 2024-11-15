@@ -29,7 +29,6 @@ func TestAcc_DerivedColumnDataSource(t *testing.T) {
 	// update ID for removal later
 	testColumn.ID = col.ID
 	t.Cleanup(func() {
-		//nolint:errcheck
 		c.DerivedColumns.Delete(ctx, dataset, testColumn.ID)
 	})
 
