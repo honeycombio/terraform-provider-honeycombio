@@ -3,10 +3,6 @@ name: CI
 on:
   workflow_dispatch:
   push:
-    paths-ignore:
-      - README.md
-      - CHANGELOG.md
-      - CONTRIBUTING.md
   schedule:
     # run CI nightly at 00:11UTC
     - cron: "11 0 * * *"
