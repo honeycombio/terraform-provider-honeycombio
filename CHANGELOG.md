@@ -1,3 +1,9 @@
+# 0.28.1 (Nov 15, 2024)
+
+BUGFIXES:
+
+* fix(r/burn_alert): handle existing remote description with default description value (#575)
+
 # 0.28.0 (Nov 15, 2024)
 
 ENHANCEMENTS:
