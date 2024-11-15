@@ -519,6 +519,10 @@ resource "honeycombio_burn_alert" "test" {
 					require.NoError(t, err, "failed to update burn alert")
 				},
 				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", ""),
+				),
 			},
 		},
 	})
