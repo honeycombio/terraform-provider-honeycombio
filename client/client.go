@@ -237,7 +237,7 @@ func (c *Client) newRequest(ctx context.Context, method, path string, body any) 
 }
 
 // retryHTTPCheck provides a callback for Client.CheckRetry which
-// will retry both rate limit (429) and server (500, 502, 503, 504) errors.
+// will retry both rate limit (429) and server (5xx) errors.
 func (c *Client) retryHTTPCheck(ctx context.Context, resp *http.Response, err error) (bool, error) {
 	if ctx.Err() != nil {
 		return false, ctx.Err()
@@ -247,11 +247,7 @@ func (c *Client) retryHTTPCheck(ctx context.Context, resp *http.Response, err er
 	}
 
 	if resp != nil {
-		if resp.StatusCode == http.StatusTooManyRequests ||
-			resp.StatusCode == http.StatusInternalServerError ||
-			resp.StatusCode == http.StatusBadGateway ||
-			resp.StatusCode == http.StatusServiceUnavailable ||
-			resp.StatusCode == http.StatusGatewayTimeout {
+		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
 			return true, nil
 		}
 	}
