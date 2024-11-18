@@ -99,16 +99,14 @@ jobs:
       - name: Notify if scheduled run fails
         id: slack-notify
         if: ${{ failure() && github.event_name == 'schedule' }}
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v2.0.0
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
-            {
-              "username": "Terraform Provider CI",
-              "text": ":rotating_light: The scheduled test suite run failed for the US region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>",
-              "icon_emoji": ":terraform-fall-down:"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+            username: "Terraform Provider CI"
+            text: ":rotating_light: The scheduled test suite run failed for the US region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
+            icon_emoji: ":terraform-fall-down:"
 
       - name: Cleanup Dangling Resources
         if: ${{ always() }}
@@ -204,16 +202,14 @@ jobs:
       - name: Notify if scheduled run fails
         id: slack-notify
         if: ${{ failure() && github.event_name == 'schedule' }}
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v2.0.0
         with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook-type: incoming-webhook
           payload: |
-            {
-              "username": "Terraform Provider CI",
-              "text": ":rotating_light: The scheduled test suite run failed for the EU region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>",
-              "icon_emoji": ":terraform-fall-down:"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+            username: "Terraform Provider CI"
+            text: ":rotating_light: The scheduled test suite run failed for the EU region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
+            icon_emoji: ":terraform-fall-down:"
 
       - name: Cleanup Dangling Resources
         if: ${{ always() }}
