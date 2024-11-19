@@ -4,13 +4,18 @@ import (
 	"context"
 	"errors"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
@@ -88,6 +93,9 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 				},
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"template": webhookTemplateSchema(),
+		},
 	}
 }
 
@@ -103,8 +111,9 @@ func (r *webhookRecipientResource) ImportState(ctx context.Context, req resource
 }
 
 func (r *webhookRecipientResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan models.WebhookRecipientModel
+	var plan, config models.WebhookRecipientModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -112,9 +121,10 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 	rcpt, err := r.client.Recipients.Create(ctx, &client.Recipient{
 		Type: client.RecipientTypeWebhook,
 		Details: client.RecipientDetails{
-			WebhookName:   plan.Name.ValueString(),
-			WebhookURL:    plan.URL.ValueString(),
-			WebhookSecret: plan.Secret.ValueString(),
+			WebhookName:     plan.Name.ValueString(),
+			WebhookURL:      plan.URL.ValueString(),
+			WebhookSecret:   plan.Secret.ValueString(),
+			WebhookPayloads: webhookTemplatesToClientPayloads(ctx, plan.Templates, &resp.Diagnostics),
 		},
 	})
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Webhook Recipient", err) {
@@ -130,7 +140,7 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 	} else {
 		state.Secret = types.StringNull()
 	}
-
+	state.Templates = config.Templates
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -179,6 +189,7 @@ func (r *webhookRecipientResource) Read(ctx context.Context, req resource.ReadRe
 	} else {
 		state.Secret = types.StringNull()
 	}
+	state.Templates = clientPayloadsToWebhookTemplates(ctx, rcpt.Details.WebhookPayloads, &resp.Diagnostics)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -246,4 +257,108 @@ func (r *webhookRecipientResource) Delete(ctx context.Context, req resource.Dele
 			)
 		}
 	}
+}
+
+func webhookTemplateSchema() schema.SetNestedBlock {
+	return schema.SetNestedBlock{
+		Description: "Templates to customize webhook payloads",
+		NestedObject: schema.NestedBlockObject{
+			Validators: []validator.Object{
+				objectvalidator.AtLeastOneOf(
+					path.MatchRelative().AtName("id"),
+					path.MatchRelative().AtName("type"),
+				),
+			},
+			Attributes: map[string]schema.Attribute{
+				"type": schema.StringAttribute{
+					Required:    true,
+					Computed:    true,
+					Description: "The type of the webhook template",
+					Validators:  []validator.String{},
+				},
+				"body": schema.StringAttribute{
+					Required:    true,
+					Computed:    true,
+					Description: "JSON formatted string of the webhook payload",
+					Validators: []validator.String{
+						stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("type")),
+					},
+				},
+			},
+		},
+	}
+}
+
+func webhookTemplatesToClientPayloads(ctx context.Context, set types.Set, diags *diag.Diagnostics) *client.WebhookPayloads {
+	var templates []models.WebhookTemplateModel
+	diags.Append(set.ElementsAs(ctx, &templates, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	var clientWebhookPayloads *client.WebhookPayloads
+
+	for _, t := range templates {
+		switch t.Type {
+		case types.StringValue("trigger"):
+			clientWebhookPayloads.PayloadTemplates.Trigger = &client.PayloadTemplate{
+				Body: t.Body.ValueString(),
+			}
+		case types.StringValue("exhaustion_time"):
+			clientWebhookPayloads.PayloadTemplates.ExhaustionTime = &client.PayloadTemplate{
+				Body: t.Body.ValueString(),
+			}
+		case types.StringValue("budget_rate"):
+			clientWebhookPayloads.PayloadTemplates.BudgetRate = &client.PayloadTemplate{
+				Body: t.Body.ValueString(),
+			}
+		}
+	}
+
+	return clientWebhookPayloads
+}
+
+func clientPayloadsToWebhookTemplates(ctx context.Context, p *client.WebhookPayloads, diags *diag.Diagnostics) types.Set {
+	if p == nil {
+		return types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+	}
+
+	values := webhookTemplatesToObjectValues(ctx, p.PayloadTemplates, diags)
+	result, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}, values)
+	diags.Append(d...)
+
+	return result
+}
+
+func webhookTemplatesToObjectValues(ctx context.Context, templates client.PayloadTemplates, diags *diag.Diagnostics) []basetypes.ObjectValue {
+	var templateObjs []basetypes.ObjectValue
+
+	if templates.Trigger != nil {
+		templateObjVal, d := types.ObjectValue(models.WebhookTemplateAttrType, map[string]attr.Value{
+			"type": types.StringValue("trigger"),
+			"body": types.StringValue(templates.Trigger.Body),
+		})
+		templateObjs = append(templateObjs, templateObjVal)
+		diags.Append(d...)
+	}
+
+	if templates.BudgetRate != nil {
+		templateObjVal, d := types.ObjectValue(models.WebhookTemplateAttrType, map[string]attr.Value{
+			"type": types.StringValue("budget_rate"),
+			"body": types.StringValue(templates.BudgetRate.Body),
+		})
+		templateObjs = append(templateObjs, templateObjVal)
+		diags.Append(d...)
+	}
+
+	if templates.ExhaustionTime != nil {
+		templateObjVal, d := types.ObjectValue(models.WebhookTemplateAttrType, map[string]attr.Value{
+			"type": types.StringValue("exhaustion_time"),
+			"body": types.StringValue(templates.ExhaustionTime.Body),
+		})
+		templateObjs = append(templateObjs, templateObjVal)
+		diags.Append(d...)
+	}
+
+	return templateObjs
 }
