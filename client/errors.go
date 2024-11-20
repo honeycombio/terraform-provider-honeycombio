@@ -14,7 +14,7 @@ type DetailedError struct {
 	Status int `json:"status,omitempty"`
 	// The error message
 	Message string `json:"error,omitempty"`
-	// ID unique ID of the HTTP request that caused this error.
+	// ID is the unique ID of the HTTP request that caused this error.
 	ID string `json:"request_id,omitempty"`
 	// Type is a URI used to uniquely identify the type of error.
 	Type string `json:"type,omitempty"`
