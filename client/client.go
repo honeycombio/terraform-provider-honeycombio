@@ -138,10 +138,9 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	}
 
 	if config.Debug {
-		// if enabled we log all requests and responses to sterr
 		client.httpClient.Logger = log.New(os.Stderr, "", log.LstdFlags)
 		client.httpClient.ResponseLogHook = func(l retryablehttp.Logger, resp *http.Response) {
-			l.Printf("[DEBUG] Request: %s \"%s\" %s %s", resp.Request.Method, resp.Request.URL.String(), resp.Status, resp.Header.Get("Request-Id"))
+			l.Printf("[DEBUG] %s \"%s\" %s %s", resp.Request.Method, resp.Request.URL.String(), resp.Status, resp.Header.Get("Request-Id"))
 		}
 	}
 
