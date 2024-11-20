@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -121,15 +122,8 @@ func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resou
 		return
 	}
 
-	// TODO: add template validations here
-
-	/*// When alert_type is exhaustion_time, check that exhaustion_minutes
-	// is configured and budget rate attributes are not configured
-	validateAttributesWhenAlertTypeIsExhaustionTime(data, resp)
-
-	// When alert_type is budget_rate, check that budget rate
-	// attributes are configured and exhaustion_minutes is not configured
-	validateAttributesWhenAlertTypeIsBudgetRate(data, resp)*/
+	// only allow one template of each type (trigger, budget_rate, exhaustion_time)
+	validateAttributesWhenTemplatesIncluded(ctx, data, resp)
 }
 
 func (r *webhookRecipientResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -391,4 +385,45 @@ func webhookTemplatesToObjectValues(templates client.PayloadTemplates, diags *di
 	}
 
 	return templateObjs
+}
+
+func validateAttributesWhenTemplatesIncluded(ctx context.Context, data models.WebhookRecipientModel, resp *resource.ValidateConfigResponse) {
+	var templates []models.WebhookTemplateModel
+	data.Templates.ElementsAs(context.Background(), &templates, false)
+
+	triggerTmplExists := false
+	budgetRateTmplExists := false
+	exhaustionTimeTmplExists := false
+	for _, t := range templates {
+		switch t.Type {
+		case types.StringValue("trigger"):
+			if triggerTmplExists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("template"),
+					"Conflicting configuration arguments",
+					"\"template\": must not configure more than one \"template\" of type \"trigger\" on a single recipient",
+				)
+			}
+			triggerTmplExists = true
+		case types.StringValue("exhaustion_time"):
+			if exhaustionTimeTmplExists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("template"),
+					"Conflicting configuration arguments",
+					"\"template\": must not configure more than one \"template\" of type \"exhaustion_time\" on a single recipient",
+				)
+			}
+			exhaustionTimeTmplExists = true
+		case types.StringValue("budget_rate"):
+			if budgetRateTmplExists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("template"),
+					"Conflicting configuration arguments",
+					"\"template\": must not configure more than one \"template\" of type \"budget_rate\" on a single recipients",
+				)
+			}
+			budgetRateTmplExists = true
+		}
+
+	}
 }

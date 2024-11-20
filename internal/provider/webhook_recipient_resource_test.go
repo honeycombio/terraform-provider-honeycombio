@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -117,6 +118,36 @@ resource "honeycombio_webhook_recipient" "test" {
 				{
 					ResourceName: "honeycombio_webhook_recipient.test",
 					ImportState:  true,
+				},
+			},
+		})
+	})
+
+	t.Run("custom webhook validations error when they should", func(t *testing.T) {
+		name := test.RandomStringWithPrefix("test.", 20)
+		url := test.RandomURL()
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	template {
+	  type   = "trigger"
+      body = "body"
+    }
+
+	template {
+	  type   = "trigger"
+      body = "another body"
+    }
+}`, name, url),
+					ExpectError: regexp.MustCompile("Conflicting configuration arguments"),
 				},
 			},
 		})
