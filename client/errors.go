@@ -146,6 +146,12 @@ func ErrorFromResponse(r *http.Response) error {
 		if detailedError.Status == 0 {
 			detailedError.Status = r.StatusCode
 		}
+
+		// ensure we have the requestID set
+		if detailedError.ID == "" {
+			detailedError.ID = requestID
+		}
+
 		return detailedError
 	}
 }
