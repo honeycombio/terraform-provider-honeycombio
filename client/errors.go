@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/hashicorp/jsonapi"
@@ -65,9 +66,8 @@ func (e *DetailedError) IsNotFound() bool {
 
 // Error returns a pretty-printed representation of the error
 func (e DetailedError) Error() string {
+	response := fmt.Sprintf("ID: %s\n", e.ID)
 	if len(e.Details) > 0 {
-		var response string
-
 		for index, details := range e.Details {
 			response += details.String()
 
@@ -81,7 +81,7 @@ func (e DetailedError) Error() string {
 		return response
 	}
 
-	return e.Message
+	return response + e.Message
 }
 
 func ErrorFromResponse(r *http.Response) error {
