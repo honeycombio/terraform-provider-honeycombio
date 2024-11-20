@@ -20,6 +20,7 @@ func TestAcc_WebhookRecipientResource(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -68,6 +69,7 @@ resource "honeycombio_webhook_recipient" "test" {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -130,6 +132,7 @@ resource "honeycombio_webhook_recipient" "test" {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -208,6 +211,28 @@ func testAccEnsureRecipientExists(t *testing.T, name string) resource.TestCheckF
 		_, err := client.Recipients.Get(context.Background(), rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created recipient: %s", err)
+		}
+
+		return nil
+	}
+}
+
+func testAccEnsureRecipientDestroyed(t *testing.T) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, resourceState := range s.RootModule().Resources {
+			if resourceState.Type != "honeycombio_webhook_recipient" {
+				continue
+			}
+
+			if resourceState.Primary.ID == "" {
+				return fmt.Errorf("no ID set for recipient")
+			}
+
+			client := testAccClient(t)
+			_, err := client.Recipients.Get(context.Background(), resourceState.Primary.ID)
+			if err == nil {
+				return fmt.Errorf("recipient %s was not deleted on destroy", resourceState.Primary.ID)
+			}
 		}
 
 		return nil
