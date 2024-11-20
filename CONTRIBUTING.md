@@ -28,7 +28,7 @@ Any new additions should be built with the Plugin Framework.
  * The Plugin SDK-based code is contained in the `honeycombio/` directory in the root of the repository.
  * The Plugin Framework-based code is contained in the `internal/provider` directory.
 
-Any PRs reimplmenting Plugin SDKv2 resources or datasources in the Plugin Framework with be enthusiastically accepted. 🙏
+Any PRs reimplementing Plugin SDKv2 resources or datasources in the Plugin Framework with be enthusiastically accepted. 🙏
 
 ### Preview document changes
 

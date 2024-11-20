@@ -274,17 +274,13 @@ func webhookTemplateSchema() schema.SetNestedBlock {
 			Attributes: map[string]schema.Attribute{
 				"type": schema.StringAttribute{
 					Required:    true,
-					Computed:    true,
 					Description: "The type of the webhook template",
 					Validators:  []validator.String{},
 				},
 				"body": schema.StringAttribute{
 					Required:    true,
-					Computed:    true,
 					Description: "JSON formatted string of the webhook payload",
-					Validators: []validator.String{
-						stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("type")),
-					},
+					Validators:  []validator.String{},
 				},
 			},
 		},
