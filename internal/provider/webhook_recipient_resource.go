@@ -23,9 +23,10 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &webhookRecipientResource{}
-	_ resource.ResourceWithConfigure   = &webhookRecipientResource{}
-	_ resource.ResourceWithImportState = &webhookRecipientResource{}
+	_ resource.Resource                   = &webhookRecipientResource{}
+	_ resource.ResourceWithConfigure      = &webhookRecipientResource{}
+	_ resource.ResourceWithImportState    = &webhookRecipientResource{}
+	_ resource.ResourceWithValidateConfig = &webhookRecipientResource{}
 
 	webhookTemplateTypes = []string{"trigger", "exhaustion_time", "budget_rate"}
 )
@@ -108,6 +109,26 @@ func (r *webhookRecipientResource) ImportState(ctx context.Context, req resource
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.WebhookRecipientModel{
 		ID: types.StringValue(req.ID),
 	})...)
+}
+
+func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data models.WebhookRecipientModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// TODO: add template validations here
+
+	/*// When alert_type is exhaustion_time, check that exhaustion_minutes
+	// is configured and budget rate attributes are not configured
+	validateAttributesWhenAlertTypeIsExhaustionTime(data, resp)
+
+	// When alert_type is budget_rate, check that budget rate
+	// attributes are configured and exhaustion_minutes is not configured
+	validateAttributesWhenAlertTypeIsBudgetRate(data, resp)*/
 }
 
 func (r *webhookRecipientResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
