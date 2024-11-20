@@ -248,6 +248,9 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 	}
 
 	rcpt, err := r.client.Recipients.Get(ctx, plan.ID.ValueString())
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Webhook Recipient", err) {
+		return
+	}
 
 	var state models.WebhookRecipientModel
 	state.ID = types.StringValue(rcpt.ID)
