@@ -195,8 +195,9 @@ func (r *webhookRecipientResource) Read(ctx context.Context, req resource.ReadRe
 }
 
 func (r *webhookRecipientResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan models.WebhookRecipientModel
+	var plan, config models.WebhookRecipientModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -205,9 +206,10 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 		ID:   plan.ID.ValueString(),
 		Type: client.RecipientTypeWebhook,
 		Details: client.RecipientDetails{
-			WebhookName:   plan.Name.ValueString(),
-			WebhookURL:    plan.URL.ValueString(),
-			WebhookSecret: plan.Secret.ValueString(),
+			WebhookName:     plan.Name.ValueString(),
+			WebhookURL:      plan.URL.ValueString(),
+			WebhookSecret:   plan.Secret.ValueString(),
+			WebhookPayloads: webhookTemplatesToClientPayloads(ctx, plan.Templates, &resp.Diagnostics),
 		},
 	})
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Webhook Recipient", err) {
