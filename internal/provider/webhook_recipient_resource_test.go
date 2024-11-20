@@ -12,7 +12,7 @@ import (
 )
 
 func TestAcc_WebhookRecipientResource(t *testing.T) {
-	t.Run("happy path", func(t *testing.T) {
+	t.Run("happy path standard webhook", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		url := test.RandomURL()
 
@@ -32,6 +32,7 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
 						resource.TestCheckNoResourceAttr("honeycombio_webhook_recipient.test", "secret"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "0"),
 					),
 				},
 				{
@@ -48,6 +49,69 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "secret", "so-secret"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "0"),
+					),
+				},
+				{
+					ResourceName: "honeycombio_webhook_recipient.test",
+					ImportState:  true,
+				},
+			},
+		})
+	})
+
+	t.Run("happy path custom webhook", func(t *testing.T) {
+		name := test.RandomStringWithPrefix("test.", 20)
+		url := test.RandomURL()
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	template {
+	  type   = "trigger"
+      body = "body"
+    }
+}`, name, url),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
+						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.body", "body"),
+						resource.TestCheckNoResourceAttr("honeycombio_webhook_recipient.test", "secret"),
+					),
+				},
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	secret = "so-secret"
+
+	template {
+	  type   = "trigger"
+      body = "body"
+    }
+}`, name, url),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
+						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "secret", "so-secret"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.body", "body"),
 					),
 				},
 				{

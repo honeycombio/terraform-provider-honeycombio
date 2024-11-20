@@ -248,9 +248,6 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 	}
 
 	rcpt, err := r.client.Recipients.Get(ctx, plan.ID.ValueString())
-	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Burn Alert", err) {
-		return
-	}
 
 	var state models.WebhookRecipientModel
 	state.ID = types.StringValue(rcpt.ID)
@@ -326,7 +323,7 @@ func webhookTemplatesToClientPayloads(ctx context.Context, set types.Set, diags 
 		return nil
 	}
 
-	var clientWebhookPayloads *client.WebhookPayloads
+	clientWebhookPayloads := &client.WebhookPayloads{}
 
 	for _, t := range templates {
 		switch t.Type {
