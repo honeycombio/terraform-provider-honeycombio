@@ -321,14 +321,14 @@ func clientPayloadsToWebhookTemplates(ctx context.Context, p *client.WebhookPayl
 		return types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
 	}
 
-	values := webhookTemplatesToObjectValues(ctx, p.PayloadTemplates, diags)
+	values := webhookTemplatesToObjectValues(p.PayloadTemplates, diags)
 	result, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}, values)
 	diags.Append(d...)
 
 	return result
 }
 
-func webhookTemplatesToObjectValues(ctx context.Context, templates client.PayloadTemplates, diags *diag.Diagnostics) []basetypes.ObjectValue {
+func webhookTemplatesToObjectValues(templates client.PayloadTemplates, diags *diag.Diagnostics) []basetypes.ObjectValue {
 	var templateObjs []basetypes.ObjectValue
 
 	if templates.Trigger != nil {
