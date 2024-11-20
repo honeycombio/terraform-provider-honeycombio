@@ -13,16 +13,6 @@ type WebhookRecipientModel struct {
 	Templates types.Set    `tfsdk:"templates"` // WebhookTemplateModel
 }
 
-var WebhookRecipientAttrType = map[string]attr.Type{
-	"id":     types.StringType,
-	"name":   types.StringType,
-	"secret": types.StringType,
-	"url":    types.StringType,
-	"templates": types.SetType{ElemType: types.ObjectType{
-		AttrTypes: WebhookTemplateAttrType,
-	}},
-}
-
 type WebhookTemplateModel struct {
 	Type types.String `tfsdk:"type"`
 	Body types.String `tfsdk:"body"`

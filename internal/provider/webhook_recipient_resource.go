@@ -4,11 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -28,6 +26,8 @@ var (
 	_ resource.Resource                = &webhookRecipientResource{}
 	_ resource.ResourceWithConfigure   = &webhookRecipientResource{}
 	_ resource.ResourceWithImportState = &webhookRecipientResource{}
+
+	webhookTemplateTypes = []string{"trigger", "exhaustion_time", "budget_rate"}
 )
 
 type webhookRecipientResource struct {
@@ -265,17 +265,13 @@ func webhookTemplateSchema() schema.SetNestedBlock {
 	return schema.SetNestedBlock{
 		Description: "Templates to customize webhook payloads",
 		NestedObject: schema.NestedBlockObject{
-			Validators: []validator.Object{
-				objectvalidator.AtLeastOneOf(
-					path.MatchRelative().AtName("id"),
-					path.MatchRelative().AtName("type"),
-				),
-			},
 			Attributes: map[string]schema.Attribute{
 				"type": schema.StringAttribute{
 					Required:    true,
 					Description: "The type of the webhook template",
-					Validators:  []validator.String{},
+					Validators: []validator.String{
+						stringvalidator.OneOf(webhookTemplateTypes...),
+					},
 				},
 				"body": schema.StringAttribute{
 					Required:    true,
