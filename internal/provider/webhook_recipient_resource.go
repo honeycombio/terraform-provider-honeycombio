@@ -389,7 +389,7 @@ func webhookTemplatesToObjectValues(templates client.PayloadTemplates, diags *di
 
 func validateAttributesWhenTemplatesIncluded(ctx context.Context, data models.WebhookRecipientModel, resp *resource.ValidateConfigResponse) {
 	var templates []models.WebhookTemplateModel
-	data.Templates.ElementsAs(context.Background(), &templates, false)
+	data.Templates.ElementsAs(ctx, &templates, false)
 
 	triggerTmplExists := false
 	budgetRateTmplExists := false
