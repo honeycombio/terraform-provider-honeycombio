@@ -107,7 +107,8 @@ func (r *webhookRecipientResource) ImportState(ctx context.Context, req resource
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.WebhookRecipientModel{
-		ID: types.StringValue(req.ID),
+		ID:        types.StringValue(req.ID),
+		Templates: types.SetUnknown(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}),
 	})...)
 }
 
@@ -161,7 +162,12 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 	} else {
 		state.Secret = types.StringNull()
 	}
-	state.Templates = config.Templates
+	if rcpt.Details.WebhookPayloads != nil {
+		state.Templates = config.Templates
+	} else {
+		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -210,7 +216,11 @@ func (r *webhookRecipientResource) Read(ctx context.Context, req resource.ReadRe
 	} else {
 		state.Secret = types.StringNull()
 	}
-	state.Templates = clientPayloadsToWebhookTemplates(ctx, rcpt.Details.WebhookPayloads, &resp.Diagnostics)
+	if rcpt.Details.WebhookPayloads != nil {
+		state.Templates = clientPayloadsToWebhookTemplates(ctx, rcpt.Details.WebhookPayloads, &resp.Diagnostics)
+	} else {
+		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -250,6 +260,11 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 		state.Secret = types.StringValue(rcpt.Details.WebhookSecret)
 	} else {
 		state.Secret = types.StringNull()
+	}
+	if rcpt.Details.WebhookPayloads != nil {
+		state.Templates = config.Templates
+	} else {
+		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
