@@ -10,7 +10,7 @@ type WebhookRecipientModel struct {
 	Name      types.String `tfsdk:"name"`
 	Secret    types.String `tfsdk:"secret"`
 	URL       types.String `tfsdk:"url"`
-	Templates types.Set    `tfsdk:"templates"` // WebhookTemplateModel
+	Templates types.Set    `tfsdk:"template"` // WebhookTemplateModel
 }
 
 type WebhookTemplateModel struct {
