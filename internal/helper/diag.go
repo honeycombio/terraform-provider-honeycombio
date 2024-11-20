@@ -53,8 +53,8 @@ func AddDiagnosticOnError(diag *diag.Diagnostics, summary string, err error) boo
 }
 
 func (d DetailedErrorDiagnostic) Detail() string {
+	response := fmt.Sprintf("ID: %s\n", d.e.ID)
 	if len(d.e.Details) > 0 {
-		var response string
 		for i, dt := range d.e.Details {
 			response += dt.Code + " - " + dt.Description
 
@@ -65,7 +65,7 @@ func (d DetailedErrorDiagnostic) Detail() string {
 		return response
 	}
 
-	return d.e.Message
+	return response + d.e.Message
 }
 
 func (d DetailedErrorDiagnostic) Summary() string {

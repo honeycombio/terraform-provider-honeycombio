@@ -14,6 +14,8 @@ type DetailedError struct {
 	Status int `json:"status,omitempty"`
 	// The error message
 	Message string `json:"error,omitempty"`
+	// ID unique ID of the HTTP request that caused this error.
+	ID string `json:"request_id,omitempty"`
 	// Type is a URI used to uniquely identify the type of error.
 	Type string `json:"type,omitempty"`
 	// Title is a human-readable summary that explains the type of the problem.
@@ -87,6 +89,8 @@ func ErrorFromResponse(r *http.Response) error {
 		return errors.New("invalid response")
 	}
 
+	requestID := r.Header.Get("Request-Id")
+
 	switch r.Header.Get("Content-Type") {
 	case jsonapi.MediaType:
 		var detailedError DetailedError
@@ -97,10 +101,12 @@ func ErrorFromResponse(r *http.Response) error {
 			return DetailedError{
 				Status:  r.StatusCode,
 				Message: r.Status,
+				ID:      requestID,
 			}
 		}
 
 		detailedError = DetailedError{
+			ID:     requestID,
 			Status: r.StatusCode,
 			Title:  errPayload.Errors[0].Title,
 		}
@@ -130,6 +136,7 @@ func ErrorFromResponse(r *http.Response) error {
 		if err := json.NewDecoder(r.Body).Decode(&detailedError); err != nil {
 			// If we can't decode the error, return a generic error
 			return DetailedError{
+				ID:      requestID,
 				Status:  r.StatusCode,
 				Message: r.Status,
 			}
