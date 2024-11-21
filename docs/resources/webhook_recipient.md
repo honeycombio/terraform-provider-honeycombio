@@ -34,7 +34,7 @@ The following arguments are supported:
 * `name` - (Required) The name of the Webhook Integration to create.
 * `secret` - (Optional) The secret to include when sending the notification to the webhook.
 * `url` - (Required) The URL of the endpoint to send the notification to.
-* `template` - (Optional) A configuration block (described below) to customize the webhook payload if desired.
+* `template` - (Optional) Zero or more configuration blocks (described below) to customize the webhook payload if desired.
 
 When configuring custom webhook payloads, use the `template` block, which accepts the following arguments:
 
