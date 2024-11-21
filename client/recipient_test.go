@@ -86,7 +86,7 @@ func TestRecipientsCustomWebhook(t *testing.T) {
 	ctx := context.Background()
 	c := newTestClient(t)
 
-	body := "webhook body"
+	body := `{"hello": "world"}`
 
 	testCases := []struct {
 		rcpt      client.Recipient

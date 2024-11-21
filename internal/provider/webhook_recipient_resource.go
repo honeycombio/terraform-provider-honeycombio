@@ -96,7 +96,24 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"template": webhookTemplateSchema(),
+			"template": schema.SetNestedBlock{
+				Description: "Template for custom webhook payloads",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							Required:    true,
+							Description: "The type of the webhook template",
+							Validators: []validator.String{
+								stringvalidator.OneOf(webhookTemplateTypes...),
+							},
+						},
+						"body": schema.StringAttribute{
+							Required:    true,
+							Description: "JSON formatted string of the webhook payload",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -127,9 +144,8 @@ func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resou
 }
 
 func (r *webhookRecipientResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan, config models.WebhookRecipientModel
+	var plan models.WebhookRecipientModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
-	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -157,7 +173,7 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 		state.Secret = types.StringNull()
 	}
 	if rcpt.Details.WebhookPayloads != nil {
-		state.Templates = config.Templates
+		state.Templates = plan.Templates
 	} else {
 		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
 	}
@@ -220,9 +236,8 @@ func (r *webhookRecipientResource) Read(ctx context.Context, req resource.ReadRe
 }
 
 func (r *webhookRecipientResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, config models.WebhookRecipientModel
+	var plan models.WebhookRecipientModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
-	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -256,7 +271,7 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 		state.Secret = types.StringNull()
 	}
 	if rcpt.Details.WebhookPayloads != nil {
-		state.Templates = config.Templates
+		state.Templates = plan.Templates
 	} else {
 		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
 	}
@@ -291,6 +306,7 @@ func (r *webhookRecipientResource) Delete(ctx context.Context, req resource.Dele
 	}
 }
 
+<<<<<<< Updated upstream
 func webhookTemplateSchema() schema.SetNestedBlock {
 	return schema.SetNestedBlock{
 		Description: "Template for custom webhook payloads",
@@ -312,6 +328,8 @@ func webhookTemplateSchema() schema.SetNestedBlock {
 	}
 }
 
+=======
+>>>>>>> Stashed changes
 func webhookTemplatesToClientPayloads(ctx context.Context, set types.Set, diags *diag.Diagnostics) *client.WebhookPayloads {
 	var templates []models.WebhookTemplateModel
 	diags.Append(set.ElementsAs(ctx, &templates, false)...)
