@@ -65,11 +65,17 @@ resource "honeycombio_webhook_recipient" "test" {
 	t.Run("happy path custom webhook", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		url := test.RandomURL()
-		body := `<<EOT
+		createBody := `<<EOT
 		{
 			"name": " {{ .Name }}",
 			"id": " {{ .ID }}",
 			"description": " {{ .Description }}",
+		}
+		EOT`
+		updateBody := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}"
 		}
 		EOT`
 
@@ -88,7 +94,7 @@ resource "honeycombio_webhook_recipient" "test" {
 	  type   = "trigger"
       body = %s
     }
-}`, name, url, body),
+}`, name, url, createBody),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
 						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
@@ -111,7 +117,7 @@ resource "honeycombio_webhook_recipient" "test" {
 	  type   = "trigger"
       body = %s
     }
-}`, name, url, body),
+}`, name, url, updateBody),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
 						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
