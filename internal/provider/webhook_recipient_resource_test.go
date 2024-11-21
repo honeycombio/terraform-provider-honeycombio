@@ -65,6 +65,13 @@ resource "honeycombio_webhook_recipient" "test" {
 	t.Run("happy path custom webhook", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		url := test.RandomURL()
+		body := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
@@ -79,9 +86,9 @@ resource "honeycombio_webhook_recipient" "test" {
 
 	template {
 	  type   = "trigger"
-      body = "body"
+      body = %s
     }
-}`, name, url),
+}`, name, url, body),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
 						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
@@ -89,7 +96,6 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
-						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.body", "body"),
 						resource.TestCheckNoResourceAttr("honeycombio_webhook_recipient.test", "secret"),
 					),
 				},
@@ -103,9 +109,9 @@ resource "honeycombio_webhook_recipient" "test" {
 
 	template {
 	  type   = "trigger"
-      body = "body"
+      body = %s
     }
-}`, name, url),
+}`, name, url, body),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
 						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
@@ -114,7 +120,6 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "secret", "so-secret"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
-						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.body", "body"),
 					),
 				},
 				{
@@ -150,7 +155,7 @@ resource "honeycombio_webhook_recipient" "test" {
       body = "another body"
     }
 }`, name, url),
-					ExpectError: regexp.MustCompile("Conflicting configuration arguments"),
+					ExpectError: regexp.MustCompile(`cannot have more than one "template" of type "trigger"`),
 				},
 			},
 		})

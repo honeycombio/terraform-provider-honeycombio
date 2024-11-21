@@ -293,7 +293,7 @@ func (r *webhookRecipientResource) Delete(ctx context.Context, req resource.Dele
 
 func webhookTemplateSchema() schema.SetNestedBlock {
 	return schema.SetNestedBlock{
-		Description: "Templates to customize webhook payloads",
+		Description: "Template for custom webhook payloads",
 		NestedObject: schema.NestedBlockObject{
 			Attributes: map[string]schema.Attribute{
 				"type": schema.StringAttribute{
@@ -306,7 +306,6 @@ func webhookTemplateSchema() schema.SetNestedBlock {
 				"body": schema.StringAttribute{
 					Required:    true,
 					Description: "JSON formatted string of the webhook payload",
-					Validators:  []validator.String{},
 				},
 			},
 		},
@@ -394,32 +393,32 @@ func validateAttributesWhenTemplatesIncluded(ctx context.Context, data models.We
 	triggerTmplExists := false
 	budgetRateTmplExists := false
 	exhaustionTimeTmplExists := false
-	for _, t := range templates {
+	for i, t := range templates {
 		switch t.Type {
 		case types.StringValue("trigger"):
 			if triggerTmplExists {
 				resp.Diagnostics.AddAttributeError(
-					path.Root("template"),
+					path.Root("template").AtListIndex(i).AtName("type"),
 					"Conflicting configuration arguments",
-					"\"template\": must not configure more than one \"template\" of type \"trigger\" on a single recipient",
+					"cannot have more than one \"template\" of type \"trigger\"",
 				)
 			}
 			triggerTmplExists = true
 		case types.StringValue("exhaustion_time"):
 			if exhaustionTimeTmplExists {
 				resp.Diagnostics.AddAttributeError(
-					path.Root("template"),
+					path.Root("template").AtListIndex(i).AtName("type"),
 					"Conflicting configuration arguments",
-					"\"template\": must not configure more than one \"template\" of type \"exhaustion_time\" on a single recipient",
+					"cannot have more than one \"template\" of type \"exhaustion_time\"",
 				)
 			}
 			exhaustionTimeTmplExists = true
 		case types.StringValue("budget_rate"):
 			if budgetRateTmplExists {
 				resp.Diagnostics.AddAttributeError(
-					path.Root("template"),
+					path.Root("template").AtListIndex(i).AtName("type"),
 					"Conflicting configuration arguments",
-					"\"template\": must not configure more than one \"template\" of type \"budget_rate\" on a single recipients",
+					"cannot have more than one \"template\" of type \"budget_rate\"",
 				)
 			}
 			budgetRateTmplExists = true

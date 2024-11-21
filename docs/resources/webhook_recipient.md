@@ -9,6 +9,21 @@ resource "honeycombio_webhook_recipient" "prod" {
   name   = "Production Alerts"
   secret = "a63dab148496ecbe04a1a802ca9b95b8"
   url    = "https://my.url.corp.net"
+
+  template {
+    type = "trigger"
+    body = <<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+            "threshold": {
+              "op": "{{ .Operator }}",
+              "value": "{{ .Threshold }}"
+            },
+		}
+		EOT
+  }
 }
 ```
 
@@ -19,6 +34,13 @@ The following arguments are supported:
 * `name` - (Required) The name of the Webhook Integration to create.
 * `secret` - (Optional) The secret to include when sending the notification to the webhook.
 * `url` - (Required) The URL of the endpoint to send the notification to.
+* `template` - (Optional) A configuration block (described below) to customize the webhook payload if desired.
+
+When configuring custom webhook payloads, use the `template` block, which accepts the following arguments:
+
+* `type` - (Required) The template type, allowed types are `trigger`, `exhaustion_time`, and `budget_rate`. Only one template block of each type is allowed on a single recipient.
+* `body` - (Required) A JSON formatted string to represent the webhook payload.
+
 
 ## Attribute Reference
 
