@@ -305,7 +305,7 @@ func webhookTemplateSchema() schema.SetNestedBlock {
 				},
 				"body": schema.StringAttribute{
 					Required:    true,
-					Description: "JSON formatted string of the webhook payload",
+					Description: "JSON-formatted string of the webhook payload template",
 				},
 			},
 		},
