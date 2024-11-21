@@ -306,30 +306,6 @@ func (r *webhookRecipientResource) Delete(ctx context.Context, req resource.Dele
 	}
 }
 
-<<<<<<< Updated upstream
-func webhookTemplateSchema() schema.SetNestedBlock {
-	return schema.SetNestedBlock{
-		Description: "Template for custom webhook payloads",
-		NestedObject: schema.NestedBlockObject{
-			Attributes: map[string]schema.Attribute{
-				"type": schema.StringAttribute{
-					Required:    true,
-					Description: "The type of the webhook template",
-					Validators: []validator.String{
-						stringvalidator.OneOf(webhookTemplateTypes...),
-					},
-				},
-				"body": schema.StringAttribute{
-					Required:    true,
-					Description: "JSON-formatted string of the webhook payload template",
-				},
-			},
-		},
-	}
-}
-
-=======
->>>>>>> Stashed changes
 func webhookTemplatesToClientPayloads(ctx context.Context, set types.Set, diags *diag.Diagnostics) *client.WebhookPayloads {
 	var templates []models.WebhookTemplateModel
 	diags.Append(set.ElementsAs(ctx, &templates, false)...)
