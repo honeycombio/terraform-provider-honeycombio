@@ -66,10 +66,26 @@ type RecipientDetails struct {
 	WebhookURL  string `json:"webhook_url,omitempty"`
 	// webhook only
 	WebhookSecret string `json:"webhook_secret,omitempty"`
+	// custom webhook
+	WebhookPayloads *WebhookPayloads `json:"webhook_payloads,omitempty"`
 }
 
 type NotificationRecipientDetails struct {
 	PDSeverity PagerDutySeverity `json:"pagerduty_severity,omitempty"`
+}
+
+type WebhookPayloads struct {
+	PayloadTemplates PayloadTemplates `json:"payload_templates"`
+}
+
+type PayloadTemplates struct {
+	Trigger        *PayloadTemplate `json:"trigger,omitempty"`
+	ExhaustionTime *PayloadTemplate `json:"exhaustion_time,omitempty"`
+	BudgetRate     *PayloadTemplate `json:"budget_rate,omitempty"`
+}
+
+type PayloadTemplate struct {
+	Body string `json:"body"`
 }
 
 // RecipientType holds all the possible recipient types.

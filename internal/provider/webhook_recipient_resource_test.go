@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -12,13 +13,14 @@ import (
 )
 
 func TestAcc_WebhookRecipientResource(t *testing.T) {
-	t.Run("happy path", func(t *testing.T) {
+	t.Run("happy path standard webhook", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		url := test.RandomURL()
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -32,6 +34,7 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
 						resource.TestCheckNoResourceAttr("honeycombio_webhook_recipient.test", "secret"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "0"),
 					),
 				},
 				{
@@ -48,11 +51,111 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "secret", "so-secret"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "0"),
 					),
 				},
 				{
 					ResourceName: "honeycombio_webhook_recipient.test",
 					ImportState:  true,
+				},
+			},
+		})
+	})
+
+	t.Run("happy path custom webhook", func(t *testing.T) {
+		name := test.RandomStringWithPrefix("test.", 20)
+		url := test.RandomURL()
+		body := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	template {
+	  type   = "trigger"
+      body = %s
+    }
+}`, name, url, body),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
+						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
+						resource.TestCheckNoResourceAttr("honeycombio_webhook_recipient.test", "secret"),
+					),
+				},
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	secret = "so-secret"
+
+	template {
+	  type   = "trigger"
+      body = %s
+    }
+}`, name, url, body),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
+						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "secret", "so-secret"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
+					),
+				},
+				{
+					ResourceName: "honeycombio_webhook_recipient.test",
+					ImportState:  true,
+				},
+			},
+		})
+	})
+
+	t.Run("custom webhook validations error when they should", func(t *testing.T) {
+		name := test.RandomStringWithPrefix("test.", 20)
+		url := test.RandomURL()
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	template {
+	  type   = "trigger"
+      body = "body"
+    }
+
+	template {
+	  type   = "trigger"
+      body = "another body"
+    }
+}`, name, url),
+					ExpectError: regexp.MustCompile(`cannot have more than one "template" of type "trigger"`),
 				},
 			},
 		})
@@ -113,6 +216,28 @@ func testAccEnsureRecipientExists(t *testing.T, name string) resource.TestCheckF
 		_, err := client.Recipients.Get(context.Background(), rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created recipient: %s", err)
+		}
+
+		return nil
+	}
+}
+
+func testAccEnsureRecipientDestroyed(t *testing.T) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, resourceState := range s.RootModule().Resources {
+			if resourceState.Type != "honeycombio_webhook_recipient" {
+				continue
+			}
+
+			if resourceState.Primary.ID == "" {
+				return fmt.Errorf("no ID set for recipient")
+			}
+
+			client := testAccClient(t)
+			_, err := client.Recipients.Get(context.Background(), resourceState.Primary.ID)
+			if err == nil {
+				return fmt.Errorf("recipient %s was not deleted on destroy", resourceState.Primary.ID)
+			}
 		}
 
 		return nil

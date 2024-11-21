@@ -5,12 +5,16 @@ import (
 	"errors"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
@@ -20,9 +24,12 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &webhookRecipientResource{}
-	_ resource.ResourceWithConfigure   = &webhookRecipientResource{}
-	_ resource.ResourceWithImportState = &webhookRecipientResource{}
+	_ resource.Resource                   = &webhookRecipientResource{}
+	_ resource.ResourceWithConfigure      = &webhookRecipientResource{}
+	_ resource.ResourceWithImportState    = &webhookRecipientResource{}
+	_ resource.ResourceWithValidateConfig = &webhookRecipientResource{}
+
+	webhookTemplateTypes = []string{"trigger", "exhaustion_time", "budget_rate"}
 )
 
 type webhookRecipientResource struct {
@@ -88,6 +95,26 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 				},
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"template": schema.SetNestedBlock{
+				Description: "Template for custom webhook payloads",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							Required:    true,
+							Description: "The type of the webhook template",
+							Validators: []validator.String{
+								stringvalidator.OneOf(webhookTemplateTypes...),
+							},
+						},
+						"body": schema.StringAttribute{
+							Required:    true,
+							Description: "JSON formatted string of the webhook payload",
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -98,8 +125,22 @@ func (r *webhookRecipientResource) ImportState(ctx context.Context, req resource
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.WebhookRecipientModel{
-		ID: types.StringValue(req.ID),
+		ID:        types.StringValue(req.ID),
+		Templates: types.SetUnknown(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}),
 	})...)
+}
+
+func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data models.WebhookRecipientModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// only allow one template of each type (trigger, budget_rate, exhaustion_time)
+	validateAttributesWhenTemplatesIncluded(ctx, data, resp)
 }
 
 func (r *webhookRecipientResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -112,9 +153,10 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 	rcpt, err := r.client.Recipients.Create(ctx, &client.Recipient{
 		Type: client.RecipientTypeWebhook,
 		Details: client.RecipientDetails{
-			WebhookName:   plan.Name.ValueString(),
-			WebhookURL:    plan.URL.ValueString(),
-			WebhookSecret: plan.Secret.ValueString(),
+			WebhookName:     plan.Name.ValueString(),
+			WebhookURL:      plan.URL.ValueString(),
+			WebhookSecret:   plan.Secret.ValueString(),
+			WebhookPayloads: webhookTemplatesToClientPayloads(ctx, plan.Templates, &resp.Diagnostics),
 		},
 	})
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Webhook Recipient", err) {
@@ -129,6 +171,11 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 		state.Secret = types.StringValue(rcpt.Details.WebhookSecret)
 	} else {
 		state.Secret = types.StringNull()
+	}
+	if rcpt.Details.WebhookPayloads != nil {
+		state.Templates = plan.Templates
+	} else {
+		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -179,6 +226,11 @@ func (r *webhookRecipientResource) Read(ctx context.Context, req resource.ReadRe
 	} else {
 		state.Secret = types.StringNull()
 	}
+	if rcpt.Details.WebhookPayloads != nil {
+		state.Templates = clientPayloadsToWebhookTemplates(ctx, rcpt.Details.WebhookPayloads, &resp.Diagnostics)
+	} else {
+		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -194,9 +246,10 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 		ID:   plan.ID.ValueString(),
 		Type: client.RecipientTypeWebhook,
 		Details: client.RecipientDetails{
-			WebhookName:   plan.Name.ValueString(),
-			WebhookURL:    plan.URL.ValueString(),
-			WebhookSecret: plan.Secret.ValueString(),
+			WebhookName:     plan.Name.ValueString(),
+			WebhookURL:      plan.URL.ValueString(),
+			WebhookSecret:   plan.Secret.ValueString(),
+			WebhookPayloads: webhookTemplatesToClientPayloads(ctx, plan.Templates, &resp.Diagnostics),
 		},
 	})
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Webhook Recipient", err) {
@@ -204,7 +257,7 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 	}
 
 	rcpt, err := r.client.Recipients.Get(ctx, plan.ID.ValueString())
-	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Burn Alert", err) {
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Webhook Recipient", err) {
 		return
 	}
 
@@ -216,6 +269,11 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 		state.Secret = types.StringValue(rcpt.Details.WebhookSecret)
 	} else {
 		state.Secret = types.StringNull()
+	}
+	if rcpt.Details.WebhookPayloads != nil {
+		state.Templates = plan.Templates
+	} else {
+		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -245,5 +303,120 @@ func (r *webhookRecipientResource) Delete(ctx context.Context, req resource.Dele
 				"Could not delete Webhook Recipient ID "+state.ID.ValueString()+": "+err.Error(),
 			)
 		}
+	}
+}
+
+func webhookTemplatesToClientPayloads(ctx context.Context, set types.Set, diags *diag.Diagnostics) *client.WebhookPayloads {
+	var templates []models.WebhookTemplateModel
+	diags.Append(set.ElementsAs(ctx, &templates, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	clientWebhookPayloads := &client.WebhookPayloads{}
+
+	for _, t := range templates {
+		switch t.Type {
+		case types.StringValue("trigger"):
+			clientWebhookPayloads.PayloadTemplates.Trigger = &client.PayloadTemplate{
+				Body: t.Body.ValueString(),
+			}
+		case types.StringValue("exhaustion_time"):
+			clientWebhookPayloads.PayloadTemplates.ExhaustionTime = &client.PayloadTemplate{
+				Body: t.Body.ValueString(),
+			}
+		case types.StringValue("budget_rate"):
+			clientWebhookPayloads.PayloadTemplates.BudgetRate = &client.PayloadTemplate{
+				Body: t.Body.ValueString(),
+			}
+		}
+	}
+
+	return clientWebhookPayloads
+}
+
+func clientPayloadsToWebhookTemplates(ctx context.Context, p *client.WebhookPayloads, diags *diag.Diagnostics) types.Set {
+	if p == nil {
+		return types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+	}
+
+	values := webhookTemplatesToObjectValues(p.PayloadTemplates, diags)
+	result, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}, values)
+	diags.Append(d...)
+
+	return result
+}
+
+func webhookTemplatesToObjectValues(templates client.PayloadTemplates, diags *diag.Diagnostics) []basetypes.ObjectValue {
+	var templateObjs []basetypes.ObjectValue
+
+	if templates.Trigger != nil {
+		templateObjVal, d := types.ObjectValue(models.WebhookTemplateAttrType, map[string]attr.Value{
+			"type": types.StringValue("trigger"),
+			"body": types.StringValue(templates.Trigger.Body),
+		})
+		templateObjs = append(templateObjs, templateObjVal)
+		diags.Append(d...)
+	}
+
+	if templates.BudgetRate != nil {
+		templateObjVal, d := types.ObjectValue(models.WebhookTemplateAttrType, map[string]attr.Value{
+			"type": types.StringValue("budget_rate"),
+			"body": types.StringValue(templates.BudgetRate.Body),
+		})
+		templateObjs = append(templateObjs, templateObjVal)
+		diags.Append(d...)
+	}
+
+	if templates.ExhaustionTime != nil {
+		templateObjVal, d := types.ObjectValue(models.WebhookTemplateAttrType, map[string]attr.Value{
+			"type": types.StringValue("exhaustion_time"),
+			"body": types.StringValue(templates.ExhaustionTime.Body),
+		})
+		templateObjs = append(templateObjs, templateObjVal)
+		diags.Append(d...)
+	}
+
+	return templateObjs
+}
+
+func validateAttributesWhenTemplatesIncluded(ctx context.Context, data models.WebhookRecipientModel, resp *resource.ValidateConfigResponse) {
+	var templates []models.WebhookTemplateModel
+	data.Templates.ElementsAs(ctx, &templates, false)
+
+	triggerTmplExists := false
+	budgetRateTmplExists := false
+	exhaustionTimeTmplExists := false
+	for i, t := range templates {
+		switch t.Type {
+		case types.StringValue("trigger"):
+			if triggerTmplExists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("template").AtListIndex(i).AtName("type"),
+					"Conflicting configuration arguments",
+					"cannot have more than one \"template\" of type \"trigger\"",
+				)
+			}
+			triggerTmplExists = true
+		case types.StringValue("exhaustion_time"):
+			if exhaustionTimeTmplExists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("template").AtListIndex(i).AtName("type"),
+					"Conflicting configuration arguments",
+					"cannot have more than one \"template\" of type \"exhaustion_time\"",
+				)
+			}
+			exhaustionTimeTmplExists = true
+		case types.StringValue("budget_rate"):
+			if budgetRateTmplExists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("template").AtListIndex(i).AtName("type"),
+					"Conflicting configuration arguments",
+					"cannot have more than one \"template\" of type \"budget_rate\"",
+				)
+			}
+			budgetRateTmplExists = true
+		}
+
 	}
 }
