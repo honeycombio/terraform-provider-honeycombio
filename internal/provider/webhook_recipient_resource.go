@@ -114,6 +114,21 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 					},
 				},
 			},
+			"variable": schema.SetNestedBlock{
+				Description: "Variables for webhook templates",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Required:    true,
+							Description: "The name of the variable",
+						},
+						"default_value": schema.StringAttribute{
+							Description: "An optional default value for the variable",
+							Optional:    true,
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -127,6 +142,7 @@ func (r *webhookRecipientResource) ImportState(ctx context.Context, req resource
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.WebhookRecipientModel{
 		ID:        types.StringValue(req.ID),
 		Templates: types.SetUnknown(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}),
+		Variables: types.SetUnknown(types.ObjectType{AttrTypes: models.TemplateVariableAttrType}),
 	})...)
 }
 
@@ -156,7 +172,7 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 			WebhookName:     plan.Name.ValueString(),
 			WebhookURL:      plan.URL.ValueString(),
 			WebhookSecret:   plan.Secret.ValueString(),
-			WebhookPayloads: webhookTemplatesToClientPayloads(ctx, plan.Templates, &resp.Diagnostics),
+			WebhookPayloads: webhookTemplatesToClientPayloads(ctx, plan.Templates, plan.Variables, &resp.Diagnostics),
 		},
 	})
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Webhook Recipient", err) {
@@ -174,8 +190,14 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 	}
 	if rcpt.Details.WebhookPayloads != nil {
 		state.Templates = plan.Templates
+		if rcpt.Details.WebhookPayloads.TemplateVariables != nil {
+			state.Variables = plan.Variables
+		} else {
+			state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
+		}
 	} else {
 		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+		state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -226,10 +248,12 @@ func (r *webhookRecipientResource) Read(ctx context.Context, req resource.ReadRe
 	} else {
 		state.Secret = types.StringNull()
 	}
+
 	if rcpt.Details.WebhookPayloads != nil {
-		state.Templates = clientPayloadsToWebhookTemplates(ctx, rcpt.Details.WebhookPayloads, &resp.Diagnostics)
+		state.Templates, state.Variables = clientPayloadsToSets(ctx, rcpt.Details.WebhookPayloads, &resp.Diagnostics)
 	} else {
 		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+		state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -249,7 +273,7 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 			WebhookName:     plan.Name.ValueString(),
 			WebhookURL:      plan.URL.ValueString(),
 			WebhookSecret:   plan.Secret.ValueString(),
-			WebhookPayloads: webhookTemplatesToClientPayloads(ctx, plan.Templates, &resp.Diagnostics),
+			WebhookPayloads: webhookTemplatesToClientPayloads(ctx, plan.Templates, plan.Variables, &resp.Diagnostics),
 		},
 	})
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Webhook Recipient", err) {
@@ -272,8 +296,12 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 	}
 	if rcpt.Details.WebhookPayloads != nil {
 		state.Templates = plan.Templates
+		if rcpt.Details.WebhookPayloads.TemplateVariables != nil {
+			state.Variables = plan.Variables
+		}
 	} else {
 		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+		state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -306,9 +334,15 @@ func (r *webhookRecipientResource) Delete(ctx context.Context, req resource.Dele
 	}
 }
 
-func webhookTemplatesToClientPayloads(ctx context.Context, set types.Set, diags *diag.Diagnostics) *client.WebhookPayloads {
+func webhookTemplatesToClientPayloads(ctx context.Context, templateSet types.Set, variableSet types.Set, diags *diag.Diagnostics) *client.WebhookPayloads {
 	var templates []models.WebhookTemplateModel
-	diags.Append(set.ElementsAs(ctx, &templates, false)...)
+	diags.Append(templateSet.ElementsAs(ctx, &templates, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	var variables []models.TemplateVariableModel
+	diags.Append(variableSet.ElementsAs(ctx, &variables, false)...)
 	if diags.HasError() {
 		return nil
 	}
@@ -332,19 +366,37 @@ func webhookTemplatesToClientPayloads(ctx context.Context, set types.Set, diags 
 		}
 	}
 
+	clientVars := make([]client.TemplateVariable, len(variables))
+	for i, v := range variables {
+		tmplVar := client.TemplateVariable{
+			Name:    v.Name.ValueString(),
+			Default: v.DefaultValue.ValueString(),
+		}
+
+		clientVars[i] = tmplVar
+	}
+	clientWebhookPayloads.TemplateVariables = clientVars
+
 	return clientWebhookPayloads
 }
 
-func clientPayloadsToWebhookTemplates(ctx context.Context, p *client.WebhookPayloads, diags *diag.Diagnostics) types.Set {
+func clientPayloadsToSets(ctx context.Context, p *client.WebhookPayloads, diags *diag.Diagnostics) (types.Set, types.Set) {
 	if p == nil {
-		return types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+		return types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}), types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
 	}
 
-	values := webhookTemplatesToObjectValues(p.PayloadTemplates, diags)
-	result, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}, values)
+	tmplValues := webhookTemplatesToObjectValues(p.PayloadTemplates, diags)
+	tmplResult, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}, tmplValues)
 	diags.Append(d...)
 
-	return result
+	var tmplVarValues []attr.Value
+	for _, v := range p.TemplateVariables {
+		tmplVarValues = append(tmplVarValues, webhookVariableToObjectValue(v, diags))
+	}
+	varResult, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.TemplateVariableAttrType}, tmplVarValues)
+	diags.Append(d...)
+
+	return tmplResult, varResult
 }
 
 func webhookTemplatesToObjectValues(templates client.PayloadTemplates, diags *diag.Diagnostics) []basetypes.ObjectValue {
@@ -378,6 +430,17 @@ func webhookTemplatesToObjectValues(templates client.PayloadTemplates, diags *di
 	}
 
 	return templateObjs
+}
+
+func webhookVariableToObjectValue(v client.TemplateVariable, diags *diag.Diagnostics) basetypes.ObjectValue {
+	variableObj := map[string]attr.Value{
+		"name":          types.StringValue(v.Name),
+		"default_value": types.StringValue(v.Default),
+	}
+	varObjVal, d := types.ObjectValue(models.TemplateVariableAttrType, variableObj)
+	diags.Append(d...)
+
+	return varObjVal
 }
 
 func validateAttributesWhenTemplatesIncluded(ctx context.Context, data models.WebhookRecipientModel, resp *resource.ValidateConfigResponse) {
