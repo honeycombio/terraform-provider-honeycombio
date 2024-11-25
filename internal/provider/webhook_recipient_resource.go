@@ -128,7 +128,7 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 							Required:    true,
 							Description: "The name of the variable",
 							Validators: []validator.String{
-								stringvalidator.LengthAtMost(63),
+								stringvalidator.LengthBetween(1, 64),
 								stringvalidator.RegexMatches(webhookTemplateNameRegex, "must be an alphanumeric string beginning with a lowercase letter"),
 							},
 						},
