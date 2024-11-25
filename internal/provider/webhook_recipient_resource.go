@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"errors"
-	"fmt"
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -513,7 +512,7 @@ func validateTemplateVarsNotDuplicated(ctx context.Context, data models.WebhookR
 			resp.Diagnostics.AddAttributeError(
 				path.Root("template").AtListIndex(i).AtName("name"),
 				"Conflicting configuration arguments",
-				fmt.Sprintf("cannot have more than one \"variable\" with the same \"name\""),
+				"cannot have more than one \"variable\" with the same \"name\"",
 			)
 		}
 		duplicateMap[name] = true
