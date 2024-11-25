@@ -3,7 +3,10 @@ package provider
 import (
 	"context"
 	"errors"
+	"fmt"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -29,7 +32,8 @@ var (
 	_ resource.ResourceWithImportState    = &webhookRecipientResource{}
 	_ resource.ResourceWithValidateConfig = &webhookRecipientResource{}
 
-	webhookTemplateTypes = []string{"trigger", "exhaustion_time", "budget_rate"}
+	webhookTemplateTypes     = []string{"trigger", "exhaustion_time", "budget_rate"}
+	webhookTemplateNameRegex = regexp.MustCompile(`^[a-z](?:[a-zA-Z0-9]+$)?$`)
 )
 
 type webhookRecipientResource struct {
@@ -116,15 +120,25 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 			},
 			"variable": schema.SetNestedBlock{
 				Description: "Variables for webhook templates",
+				Validators: []validator.Set{
+					setvalidator.SizeAtMost(10),
+				},
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
 							Required:    true,
 							Description: "The name of the variable",
+							Validators: []validator.String{
+								stringvalidator.LengthAtMost(63),
+								stringvalidator.RegexMatches(webhookTemplateNameRegex, "must be an alphanumeric string beginning with a lowercase letter"),
+							},
 						},
 						"default_value": schema.StringAttribute{
 							Description: "An optional default value for the variable",
 							Optional:    true,
+							Validators: []validator.String{
+								stringvalidator.LengthAtMost(255),
+							},
 						},
 					},
 				},
@@ -157,6 +171,8 @@ func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resou
 
 	// only allow one template of each type (trigger, budget_rate, exhaustion_time)
 	validateAttributesWhenTemplatesIncluded(ctx, data, resp)
+	// template variable names cannot be duplicated
+	validateTemplateVarsNotDuplicated(ctx, data, resp)
 }
 
 func (r *webhookRecipientResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -483,5 +499,23 @@ func validateAttributesWhenTemplatesIncluded(ctx context.Context, data models.We
 			budgetRateTmplExists = true
 		}
 
+	}
+}
+
+func validateTemplateVarsNotDuplicated(ctx context.Context, data models.WebhookRecipientModel, resp *resource.ValidateConfigResponse) {
+	var variables []models.TemplateVariableModel
+	data.Variables.ElementsAs(ctx, &variables, false)
+
+	duplicateMap := make(map[string]bool)
+	for i, v := range variables {
+		name := v.Name.ValueString()
+		if duplicateMap[name] {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("template").AtListIndex(i).AtName("type"),
+				"Conflicting configuration arguments",
+				fmt.Sprintf("cannot have more than one \"variable\" with the name \"%s\"", name),
+			)
+		}
+		duplicateMap[name] = true
 	}
 }

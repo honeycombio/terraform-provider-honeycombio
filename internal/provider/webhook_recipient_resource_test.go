@@ -241,7 +241,7 @@ resource "honeycombio_webhook_recipient" "test" {
 		})
 	})
 
-	t.Run("custom webhook when a template is removed", func(t *testing.T) {
+	t.Run("custom webhook succeeds when a template is removed", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		url := test.RandomURL()
 		body := `<<EOT
@@ -302,7 +302,7 @@ resource "honeycombio_webhook_recipient" "test" {
 		})
 	})
 
-	t.Run("custom webhook when a variable is removed", func(t *testing.T) {
+	t.Run("custom webhook succeeds when a variable is removed", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		url := test.RandomURL()
 		body := `<<EOT
