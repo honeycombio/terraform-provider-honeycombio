@@ -136,7 +136,7 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 							Description: "An optional default value for the variable",
 							Optional:    true,
 							Validators: []validator.String{
-								stringvalidator.LengthAtMost(255),
+								stringvalidator.LengthAtMost(256),
 							},
 						},
 					},
