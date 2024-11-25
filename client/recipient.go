@@ -76,7 +76,7 @@ type NotificationRecipientDetails struct {
 
 type WebhookPayloads struct {
 	PayloadTemplates  PayloadTemplates   `json:"payload_templates"`
-	TemplateVariables []TemplateVariable `json:"template_variables,omitempty"`
+	TemplateVariables []TemplateVariable `json:"template_variables"`
 }
 
 type PayloadTemplates struct {

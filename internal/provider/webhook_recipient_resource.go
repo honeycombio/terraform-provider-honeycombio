@@ -298,6 +298,8 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 		state.Templates = plan.Templates
 		if rcpt.Details.WebhookPayloads.TemplateVariables != nil {
 			state.Variables = plan.Variables
+		} else {
+			state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
 		}
 	} else {
 		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
