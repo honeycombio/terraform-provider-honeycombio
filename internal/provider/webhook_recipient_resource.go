@@ -511,9 +511,9 @@ func validateTemplateVarsNotDuplicated(ctx context.Context, data models.WebhookR
 		name := v.Name.ValueString()
 		if duplicateMap[name] {
 			resp.Diagnostics.AddAttributeError(
-				path.Root("template").AtListIndex(i).AtName("type"),
+				path.Root("template").AtListIndex(i).AtName("name"),
 				"Conflicting configuration arguments",
-				fmt.Sprintf("cannot have more than one \"variable\" with the name \"%s\"", name),
+				fmt.Sprintf("cannot have more than one \"variable\" with the same \"name\""),
 			)
 		}
 		duplicateMap[name] = true

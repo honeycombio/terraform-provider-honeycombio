@@ -407,6 +407,37 @@ resource "honeycombio_webhook_recipient" "test" {
 				},
 			},
 		})
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	template {
+	  type   = "trigger"
+      body = "body"
+    }
+
+	variable {
+	  name   = "severity"
+      default_value = "critical"
+    }
+
+	variable {
+	  name   = "severity"
+      default_value = "warning"
+    }
+}`, name, url),
+					ExpectError: regexp.MustCompile(`cannot have more than one "variable" with the same "name"`),
+				},
+			},
+		})
 	})
 }
 
