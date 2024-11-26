@@ -203,16 +203,16 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 	} else {
 		state.Secret = types.StringNull()
 	}
+
+	// to prevent confusing if/else blocks, set null by default and override it if we have that detail on the recipient
+	state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+	state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
+
 	if rcpt.Details.WebhookPayloads != nil {
 		state.Templates = plan.Templates
 		if rcpt.Details.WebhookPayloads.TemplateVariables != nil {
 			state.Variables = plan.Variables
-		} else {
-			state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
 		}
-	} else {
-		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
-		state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
