@@ -424,7 +424,7 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.#", "2"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.0.name", "variable1"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.0.default_value", ""),
-						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.1.name", "variable2"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.1.name", ""),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.1.default_value", "critical"),
 						resource.TestCheckNoResourceAttr("honeycombio_webhook_recipient.test", "secret"),
 					),
@@ -475,6 +475,13 @@ resource "honeycombio_webhook_recipient" "test" {
 	t.Run("custom webhook validations error when they should", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		url := test.RandomURL()
+		body := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
@@ -529,6 +536,76 @@ resource "honeycombio_webhook_recipient" "test" {
     }
 }`, name, url),
 					ExpectError: regexp.MustCompile(`cannot have more than one "variable" with the same "name"`),
+				},
+			},
+		})
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	variable {
+	  name   = "severity"
+      default_value = "critical"
+    }
+}`, name, url),
+					ExpectError: regexp.MustCompile(`cannot configure a "variable" without also configuring a "template"`),
+				},
+			},
+		})
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+		resource "honeycombio_webhook_recipient" "test" {
+		  name = "%s"
+			url  = "%s"
+
+			template {
+			  type = "trigger"
+			  body = %s
+			}
+
+			variable {
+			  name   = "severity"
+		      default_value = "critical"
+		    }
+		}`, name, url, body),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
+						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.0.name", "severity"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.0.default_value", "critical"),
+					),
+				},
+				{
+					Config: fmt.Sprintf(`
+		resource "honeycombio_webhook_recipient" "test" {
+		  name = "%s"
+			url  = "%s"
+
+			variable {
+			  name   = "severity"
+		      default_value = "critical"
+		    }
+		}`, name, url),
+					ExpectError: regexp.MustCompile(`cannot configure a "variable" without also configuring a "template"`),
 				},
 			},
 		})

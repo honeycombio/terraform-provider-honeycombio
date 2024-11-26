@@ -170,8 +170,8 @@ func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resou
 
 	// only allow one template of each type (trigger, budget_rate, exhaustion_time)
 	validateAttributesWhenTemplatesIncluded(ctx, data, resp)
-	// template variable names cannot be duplicated
-	validateTemplateVarsNotDuplicated(ctx, data, resp)
+	// template variables cannot be configured without a template and variable names cannot be duplicated
+	validateAttributesWhenVariablesIncluded(ctx, data, resp)
 }
 
 func (r *webhookRecipientResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -501,16 +501,27 @@ func validateAttributesWhenTemplatesIncluded(ctx context.Context, data models.We
 	}
 }
 
-func validateTemplateVarsNotDuplicated(ctx context.Context, data models.WebhookRecipientModel, resp *resource.ValidateConfigResponse) {
+func validateAttributesWhenVariablesIncluded(ctx context.Context, data models.WebhookRecipientModel, resp *resource.ValidateConfigResponse) {
+	var templates []models.WebhookTemplateModel
+	data.Templates.ElementsAs(ctx, &templates, false)
+
 	var variables []models.TemplateVariableModel
 	data.Variables.ElementsAs(ctx, &variables, false)
+
+	if len(variables) >= 1 && len(templates) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("variable").AtListIndex(0),
+			"Conflicting configuration arguments",
+			"cannot configure a \"variable\" without also configuring a \"template\"",
+		)
+	}
 
 	duplicateMap := make(map[string]bool)
 	for i, v := range variables {
 		name := v.Name.ValueString()
 		if duplicateMap[name] {
 			resp.Diagnostics.AddAttributeError(
-				path.Root("template").AtListIndex(i).AtName("name"),
+				path.Root("variable").AtListIndex(i).AtName("name"),
 				"Conflicting configuration arguments",
 				"cannot have more than one \"variable\" with the same \"name\"",
 			)
