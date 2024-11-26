@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -135,6 +136,8 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 						"default_value": schema.StringAttribute{
 							Description: "An optional default value for the variable",
 							Optional:    true,
+							Computed:    true,
+							Default:     stringdefault.StaticString(""),
 							Validators: []validator.String{
 								stringvalidator.LengthAtMost(256),
 							},
@@ -168,10 +171,70 @@ func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resou
 		return
 	}
 
-	// only allow one template of each type (trigger, budget_rate, exhaustion_time)
-	validateAttributesWhenTemplatesIncluded(ctx, data, resp)
-	// template variables cannot be configured without a template and variable names cannot be duplicated
-	validateAttributesWhenVariablesIncluded(ctx, data, resp)
+	var templates []models.WebhookTemplateModel
+	data.Templates.ElementsAs(ctx, &templates, false)
+
+	var variables []models.TemplateVariableModel
+	data.Variables.ElementsAs(ctx, &variables, false)
+
+	triggerTmplExists := false
+	budgetRateTmplExists := false
+	exhaustionTimeTmplExists := false
+	for i, t := range templates {
+		// only allow one template of each type (trigger, budget_rate, exhaustion_time)
+		switch t.Type {
+		case types.StringValue("trigger"):
+			if triggerTmplExists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("template").AtListIndex(i).AtName("type"),
+					"Conflicting configuration arguments",
+					"cannot have more than one \"template\" of type \"trigger\"",
+				)
+			}
+			triggerTmplExists = true
+		case types.StringValue("exhaustion_time"):
+			if exhaustionTimeTmplExists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("template").AtListIndex(i).AtName("type"),
+					"Conflicting configuration arguments",
+					"cannot have more than one \"template\" of type \"exhaustion_time\"",
+				)
+			}
+			exhaustionTimeTmplExists = true
+		case types.StringValue("budget_rate"):
+			if budgetRateTmplExists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("template").AtListIndex(i).AtName("type"),
+					"Conflicting configuration arguments",
+					"cannot have more than one \"template\" of type \"budget_rate\"",
+				)
+			}
+			budgetRateTmplExists = true
+		}
+	}
+
+	// template variables cannot be configured without a template
+	if len(variables) >= 1 && len(templates) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("variable").AtListIndex(0),
+			"Conflicting configuration arguments",
+			"cannot configure a \"variable\" without also configuring a \"template\"",
+		)
+	}
+
+	// variable names cannot be duplicated
+	duplicateMap := make(map[string]bool)
+	for i, v := range variables {
+		name := v.Name.ValueString()
+		if duplicateMap[name] {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("variable").AtListIndex(i).AtName("name"),
+				"Conflicting configuration arguments",
+				"cannot have more than one \"variable\" with the same \"name\"",
+			)
+		}
+		duplicateMap[name] = true
+	}
 }
 
 func (r *webhookRecipientResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -265,7 +328,7 @@ func (r *webhookRecipientResource) Read(ctx context.Context, req resource.ReadRe
 	}
 
 	if rcpt.Details.WebhookPayloads != nil {
-		state.Templates, state.Variables = clientPayloadsToSets(ctx, rcpt.Details.WebhookPayloads, &resp.Diagnostics)
+		state.Templates, state.Variables = clientPayloadsToWebhookTemplateSets(ctx, rcpt.Details.WebhookPayloads, &resp.Diagnostics)
 	} else {
 		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
 		state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
@@ -397,7 +460,7 @@ func webhookTemplatesToClientPayloads(ctx context.Context, templateSet types.Set
 	return clientWebhookPayloads
 }
 
-func clientPayloadsToSets(ctx context.Context, p *client.WebhookPayloads, diags *diag.Diagnostics) (types.Set, types.Set) {
+func clientPayloadsToWebhookTemplateSets(ctx context.Context, p *client.WebhookPayloads, diags *diag.Diagnostics) (types.Set, types.Set) {
 	if p == nil {
 		return types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}), types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
 	}
@@ -458,74 +521,4 @@ func webhookVariableToObjectValue(v client.TemplateVariable, diags *diag.Diagnos
 	diags.Append(d...)
 
 	return varObjVal
-}
-
-func validateAttributesWhenTemplatesIncluded(ctx context.Context, data models.WebhookRecipientModel, resp *resource.ValidateConfigResponse) {
-	var templates []models.WebhookTemplateModel
-	data.Templates.ElementsAs(ctx, &templates, false)
-
-	triggerTmplExists := false
-	budgetRateTmplExists := false
-	exhaustionTimeTmplExists := false
-	for i, t := range templates {
-		switch t.Type {
-		case types.StringValue("trigger"):
-			if triggerTmplExists {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("template").AtListIndex(i).AtName("type"),
-					"Conflicting configuration arguments",
-					"cannot have more than one \"template\" of type \"trigger\"",
-				)
-			}
-			triggerTmplExists = true
-		case types.StringValue("exhaustion_time"):
-			if exhaustionTimeTmplExists {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("template").AtListIndex(i).AtName("type"),
-					"Conflicting configuration arguments",
-					"cannot have more than one \"template\" of type \"exhaustion_time\"",
-				)
-			}
-			exhaustionTimeTmplExists = true
-		case types.StringValue("budget_rate"):
-			if budgetRateTmplExists {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("template").AtListIndex(i).AtName("type"),
-					"Conflicting configuration arguments",
-					"cannot have more than one \"template\" of type \"budget_rate\"",
-				)
-			}
-			budgetRateTmplExists = true
-		}
-
-	}
-}
-
-func validateAttributesWhenVariablesIncluded(ctx context.Context, data models.WebhookRecipientModel, resp *resource.ValidateConfigResponse) {
-	var templates []models.WebhookTemplateModel
-	data.Templates.ElementsAs(ctx, &templates, false)
-
-	var variables []models.TemplateVariableModel
-	data.Variables.ElementsAs(ctx, &variables, false)
-
-	if len(variables) >= 1 && len(templates) == 0 {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("variable").AtListIndex(0),
-			"Conflicting configuration arguments",
-			"cannot configure a \"variable\" without also configuring a \"template\"",
-		)
-	}
-
-	duplicateMap := make(map[string]bool)
-	for i, v := range variables {
-		name := v.Name.ValueString()
-		if duplicateMap[name] {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("variable").AtListIndex(i).AtName("name"),
-				"Conflicting configuration arguments",
-				"cannot have more than one \"variable\" with the same \"name\"",
-			)
-		}
-		duplicateMap[name] = true
-	}
 }

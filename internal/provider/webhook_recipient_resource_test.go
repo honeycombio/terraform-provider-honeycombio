@@ -312,7 +312,6 @@ resource "honeycombio_webhook_recipient" "test" {
 
 	variable {
 	  name = "variable1"
-      default_value = ""
 	}
 
 	variable {
@@ -335,7 +334,7 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.#", "2"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.0.name", "variable1"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.0.default_value", ""),
-						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.1.name", ""),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.1.name", "variable2"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.1.default_value", "critical"),
 						resource.TestCheckNoResourceAttr("honeycombio_webhook_recipient.test", "secret"),
 					),
@@ -348,12 +347,10 @@ resource "honeycombio_webhook_recipient" "test" {
 
 	variable {
 	  name = "variable1"
-      default_value = ""
 	}
 
 	variable {
 	  name = "variable2"
-      default_value = ""
 	}
 
 	template {
