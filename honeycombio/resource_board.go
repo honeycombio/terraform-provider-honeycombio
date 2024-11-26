@@ -148,7 +148,7 @@ See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-sett
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Description: "An SLO to added to the board.",
-				MaxItems:    6,
+				MaxItems:    24,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
