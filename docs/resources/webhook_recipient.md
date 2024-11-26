@@ -34,6 +34,11 @@ resource "honeycombio_webhook_recipient" "prod" {
 		}
 		EOT
   }
+    
+  variable {
+      name          = "severity"
+      default_value = "critical"
+  }
 }
 ```
 
@@ -45,11 +50,19 @@ The following arguments are supported:
 * `secret` - (Optional) The secret to include when sending the notification to the webhook.
 * `url` - (Required) The URL of the endpoint to send the notification to.
 * `template` - (Optional) Zero or more configuration blocks (described below) to customize the webhook payload if desired.
+* `variable` - (Optional) Zero or m ore configuration blocks (described below) to define variables to be used in the webhook payload if desired. 
 
 When configuring custom webhook payloads, use the `template` block, which accepts the following arguments:
 
 * `type` - (Required) The template type, allowed types are `trigger`, `exhaustion_time`, and `budget_rate`. Only one template block of each type is allowed on a single recipient.
 * `body` - (Required) A JSON formatted string to represent the webhook payload.
+
+Optionally, when configuring custom webhooks, use the `variable` block to create custom variables that can be interpolated in a template. 
+To configure a variable, at least one `template` block must also be configured.
+The `variable` block accepts the following arguments:
+
+* `name` - (Required) The name of the custom variable. Must be an alphanumeric string beginning with a lowercase letter.
+* `default_value` - (Optional) The default value for the custom variable, which can be overridden at the alert level.
 
 
 ## Attribute Reference

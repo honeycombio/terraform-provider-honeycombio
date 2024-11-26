@@ -100,7 +100,9 @@ func TestRecipientsCustomWebhook(t *testing.T) {
 					WebhookURL:    test.RandomURL(),
 					WebhookSecret: "secret",
 					WebhookPayloads: &client.WebhookPayloads{
-						PayloadTemplates: client.PayloadTemplates{Trigger: &client.PayloadTemplate{Body: body}}},
+						PayloadTemplates:  client.PayloadTemplates{Trigger: &client.PayloadTemplate{Body: body}},
+						TemplateVariables: []client.TemplateVariable{{Name: "severity", Default: "warning"}},
+					},
 				},
 			},
 		},
@@ -127,6 +129,7 @@ func TestRecipientsCustomWebhook(t *testing.T) {
 			assert.Equal(t, tr.Details.WebhookURL, r.Details.WebhookURL)
 			assert.Equal(t, tr.Details.WebhookSecret, r.Details.WebhookSecret)
 			assert.Equal(t, tr.Details.WebhookPayloads, r.Details.WebhookPayloads)
+			assert.Equal(t, tr.Details.WebhookPayloads.TemplateVariables, r.Details.WebhookPayloads.TemplateVariables)
 		})
 	}
 }

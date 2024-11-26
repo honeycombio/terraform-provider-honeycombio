@@ -75,7 +75,8 @@ type NotificationRecipientDetails struct {
 }
 
 type WebhookPayloads struct {
-	PayloadTemplates PayloadTemplates `json:"payload_templates"`
+	PayloadTemplates  PayloadTemplates   `json:"payload_templates"`
+	TemplateVariables []TemplateVariable `json:"template_variables"`
 }
 
 type PayloadTemplates struct {
@@ -86,6 +87,11 @@ type PayloadTemplates struct {
 
 type PayloadTemplate struct {
 	Body string `json:"body"`
+}
+
+type TemplateVariable struct {
+	Name    string `json:"name"`
+	Default string `json:"default_value"`
 }
 
 // RecipientType holds all the possible recipient types.
