@@ -164,7 +164,6 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 							Description: "The name or key for the header",
 							Validators: []validator.String{
 								stringvalidator.LengthBetween(1, 64),
-								//stringvalidator.RegexMatches(webhookTemplateNameRegex, "must be an alphanumeric string beginning with a lowercase letter"),
 							},
 						},
 						"value": schema.StringAttribute{
