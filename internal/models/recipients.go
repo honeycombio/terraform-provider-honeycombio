@@ -12,6 +12,7 @@ type WebhookRecipientModel struct {
 	URL       types.String `tfsdk:"url"`
 	Templates types.Set    `tfsdk:"template"` // WebhookTemplateModel
 	Variables types.Set    `tfsdk:"variable"` // TemplateVariableModel
+	Headers   types.Set    `tfsdk:"header"`   //WebhookHeaderModel
 }
 
 type WebhookTemplateModel struct {
@@ -32,4 +33,14 @@ type TemplateVariableModel struct {
 var TemplateVariableAttrType = map[string]attr.Type{
 	"name":          types.StringType,
 	"default_value": types.StringType,
+}
+
+type WebhookHeaderModel struct {
+	Name  types.String `tfsdk:"name"`
+	Value types.String `tfsdk:"value"`
+}
+
+var WebhookHeaderAttrType = map[string]attr.Type{
+	"name":  types.StringType,
+	"value": types.StringType,
 }

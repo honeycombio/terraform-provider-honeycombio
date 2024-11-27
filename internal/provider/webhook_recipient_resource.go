@@ -145,6 +145,31 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 					},
 				},
 			},
+			"header": schema.SetNestedBlock{
+				Description: "Custom headers for webhooks",
+				Validators: []validator.Set{
+					setvalidator.SizeAtMost(5),
+				},
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Required:    true,
+							Description: "The name or key for the header",
+							Validators: []validator.String{
+								stringvalidator.LengthBetween(1, 64),
+								//stringvalidator.RegexMatches(webhookTemplateNameRegex, "must be an alphanumeric string beginning with a lowercase letter"),
+							},
+						},
+						"value": schema.StringAttribute{
+							Description: "Value for the header",
+							Optional:    true,
+							Validators: []validator.String{
+								stringvalidator.LengthAtMost(256),
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -159,6 +184,7 @@ func (r *webhookRecipientResource) ImportState(ctx context.Context, req resource
 		ID:        types.StringValue(req.ID),
 		Templates: types.SetUnknown(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType}),
 		Variables: types.SetUnknown(types.ObjectType{AttrTypes: models.TemplateVariableAttrType}),
+		Headers:   types.SetUnknown(types.ObjectType{AttrTypes: models.WebhookHeaderAttrType}),
 	})...)
 }
 
@@ -251,6 +277,7 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 			WebhookURL:      plan.URL.ValueString(),
 			WebhookSecret:   plan.Secret.ValueString(),
 			WebhookPayloads: webhookTemplatesToClientPayloads(ctx, plan.Templates, plan.Variables, &resp.Diagnostics),
+			WebhookHeaders:  expandWebhookHeaders(ctx, plan.Headers, &resp.Diagnostics),
 		},
 	})
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Webhook Recipient", err) {
@@ -270,12 +297,17 @@ func (r *webhookRecipientResource) Create(ctx context.Context, req resource.Crea
 	// to prevent confusing if/else blocks, set null by default and override it if we have that detail on the recipient
 	state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
 	state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
+	state.Headers = types.SetNull(types.ObjectType{AttrTypes: models.WebhookHeaderAttrType})
 
 	if rcpt.Details.WebhookPayloads != nil {
 		state.Templates = plan.Templates
 		if rcpt.Details.WebhookPayloads.TemplateVariables != nil {
 			state.Variables = plan.Variables
 		}
+	}
+
+	if rcpt.Details.WebhookHeaders != nil {
+		state.Headers = plan.Headers
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -334,6 +366,12 @@ func (r *webhookRecipientResource) Read(ctx context.Context, req resource.ReadRe
 		state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
 	}
 
+	if rcpt.Details.WebhookHeaders != nil {
+		state.Headers = flattenWebhookHeaders(ctx, rcpt.Details.WebhookHeaders, &resp.Diagnostics)
+	} else {
+		state.Headers = types.SetNull(types.ObjectType{AttrTypes: models.WebhookHeaderAttrType})
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -351,6 +389,7 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 			WebhookName:     plan.Name.ValueString(),
 			WebhookURL:      plan.URL.ValueString(),
 			WebhookSecret:   plan.Secret.ValueString(),
+			WebhookHeaders:  expandWebhookHeaders(ctx, plan.Headers, &resp.Diagnostics),
 			WebhookPayloads: webhookTemplatesToClientPayloads(ctx, plan.Templates, plan.Variables, &resp.Diagnostics),
 		},
 	})
@@ -372,16 +411,21 @@ func (r *webhookRecipientResource) Update(ctx context.Context, req resource.Upda
 	} else {
 		state.Secret = types.StringNull()
 	}
+
+	// to prevent confusing if/else blocks, set null by default and override it if we have that detail on the recipient
+	state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
+	state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
+	state.Headers = types.SetNull(types.ObjectType{AttrTypes: models.WebhookHeaderAttrType})
+
 	if rcpt.Details.WebhookPayloads != nil {
 		state.Templates = plan.Templates
 		if rcpt.Details.WebhookPayloads.TemplateVariables != nil {
 			state.Variables = plan.Variables
-		} else {
-			state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
 		}
-	} else {
-		state.Templates = types.SetNull(types.ObjectType{AttrTypes: models.WebhookTemplateAttrType})
-		state.Variables = types.SetNull(types.ObjectType{AttrTypes: models.TemplateVariableAttrType})
+	}
+
+	if rcpt.Details.WebhookHeaders != nil {
+		state.Headers = plan.Headers
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -521,4 +565,46 @@ func webhookVariableToObjectValue(v client.TemplateVariable, diags *diag.Diagnos
 	diags.Append(d...)
 
 	return varObjVal
+}
+
+func expandWebhookHeaders(ctx context.Context, set types.Set, diags *diag.Diagnostics) []client.WebhookHeader {
+	var headers []models.WebhookHeaderModel
+	diags.Append(set.ElementsAs(ctx, &headers, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	clientHeaders := make([]client.WebhookHeader, len(headers))
+	for i, h := range headers {
+		hdr := client.WebhookHeader{
+			Key:   h.Name.ValueString(),
+			Value: h.Value.ValueString(),
+		}
+
+		clientHeaders[i] = hdr
+	}
+
+	return clientHeaders
+}
+
+func flattenWebhookHeaders(ctx context.Context, hdrs []client.WebhookHeader, diags *diag.Diagnostics) types.Set {
+	var hdrValues []attr.Value
+	for _, h := range hdrs {
+		hdrValues = append(hdrValues, webhookHeaderToObjectValue(h, diags))
+	}
+	hdrResult, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.WebhookHeaderAttrType}, hdrValues)
+	diags.Append(d...)
+
+	return hdrResult
+}
+
+func webhookHeaderToObjectValue(h client.WebhookHeader, diags *diag.Diagnostics) basetypes.ObjectValue {
+	headerObj := map[string]attr.Value{
+		"name":  types.StringValue(h.Key),
+		"value": types.StringValue(h.Value),
+	}
+	headerObjVal, d := types.ObjectValue(models.WebhookHeaderAttrType, headerObj)
+	diags.Append(d...)
+
+	return headerObjVal
 }

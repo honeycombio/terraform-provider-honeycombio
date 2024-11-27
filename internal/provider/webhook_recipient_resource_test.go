@@ -91,6 +91,11 @@ resource "honeycombio_webhook_recipient" "test" {
   name = "%s"
 	url  = "%s"
 
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
 	variable {
 	  name = "severity"
       default_value = "critical"
@@ -106,6 +111,9 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.0.name", "Authorization"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.0.value", "Bearer abc123"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.#", "1"),
@@ -121,6 +129,11 @@ resource "honeycombio_webhook_recipient" "test" {
 	url  = "%s"
 
 	secret = "so-secret"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
 
 	variable {
 	  name = "severity"
@@ -138,6 +151,9 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "secret", "so-secret"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.0.name", "Authorization"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.0.value", "Bearer abc123"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.#", "1"),
@@ -279,6 +295,96 @@ resource "honeycombio_webhook_recipient" "test" {
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
 						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.#", "0"),
+					),
+				},
+				{
+					ResourceName: "honeycombio_webhook_recipient.test",
+					ImportState:  true,
+				},
+			},
+		})
+	})
+
+	t.Run("custom webhook succeeds when a header is removed", func(t *testing.T) {
+		name := test.RandomStringWithPrefix("test.", 20)
+		url := test.RandomURL()
+		body := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}"
+		}
+		EOT`
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+	
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "trigger"
+      body = %s
+    }
+}`, name, url, body),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
+						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.0.name", "severity"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.0.default_value", "critical"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.0.name", "Authorization"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.0.value", "Bearer abc123"),
+						resource.TestCheckNoResourceAttr("honeycombio_webhook_recipient.test", "secret"),
+					),
+				},
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "trigger"
+      body = %s
+    }
+}`, name, url, body),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
+						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.0.name", "severity"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "variable.0.default_value", "critical"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.#", "0"),
+						resource.TestCheckNoResourceAttr("honeycombio_webhook_recipient.test", "secret"),
 					),
 				},
 				{

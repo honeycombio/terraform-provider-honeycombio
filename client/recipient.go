@@ -65,7 +65,8 @@ type RecipientDetails struct {
 	WebhookName string `json:"webhook_name,omitempty"`
 	WebhookURL  string `json:"webhook_url,omitempty"`
 	// webhook only
-	WebhookSecret string `json:"webhook_secret,omitempty"`
+	WebhookSecret  string          `json:"webhook_secret,omitempty"`
+	WebhookHeaders []WebhookHeader `json:"webhook_headers"`
 	// custom webhook
 	WebhookPayloads *WebhookPayloads `json:"webhook_payloads,omitempty"`
 }
@@ -92,6 +93,11 @@ type PayloadTemplate struct {
 type TemplateVariable struct {
 	Name    string `json:"name"`
 	Default string `json:"default_value"`
+}
+
+type WebhookHeader struct {
+	Key   string `json:"header"`
+	Value string `json:"value"`
 }
 
 // RecipientType holds all the possible recipient types.
