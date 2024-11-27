@@ -3,7 +3,9 @@ package provider
 import (
 	"context"
 	"errors"
+	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -18,6 +20,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"golang.org/x/net/http/httpguts"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
@@ -34,6 +37,10 @@ var (
 
 	webhookTemplateTypes     = []string{"trigger", "exhaustion_time", "budget_rate"}
 	webhookTemplateNameRegex = regexp.MustCompile(`^[a-z](?:[a-zA-Z0-9]+$)?$`)
+
+	defaultHeaderContentType            = "Content-Type"
+	defaultHeaderUserAgent              = "User-Agent"
+	defaultHeaderXHoneycombWebhookToken = "X-Honeycomb-Webhook-Token"
 )
 
 type webhookRecipientResource struct {
@@ -203,6 +210,9 @@ func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resou
 	var variables []models.TemplateVariableModel
 	data.Variables.ElementsAs(ctx, &variables, false)
 
+	var headers []models.WebhookHeaderModel
+	data.Headers.ElementsAs(ctx, &headers, false)
+
 	triggerTmplExists := false
 	budgetRateTmplExists := false
 	exhaustionTimeTmplExists := false
@@ -260,6 +270,35 @@ func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resou
 			)
 		}
 		duplicateMap[name] = true
+	}
+
+	// webhook headers cannot used reserved keys and must be valid http headers
+	for i, h := range headers {
+		header := strings.ToLower(h.Name.ValueString())
+		if header == strings.ToLower(defaultHeaderContentType) ||
+			header == strings.ToLower(defaultHeaderUserAgent) ||
+			header == strings.ToLower(defaultHeaderXHoneycombWebhookToken) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("header").AtListIndex(i).AtName("name"),
+				"Conflicting configuration arguments",
+				fmt.Sprintf("cannot match reserved \"name\": %s", h.Name.ValueString()),
+			)
+		}
+
+		if !httpguts.ValidHeaderFieldName(h.Name.ValueString()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("header").AtListIndex(i).AtName("name"),
+				"Conflicting configuration arguments",
+				"invalid webhook header name",
+			)
+		}
+		if !httpguts.ValidHeaderFieldValue(h.Value.ValueString()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("header").AtListIndex(i).AtName("value"),
+				"Conflicting configuration arguments",
+				"invalid webhook header value",
+			)
+		}
 	}
 }
 

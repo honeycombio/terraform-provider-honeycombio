@@ -665,7 +665,78 @@ resource "honeycombio_webhook_recipient" "test" {
 			},
 		})
 	})
+}
 
+func TestAcc_WebhookRecipientResource_validateReservedWebhookHeader(t *testing.T) {
+	name := test.RandomStringWithPrefix("test.", 20)
+	url := test.RandomURL()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	template {
+	  type   = "trigger"
+      body = "body"
+    }
+
+	header {
+	  name   = "Content-Type"
+      value = "xml"
+    }
+
+	variable {
+	  name   = "severity"
+      default_value = "warning"
+    }
+}`, name, url),
+				ExpectError: regexp.MustCompile(`cannot match reserved "name": Content-Type`),
+			},
+		},
+	})
+}
+
+func TestAcc_WebhookRecipientResource_validateInvalidWebhookHeader(t *testing.T) {
+	name := test.RandomStringWithPrefix("test.", 20)
+	url := test.RandomURL()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	template {
+	  type   = "trigger"
+      body = "body"
+    }
+
+	header {
+	  name   = "é"
+      value = "test"
+    }
+
+	variable {
+	  name   = "severity"
+      default_value = "warning"
+    }
+}`, name, url),
+				ExpectError: regexp.MustCompile(`invalid webhook header name`),
+			},
+		},
+	})
 }
 
 // TestAcc_WebhookRecipientResource_UpgradeFromVersion027 tests the migration case from the
