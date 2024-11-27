@@ -134,7 +134,7 @@ func TestRecipientsCustomWebhook(t *testing.T) {
 			require.Len(t, tr.Details.WebhookHeaders, 1)
 			require.Len(t, r.Details.WebhookHeaders, 1)
 			assert.Equal(t, tr.Details.WebhookHeaders[0].Key, r.Details.WebhookHeaders[0].Key)
-			assert.Equal(t, tr.Details.WebhookHeaders[0].Value, r.Details.WebhookHeaders[0].Key)
+			assert.Equal(t, tr.Details.WebhookHeaders[0].Value, r.Details.WebhookHeaders[0].Value)
 		})
 	}
 }
