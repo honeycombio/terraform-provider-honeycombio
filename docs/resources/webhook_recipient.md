@@ -74,8 +74,8 @@ Optionally, when configuring custom webhooks, use the `header` block to create c
 Up to five custom headers can be configured. Reserved headers `Content-Type`, `User-Agent`, and `X-Honeycomb-Webhook-Token` cannot be used.
 The `header` block accepts the following arguments:
 
-* `name` - (Required) The name of the custom variable. Must be an alphanumeric string beginning with a lowercase letter.
-* `default_value` - (Optional) The default value for the custom variable, which can be overridden at the alert level.
+* `name` - (Required) The name or key for the header.
+* `value` - (Optional) The value for the header.
 
 
 
