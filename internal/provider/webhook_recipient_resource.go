@@ -3,9 +3,7 @@ package provider
 import (
 	"context"
 	"errors"
-	"fmt"
 	"regexp"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -36,11 +34,8 @@ var (
 	_ resource.ResourceWithValidateConfig = &webhookRecipientResource{}
 
 	webhookTemplateTypes     = []string{"trigger", "exhaustion_time", "budget_rate"}
+	webhookHeaderDefaults    = []string{"Content-Type", "User-Agent", "X-Honeycomb-Webhook-Token"}
 	webhookTemplateNameRegex = regexp.MustCompile(`^[a-z](?:[a-zA-Z0-9]+$)?$`)
-
-	defaultHeaderContentType            = "Content-Type"
-	defaultHeaderUserAgent              = "User-Agent"
-	defaultHeaderXHoneycombWebhookToken = "X-Honeycomb-Webhook-Token"
 )
 
 type webhookRecipientResource struct {
@@ -164,13 +159,16 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 							Description: "The name or key for the header",
 							Validators: []validator.String{
 								stringvalidator.LengthBetween(1, 64),
+								stringvalidator.NoneOfCaseInsensitive(webhookHeaderDefaults...),
 							},
 						},
 						"value": schema.StringAttribute{
 							Description: "Value for the header",
 							Optional:    true,
+							Computed:    true,
+							Default:     stringdefault.StaticString(""),
 							Validators: []validator.String{
-								stringvalidator.LengthAtMost(256),
+								stringvalidator.LengthAtMost(512),
 							},
 						},
 					},
@@ -271,19 +269,8 @@ func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resou
 		duplicateMap[name] = true
 	}
 
-	// webhook headers cannot used reserved keys and must be valid http headers
+	// webhook headers must be valid http headers
 	for i, h := range headers {
-		header := strings.ToLower(h.Name.ValueString())
-		if header == strings.ToLower(defaultHeaderContentType) ||
-			header == strings.ToLower(defaultHeaderUserAgent) ||
-			header == strings.ToLower(defaultHeaderXHoneycombWebhookToken) {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("header").AtListIndex(i).AtName("name"),
-				"Conflicting configuration arguments",
-				fmt.Sprintf("cannot match reserved \"name\": %s", h.Name.ValueString()),
-			)
-		}
-
 		if !httpguts.ValidHeaderFieldName(h.Name.ValueString()) {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("header").AtListIndex(i).AtName("name"),

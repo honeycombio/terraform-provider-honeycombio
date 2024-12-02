@@ -485,6 +485,53 @@ resource "honeycombio_webhook_recipient" "test" {
 			},
 		})
 	})
+
+	t.Run("custom webhook succeeds when a header has no value", func(t *testing.T) {
+		name := test.RandomStringWithPrefix("test.", 20)
+		url := test.RandomURL()
+		body := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}"
+		}
+		EOT`
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	header {
+	  name = "Authorization"
+	}
+
+	template {
+	  type   = "trigger"
+      body = %s
+    }
+}`, name, url, body),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
+						resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "url", url),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "trigger"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.0.name", "Authorization"),
+						resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "header.0.value", ""),
+						resource.TestCheckNoResourceAttr("honeycombio_webhook_recipient.test", "secret"),
+					),
+				},
+			},
+		})
+	})
 }
 
 func TestAcc_WebhookRecipientResource_validateDuplicateTemplateType(t *testing.T) {
@@ -664,42 +711,6 @@ resource "honeycombio_webhook_recipient" "test" {
 				},
 			},
 		})
-	})
-}
-
-func TestAcc_WebhookRecipientResource_validateReservedWebhookHeader(t *testing.T) {
-	name := test.RandomStringWithPrefix("test.", 20)
-	url := test.RandomURL()
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
-		CheckDestroy:             testAccEnsureRecipientDestroyed(t),
-		Steps: []resource.TestStep{
-			{
-				Config: fmt.Sprintf(`
-resource "honeycombio_webhook_recipient" "test" {
-  name = "%s"
-	url  = "%s"
-
-	template {
-	  type   = "trigger"
-      body = "body"
-    }
-
-	header {
-	  name   = "Content-Type"
-      value = "xml"
-    }
-
-	variable {
-	  name   = "severity"
-      default_value = "warning"
-    }
-}`, name, url),
-				ExpectError: regexp.MustCompile(`cannot match reserved "name": Content-Type`),
-			},
-		},
 	})
 }
 
