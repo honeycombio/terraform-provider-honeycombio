@@ -96,9 +96,10 @@ func TestRecipientsCustomWebhook(t *testing.T) {
 			rcpt: client.Recipient{
 				Type: client.RecipientTypeWebhook,
 				Details: client.RecipientDetails{
-					WebhookName:   test.RandomStringWithPrefix("test.", 10),
-					WebhookURL:    test.RandomURL(),
-					WebhookSecret: "secret",
+					WebhookName:    test.RandomStringWithPrefix("test.", 10),
+					WebhookURL:     test.RandomURL(),
+					WebhookSecret:  "secret",
+					WebhookHeaders: []client.WebhookHeader{{Key: "Authorization", Value: "Bearer 123"}},
 					WebhookPayloads: &client.WebhookPayloads{
 						PayloadTemplates:  client.PayloadTemplates{Trigger: &client.PayloadTemplate{Body: body}},
 						TemplateVariables: []client.TemplateVariable{{Name: "severity", Default: "warning"}},
@@ -130,6 +131,10 @@ func TestRecipientsCustomWebhook(t *testing.T) {
 			assert.Equal(t, tr.Details.WebhookSecret, r.Details.WebhookSecret)
 			assert.Equal(t, tr.Details.WebhookPayloads, r.Details.WebhookPayloads)
 			assert.Equal(t, tr.Details.WebhookPayloads.TemplateVariables, r.Details.WebhookPayloads.TemplateVariables)
+			if assert.Len(t, r.Details.WebhookHeaders, 1) {
+				assert.Equal(t, tr.Details.WebhookHeaders[0].Key, r.Details.WebhookHeaders[0].Key)
+				assert.Equal(t, tr.Details.WebhookHeaders[0].Value, r.Details.WebhookHeaders[0].Value)
+			}
 		})
 	}
 }
