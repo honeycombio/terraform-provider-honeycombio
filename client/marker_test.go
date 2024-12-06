@@ -95,6 +95,7 @@ func TestMarkers(t *testing.T) {
 		_, err := c.Markers.Get(ctx, dataset, m.ID)
 
 		var de client.DetailedError
+		require.NoError(t, err)
 		require.Error(t, err)
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())

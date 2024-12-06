@@ -24,11 +24,10 @@ func newTestClient(t *testing.T) *client.Client {
 	if !ok {
 		t.Fatal("expected environment variable " + client.DefaultAPIKeyEnv)
 	}
-	_, debug := os.LookupEnv("HONEYCOMBIO_DEBUG")
 
 	c, err := client.NewClientWithConfig(&client.Config{
 		APIKey:    apiKey,
-		Debug:     debug,
+		Debug:     true,
 		UserAgent: testUserAgent,
 	})
 	require.NoError(t, err, "failed to create client")

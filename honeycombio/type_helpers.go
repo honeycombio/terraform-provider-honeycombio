@@ -251,6 +251,7 @@ func diagFromDetailedErr(err honeycombio.DetailedError) diag.Diagnostics {
 				detail += d.Field + " "
 			}
 			detail += d.Description
+			detail += fmt.Sprintf(" - ID: %s", err.ID)
 
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
