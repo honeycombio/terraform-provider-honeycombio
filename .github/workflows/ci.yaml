@@ -65,7 +65,6 @@ jobs:
           HONEYCOMB_DATASET: testacc
         run: |
           go test -v ./client/... \
-            -coverprofile=client-coverage.txt \
             -covermode=atomic | \
             go-junit-report \
             -set-exit-code \
@@ -87,7 +86,6 @@ jobs:
           TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
         run: |
           go test -v ./internal/... ./honeycombio/... \
-            -coverprofile=tf-coverage.txt \
             -covermode=atomic | \
             go-junit-report \
             -set-exit-code \
@@ -121,11 +119,6 @@ jobs:
         with:
           paths: "*-report.xml"
           show: "fail, skip"
-
-      - name: Generate Coverage Report
-        uses: codecov/codecov-action@v4.6.0
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
 
   test-eu:
     name: Test EU
@@ -164,7 +157,6 @@ jobs:
           HONEYCOMB_DATASET: testacc
         run: |
           go test -v ./client/... \
-            -coverprofile=client-coverage.txt \
             -covermode=atomic | \
             go-junit-report \
             -set-exit-code \
@@ -187,7 +179,6 @@ jobs:
           TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
         run: |
           go test -v ./internal/... ./honeycombio/... \
-            -coverprofile=tf-coverage.txt \
             -covermode=atomic | \
             go-junit-report \
             -set-exit-code \
@@ -222,8 +213,3 @@ jobs:
         with:
           paths: "*-report.xml"
           show: "fail, skip"
-
-      - name: Generate Coverage Report
-        uses: codecov/codecov-action@v4.6.0
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
