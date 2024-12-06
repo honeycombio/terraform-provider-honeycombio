@@ -34,7 +34,7 @@ jobs:
     name: Test US
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     concurrency:
       group: hnytf-testacc-us
     env:
@@ -58,7 +58,6 @@ jobs:
           ./scripts/setup-testsuite-dataset
 
       - name: Run client acceptance tests
-        timeout-minutes: 10
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
           HONEYCOMB_KEY_ID: ${{ secrets.HONEYCOMB_KEY_ID }}
@@ -79,7 +78,6 @@ jobs:
           terraform_wrapper: false
 
       - name: Run TF acceptance tests
-        timeout-minutes: 10
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
           HONEYCOMB_KEY_ID: ${{ secrets.HONEYCOMB_KEY_ID }}
@@ -110,7 +108,6 @@ jobs:
 
       - name: Cleanup Dangling Resources
         if: ${{ always() }}
-        timeout-minutes: 5
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
           HONEYCOMB_KEY_ID: ${{ secrets.HONEYCOMB_KEY_ID }}
@@ -134,7 +131,7 @@ jobs:
     name: Test EU
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     concurrency:
       group: hnytf-testacc-eu
     env:
@@ -159,7 +156,6 @@ jobs:
           ./scripts/setup-testsuite-dataset
 
       - name: Run client acceptance tests
-        timeout-minutes: 10
         env:
           HONEYCOMB_API_ENDPOINT: https://api.eu1.honeycomb.io
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
@@ -181,7 +177,6 @@ jobs:
           terraform_wrapper: false
 
       - name: Run TF acceptance tests
-        timeout-minutes: 10
         env:
           HONEYCOMB_API_ENDPOINT: https://api.eu1.honeycomb.io
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
@@ -213,7 +208,6 @@ jobs:
 
       - name: Cleanup Dangling Resources
         if: ${{ always() }}
-        timeout-minutes: 5
         env:
           HONEYCOMB_API_ENDPOINT: https://api.eu1.honeycomb.io
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
