@@ -80,6 +80,65 @@ func TestRecipientsEmail(t *testing.T) {
 	})
 }
 
+func TestRecipientsCustomWebhook(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := newTestClient(t)
+
+	body := `{"hello": "world"}`
+
+	testCases := []struct {
+		rcpt      client.Recipient
+		expectErr bool
+	}{
+		{
+			rcpt: client.Recipient{
+				Type: client.RecipientTypeWebhook,
+				Details: client.RecipientDetails{
+					WebhookName:    test.RandomStringWithPrefix("test.", 10),
+					WebhookURL:     test.RandomURL(),
+					WebhookSecret:  "secret",
+					WebhookHeaders: []client.WebhookHeader{{Key: "Authorization", Value: "Bearer 123"}},
+					WebhookPayloads: &client.WebhookPayloads{
+						PayloadTemplates:  client.PayloadTemplates{Trigger: &client.PayloadTemplate{Body: body}},
+						TemplateVariables: []client.TemplateVariable{{Name: "severity", Default: "warning"}},
+					},
+				},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		tr := tc.rcpt
+		t.Run(tr.Type.String(), func(t *testing.T) {
+			r, err := c.Recipients.Create(ctx, &tr)
+			t.Cleanup(func() {
+				_ = c.Recipients.Delete(ctx, r.ID)
+			})
+
+			if tc.expectErr {
+				require.Error(t, err, "expected error creating %s recipient", tr.Type)
+				return
+			}
+			require.NoError(t, err, "failed to create %s recipient", tr.Type)
+			r, err = c.Recipients.Get(ctx, r.ID)
+			require.NoError(t, err)
+
+			assert.Equal(t, tr.Type, r.Type)
+			assert.Equal(t, tr.Details.WebhookName, r.Details.WebhookName)
+			assert.Equal(t, tr.Details.WebhookURL, r.Details.WebhookURL)
+			assert.Equal(t, tr.Details.WebhookSecret, r.Details.WebhookSecret)
+			assert.Equal(t, tr.Details.WebhookPayloads, r.Details.WebhookPayloads)
+			assert.Equal(t, tr.Details.WebhookPayloads.TemplateVariables, r.Details.WebhookPayloads.TemplateVariables)
+			if assert.Len(t, r.Details.WebhookHeaders, 1) {
+				assert.Equal(t, tr.Details.WebhookHeaders[0].Key, r.Details.WebhookHeaders[0].Key)
+				assert.Equal(t, tr.Details.WebhookHeaders[0].Value, r.Details.WebhookHeaders[0].Value)
+			}
+		})
+	}
+}
+
 func TestRecipientsWebhooksandMSTeams(t *testing.T) {
 	t.Parallel()
 

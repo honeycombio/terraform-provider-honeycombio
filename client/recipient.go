@@ -65,11 +65,39 @@ type RecipientDetails struct {
 	WebhookName string `json:"webhook_name,omitempty"`
 	WebhookURL  string `json:"webhook_url,omitempty"`
 	// webhook only
-	WebhookSecret string `json:"webhook_secret,omitempty"`
+	WebhookSecret  string          `json:"webhook_secret,omitempty"`
+	WebhookHeaders []WebhookHeader `json:"webhook_headers"`
+	// custom webhook
+	WebhookPayloads *WebhookPayloads `json:"webhook_payloads,omitempty"`
 }
 
 type NotificationRecipientDetails struct {
 	PDSeverity PagerDutySeverity `json:"pagerduty_severity,omitempty"`
+}
+
+type WebhookPayloads struct {
+	PayloadTemplates  PayloadTemplates   `json:"payload_templates"`
+	TemplateVariables []TemplateVariable `json:"template_variables"`
+}
+
+type PayloadTemplates struct {
+	Trigger        *PayloadTemplate `json:"trigger,omitempty"`
+	ExhaustionTime *PayloadTemplate `json:"exhaustion_time,omitempty"`
+	BudgetRate     *PayloadTemplate `json:"budget_rate,omitempty"`
+}
+
+type PayloadTemplate struct {
+	Body string `json:"body"`
+}
+
+type TemplateVariable struct {
+	Name    string `json:"name"`
+	Default string `json:"default_value"`
+}
+
+type WebhookHeader struct {
+	Key   string `json:"header"`
+	Value string `json:"value"`
 }
 
 // RecipientType holds all the possible recipient types.
