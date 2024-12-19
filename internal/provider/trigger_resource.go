@@ -297,17 +297,9 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		state.QueryJson = types.StringNull()
 	} else {
 		state.QueryID = types.StringNull()
-
-		json, err := trigger.Query.Encode()
-		if err != nil {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("query_json"),
-				"failed to encode query_json",
-				err.Error(),
-			)
-		} else {
-			state.QueryJson = types.StringValue(json)
-		}
+		// store the plan's query JSON in state so it matches the config and rely on the plan modifier
+		// to handle the rest when we read it back
+		state.QueryJson = plan.QueryJson
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -450,17 +442,9 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		state.QueryJson = types.StringNull()
 	} else {
 		state.QueryID = types.StringNull()
-
-		json, err := trigger.Query.Encode()
-		if err != nil {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("query_json"),
-				"failed to encode query_json",
-				err.Error(),
-			)
-		} else {
-			state.QueryJson = types.StringValue(json)
-		}
+		// store the plan's query JSON in state so it matches the config and rely on the plan modifier
+		// to handle the rest when we read it back
+		state.QueryJson = plan.QueryJson
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
