@@ -85,30 +85,32 @@ func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.Set
 								},
 							},
 						},
-					},
-				},
-				"variable": schema.SetNestedBlock{
-					Description: "The variables to set with the Webhook notification.",
-					Validators: []validator.Set{
-						setvalidator.SizeAtMost(10),
-					},
-					NestedObject: schema.NestedBlockObject{
-						Attributes: map[string]schema.Attribute{
-							"name": schema.StringAttribute{
-								Required:    true,
-								Description: "The name of the variable",
-								Validators: []validator.String{
-									stringvalidator.LengthBetween(1, 64),
-									stringvalidator.RegexMatches(webhookTemplateNameRegex, "must be an alphanumeric string beginning with a lowercase letter"),
+						Blocks: map[string]schema.Block{
+							"variable": schema.SetNestedBlock{
+								Description: "The variables to set with the webhook notification.",
+								Validators: []validator.Set{
+									setvalidator.SizeAtMost(10),
 								},
-							},
-							"value": schema.StringAttribute{
-								Description: "An optional default value for the variable",
-								Optional:    true,
-								Computed:    true,
-								Default:     stringdefault.StaticString(""),
-								Validators: []validator.String{
-									stringvalidator.LengthAtMost(256),
+								NestedObject: schema.NestedBlockObject{
+									Attributes: map[string]schema.Attribute{
+										"name": schema.StringAttribute{
+											Required:    true,
+											Description: "The name of the variable",
+											Validators: []validator.String{
+												stringvalidator.LengthBetween(1, 64),
+												stringvalidator.RegexMatches(webhookTemplateNameRegex, "must be an alphanumeric string beginning with a lowercase letter"),
+											},
+										},
+										"value": schema.StringAttribute{
+											Description: "The variable value",
+											Optional:    true,
+											Computed:    true,
+											Default:     stringdefault.StaticString(""),
+											Validators: []validator.String{
+												stringvalidator.LengthAtMost(256),
+											},
+										},
+									},
 								},
 							},
 						},
