@@ -606,7 +606,7 @@ func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.Bur
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", testBADescription),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "alert_type", "exhaustion_time"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes", fmt.Sprintf("%d", exhaustionMinutes)),
-		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "2"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.#", "1"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.pagerduty_severity", pagerdutySeverity),
 
