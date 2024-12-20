@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -13,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -80,6 +82,33 @@ func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.Set
 									stringvalidator.All(
 										stringvalidator.OneOf("info", "warning", "error", "critical"),
 									),
+								},
+							},
+						},
+					},
+				},
+				"variable": schema.SetNestedBlock{
+					Description: "The variables to set with the Webhook notification.",
+					Validators: []validator.Set{
+						setvalidator.SizeAtMost(10),
+					},
+					NestedObject: schema.NestedBlockObject{
+						Attributes: map[string]schema.Attribute{
+							"name": schema.StringAttribute{
+								Required:    true,
+								Description: "The name of the variable",
+								Validators: []validator.String{
+									stringvalidator.LengthBetween(1, 64),
+									stringvalidator.RegexMatches(webhookTemplateNameRegex, "must be an alphanumeric string beginning with a lowercase letter"),
+								},
+							},
+							"value": schema.StringAttribute{
+								Description: "An optional default value for the variable",
+								Optional:    true,
+								Computed:    true,
+								Default:     stringdefault.StaticString(""),
+								Validators: []validator.String{
+									stringvalidator.LengthAtMost(256),
 								},
 							},
 						},
@@ -155,8 +184,10 @@ func expandNotificationRecipients(ctx context.Context, set types.Set, diags *dia
 			if diags.HasError() {
 				return nil
 			}
+
 			rcpt.Details = &client.NotificationRecipientDetails{
 				PDSeverity: client.PagerDutySeverity(details[0].PDSeverity.ValueString()),
+				Variables:  expandNotificationVariables(ctx, details[0].Variables, diags),
 			}
 		}
 		clientRecips[i] = rcpt
@@ -207,7 +238,8 @@ func notificationRecipientModelToObjectValue(ctx context.Context, r models.Notif
 		if diags.HasError() {
 			return basetypes.ObjectValue{}
 		}
-		detailsObjVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{"pagerduty_severity": details[0].PDSeverity})
+
+		detailsObjVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{"pagerduty_severity": details[0].PDSeverity, "variable": details[0].Variables})
 		diags.Append(d...)
 		result, d = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, []attr.Value{detailsObjVal})
 		diags.Append(d...)
@@ -236,7 +268,7 @@ func notificationRecipientToModel(ctx context.Context, r client.NotificationReci
 func notificationRecipientDetailsToList(ctx context.Context, details *client.NotificationRecipientDetails, diags *diag.Diagnostics) basetypes.ListValue {
 	var result basetypes.ListValue
 	if details != nil {
-		detailsObj := map[string]attr.Value{"pagerduty_severity": types.StringValue(string(details.PDSeverity))}
+		detailsObj := map[string]attr.Value{"pagerduty_severity": types.StringValue(string(details.PDSeverity)), "variable": flattenNotificationVariables(ctx, details.Variables, diags)}
 		objVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrType, detailsObj)
 		diags.Append(d...)
 		result, d = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, []attr.Value{objVal})
@@ -246,4 +278,50 @@ func notificationRecipientDetailsToList(ctx context.Context, details *client.Not
 	}
 
 	return result
+}
+
+func notificationVariableToObjectValue(v client.NotificationVariable, diags *diag.Diagnostics) basetypes.ObjectValue {
+	variableObj := map[string]attr.Value{
+		"name":  types.StringValue(v.Name),
+		"value": types.StringValue(v.Value),
+	}
+	varObjVal, d := types.ObjectValue(models.NotificationVariableAttrType, variableObj)
+	diags.Append(d...)
+
+	return varObjVal
+}
+
+func flattenNotificationVariables(ctx context.Context, vars []client.NotificationVariable, diags *diag.Diagnostics) types.Set {
+	if len(vars) == 0 || vars == nil {
+		return types.SetNull(types.ObjectType{AttrTypes: models.NotificationVariableAttrType})
+	}
+
+	var notifVarValues []attr.Value
+	for _, v := range vars {
+		notifVarValues = append(notifVarValues, notificationVariableToObjectValue(v, diags))
+	}
+	notifVarResult, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.WebhookHeaderAttrType}, notifVarValues)
+	diags.Append(d...)
+
+	return notifVarResult
+}
+
+func expandNotificationVariables(ctx context.Context, set types.Set, diags *diag.Diagnostics) []client.NotificationVariable {
+	var notifVars []models.NotificationVariableModel
+	diags.Append(set.ElementsAs(ctx, &notifVars, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	clientNotifVars := make([]client.NotificationVariable, len(notifVars))
+	for i, v := range notifVars {
+		notifVar := client.NotificationVariable{
+			Name:  v.Name.ValueString(),
+			Value: v.Value.ValueString(),
+		}
+
+		clientNotifVars[i] = notifVar
+	}
+
+	return clientNotifVars
 }

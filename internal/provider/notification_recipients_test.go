@@ -150,5 +150,5 @@ func notificationRecipientModelsToSet(n []models.NotificationRecipientModel) typ
 }
 
 func severityStringToValue(s string) []attr.Value {
-	return []attr.Value{types.ObjectValueMust(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{"pagerduty_severity": types.StringValue(s)})}
+	return []attr.Value{types.ObjectValueMust(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{"pagerduty_severity": types.StringValue(s), "variable": types.SetNull(types.ObjectType{AttrTypes: models.NotificationVariableAttrType})})}
 }
