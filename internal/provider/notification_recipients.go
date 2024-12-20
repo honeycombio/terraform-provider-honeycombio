@@ -102,7 +102,7 @@ func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.Set
 											},
 										},
 										"value": schema.StringAttribute{
-											Description: "The variable value",
+											Description: "The value of the variable",
 											Optional:    true,
 											Computed:    true,
 											Default:     stringdefault.StaticString(""),
