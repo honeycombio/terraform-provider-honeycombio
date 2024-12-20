@@ -1,3 +1,9 @@
+# 0.28.2 (Dec 20, 2024)
+
+BUGFIXES:
+
+* fix(r/trigger): handle state error with equivalent query_json (#593)
+
 # 0.28.1 (Nov 15, 2024)
 
 BUGFIXES:
