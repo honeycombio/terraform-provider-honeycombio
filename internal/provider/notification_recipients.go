@@ -20,6 +20,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
+
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/modifiers"
@@ -90,6 +92,7 @@ func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.Set
 								Description: "The variables to set with the webhook notification.",
 								Validators: []validator.Set{
 									setvalidator.SizeAtMost(10),
+									validation.ValidNotificationVariables(),
 								},
 								NestedObject: schema.NestedBlockObject{
 									Attributes: map[string]schema.Attribute{
