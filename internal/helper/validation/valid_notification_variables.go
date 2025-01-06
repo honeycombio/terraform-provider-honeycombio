@@ -11,9 +11,7 @@ import (
 
 var _ validator.Set = notificationVariablesValidator{}
 
-type notificationVariablesValidator struct {
-	schemes []string
-}
+type notificationVariablesValidator struct{}
 
 func (v notificationVariablesValidator) Description(_ context.Context) string {
 	return "value must be a valid set of webhook variables"
