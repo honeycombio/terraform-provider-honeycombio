@@ -44,7 +44,8 @@ func (v notificationVariablesValidator) ValidateSet(ctx context.Context, request
 	}
 }
 
-// ValidQuerySpec determines if the provided JSON is a valid Honeycomb Query Specification
+// ValidNotificationVariables determines if the provided recipient notification variables are valid.
+// Today this means no variable names are duplicated.
 func ValidNotificationVariables() validator.Set {
 	return notificationVariablesValidator{}
 }
