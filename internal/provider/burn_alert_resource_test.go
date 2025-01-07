@@ -119,6 +119,43 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasic(t *testing.T) {
 	})
 }
 
+func TestAcc_BurnAlertResource_exhaustionTimeBasicWebhookRecipient(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+	exhaustionMinutes := 240
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			// Create - basic
+			{
+				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, "warning"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t, burnAlert, exhaustionMinutes, sloID, "warning"),
+			},
+			// Update - change variable value
+			{
+				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t, burnAlert, exhaustionMinutes, sloID, "info"),
+			},
+			// Update - remove variables
+			{
+				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, ""),
+				Check:  testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t, burnAlert, exhaustionMinutes, sloID, ""),
+			},
+			// Import
+			{
+				ResourceName:            "honeycombio_burn_alert.test",
+				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"recipient"},
+			},
+		},
+	})
+}
+
 func TestAcc_BurnAlertResource_budgetRateBasic(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
@@ -164,6 +201,44 @@ func TestAcc_BurnAlertResource_budgetRateBasic(t *testing.T) {
 			{
 				Config: testAccConfigBurnAlertExhaustionTime_basic(exhaustionTime, dataset, sloID, "info"),
 				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionTime, "info", sloID),
+			},
+		},
+	})
+}
+
+func TestAcc_BurnAlertResource_budgetRateBasicWebhookRecipient(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+	burnAlert := &client.BurnAlert{}
+	budgetRateWindowMinutes := 60
+	budgetRateDecreasePercent := float64(5)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			// Create - basic
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "warning"),
+				Check:  testAccEnsureSuccessBudgetRateAlertWithWebhookRecip(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, "warning"),
+			},
+			// Update - change variable value
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "info"),
+				Check:  testAccEnsureSuccessBudgetRateAlertWithWebhookRecip(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, "info"),
+			},
+			// Update - remove variables
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, ""),
+				Check:  testAccEnsureSuccessBudgetRateAlertWithWebhookRecip(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, ""),
+			},
+			// Import
+			{
+				ResourceName:            "honeycombio_burn_alert.test",
+				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"recipient"},
 			},
 		},
 	})
@@ -328,6 +403,10 @@ func TestAcc_BurnAlertResource_validateExhaustionTime(t *testing.T) {
 				Config:      testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
 				ExpectError: regexp.MustCompile(`"budget_rate_decrease_percent": must not be configured when`),
 			},
+			{
+				Config:      testAccConfigBurnAlertExhaustionTime_basicWebhookRecipientDuplicateVar(240, dataset, sloID),
+				ExpectError: regexp.MustCompile(`cannot have more than one "variable" with the same "name"`),
+			},
 		},
 	})
 }
@@ -370,6 +449,10 @@ func TestAcc_BurnAlertResource_validateBudgetRate(t *testing.T) {
 			{
 				Config:      testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID),
 				ExpectError: regexp.MustCompile(`"exhaustion_minutes": must not be configured when "alert_type"`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_basicWebhookRecipientDuplicateVar(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID),
+				ExpectError: regexp.MustCompile(`cannot have more than one "variable" with the same "name"`),
 			},
 		},
 	})
@@ -551,6 +634,54 @@ func testAccEnsureSuccessExhaustionTimeAlert(t *testing.T, burnAlert *client.Bur
 	)
 }
 
+// Checks that the exhaustion time burn alert exists, has the correct attributes, and has the correct state
+func testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t *testing.T, burnAlert *client.BurnAlert, exhaustionMinutes int, sloID, varValue string) resource.TestCheckFunc {
+	if varValue == "" {
+		return resource.ComposeAggregateTestCheckFunc(
+			// Check that the burn alert exists
+			testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
+
+			// Check that the burn alert has the correct attributes
+			testAccEnsureAttributesCorrectExhaustionTime(burnAlert, exhaustionMinutes, sloID),
+
+			// Check that the burn alert has the correct values in state
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", sloID),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", testBADescription),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "alert_type", "exhaustion_time"),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes", fmt.Sprintf("%d", exhaustionMinutes)),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.#", "0"),
+
+			// Budget rate attributes should not be set
+			resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "budget_rate_window_minutes"),
+			resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "budget_rate_decrease_percent"),
+		)
+	}
+
+	return resource.ComposeAggregateTestCheckFunc(
+		// Check that the burn alert exists
+		testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
+
+		// Check that the burn alert has the correct attributes
+		testAccEnsureAttributesCorrectExhaustionTime(burnAlert, exhaustionMinutes, sloID),
+
+		// Check that the burn alert has the correct values in state
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", sloID),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", testBADescription),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "alert_type", "exhaustion_time"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes", fmt.Sprintf("%d", exhaustionMinutes)),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.#", "1"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.variable.#", "1"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.variable.0.name", "severity"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.variable.0.value", varValue),
+
+		// Budget rate attributes should not be set
+		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "budget_rate_window_minutes"),
+		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "budget_rate_decrease_percent"),
+	)
+}
+
 // Checks that the budget rate burn alert exists, has the correct attributes, and has the correct state
 func testAccEnsureSuccessBudgetRateAlert(t *testing.T, burnAlert *client.BurnAlert, budgetRateWindowMinutes int, budgetRateDecreasePercent float64, pagerdutySeverity, sloID string) resource.TestCheckFunc {
 	return resource.ComposeAggregateTestCheckFunc(
@@ -569,6 +700,54 @@ func testAccEnsureSuccessBudgetRateAlert(t *testing.T, burnAlert *client.BurnAle
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.#", "1"),
 		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.pagerduty_severity", pagerdutySeverity),
+		// Exhaustion time attributes should not be set
+		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes"),
+	)
+}
+
+// Checks that the budget rate burn alert exists, has the correct attributes, and has the correct state
+func testAccEnsureSuccessBudgetRateAlertWithWebhookRecip(t *testing.T, burnAlert *client.BurnAlert, budgetRateWindowMinutes int, budgetRateDecreasePercent float64, sloID, varValue string) resource.TestCheckFunc {
+	if varValue == "" {
+		return resource.ComposeAggregateTestCheckFunc(
+			// Check that the burn alert exists
+			testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
+
+			// Check that the burn alert has the correct attributes
+			testAccEnsureAttributesCorrectBudgetRate(burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, sloID),
+
+			// Check that the burn alert has the correct values in state
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", sloID),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", testBADescription),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "alert_type", "budget_rate"),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "budget_rate_window_minutes", fmt.Sprintf("%d", budgetRateWindowMinutes)),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "budget_rate_decrease_percent", helper.FloatToPercentString(budgetRateDecreasePercent)),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
+			resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.#", "0"),
+
+			// Exhaustion time attributes should not be set
+			resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes"),
+		)
+	}
+
+	return resource.ComposeAggregateTestCheckFunc(
+		// Check that the burn alert exists
+		testAccEnsureBurnAlertExists(t, "honeycombio_burn_alert.test", burnAlert),
+
+		// Check that the burn alert has the correct attributes
+		testAccEnsureAttributesCorrectBudgetRate(burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, sloID),
+
+		// Check that the burn alert has the correct values in state
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", sloID),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "description", testBADescription),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "alert_type", "budget_rate"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "budget_rate_window_minutes", fmt.Sprintf("%d", budgetRateWindowMinutes)),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "budget_rate_decrease_percent", helper.FloatToPercentString(budgetRateDecreasePercent)),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.#", "1"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.#", "1"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.variable.#", "1"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.variable.0.name", "severity"),
+		resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "recipient.0.notification_details.0.variable.0.value", varValue),
+
 		// Exhaustion time attributes should not be set
 		resource.TestCheckNoResourceAttr("honeycombio_burn_alert.test", "exhaustion_minutes"),
 	)
@@ -722,6 +901,13 @@ resource "honeycombio_burn_alert" "test" {
 }
 
 func testAccConfigBurnAlertDefault_basic(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
+	tmplBody := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
@@ -742,7 +928,147 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[4]s"
     }
   }
-}`, exhaustionMinutes, dataset, sloID, pdseverity, testBADescription)
+}`, exhaustionMinutes, dataset, sloID, pdseverity, testBADescription, tmplBody)
+}
+
+func testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes int, dataset, sloID, variableValue string) string {
+	tmplBody := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
+
+	if variableValue == "" {
+		return fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "test"
+	url  = "http://example.com"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "exhaustion_time"
+      body = %[5]s
+    }
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = %[1]d
+
+  dataset            = "%[2]s"
+  slo_id             = "%[3]s"
+  description        = "%[4]s"
+
+  recipient {
+	id = honeycombio_webhook_recipient.test.id
+  }
+}`, exhaustionMinutes, dataset, sloID, testBADescription, tmplBody)
+	}
+
+	return fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "test"
+	url  = "http://example.com"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "exhaustion_time"
+      body = %[5]s
+    }
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = %[1]d
+
+  dataset            = "%[2]s"
+  slo_id             = "%[3]s"
+  description        = "%[4]s"
+
+  recipient {
+	id = honeycombio_webhook_recipient.test.id
+
+	notification_details {	
+ 		variable {
+ 			name = "severity"
+ 			value = "%[6]s"
+ 		}
+ 	}
+  }
+}`, exhaustionMinutes, dataset, sloID, testBADescription, tmplBody, variableValue)
+}
+
+func testAccConfigBurnAlertExhaustionTime_basicWebhookRecipientDuplicateVar(exhaustionMinutes int, dataset, sloID string) string {
+	tmplBody := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
+
+	return fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "test"
+	url  = "http://example.com"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "exhaustion_time"
+      body = %[5]s
+    }
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = %[1]d
+
+  dataset            = "%[2]s"
+  slo_id             = "%[3]s"
+  description        = "%[4]s"
+
+  recipient {
+	id = honeycombio_webhook_recipient.test.id
+
+	notification_details {	
+ 		variable {
+ 			name = "severity"
+ 			value = "info"
+ 		}
+
+		variable {
+ 			name = "severity"
+ 			value = "critical"
+ 		}
+ 	}
+  }
+}`, exhaustionMinutes, dataset, sloID, testBADescription, tmplBody)
 }
 
 func testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
@@ -827,6 +1153,152 @@ resource "honeycombio_burn_alert" "test" {
     }
   }
 }`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, pdseverity, testBADescription)
+}
+
+func testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, variableValue string) string {
+	tmplBody := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
+
+	if variableValue == "" {
+		return fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "test"
+	url  = "http://example.com"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "budget_rate"
+      body = %[6]s
+    }
+}
+
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  description                  = "%[5]s"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  dataset = "%[3]s"
+  slo_id  = "%[4]s"
+
+  recipient {
+	id = honeycombio_webhook_recipient.test.id
+  }
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription, tmplBody)
+	}
+
+	return fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "test"
+	url  = "http://example.com"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "budget_rate"
+      body = %[6]s
+    }
+}
+
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  description                  = "%[5]s"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  dataset = "%[3]s"
+  slo_id  = "%[4]s"
+
+  recipient {
+	id = honeycombio_webhook_recipient.test.id
+	
+	notification_details {	
+		variable {
+			name = "severity"
+			value = "%[7]s"
+		}
+	}
+  }
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription, tmplBody, variableValue)
+}
+
+func testAccConfigBurnAlertBudgetRate_basicWebhookRecipientDuplicateVar(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID string) string {
+	tmplBody := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
+
+	return fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "test"
+	url  = "http://example.com"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "budget_rate"
+      body = %[6]s
+    }
+}
+
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  description                  = "%[5]s"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  dataset = "%[3]s"
+  slo_id  = "%[4]s"
+
+  recipient {
+	id = honeycombio_webhook_recipient.test.id
+	
+	notification_details {	
+		variable {
+			name = "severity"
+			value = "info"
+		}
+
+		variable {
+			name = "severity"
+			value = "critical"
+		}
+	}
+  }
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription, tmplBody)
 }
 
 func testAccConfigBurnAlertBudgetRate_trailingZeros(dataset, sloID string) string {

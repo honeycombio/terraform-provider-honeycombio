@@ -71,8 +71,14 @@ type RecipientDetails struct {
 	WebhookPayloads *WebhookPayloads `json:"webhook_payloads,omitempty"`
 }
 
+type NotificationVariable struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 type NotificationRecipientDetails struct {
-	PDSeverity PagerDutySeverity `json:"pagerduty_severity,omitempty"`
+	Variables  []NotificationVariable `json:"variables,omitempty"`
+	PDSeverity PagerDutySeverity      `json:"pagerduty_severity,omitempty"`
 }
 
 type WebhookPayloads struct {

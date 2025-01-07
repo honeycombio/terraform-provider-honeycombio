@@ -96,7 +96,7 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 					ID:      types.StringValue("ijkl13579"),
 					Type:    types.StringValue("pagerduty"),
 					Target:  types.StringValue("test-pagerduty"),
-					Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, severityStringToValue("warning")),
+					Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, notificationRecipientDetailsToValue("warning")),
 				},
 			}),
 		},
@@ -109,7 +109,7 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 					{ID: types.StringValue("abcd12345")},
 					{Type: types.StringValue("slack"), Target: types.StringValue("#test-foo")},
-					{ID: types.StringValue("ijkl13579"), Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, severityStringToValue("warning"))},
+					{ID: types.StringValue("ijkl13579"), Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, notificationRecipientDetailsToValue("warning"))},
 				}),
 			},
 			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
@@ -125,7 +125,7 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 					{ID: types.StringValue("abcd12345")},
 					{Type: types.StringValue("slack"), Target: types.StringValue("#test-channel")},
-					{ID: types.StringValue("ijkl13579"), Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, severityStringToValue("warning"))},
+					{ID: types.StringValue("ijkl13579"), Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, notificationRecipientDetailsToValue("warning"))},
 				}),
 			},
 			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
@@ -149,6 +149,6 @@ func notificationRecipientModelsToSet(n []models.NotificationRecipientModel) typ
 	return types.SetValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}, values)
 }
 
-func severityStringToValue(s string) []attr.Value {
-	return []attr.Value{types.ObjectValueMust(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{"pagerduty_severity": types.StringValue(s)})}
+func notificationRecipientDetailsToValue(s string) []attr.Value {
+	return []attr.Value{types.ObjectValueMust(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{"pagerduty_severity": types.StringValue(s), "variable": types.SetNull(types.ObjectType{AttrTypes: models.NotificationVariableAttrType})})}
 }

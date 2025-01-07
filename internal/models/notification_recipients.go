@@ -23,8 +23,20 @@ var NotificationRecipientAttrType = map[string]attr.Type{
 
 type NotificationRecipientDetailsModel struct {
 	PDSeverity types.String `tfsdk:"pagerduty_severity"`
+	Variables  types.Set    `tfsdk:"variable"`
 }
 
 var NotificationRecipientDetailsAttrType = map[string]attr.Type{
 	"pagerduty_severity": types.StringType,
+	"variable":           types.SetType{ElemType: types.ObjectType{AttrTypes: NotificationVariableAttrType}},
+}
+
+type NotificationVariableModel struct {
+	Name  types.String `tfsdk:"name"`
+	Value types.String `tfsdk:"value"`
+}
+
+var NotificationVariableAttrType = map[string]attr.Type{
+	"name":  types.StringType,
+	"value": types.StringType,
 }
