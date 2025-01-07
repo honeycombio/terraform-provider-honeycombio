@@ -403,6 +403,10 @@ func TestAcc_BurnAlertResource_validateExhaustionTime(t *testing.T) {
 				Config:      testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID),
 				ExpectError: regexp.MustCompile(`"budget_rate_decrease_percent": must not be configured when`),
 			},
+			{
+				Config:      testAccConfigBurnAlertExhaustionTime_basicWebhookRecipientDuplicateVar(240, dataset, sloID),
+				ExpectError: regexp.MustCompile(`cannot have more than one "variable" with the same "name"`),
+			},
 		},
 	})
 }
@@ -445,6 +449,10 @@ func TestAcc_BurnAlertResource_validateBudgetRate(t *testing.T) {
 			{
 				Config:      testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID),
 				ExpectError: regexp.MustCompile(`"exhaustion_minutes": must not be configured when "alert_type"`),
+			},
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_basicWebhookRecipientDuplicateVar(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID),
+				ExpectError: regexp.MustCompile(`cannot have more than one "variable" with the same "name"`),
 			},
 		},
 	})
@@ -1008,6 +1016,61 @@ resource "honeycombio_burn_alert" "test" {
 }`, exhaustionMinutes, dataset, sloID, testBADescription, tmplBody, variableValue)
 }
 
+func testAccConfigBurnAlertExhaustionTime_basicWebhookRecipientDuplicateVar(exhaustionMinutes int, dataset, sloID string) string {
+	tmplBody := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
+
+	return fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "test"
+	url  = "http://example.com"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "exhaustion_time"
+      body = %[5]s
+    }
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = %[1]d
+
+  dataset            = "%[2]s"
+  slo_id             = "%[3]s"
+  description        = "%[4]s"
+
+  recipient {
+	id = honeycombio_webhook_recipient.test.id
+
+	notification_details {	
+ 		variable {
+ 			name = "severity"
+ 			value = "info"
+ 		}
+
+		variable {
+ 			name = "severity"
+ 			value = "critical"
+ 		}
+ 	}
+  }
+}`, exhaustionMinutes, dataset, sloID, testBADescription, tmplBody)
+}
+
 func testAccConfigBurnAlertDefault_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_burn_alert" "test" {
@@ -1179,6 +1242,63 @@ resource "honeycombio_burn_alert" "test" {
 	}
   }
 }`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription, tmplBody, variableValue)
+}
+
+func testAccConfigBurnAlertBudgetRate_basicWebhookRecipientDuplicateVar(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID string) string {
+	tmplBody := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
+
+	return fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "test"
+	url  = "http://example.com"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "budget_rate"
+      body = %[6]s
+    }
+}
+
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  description                  = "%[5]s"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  dataset = "%[3]s"
+  slo_id  = "%[4]s"
+
+  recipient {
+	id = honeycombio_webhook_recipient.test.id
+	
+	notification_details {	
+		variable {
+			name = "severity"
+			value = "info"
+		}
+
+		variable {
+			name = "severity"
+			value = "critical"
+		}
+	}
+  }
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription, tmplBody)
 }
 
 func testAccConfigBurnAlertBudgetRate_trailingZeros(dataset, sloID string) string {

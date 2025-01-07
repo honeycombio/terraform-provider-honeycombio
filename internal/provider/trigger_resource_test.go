@@ -139,6 +139,19 @@ func TestAcc_TriggerResource(t *testing.T) {
 			},
 		})
 	})
+
+	t.Run("duplicate variable on custom webhook recipient", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config:      testAccConfigBasicTriggerTestWithWebhookRecipAndDuplicateVar(dataset, name),
+					ExpectError: regexp.MustCompile(`cannot have more than one "variable" with the same "name"`),
+				},
+			},
+		})
+	})
 }
 
 // TestAcc_TriggerResourceUpgradeFromVersion014 is intended to test the migration
@@ -1025,6 +1038,82 @@ resource "honeycombio_trigger" "test" {
 	}
   }
 }`, dataset, name, varValue, tmplBody)
+}
+
+func testAccConfigBasicTriggerTestWithWebhookRecipAndDuplicateVar(dataset, name string) string {
+	tmplBody := `<<EOT
+		{
+			"name": " {{ .Name }}",
+			"id": " {{ .ID }}",
+			"description": " {{ .Description }}",
+		}
+		EOT`
+
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+  time_range = 1200
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_webhook_recipient" "test" {
+  name = "test"
+	url  = "http://example.com"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "trigger"
+      body 	 = %[3]s
+    }
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  description = "My nice description"
+
+  query_id = honeycombio_query.test.id
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = data.honeycombio_query_specification.test.time_range / 2
+
+  recipient {
+	id = honeycombio_webhook_recipient.test.id
+	
+	notification_details {	
+		variable {
+			name = "severity"
+			value = "info"
+		}
+
+		variable {
+			name = "severity"
+			value = "critical"
+		}
+	}
+  }
+}`, dataset, name, tmplBody)
 }
 
 func testAccConfigBasicTriggerTest_QuerySpec(dataset, name, pdseverity string) string {
