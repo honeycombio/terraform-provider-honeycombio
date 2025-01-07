@@ -60,7 +60,7 @@ variable "dataset" {
   type = string
 }
 
-data "honeycombio_recipient" "pd-prod" {
+data "honeycombio_recipient" "pd_prod" {
   type = "pagerduty"
 
   detail_filter {
@@ -97,7 +97,7 @@ resource "honeycombio_trigger" "example" {
   }
 
   recipient {
-    id = data.honeycombio_recipient.pd-prod.id
+    id = data.honeycombio_recipient.pd_prod.id
 
     notification_details {
       pagerduty_severity = "warning"
@@ -114,6 +114,71 @@ resource "honeycombio_trigger" "example" {
       "friday"
     ]
   }
+}
+```
+### Example - Example with Webhook Recipient and Notification Variable
+```hcl
+variable "dataset" {
+    type = string
+}
+
+data "honeycombio_recipient" "custom_webhook" {
+    type = "webhook"
+
+    detail_filter {
+        name  = "name"
+        value = "My Custom Webhook"
+    }
+}
+
+data "honeycombio_query_specification" "example" {
+    calculation {
+        op     = "AVG"
+        column = "duration_ms"
+    }
+
+    filter {
+        column = "trace.parent_id"
+        op     = "does-not-exist"
+    }
+}
+
+resource "honeycombio_trigger" "example" {
+    name        = "Requests are slower than usual"
+    description = "Average duration of all requests for the last 10 minutes."
+
+    query_json = data.honeycombio_query_specification.example.json
+    dataset    = var.dataset
+
+    frequency = 600 // in seconds, 10 minutes
+
+    threshold {
+        op             = ">"
+        value          = 1000
+        exceeded_limit = 3
+    }
+
+    recipient {
+        id = data.honeycombio_recipient.custom_webhook.id
+
+        notification_details {
+            variable {
+                name = "severity"
+                value = "info"
+            }
+        }
+    }
+
+    evaluation_schedule {
+        start_time = "13:00"
+        end_time   = "21:00"
+
+        days_of_week = [
+            "monday",
+            "wednesday",
+            "friday"
+        ]
+    }
 }
 ```
 
@@ -166,7 +231,9 @@ Cannot not be used in combination with `id`.
 * `target` - (Optional) Target of the trigger recipient, this has another meaning depending on the type of recipient (see the table below).
 Cannot not be used in combination with `id`.
 * `id` - (Optional) The ID of an already existing recipient. Cannot not be used in combination with `type` and `target`.
-* `notification_details` - (Optional) a block of additional details to send along with the notification. The only supported option currently is `pagerduty_severity` which has a default value of `critical` but can be set to one of `info`, `warning`, `error`, or `critical` and must be used in combination with a PagerDuty recipient.
+* `notification_details` - (Optional) a block of additional details to send along with the notification.
+  * `pagerduty_severity` - (Optional) Indicates the severity of an alert and has a default value of `critical` but can be set to one of `info`, `warning`, `error`, or `critical` and must be used in combination with a PagerDuty recipient.
+  * `variable` - (Optional) Up to 10 configuration blocks with a `name` and a `value` to override the default variable value. Must be used in combination with a Webhook recipient that already has a variable with the same name configured.
 
 Type      | Target
 ----------|-------------------------

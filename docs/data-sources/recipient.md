@@ -88,4 +88,4 @@ In addition to all arguments above, the following attributes are exported:
 * `secret` - (Sensitive) The webhook recipient's secret -- if of type `webhook`.
 * `url` - The webhook recipient's URL - if of type `webhook`, `msteams` or `msteams_workflow`.
 * `integration_key` - (Sensitive) The PagerDuty recipient's integration key -- if of type `pagerduty`.
-* `integration_name` - The PagerDuty recipient's inregration name -- if of type `pagerduty`.
+* `integration_name` - The PagerDuty recipient's integration name -- if of type `pagerduty`.
