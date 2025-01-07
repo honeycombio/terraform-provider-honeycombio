@@ -859,6 +859,43 @@ resource "honeycombio_trigger" "test" {
 	})
 }
 
+func TestAcc_TriggerResource_QueryJSONHandlesEquivQuerySpecs(t *testing.T) {
+	dataset := testAccDataset()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT"
+  }
+
+  filter_combination = "AND"
+
+  time_range = 1200
+}
+
+resource honeycombio_trigger "test" {
+  name    = "test trigger"
+  dataset = "%s"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = data.honeycombio_query_specification.test.time_range / 2
+
+  query_json = data.honeycombio_query_specification.test.json
+}`, dataset),
+			},
+		},
+	})
+}
+
 func testAccConfigBasicTriggerTest(dataset, name, pdseverity string) string {
 	email := test.RandomEmail()
 	pdKey := test.RandomString(32)
