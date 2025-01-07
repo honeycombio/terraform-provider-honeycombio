@@ -92,6 +92,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "600"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "1"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.notification_details.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.notification_details.0.variable.#", "1"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.notification_details.0.variable.0.name", "severity"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.notification_details.0.variable.0.value", "info"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "1"),
@@ -102,6 +103,33 @@ func TestAcc_TriggerResource(t *testing.T) {
 				// then update the variable value from info -> critical
 				{
 					Config: testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, "critical"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "600"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.notification_details.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.notification_details.0.variable.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.notification_details.0.variable.0.name", "severity"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.notification_details.0.variable.0.value", "critical"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "1"),
+						resource.TestCheckResourceAttrPair("honeycombio_trigger.test", "query_id", "honeycombio_query.test", "id"),
+						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_json"),
+					),
+				},
+				// remove variables
+				{
+					Config: testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, ""),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "600"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "1"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.0.notification_details.#", "0"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "1"),
+						resource.TestCheckResourceAttrPair("honeycombio_trigger.test", "query_id", "honeycombio_query.test", "id"),
+						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_json"),
+					),
 				},
 				{
 					ResourceName:        "honeycombio_trigger.test",
@@ -880,6 +908,62 @@ func testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, varValue strin
 			"description": " {{ .Description }}",
 		}
 		EOT`
+
+	if varValue == "" {
+		return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+  time_range = 1200
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_webhook_recipient" "test" {
+  name = "test"
+	url  = "http://example.com"
+
+	header {
+	  name = "Authorization"
+	  value = "Bearer abc123"
+	}
+
+	variable {
+	  name = "severity"
+      default_value = "critical"
+	}
+
+	template {
+	  type   = "trigger"
+      body 	 = %[3]s
+    }
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  description = "My nice description"
+
+  query_id = honeycombio_query.test.id
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = data.honeycombio_query_specification.test.time_range / 2
+
+  recipient {
+	id = honeycombio_webhook_recipient.test.id
+  }
+}`, dataset, name, tmplBody)
+	}
 
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
