@@ -1,3 +1,30 @@
+# 0.29.0 (Jan 10, 2024)
+
+NOTES: this release contains support for managing Customizable Webhook Recipients.
+To learn more about the feature check out the [provider documentation](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs/resources/webhook_recipient)
+or the [Honeycomb documentation](https://docs.honeycomb.io/integrations/webhooks/#customize-your-webhook).
+
+ENHANCEMENTS
+
+* feat(r/webhook_recipient): support for templates, custom headers, and template variables (#580, #582, #583, #586)
+* feat(r/board): bump up max number of SLOs on a board to 24 (#585)
+* feat(r/trigger, r/burn_alert): notification variable support (#594)
+
+HOUSEKEEPING
+
+* chore(ci): tidy up lint config (#577)
+* maint(deps): bump slackapi/slack-github-action from 1.27.0 to 2.0.0 (#570)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.10.0 to 1.11.0 (#579)
+* maint(deps): bump github.com/stretchr/testify from 1.9.0 to 1.10.0 (#584)
+* chore(ci): increase integration test timeout to 20min (#587)
+* chore(ci): remove codecov (#588)
+* maint(deps): bump golang.org/x/crypto from 0.29.0 to 0.31.0 (#589)
+* maint(deps): bump golang.org/x/net from 0.28.0 to 0.32.0 (#591)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.15.0 to 0.16.0 (#590)
+* maint(deps): bump golang.org/x/net from 0.32.0 to 0.33.0 (#592)
+* maint(deps): bump golang.org/x/net from 0.33.0 to 0.34.0 (#596)
+* maint(deps): bump github.com/hashicorp/jsonapi from 1.3.2-0.20240802183744-2490a9451c3d to 1.3.2 (#597)
+
 # 0.28.2 (Dec 20, 2024)
 
 BUGFIXES:
