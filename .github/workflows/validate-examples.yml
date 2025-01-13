@@ -3,10 +3,6 @@ name: Validate Examples
 on:
     workflow_dispatch:
     push:
-        paths-ignore:
-            - README.md
-            - CHANGELOG.md
-            - CONTRIBUTING.md
 
 jobs:
     validate:
@@ -24,6 +20,11 @@ jobs:
 
             - name: Build
               run: go build -o /tmp/providers/terraform-provider-honeycombio
+
+            - name: Setup Terraform
+              uses: hashicorp/setup-terraform@v3
+              with:
+                  terraform_wrapper: false
 
             - name: Validate examples
               env:

@@ -34,7 +34,7 @@ jobs:
     name: Test US
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     concurrency:
       group: hnytf-testacc-us
     env:
@@ -86,6 +86,7 @@ jobs:
           TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
         run: |
           go test -v ./internal/... ./honeycombio/... \
+            -timeout=20m \
             -covermode=atomic | \
             go-junit-report \
             -set-exit-code \
@@ -124,7 +125,7 @@ jobs:
     name: Test EU
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     concurrency:
       group: hnytf-testacc-eu
     env:
@@ -179,6 +180,7 @@ jobs:
           TF_ACC_TERRAFORM_VERSION: ${{ env.TERRAFORM_VERSION }}
         run: |
           go test -v ./internal/... ./honeycombio/... \
+            -timeout=20m \
             -covermode=atomic | \
             go-junit-report \
             -set-exit-code \
