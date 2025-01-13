@@ -11,6 +11,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,6 +34,7 @@ jobs:
     name: Test US
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     concurrency:
       group: hnytf-testacc-us
     env:
@@ -123,6 +125,7 @@ jobs:
     name: Test EU
     needs: build
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     concurrency:
       group: hnytf-testacc-eu
     env:
