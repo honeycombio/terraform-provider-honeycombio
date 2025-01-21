@@ -91,7 +91,7 @@ This project uses `golangci-lint` with the configuration at `.golangci.yml` in t
 
 ### Run GitHub Actions on your fork
 
-If you fork the repository, you can also run the tests on GitHub Actions (for free since it's a public repository). Unfortunatly there is no mechanism to share secrets, so all runs will fail until the necessary secrets are configured.
+If you fork the repository, you can also run the tests on GitHub Actions (for free since it's a public repository). Unfortunately there is no mechanism to share secrets, so all runs will fail until the necessary secrets are configured.
 
 To properly setup the GitHub Actions, add the following secrets:
 
@@ -104,14 +104,14 @@ To properly setup the GitHub Actions, add the following secrets:
 To release a new version of the Terraform provider a binary has to be built for a list of platforms ([more information](https://developer.hashicorp.com/terraform/registry/providers/publishing#creating-a-github-release)).
 This process is largely automated with GoReleaser and GitHub Actions.
 
-The unautomated part is creating a "releast commit" which updates `CHANGELOG.md` in the root of the repository as well as the references to the build version in the various examples.
+The unautomated part is creating a "release commit" which updates `CHANGELOG.md` in the root of the repository as well as the references to the build version in the various examples.
 
 Once the release commit has landed on the `main` branch:
 
 - Create a tag following semantic convention prefixed with a `v` (i.e. `v0.83.0`)
   - this will start the "release" workflow which builds various versions of the provider for target platforms and architectures.
     This can take up to 10 minutes to complete.
-- When the release workflow compltes, go to [releases](https://github.com/honeycombio/terraform-provider-honeycombio/releases/) and you'll find a draft release with the build artifacts attached.
+- When the release workflow completes, go to [releases](https://github.com/honeycombio/terraform-provider-honeycombio/releases/) and you'll find a draft release with the build artifacts attached.
 - Update the release name to match the release tag (i.e. `v0.83.0`)
 - Copy the section from `CHANGELOG.md` for this release into the release description.
 - Publish the release.
