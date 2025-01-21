@@ -33,12 +33,12 @@ func newQueryAnnotation() *schema.Resource {
 			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 80),
+				ValidateFunc: validation.StringLenBetween(1, 320),
 			},
 			"description": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringLenBetween(1, 280),
+				ValidateFunc: validation.StringLenBetween(1, 1023),
 			},
 		},
 	}
