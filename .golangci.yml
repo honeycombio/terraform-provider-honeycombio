@@ -11,6 +11,8 @@ issues:
           text: "Error return value of `d.Set` is not checked"
         - path: honeycombio/*
           text: "type assertion must be checked"
+        - path: honeycombio/*
+          text: "right hand must be only type assertion"
 
 linters-settings:
     goimports:
@@ -31,9 +33,9 @@ linters:
         - nilerr
         - predeclared
         - staticcheck
-        - tenv
         - testifylint
         - unconvert
+        - usetesting
         - unparam
         - unused
         - govet
