@@ -38,8 +38,18 @@ func newSLO() *schema.Resource {
 				Description:  "A description of the SLO's intent and context.",
 			},
 			"dataset": {
-				Type:        schema.TypeString,
-				Required:    true,
+				Type:     schema.TypeString,
+				Optional: true,
+				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+					if oldValue == newValue {
+						return true
+					}
+					if oldValue != "" && newValue == "__all__" {
+						return true
+					}
+					return false
+				},
+				Default:     "__all__",
 				ForceNew:    true,
 				Description: "The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI's dataset is `\"__all__\"`.",
 			},
@@ -70,11 +80,15 @@ func resourceSLOImport(ctx context.Context, d *schema.ResourceData, i interface{
 	// import ID is of the format <dataset>/<SLO ID>
 	dataset, id, found := strings.Cut(d.Id(), "/")
 	if !found {
-		return nil, errors.New("invalid import ID, supplied ID must be written as <dataset>/<SLO ID>")
+		dataset = "__all__"
+		id = d.Id()
 	}
 
-	d.Set("dataset", dataset)
 	d.SetId(id)
+	err := d.Set("dataset", dataset)
+	if err != nil {
+		return nil, err
+	}
 
 	return []*schema.ResourceData{d}, nil
 }

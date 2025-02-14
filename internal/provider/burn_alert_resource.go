@@ -97,10 +97,31 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"dataset": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
+				Default:     stringdefault.StaticString("__all__"),
 				Description: "The dataset this Burn Alert is associated with.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.RequiresReplaceIf(
+						func(_ context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+							oldValue := req.StateValue.ValueString()
+							newValue := req.PlanValue.ValueString()
+							if req.PlanValue.IsNull() && req.StateValue.IsNull() {
+								return
+							}
+							if oldValue == newValue {
+								return
+							}
+
+							// Allow switching to "__all__" without replacement
+							if oldValue != "" && newValue == "__all__" {
+								return // No replacement needed
+							}
+
+							resp.RequiresReplace = true
+						},
+						"If the value of this attribute changes to a non-default, Terraform will destroy and recreate the resource.",
+						"If the value of this attribute changes, Terraform will destroy and recreate the resource.",
+					),
 				},
 			},
 			"description": schema.StringAttribute{
