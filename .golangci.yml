@@ -6,7 +6,7 @@ issues:
           linters:
               - errcheck
               - unparam
-          # disabling both of these for the SDKv2-based code as it's idomatic for the SDK
+          # disabling these for the SDKv2-based code as it's idomatic and things are being migrated to the Framework
         - path: honeycombio/*
           text: "Error return value of `d.Set` is not checked"
         - path: honeycombio/*
