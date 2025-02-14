@@ -77,6 +77,9 @@ func (*datasetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 255),
 				},
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"slug": schema.StringAttribute{
 				Description: "The slug of the Dataset.",
