@@ -43,7 +43,7 @@ func newDerivedColumn() *schema.Resource {
 							return nil, []error{fmt.Errorf("expected type of %s to be string", k)}
 						}
 
-						if _, err := dcparser.ANTLRParse(v, true); err != nil {
+						if _, err := dcparser.ANTLRParse(v, false); err != nil {
 							return nil, []error{fmt.Errorf("invalid derived column syntax: %s", err)}
 						}
 
