@@ -58,4 +58,59 @@ resource "honeycombio_derived_column" "invalid_column_in_expression" {
 			},
 		},
 	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "honeycombio_derived_column" "test" {
+  alias      = "invalid_syntax"
+  expression = "BOOL(1"
+
+  dataset = "foobar"
+}`,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`invalid derived column syntax: mismatched input '<EOF>'`),
+			},
+			{
+				Config: `
+resource "honeycombio_derived_column" "test" {
+  alias      = "invalid_syntax"
+  expression = "FOOBAR(1)"
+
+  dataset = "foobar"
+}`,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`invalid derived column syntax: invalid function: FOOBAR`),
+			},
+			{
+				Config: `
+resource "honeycombio_derived_column" "test" {
+  alias      = "invalid_syntax"
+  expression = <<EOF
+IF(AND(NOT(EXISTS($trace.parent_id)),EXISTS($duration_ms)),LTE($duration_ms,300)),
+EOF
+
+  dataset = "foobar"
+}`,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`invalid derived column syntax: extraneous input ','`),
+			},
+			{
+				Config: `
+resource "honeycombio_derived_column" "test" {
+  alias      = "valid_syntax"
+  expression = <<EOF
+IF(AND(NOT(EXISTS($trace.parent_id)),EXISTS($duration_ms)),LTE($duration_ms,300))
+EOF
+
+  dataset = "foobar"
+}`,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
 }
