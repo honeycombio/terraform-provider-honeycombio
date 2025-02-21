@@ -3,11 +3,14 @@ package honeycombio
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+
+	dcparser "github.com/honeycombio/honeycomb-derived-column-validator/pkg/parser"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
@@ -30,9 +33,23 @@ func newDerivedColumn() *schema.Resource {
 				ValidateFunc: validation.StringLenBetween(1, 255),
 			},
 			"expression": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringLenBetween(1, 4095),
+				Type:     schema.TypeString,
+				Required: true,
+				ValidateFunc: validation.All(
+					validation.StringLenBetween(1, 4095),
+					func(i interface{}, k string) ([]string, []error) {
+						v, ok := i.(string)
+						if !ok {
+							return nil, []error{fmt.Errorf("expected type of %s to be string", k)}
+						}
+
+						if _, err := dcparser.ANTLRParse(v, true); err != nil {
+							return nil, []error{fmt.Errorf("invalid derived column syntax: %s", err)}
+						}
+
+						return nil, nil
+					},
+				),
 			},
 			"description": {
 				Type:         schema.TypeString,
