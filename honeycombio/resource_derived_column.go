@@ -37,17 +37,17 @@ func newDerivedColumn() *schema.Resource {
 				Required: true,
 				ValidateFunc: validation.All(
 					validation.StringLenBetween(1, 4095),
-					func(i interface{}, k string) (warnings []string, errors []error) {
+					func(i interface{}, k string) ([]string, []error) {
 						v, ok := i.(string)
 						if !ok {
 							return nil, []error{fmt.Errorf("expected type of %s to be string", k)}
 						}
 
 						if _, err := dcparser.ANTLRParse(v, true); err != nil {
-							errors = append(errors, fmt.Errorf("invalid derived column syntax: %s", err))
+							return nil, []error{fmt.Errorf("invalid derived column syntax: %s", err)}
 						}
 
-						return warnings, errors
+						return nil, nil
 					},
 				),
 			},
