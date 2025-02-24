@@ -1,16 +1,52 @@
-# 0.29.0 (Jan 10, 2024)
+# 0.30.0 (Feb 24, 2025)
+
+NOTES: this release adds support for syntax validation of Derived Columns.
+
+ENHANCEMENTS:
+
+* feat(r/derived_column): expression syntax validation (#622)
+
+BUGFIXES:
+
+* fix(r/query_annotation): update name and description max length (#601)
+* fix(r/dataset): changing a dataset's name requires replacement (#618)
+* fix(r/derived_column): don't run validation parser in debug mode (#623)
+
+HOUSEKEEPING:
+
+* fix(ci): extend 'go test' timeout to 20 min (#599)
+* maint(deps): bump golangci/golangci-lint-action from 6.1.1 to 6.2.0 (#600)
+* build(deps): bump github.com/hashicorp/yamux from 0.1.1 to 0.1.2 (#606)
+* maint(deps): bump golangci/golangci-lint-action from 6.2.0 to 6.3.0 (#608)
+* maint(deps): bump golangci/golangci-lint-action from 6.3.0 to 6.3.1 (#610)
+* maint(deps): bump goreleaser/goreleaser-action from 6.1.0 to 6.2.1 (#613)
+* maint(deps): bump golangci/golangci-lint-action from 6.3.1 to 6.3.2 (#612)
+* maint(deps): bump golang.org/x/net from 0.34.0 to 0.35.0 (#611)
+* maint(deps): bump github.com/hashicorp/jsonapi from 1.3.2 to 1.4.2 (#609)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.25.0 to 0.26.0 (#609)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.17.0 to 0.18.0 (#609)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.35.0 to 2.36.0 (#609)
+* chore(ci): adjust linter config. after golangci-lint update (#615)
+* chore(build): bump Go to 1.23 (#617)
+* maint(deps): bump golangci/golangci-lint-action from 6.3.2 to 6.4.1 (#616)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.13.0 to 1.14.1 (#621)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.36.0 to 2.36.1 (#621)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.13.0 to 1.14.1 (#621)
+* maint(deps): bump golangci/golangci-lint-action from 6.4.1 to 6.5.0 (#619)
+
+# 0.29.0 (Jan 10, 2025)
 
 NOTES: this release contains support for managing Customizable Webhook Recipients.
 To learn more about the feature check out the [provider documentation](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs/resources/webhook_recipient)
 or the [Honeycomb documentation](https://docs.honeycomb.io/integrations/webhooks/#customize-your-webhook).
 
-ENHANCEMENTS
+ENHANCEMENTS:
 
 * feat(r/webhook_recipient): support for templates, custom headers, and template variables (#580, #582, #583, #586)
 * feat(r/board): bump up max number of SLOs on a board to 24 (#585)
 * feat(r/trigger, r/burn_alert): notification variable support (#594)
 
-HOUSEKEEPING
+HOUSEKEEPING:
 
 * chore(ci): tidy up lint config (#577)
 * maint(deps): bump slackapi/slack-github-action from 1.27.0 to 2.0.0 (#570)
