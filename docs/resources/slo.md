@@ -28,7 +28,7 @@ resource "honeycombio_slo" "slo" {
 }
 ```
 
--> **Note** As [Derived Columns](derived_column.md) cannot be deleted while in it is recommended to use the [create_before_destroy](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#create_before_destroy) lifecycle argument on your SLI resources as shown in the example above.
+-> **Note** As [Derived Columns](derived_column.md) cannot be renamed or deleted while in use, it is recommended to use the [create_before_destroy](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#create_before_destroy) lifecycle argument on your SLI resources as shown in the example above.
 This way you will avoid running into conflicts if the Derived Column needs to be recreated.
 
 ## Argument Reference
