@@ -7,11 +7,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
-
 	"github.com/stretchr/testify/require"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAccHoneycombioSLO_basic(t *testing.T) {
@@ -107,7 +106,7 @@ func sloAccTestSetup(t *testing.T) (string, string) {
 	dataset := testAccDataset()
 
 	sli, err := c.DerivedColumns.Create(ctx, dataset, &honeycombio.DerivedColumn{
-		Alias:      "sli." + acctest.RandString(8),
+		Alias:      test.RandomStringWithPrefix("test.", 8),
 		Expression: "BOOL(1)",
 	})
 	require.NoError(t, err)

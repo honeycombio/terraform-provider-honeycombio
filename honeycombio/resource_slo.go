@@ -46,6 +46,7 @@ func newSLO() *schema.Resource {
 			"sli": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 				Description: `The alias of the Derived Column that will be used as the SLI to indicate event success.
 The derived column used as the SLI must be in the same dataset as the SLO. Additionally,
 the column evaluation should consistently return nil, true, or false, as these are the only valid values for an SLI.`,
