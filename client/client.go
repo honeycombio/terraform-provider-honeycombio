@@ -19,6 +19,8 @@ import (
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client/internal/limits"
 )
 
 const (
@@ -128,13 +130,13 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	}
 
 	client.httpClient = &retryablehttp.Client{
-		Backoff:      retryablehttp.DefaultBackoff,
-		CheckRetry:   client.retryHTTPCheck,
+		Backoff:      limits.RetryHTTPBackoff,
+		CheckRetry:   limits.RetryHTTPCheck,
 		ErrorHandler: retryablehttp.PassthroughErrorHandler,
 		HTTPClient:   cfg.HTTPClient,
 		RetryWaitMin: 200 * time.Millisecond,
-		RetryWaitMax: 10 * time.Second,
-		RetryMax:     15,
+		RetryWaitMax: time.Minute,
+		RetryMax:     30,
 	}
 
 	if config.Debug {

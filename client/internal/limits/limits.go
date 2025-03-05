@@ -1,6 +1,7 @@
-package v2
+package limits
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/rand"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/dunglas/httpsfv"
+	"github.com/hashicorp/go-retryablehttp"
 )
 
 const (
@@ -26,6 +28,26 @@ const (
 	// retry requests in UTC time.
 	HeaderRetryAfter = "Retry-After"
 )
+
+// RetryHTTPBackoff is a retryablehttp.Backoff function that will
+// use a linear backoff for all status codes except 429, which will
+// attempt to use the rate limit headers to determine the backoff time
+func RetryHTTPBackoff(
+	mini, maxi time.Duration,
+	attemptNum int,
+	r *http.Response,
+) time.Duration {
+	if r != nil && r.StatusCode == http.StatusTooManyRequests {
+		return rateLimitBackoff(mini, maxi, r)
+	}
+
+	// if we've not been rate limited, use a linear backoff
+	// but increase the minimum and maximum backoff times
+	// and hand it off to retryablehttp.LinearJitterBackoff
+	mini = 500 * time.Millisecond
+	maxi = 950 * time.Millisecond
+	return retryablehttp.LinearJitterBackoff(mini, maxi, attemptNum, r)
+}
 
 // rateLimitBackoff calculates the backoff time for a rate limited request
 // based on the possible response headers.
@@ -61,6 +83,27 @@ func rateLimitBackoff(mini, maxi time.Duration, r *http.Response) time.Duration 
 		mini = reset
 	}
 	return mini + jitter
+}
+
+// retryHTTPCheck is a retryablehttp.CheckRetry function that will
+// retry on a 429 or any 5xx status code
+func RetryHTTPCheck(
+	ctx context.Context,
+	r *http.Response,
+	err error,
+) (bool, error) {
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
+	if err != nil {
+		return true, err
+	}
+	if r != nil {
+		if r.StatusCode == http.StatusTooManyRequests || r.StatusCode >= 500 {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // parseRateLimitHeader parses the rate limit header into its constituent parts.

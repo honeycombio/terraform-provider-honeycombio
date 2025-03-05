@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/jsonapi"
 
 	hnyclient "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/client/internal/limits"
 )
 
 const (
@@ -94,13 +95,13 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 		},
 	}
 	client.http = &retryablehttp.Client{
-		Backoff:      client.retryHTTPBackoff,
-		CheckRetry:   client.retryHTTPCheck,
+		Backoff:      limits.RetryHTTPBackoff,
+		CheckRetry:   limits.RetryHTTPCheck,
 		ErrorHandler: retryablehttp.PassthroughErrorHandler,
 		HTTPClient:   config.HTTPClient,
 		RetryWaitMin: 200 * time.Millisecond,
-		RetryWaitMax: 10 * time.Second,
-		RetryMax:     15,
+		RetryWaitMax: time.Minute,
+		RetryMax:     30,
 	}
 
 	if config.Debug {
@@ -193,45 +194,4 @@ func (c *Client) newRequest(
 	}
 
 	return req, err
-}
-
-// retryHTTPCheck is a retryablehttp.CheckRetry function that will
-// retry on a 429 or any 5xx status code
-func (c *Client) retryHTTPCheck(
-	ctx context.Context,
-	r *http.Response,
-	err error,
-) (bool, error) {
-	if ctx.Err() != nil {
-		return false, ctx.Err()
-	}
-	if err != nil {
-		return true, err
-	}
-	if r != nil {
-		if r.StatusCode == http.StatusTooManyRequests || r.StatusCode >= 500 {
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-// retryHTTPBackoff is a retryablehttp.Backoff function that will
-// use a linear backoff for all status codes except 429, which will
-// attempt to use the rate limit headers to determine the backoff time
-func (c *Client) retryHTTPBackoff(
-	mini, maxi time.Duration,
-	attemptNum int,
-	r *http.Response,
-) time.Duration {
-	if r != nil && r.StatusCode == http.StatusTooManyRequests {
-		return rateLimitBackoff(mini, maxi, r)
-	}
-
-	// if we've not been rate limited, use a linear backoff
-	// but increase the minimum and maximum backoff times
-	// and hand it off to retryablehttp.LinearJitterBackoff
-	mini = 500 * time.Millisecond
-	maxi = 950 * time.Millisecond
-	return retryablehttp.LinearJitterBackoff(mini, maxi, attemptNum, r)
 }
