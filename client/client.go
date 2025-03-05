@@ -19,6 +19,8 @@ import (
 
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client/internal/limits"
 )
 
 const (
@@ -128,13 +130,13 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	}
 
 	client.httpClient = &retryablehttp.Client{
-		Backoff:      retryablehttp.DefaultBackoff,
-		CheckRetry:   client.retryHTTPCheck,
+		Backoff:      limits.RetryHTTPBackoff,
+		CheckRetry:   limits.RetryHTTPCheck,
 		ErrorHandler: retryablehttp.PassthroughErrorHandler,
 		HTTPClient:   cfg.HTTPClient,
 		RetryWaitMin: 200 * time.Millisecond,
-		RetryWaitMax: 10 * time.Second,
-		RetryMax:     15,
+		RetryWaitMax: time.Minute,
+		RetryMax:     30,
 	}
 
 	if config.Debug {
@@ -234,25 +236,6 @@ func (c *Client) newRequest(ctx context.Context, method, path string, body any) 
 	req.Header = c.headers
 
 	return req, nil
-}
-
-// retryHTTPCheck provides a callback for Client.CheckRetry which
-// will retry both rate limit (429) and server (5xx) errors.
-func (c *Client) retryHTTPCheck(ctx context.Context, resp *http.Response, err error) (bool, error) {
-	if ctx.Err() != nil {
-		return false, ctx.Err()
-	}
-	if err != nil {
-		return true, err
-	}
-
-	if resp != nil {
-		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
-			return true, nil
-		}
-	}
-
-	return false, nil
 }
 
 // urlEncodeDataset sanitizes the dataset name for when it is used as part of
