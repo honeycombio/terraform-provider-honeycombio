@@ -1,3 +1,19 @@
+# 0.31.0 (Mar 6, 2025)
+
+ENHANCEMENTS:
+
+* feat(client): improve V1 api client retry behaviour (#629)
+
+BUGFIXES:
+
+* fix(r/slo): recommend using lifecycle argument to avoid conflicts during derived column updates (#626)
+
+HOUSEKEEPING:
+
+* maint(deps): bump golang.org/x/net from 0.35.0 to 0.36.0 (#628)
+* maint(deps): bump github.com/hashicorp/go-cty from 1.4.1-0.20200414143053-d3edf31b6320 to 1.4.1 (#630)
+* maint(deps): bump golang.org/x/net from 0.36.0 to 0.37.0 (#631)
+
 # 0.30.0 (Feb 24, 2025)
 
 NOTES: this release adds support for syntax validation of Derived Columns.
