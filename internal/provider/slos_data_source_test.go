@@ -74,7 +74,7 @@ func TestAcc_SLOsDataSource(t *testing.T) {
 	}
 
 	t.Cleanup(func() {
-		// remove SLOs at the of the test run
+		// remove SLOs at the end of the test run
 		for _, tc := range testData {
 			c.SLOs.Delete(ctx, dataset, tc.SLO.ID)
 			c.DerivedColumns.Delete(ctx, dataset, tc.SLI.ID)

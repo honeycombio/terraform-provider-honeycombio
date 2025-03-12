@@ -42,11 +42,13 @@ func (d *sloDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 			},
 			"dataset": schema.StringAttribute{
 				Description:        "The dataset to fetch the SLO from.",
+				Computed:           true,
 				Required:           false,
+				Optional:           false,
 				DeprecationMessage: "Deprecated",
 			},
 			"dataset_slugs": schema.StringAttribute{
-				Description: "",
+				Description: "List dataset slugs the SLO applies to",
 				Computed:    true,
 				Optional:    false,
 				Required:    false,
@@ -128,6 +130,7 @@ func (d *sloDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	for i, slug := range slo.DatasetSlugs {
 		data.Datasets[i] = types.StringValue(slug)
 	}
+	data.Dataset = types.StringValue(dataset)
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
