@@ -64,6 +64,11 @@ data "honeycombio_slo" "test" {
 func TestAcc_MDSLODataSource(t *testing.T) {
 	ctx := context.Background()
 	c := testAccClient(t)
+
+	if c.IsClassic(ctx) {
+		t.Skip("Classic does not support multi-dataset SLOs")
+	}
+
 	dataset_all := "__all__"
 	dataset1, err := c.Datasets.Create(ctx, &client.Dataset{
 		Name:        "dataset1",
