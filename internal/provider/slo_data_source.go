@@ -41,8 +41,18 @@ func (d *sloDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 				Required:    true,
 			},
 			"dataset": schema.StringAttribute{
-				Description: "The dataset to fetch the SLO from.",
-				Required:    true,
+				Description:        "The dataset to fetch the SLO from.",
+				Required:           false,
+				Optional:           true,
+				Computed:           true,
+				DeprecationMessage: "Deprecated",
+			},
+			"dataset_slugs": schema.ListAttribute{
+				ElementType: types.StringType,
+				Description: "The dataset slugs to fetch the SLO from.",
+				Required:    false,
+				Computed:    true,
+				Optional:    false,
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the SLO.",
@@ -99,7 +109,13 @@ func (d *sloDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		return
 	}
 
-	slo, err := d.client.SLOs.Get(ctx, data.Dataset.ValueString(), data.ID.ValueString())
+	dataset := data.Dataset.ValueString()
+
+	if data.Dataset.IsNull() {
+		dataset = "__all__"
+	}
+
+	slo, err := d.client.SLOs.Get(ctx, dataset, data.ID.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics,
 		fmt.Sprintf("Looking up SLO %q", data.ID.ValueString()),
 		err) {
@@ -112,6 +128,10 @@ func (d *sloDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	data.SLI = types.StringValue(slo.SLI.Alias)
 	data.TargetPercentage = types.Float64Value(float64(slo.TargetPerMillion) / 10000)
 	data.TimePeriod = types.Int64Value(int64(slo.TimePeriodDays))
+	data.Datasets = make([]types.String, len(slo.DatasetSlugs))
+	for i, slug := range slo.DatasetSlugs {
+		data.Datasets[i] = types.StringValue(slug)
+	}
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
