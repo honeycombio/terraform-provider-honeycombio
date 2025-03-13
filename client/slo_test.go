@@ -40,7 +40,6 @@ func TestSLOs(t *testing.T) {
 			TimePeriodDays:   30,
 			TargetPerMillion: 995000,
 			SLI:              client.SLIRef{Alias: sli.Alias},
-			DatasetSlugs:     []string{dataset},
 		}
 		slo, err = c.SLOs.Create(ctx, dataset, data)
 
@@ -52,6 +51,8 @@ func TestSLOs(t *testing.T) {
 		data.ID = slo.ID
 		data.CreatedAt = slo.CreatedAt
 		data.UpdatedAt = slo.UpdatedAt
+		data.DatasetSlugs = []string{dataset}
+
 		assert.Equal(t, data, slo)
 	})
 
