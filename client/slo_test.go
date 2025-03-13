@@ -40,6 +40,7 @@ func TestSLOs(t *testing.T) {
 			TimePeriodDays:   30,
 			TargetPerMillion: 995000,
 			SLI:              client.SLIRef{Alias: sli.Alias},
+			DatasetSlugs:     []string{dataset},
 		}
 		slo, err = c.SLOs.Create(ctx, dataset, data)
 
