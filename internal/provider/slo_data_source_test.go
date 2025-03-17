@@ -11,6 +11,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAcc_SLODataSource(t *testing.T) {
@@ -55,6 +56,7 @@ data "honeycombio_slo" "test" {
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "sli", slo.SLI.Alias),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "target_percentage", "99.5"),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "time_period", "30"),
+					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "dataset", dataset),
 				),
 			},
 		},
@@ -68,28 +70,26 @@ func TestAcc_MDSLODataSource(t *testing.T) {
 	if c.IsClassic(ctx) {
 		t.Skip("Classic does not support multi-dataset SLOs")
 	}
-
-	dataset_all := "__all__"
 	dataset1, err := c.Datasets.Create(ctx, &client.Dataset{
-		Name:        "dataset1",
+		Name:        test.RandomStringWithPrefix("test.", 10),
 		Description: "test dataset 1",
 	})
 	require.NoError(t, err)
 
 	dataset2, err := c.Datasets.Create(ctx, &client.Dataset{
-		Name:        "dataset2",
+		Name:        test.RandomStringWithPrefix("test.", 10),
 		Description: "test dataset 2",
 	})
 	require.NoError(t, err)
 
-	sli, err := c.DerivedColumns.Create(ctx, dataset_all, &client.DerivedColumn{
+	sli, err := c.DerivedColumns.Create(ctx, client.Dataset_All, &client.DerivedColumn{
 		Alias:       acctest.RandString(4) + "_sli",
 		Description: "test SLI",
 		Expression:  "BOOL(1)",
 	})
 	require.NoError(t, err)
 
-	slo, err := c.SLOs.Create(ctx, dataset_all, &client.SLO{
+	slo, err := c.SLOs.Create(ctx, client.Dataset_All, &client.SLO{
 		Name:             acctest.RandString(4) + "_slo",
 		Description:      "test SLO",
 		TimePeriodDays:   30,
@@ -100,8 +100,8 @@ func TestAcc_MDSLODataSource(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.SLOs.Delete(ctx, dataset_all, slo.ID)
-		c.DerivedColumns.Delete(ctx, dataset_all, sli.ID)
+		c.SLOs.Delete(ctx, client.Dataset_All, slo.ID)
+		c.DerivedColumns.Delete(ctx, client.Dataset_All, sli.ID)
 
 		c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset1.Slug,
@@ -135,6 +135,7 @@ data "honeycombio_slo" "test" {
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "sli", slo.SLI.Alias),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "target_percentage", "99.5"),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "time_period", "30"),
+					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "dataset", ""),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "dataset_slugs.#", "2"),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "dataset_slugs.0", dataset1.Slug),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "dataset_slugs.1", dataset2.Slug),

@@ -51,6 +51,8 @@ type SLO struct {
 	UpdatedAt        time.Time `json:"updated_at,omitempty"`
 }
 
+const Dataset_All = "__all__"
+
 func (s *slos) List(ctx context.Context, dataset string) ([]SLO, error) {
 	var r []SLO
 	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/slos/%s", urlEncodeDataset(dataset)), nil, &r)

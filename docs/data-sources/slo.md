@@ -17,9 +17,7 @@ data "honeycombio_slo" "myslo" {
 The following arguments are supported:
 
 * `id` - (Required) The ID of the SLO
-* `dataset` - (Optional) The dataset this SLO is created in.
-    * Deprecated
-    * When this attribute is missing, we’ll automatically use the special `__all__` dataset slug endpoints to look up the SLO by ID
+* `dataset` - (Deprecated) No longer required. The dataset this SLO is associated with.
 
 ## Attribute Reference
 
@@ -28,6 +26,6 @@ In addition to all arguments above, the following attributes are exported:
 * `name` - the name of the SLO.
 * `description` - the SLO's description.
 * `sli` - the alias of the Derived Column used as the SLO's SLI.
-* `dataset_slugs` - Array of dataset slugs the SLO applies to, always returned, regardless of whether the SLO is single or multi-dataset.
+* `datasets` - A list of dataset slugs the SLO is evaluated on.
 * `target_percentage` - the percentage of qualified events expected to succeed during the `time_period`.
 * `time_period` - The time period, in days, over which the SLO is evaluated.

@@ -14,7 +14,7 @@ type SLOsDataSourceModel struct {
 type SLODataSourceModel struct {
 	ID               types.String   `tfsdk:"id"`
 	Dataset          types.String   `tfsdk:"dataset"`
-	Datasets         []types.String `tfsdk:"dataset_slugs"`
+	Datasets         []types.String `tfsdk:"datasets"`
 	Name             types.String   `tfsdk:"name"`
 	Description      types.String   `tfsdk:"description"`
 	SLI              types.String   `tfsdk:"sli"`

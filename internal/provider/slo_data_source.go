@@ -42,17 +42,17 @@ func (d *sloDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 			},
 			"dataset": schema.StringAttribute{
 				Description:        "The dataset to fetch the SLO from.",
-				Required:           false,
-				Optional:           true,
 				Computed:           true,
-				DeprecationMessage: "Deprecated",
+				Optional:           true,
+				Required:           false,
+				DeprecationMessage: "No longer required.",
 			},
-			"dataset_slugs": schema.ListAttribute{
+			"datasets": schema.ListAttribute{
 				ElementType: types.StringType,
-				Description: "The dataset slugs to fetch the SLO from.",
-				Required:    false,
+				Description: "The datasets the SLO is evaluated on.",
 				Computed:    true,
 				Optional:    false,
+				Required:    false,
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the SLO.",
