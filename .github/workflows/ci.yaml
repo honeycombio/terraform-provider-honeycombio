@@ -119,7 +119,7 @@ jobs:
         uses: test-summary/action@v2
         with:
           paths: "*-report.xml"
-          show: "fail, skip"
+          show: "fail"
 
   test-eu:
     name: Test EU
@@ -214,4 +214,4 @@ jobs:
         uses: test-summary/action@v2
         with:
           paths: "*-report.xml"
-          show: "fail, skip"
+          show: "fail"
