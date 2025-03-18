@@ -82,15 +82,15 @@ func TestAcc_MDSLODataSource(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	sli, err := c.DerivedColumns.Create(ctx, client.Dataset_All, &client.DerivedColumn{
-		Alias:       acctest.RandString(4) + "_sli",
+	sli, err := c.DerivedColumns.Create(ctx, client.EnvironmentWideSlug, &client.DerivedColumn{
+		Alias:       test.RandomStringWithPrefix("test.", 10),
 		Description: "test SLI",
 		Expression:  "BOOL(1)",
 	})
 	require.NoError(t, err)
 
-	slo, err := c.SLOs.Create(ctx, client.Dataset_All, &client.SLO{
-		Name:             acctest.RandString(4) + "_slo",
+	slo, err := c.SLOs.Create(ctx, client.EnvironmentWideSlug, &client.SLO{
+		Name:             test.RandomStringWithPrefix("test.", 10),
 		Description:      "test SLO",
 		TimePeriodDays:   30,
 		TargetPerMillion: 995000,
@@ -100,8 +100,8 @@ func TestAcc_MDSLODataSource(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.SLOs.Delete(ctx, client.Dataset_All, slo.ID)
-		c.DerivedColumns.Delete(ctx, client.Dataset_All, sli.ID)
+		c.SLOs.Delete(ctx, client.EnvironmentWideSlug, slo.ID)
+		c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, sli.ID)
 
 		c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset1.Slug,
