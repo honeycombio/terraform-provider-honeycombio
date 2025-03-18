@@ -30,6 +30,8 @@ const (
 	// Deprecated: use DefaultAPIKeyEnv instead. To be removed in v1.0
 	LegacyAPIKeyEnv  = "HONEYCOMBIO_APIKEY"
 	defaultUserAgent = "go-honeycombio"
+
+	EnvironmentWideSlug = "__all__"
 )
 
 // Config holds all configuration options for the client.
