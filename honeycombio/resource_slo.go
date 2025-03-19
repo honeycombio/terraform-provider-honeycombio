@@ -39,9 +39,26 @@ func newSLO() *schema.Resource {
 			},
 			"dataset": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI's dataset is `\"__all__\"`.",
+				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+					if oldValue == newValue {
+						return true
+					}
+					if newValue == "__all__" {
+						return true
+					}
+					return false
+				},
+			},
+			"datasets": {
+				Type:        schema.TypeSet,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "The datasets the SLO is evaluated on.",
 			},
 			"sli": {
 				Type:     schema.TypeString,
@@ -62,6 +79,32 @@ the column evaluation should consistently return nil, true, or false, as these a
 				Description:  "The time period, in days, over which your SLO will be evaluated.",
 				ValidateFunc: validation.IntAtLeast(1),
 			},
+		},
+
+		CustomizeDiff: func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+			dataset, datasetSet := d.GetOk("dataset")
+			datasets, datasetsSet := d.GetOk("datasets")
+
+			slugs := datasets.(*schema.Set).List()
+
+			// If dataset is explicitly set (not the default) and more than 1 datasets is set, return an error
+			if datasetsSet && len(slugs) > 1 && datasetSet && dataset != "__all__" {
+				return errors.New("if more than 1 'datasets' is set, 'dataset' must be left as default ('__all__') or unset")
+			}
+
+			// not sure how it would happen, but adding validation in case
+			if datasetSet && len(slugs) == 1 && dataset != "__all__" && slugs[0] != dataset {
+				return errors.New("'dataset' must be the same as the only element of 'datasets'")
+			}
+
+			// Validate datasets length if it's provided or if dataset was set to "__all__"
+			if datasetsSet || dataset == "__all__" {
+				if len(slugs) < 1 || len(slugs) > 10 {
+					return errors.New("'datasets' must contain between 1 and 10 datasets")
+				}
+			}
+
+			return nil
 		},
 	}
 }
@@ -85,7 +128,8 @@ func resourceSLOCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDataset(d)
+
 	s, err := client.SLOs.Create(ctx, dataset, expandSLO(d))
 	if err != nil {
 		return diag.FromErr(err)
@@ -101,7 +145,7 @@ func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDataset(d)
 
 	var detailedErr honeycombio.DetailedError
 	s, err := client.SLOs.Get(ctx, dataset, d.Id())
@@ -122,6 +166,7 @@ func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface
 	d.Set("sli", s.SLI.Alias)
 	d.Set("target_percentage", helper.PPMToFloat(s.TargetPerMillion))
 	d.Set("time_period", s.TimePeriodDays)
+	d.Set("datasets", s.DatasetSlugs)
 
 	return nil
 }
@@ -132,7 +177,8 @@ func resourceSLOUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDataset(d)
+
 	s, err := client.SLOs.Update(ctx, dataset, expandSLO(d))
 	if err != nil {
 		return diag.FromErr(err)
@@ -148,7 +194,7 @@ func resourceSLODelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDataset(d)
 
 	err = client.SLOs.Delete(ctx, dataset, d.Id())
 	if err != nil {
@@ -158,6 +204,13 @@ func resourceSLODelete(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func expandSLO(d *schema.ResourceData) *honeycombio.SLO {
+	var datasets []string
+	if v, ok := d.GetOk("datasets"); ok {
+		for _, v := range v.(*schema.Set).List() {
+			datasets = append(datasets, v.(string))
+		}
+	}
+
 	return &honeycombio.SLO{
 		ID:               d.Id(),
 		Name:             d.Get("name").(string),
@@ -165,5 +218,14 @@ func expandSLO(d *schema.ResourceData) *honeycombio.SLO {
 		TimePeriodDays:   d.Get("time_period").(int),
 		TargetPerMillion: helper.FloatToPPM(d.Get("target_percentage").(float64)),
 		SLI:              honeycombio.SLIRef{Alias: d.Get("sli").(string)},
+		DatasetSlugs:     datasets,
 	}
+}
+
+func getDataset(d *schema.ResourceData) string {
+	dataset := d.Get("dataset").(string)
+	if dataset == "" {
+		dataset = "__all__"
+	}
+	return dataset
 }

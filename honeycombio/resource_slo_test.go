@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
 func TestAccHoneycombioSLO_basic(t *testing.T) {
@@ -26,6 +27,7 @@ func TestAccHoneycombioSLO_basic(t *testing.T) {
 				Config: testAccConfigSLO_basic(dataset, sliAlias),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "dataset", dataset),
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "name", "TestAcc SLO"),
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", "integration test SLO"),
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "sli", sliAlias),
@@ -67,6 +69,39 @@ func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 	})
 }
 
+func TestHoneycombSLO_MD(t *testing.T) {
+	client := testAccClient(t)
+	if client.IsClassic(context.Background()) {
+		t.Skip("MD SLOs are not supported in classic")
+	}
+	dataset1, dataset2, mdSLI := mdSLOAccTestSetup(t)
+
+	mdSLO := &honeycombio.SLO{}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigSLO_md(dataset1.Slug, dataset2.Slug, mdSLI.Alias),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.md_test", mdSLO),
+					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "name", "TestAcc MD SLO"),
+					resource.TestCheckNoResourceAttr("honeycombio_slo.md_test", "dataset"),
+					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "datasets.#", "2"),
+					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "datasets.0", dataset1.Slug),
+					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "datasets.1", dataset2.Slug),
+					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "description", "integration test MD SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "sli", mdSLI.Alias),
+					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "target_percentage", "99.95"),
+					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "time_period", "30"),
+				),
+			},
+		},
+	})
+
+}
+
 func testAccConfigSLO_basic(dataset, sliAlias string) string {
 	return fmt.Sprintf(`
 	resource "honeycombio_slo" "test" {
@@ -80,6 +115,19 @@ func testAccConfigSLO_basic(dataset, sliAlias string) string {
 	`, dataset, sliAlias)
 }
 
+func testAccConfigSLO_md(dataset1Slug, dataset2Slug, sliAlias string) string {
+	return fmt.Sprintf(`
+	resource "honeycombio_slo" "md_test" {
+		name              = "TestAcc MD SLO"
+		description       = "integration test MD SLO"
+		sli               = "%s"
+		target_percentage = 99.95
+		time_period       = 30
+		datasets     	  = ["%s", "%s"]
+	}
+	`, sliAlias, dataset1Slug, dataset2Slug)
+}
+
 func testAccCheckSLOExists(t *testing.T, name string, slo *honeycombio.SLO) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
@@ -88,7 +136,7 @@ func testAccCheckSLOExists(t *testing.T, name string, slo *honeycombio.SLO) reso
 		}
 
 		client := testAccClient(t)
-		rslo, err := client.SLOs.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+		rslo, err := client.SLOs.Get(context.Background(), "__all__", resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created SLO: %w", err)
 		}
@@ -118,4 +166,56 @@ func sloAccTestSetup(t *testing.T) (string, string) {
 	})
 
 	return dataset, sli.Alias
+}
+
+func mdSLOAccTestSetup(t *testing.T) (honeycombio.Dataset, honeycombio.Dataset, honeycombio.DerivedColumn) {
+	t.Helper()
+
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	dataset1, err := c.Datasets.Create(ctx, &honeycombio.Dataset{
+		Name:        "test." + acctest.RandString(8),
+		Description: "test dataset 1",
+	})
+	require.NoError(t, err)
+
+	dataset2, err := c.Datasets.Create(ctx, &honeycombio.Dataset{
+		Name:        "test." + acctest.RandString(8),
+		Description: "test dataset 2",
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		c.Datasets.Update(ctx, &honeycombio.Dataset{
+			Slug: dataset1.Slug,
+			Settings: honeycombio.DatasetSettings{
+				DeleteProtected: helper.ToPtr(false),
+			},
+		})
+		err = c.Datasets.Delete(ctx, dataset1.Slug)
+		require.NoError(t, err)
+
+		c.Datasets.Update(ctx, &honeycombio.Dataset{
+			Slug: dataset2.Slug,
+			Settings: honeycombio.DatasetSettings{
+				DeleteProtected: helper.ToPtr(false),
+			},
+		})
+		err = c.Datasets.Delete(ctx, dataset2.Slug)
+		require.NoError(t, err)
+	})
+
+	sli, err := c.DerivedColumns.Create(ctx, honeycombio.EnvironmentWideSlug, &honeycombio.DerivedColumn{
+		Alias:       "sli." + acctest.RandString(8),
+		Description: "test SLI",
+		Expression:  "BOOL(1)",
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		c.DerivedColumns.Delete(ctx, honeycombio.EnvironmentWideSlug, sli.ID)
+	})
+
+	return *dataset1, *dataset2, *sli
 }
