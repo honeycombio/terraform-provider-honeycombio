@@ -21,7 +21,7 @@ resource "honeycombio_derived_column" "request_latency_sli" {
 resource "honeycombio_slo" "slo" {
   name              = "Latency SLO"
   description       = "example of an SLO"
-  dataset           = var.dataset
+  datasets          = [var.dataset]
   sli               = honeycombio_derived_column.request_latency_sli.alias
   target_percentage = 99.9
   time_period       = 30
@@ -37,7 +37,11 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the SLO.
 * `description` - (Optional) A description of the SLO's intent and context.
-* `dataset` - (Required) The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI's dataset is `"__all__"`.
+* `dataset` - (Deprecated, conflicts with `datasets`) The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI's dataset is `"__all__"`.
+  * If `dataset` is not configured, `datasets` must be configured. 
+* `datasets` - (Required, conflicts with `dataset`) Array of datasets the SLO is evaluated on.
+  * If `datasets` is not configured, `dataset` must be configured.
+  * Must be >= 1 and <= 10. 
 * `sli` - (Required) The alias of the Derived Column that will be used as the SLI to indicate event success.
 The derived column used as the SLI must be in the same dataset as the SLO. Additionally,
 the column evaluation should consistently return nil, true, or false, as these are the only valid values for an SLI.
