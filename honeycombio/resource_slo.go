@@ -46,19 +46,24 @@ func newSLO() *schema.Resource {
 					if oldValue == newValue {
 						return true
 					}
-					if newValue == "__all__" {
+					// if the config moves away from deprecated dataset, nothing should change
+					if newValue == "" || newValue == "__all__" {
 						return true
 					}
 					return false
 				},
+				ExactlyOneOf: []string{"dataset", "datasets"},
 			},
 			"datasets": {
-				Type:        schema.TypeSet,
-				Elem:        &schema.Schema{Type: schema.TypeString},
-				Optional:    true,
-				Computed:    true,
-				ForceNew:    true,
-				Description: "The datasets the SLO is evaluated on.",
+				Type:         schema.TypeSet,
+				Elem:         &schema.Schema{Type: schema.TypeString},
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				Description:  "The datasets the SLO is evaluated on.",
+				ExactlyOneOf: []string{"dataset", "datasets"},
+				MaxItems:     10,
+				MinItems:     1,
 			},
 			"sli": {
 				Type:     schema.TypeString,
@@ -79,32 +84,6 @@ the column evaluation should consistently return nil, true, or false, as these a
 				Description:  "The time period, in days, over which your SLO will be evaluated.",
 				ValidateFunc: validation.IntAtLeast(1),
 			},
-		},
-
-		CustomizeDiff: func(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
-			dataset, datasetSet := d.GetOk("dataset")
-			datasets, datasetsSet := d.GetOk("datasets")
-
-			slugs := datasets.(*schema.Set).List()
-
-			// If dataset is explicitly set (not the default) and more than 1 datasets is set, return an error
-			if datasetsSet && len(slugs) > 1 && datasetSet && dataset != "__all__" {
-				return errors.New("if more than 1 'datasets' is set, 'dataset' must be left as default ('__all__') or unset")
-			}
-
-			// not sure how it would happen, but adding validation in case
-			if datasetSet && len(slugs) == 1 && dataset != "__all__" && slugs[0] != dataset {
-				return errors.New("'dataset' must be the same as the only element of 'datasets'")
-			}
-
-			// Validate datasets length if it's provided or if dataset was set to "__all__"
-			if datasetsSet || dataset == "__all__" {
-				if len(slugs) < 1 || len(slugs) > 10 {
-					return errors.New("'datasets' must contain between 1 and 10 datasets")
-				}
-			}
-
-			return nil
 		},
 	}
 }

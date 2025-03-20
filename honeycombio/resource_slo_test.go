@@ -13,6 +13,7 @@ import (
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAccHoneycombioSLO_basic(t *testing.T) {
@@ -89,8 +90,8 @@ func TestHoneycombSLO_MD(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "name", "TestAcc MD SLO"),
 					resource.TestCheckNoResourceAttr("honeycombio_slo.md_test", "dataset"),
 					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "datasets.#", "2"),
-					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "datasets.0", dataset1.Slug),
-					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "datasets.1", dataset2.Slug),
+					resource.TestCheckTypeSetElemAttr("honeycombio_slo.md_test", "datasets.*", dataset1.Slug),
+					resource.TestCheckTypeSetElemAttr("honeycombio_slo.md_test", "datasets.*", dataset2.Slug),
 					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "description", "integration test MD SLO"),
 					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "sli", mdSLI.Alias),
 					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "target_percentage", "99.95"),
@@ -136,7 +137,7 @@ func testAccCheckSLOExists(t *testing.T, name string, slo *honeycombio.SLO) reso
 		}
 
 		client := testAccClient(t)
-		rslo, err := client.SLOs.Get(context.Background(), "__all__", resourceState.Primary.ID)
+		rslo, err := client.SLOs.Get(context.Background(), honeycombio.EnvironmentWideSlug, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created SLO: %w", err)
 		}
@@ -207,7 +208,7 @@ func mdSLOAccTestSetup(t *testing.T) (honeycombio.Dataset, honeycombio.Dataset, 
 	})
 
 	sli, err := c.DerivedColumns.Create(ctx, honeycombio.EnvironmentWideSlug, &honeycombio.DerivedColumn{
-		Alias:       "sli." + acctest.RandString(8),
+		Alias:       test.RandomStringWithPrefix("test.", 10),
 		Description: "test SLI",
 		Expression:  "BOOL(1)",
 	})
