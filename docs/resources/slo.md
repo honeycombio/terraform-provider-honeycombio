@@ -3,6 +3,7 @@
 Creates a service level objective (SLO). For more information about SLOs, check out [Set Service Level Objectives (SLOs)](https://docs.honeycomb.io/working-with-your-data/slos/).
 
 ## Example Usage
+### Single Dataset SLO
 
 ```hcl
 resource "honeycombio_derived_column" "request_latency_sli" {
@@ -21,7 +22,33 @@ resource "honeycombio_derived_column" "request_latency_sli" {
 resource "honeycombio_slo" "slo" {
   name              = "Latency SLO"
   description       = "example of an SLO"
-  datasets          = [var.dataset]
+  dataset           = var.dataset
+  sli               = honeycombio_derived_column.request_latency_sli.alias
+  target_percentage = 99.9
+  time_period       = 30
+}
+```
+
+### Multi-Dataset SLO
+
+```hcl
+resource "honeycombio_derived_column" "request_latency_sli" {
+  alias       = "sli.request_latency"
+  description = "SLI: request latency less than 300ms"
+  dataset     = "__all__"
+
+  # heredoc also works
+  expression = file("../sli/sli.request_latency.honeycomb")
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "honeycombio_slo" "slo" {
+  name              = "Latency SLO"
+  description       = "example of an SLO"
+  datasets          = [var.dataset1, var.dataset2]
   sli               = honeycombio_derived_column.request_latency_sli.alias
   target_percentage = 99.9
   time_period       = 30
@@ -45,7 +72,7 @@ the column evaluation should consistently return nil, true, or false, as these a
 * `target_percentage` - (Required) The percentage of qualified events that you expect to succeed during the `time_period`.
 * `time_period` - (Required) The time period, in days, over which your SLO will be evaluated.
 
-~> **Note** `dataset` will be deprecated in a future release.
+~> **Note** `dataset` will be deprecated in a future release. In the meantime, you can swap `dataset` with a single value array for `datasets` to effectively evaluate to the same configuration.
 
 ## Attribute Reference
 

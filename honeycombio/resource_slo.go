@@ -47,7 +47,7 @@ func newSLO() *schema.Resource {
 						return true
 					}
 					// if the config moves away from deprecated dataset, nothing should change
-					if newValue == "" || newValue == "__all__" {
+					if newValue == "" {
 						return true
 					}
 					return false

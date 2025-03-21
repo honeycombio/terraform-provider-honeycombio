@@ -70,6 +70,40 @@ func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 	})
 }
 
+func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
+	dataset, sliAlias := sloAccTestSetup(t)
+	slo := &honeycombio.SLO{}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigSLO_basic(dataset, sliAlias),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "dataset", dataset),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "name", "TestAcc SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", "integration test SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "sli", sliAlias),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "target_percentage", "99.95"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "time_period", "30"),
+				),
+			},
+			// update the config to swap out dataset for datasets and ensure nothing changes
+			{
+				Config: testAccConfigSLO_dataset_deprecation(dataset, sliAlias),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "datasets.#", "1"),
+					resource.TestCheckTypeSetElemAttr("honeycombio_slo.md_test", "datasets.*", dataset),
+				),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
 func TestHoneycombSLO_MD(t *testing.T) {
 	client := testAccClient(t)
 	if client.IsClassic(context.Background()) {
@@ -109,6 +143,19 @@ func testAccConfigSLO_basic(dataset, sliAlias string) string {
 		name              = "TestAcc SLO"
 		description       = "integration test SLO"
 		dataset           = "%s"
+		sli               = "%s"
+		target_percentage = 99.95
+		time_period       = 30
+	}
+	`, dataset, sliAlias)
+}
+
+func testAccConfigSLO_dataset_deprecation(dataset, sliAlias string) string {
+	return fmt.Sprintf(`
+	resource "honeycombio_slo" "test" {
+		name              = "TestAcc SLO"
+		description       = "integration test SLO"
+		datasets          = ["%s"]
 		sli               = "%s"
 		target_percentage = 99.95
 		time_period       = 30
