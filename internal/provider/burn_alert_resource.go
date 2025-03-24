@@ -97,11 +97,12 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"dataset": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "The dataset this Burn Alert is associated with.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				DeprecationMessage: "No longer required.",
 			},
 			"description": schema.StringAttribute{
 				Description: "A description for this Burn Alert.",
@@ -263,8 +264,11 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 		createRequest.BudgetRateWindowMinutes = &budgetRateWindowMinutes
 	}
 
+	// dataset value to use in the API call
+	dataset := getDatasetString(plan.Dataset)
+
 	// Create the new burn alert
-	burnAlert, err := r.client.BurnAlerts.Create(ctx, plan.Dataset.ValueString(), createRequest)
+	burnAlert, err := r.client.BurnAlerts.Create(ctx, dataset.ValueString(), createRequest)
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Burn Alert", err) {
 		return
 	}
@@ -304,9 +308,12 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
+	// dataset value to use in the API call
+	dataset := getDatasetString(state.Dataset)
+
 	// Read the burn alert, using the values from state
 	var detailedErr client.DetailedError
-	burnAlert, err := r.client.BurnAlerts.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
+	burnAlert, err := r.client.BurnAlerts.Get(ctx, dataset.ValueString(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
 			// if not found consider it deleted -- so just remove it from state
@@ -383,14 +390,17 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 		updateRequest.BudgetRateWindowMinutes = &budgetRateWindowMinutes
 	}
 
+	// dataset value to use in the API call
+	dataset := getDatasetString(plan.Dataset)
+
 	// Update the burn alert
-	_, err := r.client.BurnAlerts.Update(ctx, plan.Dataset.ValueString(), updateRequest)
+	_, err := r.client.BurnAlerts.Update(ctx, dataset.ValueString(), updateRequest)
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Burn Alert", err) {
 		return
 	}
 
 	// Read the updated burn alert
-	burnAlert, err := r.client.BurnAlerts.Get(ctx, plan.Dataset.ValueString(), plan.ID.ValueString())
+	burnAlert, err := r.client.BurnAlerts.Get(ctx, dataset.ValueString(), plan.ID.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Burn Alert", err) {
 		return
 	}
@@ -430,9 +440,12 @@ func (r *burnAlertResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
+	// dataset value to use in the API call
+	dataset := getDatasetString(state.Dataset)
+
 	// Delete the burn alert, using the values from state
 	var detailedErr client.DetailedError
-	err := r.client.BurnAlerts.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
+	err := r.client.BurnAlerts.Delete(ctx, dataset.ValueString(), state.ID.ValueString())
 	if err != nil {
 		if errors.As(err, &detailedErr) {
 			// if not found consider it deleted -- so don't error
@@ -449,4 +462,11 @@ func (r *burnAlertResource) Delete(ctx context.Context, req resource.DeleteReque
 			)
 		}
 	}
+}
+
+func getDatasetString(dataset types.String) types.String {
+	if dataset == types.StringNull() {
+		return types.StringValue(client.EnvironmentWideSlug)
+	}
+	return dataset
 }
