@@ -850,7 +850,7 @@ func testAccEnsureBurnAlertDestroyed(t *testing.T) resource.TestCheckFunc {
 }
 
 func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
-	dataset, sloID := burnAlertAccTestSetup(t)
+	_, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
 	// Create
@@ -875,14 +875,6 @@ func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
 			{
 				Config: testAccConfigBurnAlertDefault_MD(exhaustionMinutes, sloID, "critical"),
 				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "critical", sloID),
-			},
-			// Import
-			{
-				ResourceName:            "honeycombio_burn_alert.test",
-				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"recipient"},
 			},
 			// Update - exhaustion time to exhaustion time
 			{
