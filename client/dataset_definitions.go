@@ -92,14 +92,14 @@ func DatasetDefinitionDefaults() map[string][]string {
 		"route":           {"route", "http.route", "request_path"},
 		"service_name":    {"service_name", "service.name", "serviceName"},
 		"span_id":         {"id", "trace.span_id"},
-		"span_kind":       {"meta.span_type"},
+		"span_kind":       {"meta.span_type", "span.kind"},
 		"annotation_type": {"meta.annotation_type"},
 		"link_trace_id":   {"trace.link.trace_id"},
 		"link_span_id":    {"trace.link.span_id", "trace.span_id"},
 		"log_message":     {"body"},
 		"log_severity":    {"severity"},
 		"status":          {"response.status_code", "http.status_code", "elb_status_code"},
-		"trace_id":        {"http.status_code", "trace.trace_id", "traceId"},
+		"trace_id":        {"trace.trace_id", "traceId"},
 		"user":            {"user.id", "user.email", "request.user.id", "request.user.username"},
 	}
 }
