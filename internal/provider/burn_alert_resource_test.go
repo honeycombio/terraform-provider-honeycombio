@@ -989,19 +989,19 @@ func testAccConfigBurnAlertDefault_MD(exhaustionMinutes int, sloID, pdseverity s
 		}
 		EOT`
 	return fmt.Sprintf(`
-resource "honeycombio_pagerduty_recipient" "test_md" {
+resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
-  integration_name = "test.pd-basic-md"
+  integration_name = "test.pd-basic"
 }
 
-resource "honeycombio_burn_alert" "test_md" {
+resource "honeycombio_burn_alert" "test" {
   exhaustion_minutes = %[1]d
 
   slo_id             = "%[2]s"
   description        = "%[4]s"
   
   recipient {
-    id = honeycombio_pagerduty_recipient.test_md.id
+    id = honeycombio_pagerduty_recipient.test.id
 
     notification_details {
       pagerduty_severity = "%[3]s"
