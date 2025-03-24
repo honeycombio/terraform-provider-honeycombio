@@ -349,6 +349,39 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 		orders[i] = order
 	}
+	// ensure all orders have a matching calculation or breakdown
+	for i, order := range orders {
+		if order.Op != nil && *order.Op == client.CalculationOpHeatmap {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("order").AtListIndex(i).AtName("op"),
+				"cannot order by HEATMAP",
+				"",
+			)
+			continue
+		}
+		found := false
+		for _, calc := range calculations {
+			if reflect.DeepEqual(order.Column, calc.Column) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			for _, breakdown := range breakdowns {
+				if order.Column != nil && *order.Column == breakdown {
+					found = true
+					break
+				}
+			}
+		}
+		if !found {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("order").AtListIndex(i),
+				"missing matching calculation or breakdown",
+				"each order must have a matching calculation or breakdown",
+			)
+		}
+	}
 
 	querySpec := &client.QuerySpec{
 		Calculations:      calculations,
