@@ -39,9 +39,31 @@ func newSLO() *schema.Resource {
 			},
 			"dataset": {
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				ForceNew:    true,
 				Description: "The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI's dataset is `\"__all__\"`.",
+				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+					if oldValue == newValue {
+						return true
+					}
+					// if the config moves away from deprecated dataset, nothing should change
+					if newValue == "" {
+						return true
+					}
+					return false
+				},
+				ExactlyOneOf: []string{"dataset", "datasets"},
+			},
+			"datasets": {
+				Type:         schema.TypeSet,
+				Elem:         &schema.Schema{Type: schema.TypeString},
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				Description:  "The datasets the SLO is evaluated on.",
+				ExactlyOneOf: []string{"dataset", "datasets"},
+				MaxItems:     10,
+				MinItems:     1,
 			},
 			"sli": {
 				Type:     schema.TypeString,
@@ -85,7 +107,8 @@ func resourceSLOCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDataset(d)
+
 	s, err := client.SLOs.Create(ctx, dataset, expandSLO(d))
 	if err != nil {
 		return diag.FromErr(err)
@@ -101,7 +124,7 @@ func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDataset(d)
 
 	var detailedErr honeycombio.DetailedError
 	s, err := client.SLOs.Get(ctx, dataset, d.Id())
@@ -122,6 +145,7 @@ func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface
 	d.Set("sli", s.SLI.Alias)
 	d.Set("target_percentage", helper.PPMToFloat(s.TargetPerMillion))
 	d.Set("time_period", s.TimePeriodDays)
+	d.Set("datasets", s.DatasetSlugs)
 
 	return nil
 }
@@ -132,7 +156,8 @@ func resourceSLOUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDataset(d)
+
 	s, err := client.SLOs.Update(ctx, dataset, expandSLO(d))
 	if err != nil {
 		return diag.FromErr(err)
@@ -148,7 +173,7 @@ func resourceSLODelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDataset(d)
 
 	err = client.SLOs.Delete(ctx, dataset, d.Id())
 	if err != nil {
@@ -158,6 +183,13 @@ func resourceSLODelete(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func expandSLO(d *schema.ResourceData) *honeycombio.SLO {
+	var datasets []string
+	if v, ok := d.GetOk("datasets"); ok {
+		for _, v := range v.(*schema.Set).List() {
+			datasets = append(datasets, v.(string))
+		}
+	}
+
 	return &honeycombio.SLO{
 		ID:               d.Id(),
 		Name:             d.Get("name").(string),
@@ -165,5 +197,14 @@ func expandSLO(d *schema.ResourceData) *honeycombio.SLO {
 		TimePeriodDays:   d.Get("time_period").(int),
 		TargetPerMillion: helper.FloatToPPM(d.Get("target_percentage").(float64)),
 		SLI:              honeycombio.SLIRef{Alias: d.Get("sli").(string)},
+		DatasetSlugs:     datasets,
 	}
+}
+
+func getDataset(d *schema.ResourceData) string {
+	dataset := d.Get("dataset").(string)
+	if dataset == "" {
+		dataset = "__all__"
+	}
+	return dataset
 }
