@@ -197,6 +197,7 @@ func TestAcc_QuerySpecificationDataSource_validationChecks(t *testing.T) {
 			testStepsQueryValidationChecks_limit(),
 			testStepsQueryValidationChecks_time,
 			testStepsQueryValidationChecks_having,
+			testStepsQueryValidationChecks_order,
 		),
 	})
 }
@@ -210,6 +211,7 @@ data "honeycombio_query_specification" "test" {
     column = "we-should-not-specify-a-column-with-COUNT"
   }
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("column is not allowed with operator COUNT"),
 	},
 	{
@@ -219,6 +221,7 @@ data "honeycombio_query_specification" "test" {
     op     = "AVG"
   }
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("AVG requires a colum"),
 	},
 }
@@ -233,6 +236,7 @@ data "honeycombio_query_specification" "test" {
     value  = "this-value-should-not-be-here"
   }
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("exists does not take a value"),
 	},
 	{
@@ -243,6 +247,7 @@ data "honeycombio_query_specification" "test" {
     op     = ">"
   }
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("operator > requires a value"),
 	},
 }
@@ -255,14 +260,17 @@ data "honeycombio_query_specification" "test" {
 	return []resource.TestStep{
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, 0),
+			PlanOnly:    true,
 			ExpectError: regexp.MustCompile("limit value must be between 1 and 1000"),
 		},
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, -5),
+			PlanOnly:    true,
 			ExpectError: regexp.MustCompile("limit value must be between 1 and 1000"),
 		},
 		{
 			Config:      fmt.Sprintf(queryLimitFmt, 1200),
+			PlanOnly:    true,
 			ExpectError: regexp.MustCompile("limit value must be between 1 and 1000"),
 		},
 	}
@@ -276,6 +284,7 @@ data "honeycombio_query_specification" "test" {
   start_time = 1577836800
   end_time   = 1577844000
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("specify at most two of time_range, start_time and end_time"),
 	},
 	{
@@ -284,6 +293,7 @@ data "honeycombio_query_specification" "test" {
   time_range  = 120
   granularity = 13
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("granularity can not be greater than time_range/10"),
 	},
 	{
@@ -292,6 +302,7 @@ data "honeycombio_query_specification" "test" {
   time_range  = 60000
   granularity = 59
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("granularity can not be less than time_range/1000"),
 	},
 }
@@ -307,6 +318,7 @@ data "honeycombio_query_specification" "test" {
     value        = 1
   }
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("COUNT should not have an accompanying column"),
 	},
 	{
@@ -319,6 +331,7 @@ data "honeycombio_query_specification" "test" {
     value        = 1
   }
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("CONCURRENCY should not have an accompanying column"),
 	},
 	{
@@ -330,6 +343,7 @@ data "honeycombio_query_specification" "test" {
     value        = 1000
   }
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("P99 requires a column"),
 	},
 	{
@@ -342,7 +356,120 @@ data "honeycombio_query_specification" "test" {
     value        = "850"
   }
 }`,
+		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("P95 missing matching calculation"),
+	},
+}
+
+var testStepsQueryValidationChecks_order = []resource.TestStep{
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  order {
+    op    = "COUNT"
+    order = "descending"
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  order {
+    op    = "COUNT"
+    order = "descending"
+  }
+}`,
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  breakdowns = ["app.tenant"]
+
+  order {
+    op     = "AVG"
+    column = "duration_ms"
+    order  = "ascending"
+  }
+
+  order {
+    column = "app.tenant"
+    order  = "descending"
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "MAX"
+    column = "duration_ms"
+  }
+
+  order {
+    op    = "COUNT"
+    order = "ascending"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("missing matching calculation or breakdown"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "MAX"
+    column = "duration_ms"
+  }
+
+  breakdowns = ["app.tenant"]
+
+  order {
+    column = "column_1"
+    order  = "ascending"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("missing matching calculation or breakdown"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "HEATMAP"
+    column = "duration_ms"
+  }
+
+  breakdowns = ["app.tenant"]
+
+  order {
+    op     = "HEATMAP"
+    column = "duration_ms"
+    order  = "ascending"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("cannot order by HEATMAP"),
 	},
 }
 
@@ -378,6 +505,7 @@ data "honeycombio_query_specification" "test" {
     value  = "fzz,bzz"
   }
 }`,
+				PlanOnly: true,
 			},
 		},
 	})
