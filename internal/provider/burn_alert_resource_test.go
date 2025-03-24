@@ -878,7 +878,7 @@ func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
 			},
 			// Import
 			{
-				ResourceName:            "honeycombio_burn_alert.test_md",
+				ResourceName:            "honeycombio_burn_alert.test",
 				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
 				ImportState:             true,
 				ImportStateVerify:       true,
@@ -1236,12 +1236,12 @@ resource "honeycombio_burn_alert" "test" {
 
 func testAccConfigBurnAlertBudgetRate_MD(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
-resource "honeycombio_pagerduty_recipient" "test_md" {
+resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
-  integration_name = "test.pd-basic-md"
+  integration_name = "test.pd-basic"
 }
 
-resource "honeycombio_burn_alert" "test_md" {
+resource "honeycombio_burn_alert" "test" {
   alert_type                   = "budget_rate"
   description                  = "%[5]s"
   budget_rate_window_minutes   = %[1]d
@@ -1250,7 +1250,7 @@ resource "honeycombio_burn_alert" "test_md" {
   slo_id  = "%[3]s"
 
   recipient {
-    id = honeycombio_pagerduty_recipient.test_md.id
+    id = honeycombio_pagerduty_recipient.test.id
 
     notification_details {
       pagerduty_severity = "%[4]s"
