@@ -102,7 +102,6 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
-				DeprecationMessage: "No longer required.",
 			},
 			"description": schema.StringAttribute{
 				Description: "A description for this Burn Alert.",
@@ -265,7 +264,7 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	// dataset value to use in the API call
-	dataset := getDatasetString(plan.Dataset)
+	dataset := helper.GetDatasetString(plan.Dataset)
 
 	// Create the new burn alert
 	burnAlert, err := r.client.BurnAlerts.Create(ctx, dataset.ValueString(), createRequest)
@@ -309,7 +308,7 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	// dataset value to use in the API call
-	dataset := getDatasetString(state.Dataset)
+	dataset := helper.GetDatasetString(state.Dataset)
 
 	// Read the burn alert, using the values from state
 	var detailedErr client.DetailedError
@@ -391,7 +390,7 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 
 	// dataset value to use in the API call
-	dataset := getDatasetString(plan.Dataset)
+	dataset := helper.GetDatasetString(plan.Dataset)
 
 	// Update the burn alert
 	_, err := r.client.BurnAlerts.Update(ctx, dataset.ValueString(), updateRequest)
@@ -441,7 +440,7 @@ func (r *burnAlertResource) Delete(ctx context.Context, req resource.DeleteReque
 	}
 
 	// dataset value to use in the API call
-	dataset := getDatasetString(state.Dataset)
+	dataset := helper.GetDatasetString(state.Dataset)
 
 	// Delete the burn alert, using the values from state
 	var detailedErr client.DetailedError
@@ -462,11 +461,4 @@ func (r *burnAlertResource) Delete(ctx context.Context, req resource.DeleteReque
 			)
 		}
 	}
-}
-
-func getDatasetString(dataset types.String) types.String {
-	if dataset == types.StringNull() {
-		return types.StringValue(client.EnvironmentWideSlug)
-	}
-	return dataset
 }

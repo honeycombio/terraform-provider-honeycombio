@@ -973,13 +973,6 @@ resource "honeycombio_burn_alert" "test" {
 }
 
 func testAccConfigBurnAlertDefault_MD(exhaustionMinutes int, sloID, pdseverity string) string {
-	tmplBody := `<<EOT
-		{
-			"name": " {{ .Name }}",
-			"id": " {{ .ID }}",
-			"description": " {{ .Description }}",
-		}
-		EOT`
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
@@ -999,7 +992,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[3]s"
     }
   }
-}`, exhaustionMinutes, sloID, pdseverity, testBADescription, tmplBody)
+}`, exhaustionMinutes, sloID, pdseverity, testBADescription)
 }
 
 func testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes int, dataset, sloID, variableValue string) string {
