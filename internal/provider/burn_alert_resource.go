@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/modifiers"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
@@ -101,7 +102,7 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Computed:    true,
 				Description: "The dataset this Burn Alert is associated with.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
+					modifiers.DatasetDeprecation(),
 					stringplanmodifier.RequiresReplaceIf(
 						func(ctx context.Context, sr planmodifier.StringRequest, rrifr *stringplanmodifier.RequiresReplaceIfFuncResponse) {
 							// If the dataset is empty, we don't want to require a replace
