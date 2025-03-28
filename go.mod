@@ -2,6 +2,8 @@ module github.com/honeycombio/terraform-provider-honeycombio
 
 go 1.23.6
 
+toolchain go1.24.1
+
 require (
 	github.com/dunglas/httpsfv v1.1.0
 	github.com/google/go-querystring v1.1.0
@@ -69,7 +71,7 @@ require (
 	github.com/zclconf/go-cty v1.16.2 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/mod v0.23.0 // indirect
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
