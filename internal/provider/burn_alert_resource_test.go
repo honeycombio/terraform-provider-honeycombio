@@ -851,6 +851,12 @@ func testAccEnsureBurnAlertDestroyed(t *testing.T) resource.TestCheckFunc {
 
 func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
 	_, sloID := burnAlertAccTestSetup(t)
+	c := testAccClient(t)
+
+	if c.IsClassic(context.Background()) {
+		t.Skip("MD SLOs are not supported in classic")
+	}
+
 	burnAlert := &client.BurnAlert{}
 
 	// Create
