@@ -146,7 +146,7 @@ resource "honeycombio_burn_alert" "example_alert" {
 
 The following arguments are supported:
 * `slo_id` - (Required) ID of the SLO this burn alert is associated with.
-* `dataset` - (Required) The dataset this burn alert is associated with.
+* `dataset` - (Optional) The dataset this burn alert is associated with. Will be deprecated in a future release of the provider.
 * `description` - (Optional) A description for this Burn Alert.
 * `alert_type` - (Optional) Type of the burn alert. Valid values are `exhaustion_time` and `budget_rate`. 
    Defaults to `exhaustion_time`.
@@ -191,6 +191,8 @@ In addition to all arguments above, the following attributes are exported:
 ## Import
 
 Burn alerts can be imported using a combination of the dataset name and their ID, e.g.
+
+For multi-dataset burn alerts, replace dataset name with `__all__`.
 
 ```
 $ terraform import honeycombio_burn_alert.my_alert my-dataset/bj9BwOb1uKz

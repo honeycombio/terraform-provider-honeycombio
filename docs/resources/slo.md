@@ -84,6 +84,8 @@ In addition to all arguments above, the following attributes are exported:
 
 SLOs can be imported using a combination of the dataset name and their ID, e.g.
 
+For multi-dataset SLOs, replace dataset name with `__all__`.
+
 ```
 $ terraform import honeycombio_slo.my_slo my-dataset/bj9BwOb1uKz
 ```
