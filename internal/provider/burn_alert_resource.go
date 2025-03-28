@@ -243,7 +243,11 @@ func (r *burnAlertResource) ImportState(ctx context.Context, req resource.Import
 	}
 
 	if dataset == client.EnvironmentWideSlug {
-		dataset = ""
+		resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{
+			ID:         types.StringValue(id),
+			Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
+		})...)
+		return
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{
