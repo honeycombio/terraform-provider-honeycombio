@@ -7,7 +7,7 @@ import (
 )
 
 func GetDatasetString(dataset types.String) types.String {
-	if dataset == types.StringNull() {
+	if dataset == types.StringNull() || dataset.ValueString() == "" {
 		return types.StringValue(client.EnvironmentWideSlug)
 	}
 	return dataset

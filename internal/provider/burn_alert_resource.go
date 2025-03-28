@@ -98,9 +98,24 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"dataset": schema.StringAttribute{
 				Optional:    true,
+				Computed:    true,
 				Description: "The dataset this Burn Alert is associated with.",
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplaceIf(
+						func(ctx context.Context, sr planmodifier.StringRequest, rrifr *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+							// If the dataset is empty, we don't want to require a replace
+							if sr.PlanValue.IsNull() || sr.PlanValue.IsUnknown() || sr.PlanValue.ValueString() == "" {
+								return
+							}
+							// Require replacement only if the dataset value is explicitly changing
+							if sr.PlanValue.ValueString() != sr.StateValue.ValueString() {
+								rrifr.RequiresReplace = true
+							}
+						},
+						"Dataset Change Requires Replacement",
+						"Changing the dataset requires replacing the resource.",
+					),
 				},
 			},
 			"description": schema.StringAttribute{
@@ -217,6 +232,7 @@ func (r *burnAlertResource) ValidateConfig(ctx context.Context, req resource.Val
 
 func (r *burnAlertResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// import ID is of the format <dataset>/<BurnAlert ID>
+	// To import MD burn alerts, format will be __all__/<BurnAlert ID>
 	dataset, id, found := strings.Cut(req.ID, "/")
 	if !found {
 		resp.Diagnostics.AddError(
@@ -224,6 +240,10 @@ func (r *burnAlertResource) ImportState(ctx context.Context, req resource.Import
 			"The supplied ID must be written as <dataset>/<BurnAlert ID>.",
 		)
 		return
+	}
+
+	if dataset == client.EnvironmentWideSlug {
+		dataset = ""
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{
