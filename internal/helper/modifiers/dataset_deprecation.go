@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type datasetDeprecation struct{}
@@ -23,8 +24,9 @@ func (m datasetDeprecation) PlanModifyString(ctx context.Context, req planmodifi
 	if req.Plan.Raw.IsNull() {
 		return
 	}
-	// Do nothing if the plan or state is not yet known.
+	// Assign null value if the plan value is unknown or theres no state value to fall back on
 	if req.PlanValue.IsUnknown() || req.StateValue.IsUnknown() {
+		resp.PlanValue = types.StringNull()
 		return
 	}
 
