@@ -240,7 +240,12 @@ func (r *burnAlertResource) ImportState(ctx context.Context, req resource.Import
 	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
 	if !found {
 		id = dataset
-		dataset = ""
+		resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{
+			ID:         types.StringValue(id),
+			Dataset:    types.StringNull(),
+			Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
+		})...)
+		return
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{

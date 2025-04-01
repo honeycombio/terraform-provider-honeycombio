@@ -324,33 +324,6 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 	})
 }
 
-func TestAcc_BurnAlertResource_Import_validateImportID(t *testing.T) {
-	dataset, sloID := burnAlertAccTestSetup(t)
-	burnAlert := &client.BurnAlert{}
-
-	exhaustionMinutes := 240
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
-		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
-		Steps: []resource.TestStep{
-			// Create resource for importing
-			{
-				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "info"),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
-			},
-			// Import with invalid import ID
-			{
-				ResourceName:        "honeycombio_burn_alert.test",
-				ImportStateIdPrefix: fmt.Sprintf("%v.", dataset),
-				ImportState:         true,
-				ExpectError:         regexp.MustCompile(`Error: Invalid Import ID`),
-			},
-		},
-	})
-}
-
 func TestAcc_BurnAlertResource_validateDefault(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
 

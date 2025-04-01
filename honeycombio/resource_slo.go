@@ -97,10 +97,10 @@ func resourceSLOImport(ctx context.Context, d *schema.ResourceData, i interface{
 	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
 	if !found {
 		id = dataset
-		dataset = ""
+	} else {
+		d.Set("dataset", dataset)
 	}
 
-	d.Set("dataset", dataset)
 	d.SetId(id)
 
 	return []*schema.ResourceData{d}, nil
