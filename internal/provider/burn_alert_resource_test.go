@@ -66,6 +66,13 @@ func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 				Config: testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "info"),
 				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, "info", sloID),
 			},
+
+			// update the config to remove dataset and ensure nothing changes
+			{
+				Config:             testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, "info"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
 		},
 	})
 }
@@ -1203,6 +1210,31 @@ resource "honeycombio_burn_alert" "test" {
     }
   }
 }`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, pdseverity, testBADescription)
+}
+
+func testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, pdseverity string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "test.pd-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  description                  = "%[5]s"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  slo_id  = "%[3]s"
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[4]s"
+    }
+  }
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), sloID, pdseverity, testBADescription)
 }
 
 func testAccConfigBurnAlertBudgetRate_MD(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, sloID, pdseverity string) string {
