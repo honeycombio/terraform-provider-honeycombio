@@ -1212,7 +1212,7 @@ resource "honeycombio_burn_alert" "test" {
 }`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, pdseverity, testBADescription)
 }
 
-func testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, pdseverity string) string {
+func testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
   integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
