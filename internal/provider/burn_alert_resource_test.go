@@ -885,7 +885,7 @@ func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
 			// Import
 			{
 				ResourceName:            "honeycombio_burn_alert.test",
-				ImportStateIdPrefix:     fmt.Sprintf("%v/", client.EnvironmentWideSlug),
+				ImportStateIdPrefix:     fmt.Sprintf(""),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"recipient"},
@@ -908,7 +908,7 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 	t.Helper()
 
 	ctx := context.Background()
-	dataset := testAccDataset()
+	dataset := testAccDataset() // Ensure this returns a valid, known dataset value
 	c := testAccClient(t)
 
 	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{

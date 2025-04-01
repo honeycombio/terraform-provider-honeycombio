@@ -233,22 +233,14 @@ func (r *burnAlertResource) ValidateConfig(ctx context.Context, req resource.Val
 
 func (r *burnAlertResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// import ID is of the format <dataset>/<BurnAlert ID>
-	// To import MD burn alerts, format will be __all__/<BurnAlert ID>
+	// To import MD burn alerts, just pass in <BurnAlert ID>
 	dataset, id, found := strings.Cut(req.ID, "/")
-	if !found {
-		resp.Diagnostics.AddError(
-			"Invalid Import ID",
-			"The supplied ID must be written as <dataset>/<BurnAlert ID>.",
-		)
-		return
-	}
 
-	if dataset == client.EnvironmentWideSlug {
-		resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{
-			ID:         types.StringValue(id),
-			Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
-		})...)
-		return
+	// if seperator not found, we will assume its the bare id
+	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
+	if !found {
+		id = dataset
+		dataset = ""
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{

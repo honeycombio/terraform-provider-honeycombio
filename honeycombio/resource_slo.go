@@ -9,7 +9,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
@@ -91,16 +90,17 @@ the column evaluation should consistently return nil, true, or false, as these a
 
 func resourceSLOImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
 	// import ID is of the format <dataset>/<SLO ID>
-	// To import MD SLOs, format will be __all__/<SLO ID>
+	// To import MD SLOs, just pass in the <SLO ID>
 	dataset, id, found := strings.Cut(d.Id(), "/")
+
+	// if seperator not found, we will assume its the bare id
+	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
 	if !found {
-		return nil, errors.New("invalid import ID, supplied ID must be written as <dataset>/<SLO ID>")
+		id = dataset
+		dataset = ""
 	}
 
-	if dataset != client.EnvironmentWideSlug {
-		d.Set("dataset", dataset)
-	}
-
+	d.Set("dataset", dataset)
 	d.SetId(id)
 
 	return []*schema.ResourceData{d}, nil

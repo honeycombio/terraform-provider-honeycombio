@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
@@ -143,7 +142,7 @@ func TestHoneycombSLO_MD(t *testing.T) {
 					if !ok {
 						return "", fmt.Errorf("resource not found in state")
 					}
-					return fmt.Sprintf("%s/%s", client.EnvironmentWideSlug, rs.Primary.ID), nil
+					return fmt.Sprintf("%s", rs.Primary.ID), nil
 				},
 			},
 		},
