@@ -168,7 +168,7 @@ func (*webhookRecipientResource) Schema(_ context.Context, _ resource.SchemaRequ
 							Computed:    true,
 							Default:     stringdefault.StaticString(""),
 							Validators: []validator.String{
-								stringvalidator.LengthAtMost(512),
+								stringvalidator.LengthAtMost(750),
 							},
 						},
 					},
