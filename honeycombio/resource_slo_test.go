@@ -142,7 +142,7 @@ func TestHoneycombSLO_MD(t *testing.T) {
 					if !ok {
 						return "", fmt.Errorf("resource not found in state")
 					}
-					return fmt.Sprintf("%s", rs.Primary.ID), nil
+					return rs.Primary.ID, nil
 				},
 			},
 		},

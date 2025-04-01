@@ -93,7 +93,7 @@ func resourceSLOImport(ctx context.Context, d *schema.ResourceData, i interface{
 	// To import MD SLOs, just pass in the <SLO ID>
 	dataset, id, found := strings.Cut(d.Id(), "/")
 
-	// if seperator not found, we will assume its the bare id
+	// if separator not found, we will assume its the bare id
 	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
 	if !found {
 		id = dataset

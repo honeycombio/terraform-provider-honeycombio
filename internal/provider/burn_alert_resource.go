@@ -236,7 +236,7 @@ func (r *burnAlertResource) ImportState(ctx context.Context, req resource.Import
 	// To import MD burn alerts, just pass in <BurnAlert ID>
 	dataset, id, found := strings.Cut(req.ID, "/")
 
-	// if seperator not found, we will assume its the bare id
+	// if separator not found, we will assume its the bare id
 	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
 	if !found {
 		id = dataset
