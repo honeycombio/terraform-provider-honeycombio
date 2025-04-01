@@ -137,13 +137,7 @@ func TestHoneycombSLO_MD(t *testing.T) {
 				ResourceName:      "honeycombio_slo.md_test",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: func(s *terraform.State) (string, error) {
-					rs, ok := s.RootModule().Resources["honeycombio_slo.md_test"]
-					if !ok {
-						return "", fmt.Errorf("resource not found in state")
-					}
-					return rs.Primary.ID, nil
-				},
+				ImportStateId:     mdSLO.ID,
 			},
 		},
 	})

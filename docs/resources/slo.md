@@ -87,8 +87,19 @@ SLOs can be imported using a combination of the dataset name and their ID, e.g.
 
 For multi-dataset SLOs, just pass in their ID.
 
+SLOs can be imported using by using their ID combined with their dataset.
+If the SLO is a multi-dataset (MD) SLO, the dataset is not provided.
+
+### SLO
+
 ```
 $ terraform import honeycombio_slo.my_slo my-dataset/bj9BwOb1uKz
+```
+
+### Multi-dataset SLO
+
+```
+$ terraform import honeycombio_slo.my_slo bj9BwOb1uKz
 ```
 
 You can find the ID in the URL bar when visiting the SLO from the UI.

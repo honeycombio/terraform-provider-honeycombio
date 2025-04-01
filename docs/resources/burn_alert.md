@@ -194,10 +194,17 @@ In addition to all arguments above, the following attributes are exported:
 
 ## Import
 
-Burn alerts can be imported using a combination of the dataset name and their ID, e.g.
+Burn alerts can be imported using by using their ID combined with their dataset.
+If the burn alert is a multi-dataset (MD) burn alert, the dataset is not provided.
 
-For multi-dataset burn alerts, just pass in their ID.
+### Burn Alert
 
 ```
 $ terraform import honeycombio_burn_alert.my_alert my-dataset/bj9BwOb1uKz
+```
+
+### Multi-dataset Burn Alert
+
+```
+$ terraform import honeycombio_burn_alert.my_alert bc9XwOb2yJu
 ```

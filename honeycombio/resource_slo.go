@@ -89,11 +89,9 @@ the column evaluation should consistently return nil, true, or false, as these a
 }
 
 func resourceSLOImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
-	// import ID is of the format <dataset>/<SLO ID>
-	// To import MD SLOs, just pass in the <SLO ID>
 	dataset, id, found := strings.Cut(d.Id(), "/")
 
-	// if separator not found, we will assume its the bare id
+	// if dataset separator not found, we will assume its the bare id
 	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
 	if !found {
 		id = dataset

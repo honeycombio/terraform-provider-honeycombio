@@ -858,7 +858,6 @@ func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
 			// Import
 			{
 				ResourceName:            "honeycombio_burn_alert.test",
-				ImportStateIdPrefix:     "",
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"recipient"},

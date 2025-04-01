@@ -232,25 +232,20 @@ func (r *burnAlertResource) ValidateConfig(ctx context.Context, req resource.Val
 }
 
 func (r *burnAlertResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// import ID is of the format <dataset>/<BurnAlert ID>
-	// To import MD burn alerts, just pass in <BurnAlert ID>
 	dataset, id, found := strings.Cut(req.ID, "/")
 
-	// if separator not found, we will assume its the bare id
+	// if dataset separator not found, we will assume its the bare id
 	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
+	dsValue := types.StringNull()
 	if !found {
 		id = dataset
-		resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{
-			ID:         types.StringValue(id),
-			Dataset:    types.StringNull(),
-			Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
-		})...)
-		return
+	} else {
+		dsValue = types.StringValue(dataset)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{
 		ID:         types.StringValue(id),
-		Dataset:    types.StringValue(dataset),
+		Dataset:    dsValue,
 		Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
 	})...)
 }
