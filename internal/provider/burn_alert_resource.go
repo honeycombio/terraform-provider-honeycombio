@@ -103,20 +103,6 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Description: "The dataset this Burn Alert is associated with.",
 				PlanModifiers: []planmodifier.String{
 					modifiers.DatasetDeprecation(),
-					stringplanmodifier.RequiresReplaceIf(
-						func(ctx context.Context, sr planmodifier.StringRequest, rrifr *stringplanmodifier.RequiresReplaceIfFuncResponse) {
-							// If the dataset is empty, we don't want to require a replace
-							if sr.PlanValue.IsNull() || sr.PlanValue.IsUnknown() || sr.PlanValue.ValueString() == "" {
-								return
-							}
-							// Require replacement only if the dataset value is explicitly changing
-							if sr.PlanValue.ValueString() != sr.StateValue.ValueString() {
-								rrifr.RequiresReplace = true
-							}
-						},
-						"Dataset Change Requires Replacement",
-						"Changing the dataset requires replacing the resource.",
-					),
 				},
 			},
 			"description": schema.StringAttribute{

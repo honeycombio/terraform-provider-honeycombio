@@ -40,6 +40,12 @@ func (m datasetDeprecation) PlanModifyString(ctx context.Context, req planmodifi
 		resp.PlanValue = req.StateValue
 		return
 	}
+
+	if !req.PlanValue.Equal(req.StateValue) {
+		// Require replacement only if the dataset value is explicitly changing
+		resp.RequiresReplace = true
+		return
+	}
 }
 
 // DatasetDeprecation avoids unnecessary plans if dataset becomes omitted. Configuration should now behave the same.
