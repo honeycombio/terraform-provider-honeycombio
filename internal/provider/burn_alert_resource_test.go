@@ -933,6 +933,12 @@ func getNewDatasetAndSLO(t *testing.T) (string, string) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
+		c.Datasets.Update(ctx, &client.Dataset{
+			Slug: dataset.Slug,
+			Settings: client.DatasetSettings{
+				DeleteProtected: helper.ToPtr(false),
+			},
+		})
 		c.Datasets.Delete(ctx, dataset.Slug)
 	})
 	sli, err := c.DerivedColumns.Create(ctx, dataset.Slug, &client.DerivedColumn{
