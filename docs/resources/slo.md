@@ -3,6 +3,7 @@
 Creates a service level objective (SLO). For more information about SLOs, check out [Set Service Level Objectives (SLOs)](https://docs.honeycomb.io/working-with-your-data/slos/).
 
 ## Example Usage
+
 ### Single Dataset SLO
 
 ```hcl
@@ -62,15 +63,15 @@ This way you will avoid running into conflicts if the Derived Column needs to be
 
 The following arguments are supported:
 
-* `name` - (Required) The name of the SLO.
-* `description` - (Optional) A description of the SLO's intent and context.
-* `dataset` - (Optional) The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI's dataset is `"__all__"`. Conflicts with `datasets`. Will be deprecated in a future release of the provider.
-* `datasets` - (Optional) Array of datasets the SLO is evaluated on. Conflicts with `dataset`. Must have a length between 1 and 10.
-* `sli` - (Required) The alias of the Derived Column that will be used as the SLI to indicate event success.
-The derived column used as the SLI must be in the same dataset as the SLO. Additionally,
-the column evaluation should consistently return nil, true, or false, as these are the only valid values for an SLI.
-* `target_percentage` - (Required) The percentage of qualified events that you expect to succeed during the `time_period`.
-* `time_period` - (Required) The time period, in days, over which your SLO will be evaluated.
+-   `name` - (Required) The name of the SLO.
+-   `description` - (Optional) A description of the SLO's intent and context.
+-   `dataset` - (Optional) The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI's dataset is `"__all__"`. Conflicts with `datasets`. Will be deprecated in a future release of the provider.
+-   `datasets` - (Optional) Array of datasets the SLO is evaluated on. Conflicts with `dataset`. Must have a length between 1 and 10.
+-   `sli` - (Required) The alias of the Derived Column that will be used as the SLI to indicate event success.
+    The derived column used as the SLI must be in the same dataset as the SLO. Additionally,
+    the column evaluation should consistently return nil, true, or false, as these are the only valid values for an SLI.
+-   `target_percentage` - (Required) The percentage of qualified events that you expect to succeed during the `time_period`.
+-   `time_period` - (Required) The time period, in days, over which your SLO will be evaluated.
 
 ~> **Note** `dataset` will be deprecated in a future release. In the meantime, you can swap `dataset` with a single value array for `datasets` to effectively evaluate to the same configuration.
 
@@ -78,14 +79,27 @@ the column evaluation should consistently return nil, true, or false, as these a
 
 In addition to all arguments above, the following attributes are exported:
 
-* `id` - ID of the SLO.
+-   `id` - ID of the SLO.
 
 ## Import
 
 SLOs can be imported using a combination of the dataset name and their ID, e.g.
 
+For multi-dataset SLOs, just pass in their ID.
+
+SLOs can be imported using by using their ID combined with their dataset.
+If the SLO is a multi-dataset (MD) SLO, the dataset is not provided.
+
+### SLO
+
 ```
 $ terraform import honeycombio_slo.my_slo my-dataset/bj9BwOb1uKz
+```
+
+### Multi-dataset SLO
+
+```
+$ terraform import honeycombio_slo.my_slo bj9BwOb1uKz
 ```
 
 You can find the ID in the URL bar when visiting the SLO from the UI.

@@ -23,6 +23,7 @@ const testBADescription = "burn alert description"
 
 func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
+	dataset2, slo2ID := getNewDatasetAndSLO(t)
 	burnAlert := &client.BurnAlert{}
 
 	// Create
@@ -65,6 +66,21 @@ func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 			{
 				Config: testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "info"),
 				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, "info", sloID),
+			},
+
+			// update the config to remove dataset and ensure nothing changes
+			{
+				Config:   testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, "info"),
+				PlanOnly: true,
+			},
+			// update the config to change the dataset and ensure it gets replaced
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset2, slo2ID, "info"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("honeycombio_burn_alert.test", "id"),
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "dataset", dataset2),
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", slo2ID),
+				),
 			},
 		},
 	})
@@ -319,33 +335,6 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 			{
 				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 				Config:                   config,
-			},
-		},
-	})
-}
-
-func TestAcc_BurnAlertResource_Import_validateImportID(t *testing.T) {
-	dataset, sloID := burnAlertAccTestSetup(t)
-	burnAlert := &client.BurnAlert{}
-
-	exhaustionMinutes := 240
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
-		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
-		Steps: []resource.TestStep{
-			// Create resource for importing
-			{
-				Config: testAccConfigBurnAlertDefault_basic(exhaustionMinutes, dataset, sloID, "info"),
-				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
-			},
-			// Import with invalid import ID
-			{
-				ResourceName:        "honeycombio_burn_alert.test",
-				ImportStateIdPrefix: fmt.Sprintf("%v.", dataset),
-				ImportState:         true,
-				ExpectError:         regexp.MustCompile(`Error: Invalid Import ID`),
 			},
 		},
 	})
@@ -760,8 +749,8 @@ func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.B
 			return fmt.Errorf("\"%s\" not found in state", name)
 		}
 
-		client := testAccClient(t)
-		alert, err := client.BurnAlerts.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+		c := testAccClient(t)
+		alert, err := c.BurnAlerts.Get(context.Background(), client.EnvironmentWideSlug, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created Burn Alert: %w", err)
 		}
@@ -838,8 +827,8 @@ func testAccEnsureBurnAlertDestroyed(t *testing.T) resource.TestCheckFunc {
 				return fmt.Errorf("no ID set for burn alert")
 			}
 
-			client := testAccClient(t)
-			_, err := client.BurnAlerts.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+			c := testAccClient(t)
+			_, err := c.BurnAlerts.Get(context.Background(), client.EnvironmentWideSlug, resourceState.Primary.ID)
 			if err == nil {
 				return fmt.Errorf("burn alert %s was not deleted on destroy", resourceState.Primary.ID)
 			}
@@ -849,11 +838,65 @@ func testAccEnsureBurnAlertDestroyed(t *testing.T) resource.TestCheckFunc {
 	}
 }
 
+func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
+	_, sloID := burnAlertAccTestSetup(t)
+	c := testAccClient(t)
+
+	if c.IsClassic(context.Background()) {
+		t.Skip("MD SLOs are not supported in classic")
+	}
+
+	burnAlert := &client.BurnAlert{}
+
+	// Create
+	exhaustionMinutes := 240
+
+	// Update
+	updatedExhaustionMinutes := 480
+	budgetRateWindowMinutes := 60
+	budgetRateDecreasePercent := 0.0001
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			// Create - basic
+			{
+				Config: testAccConfigBurnAlertDefault_MD(exhaustionMinutes, sloID, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
+			},
+			// Update - PD Severity from info -> critical (the default)
+			{
+				Config: testAccConfigBurnAlertDefault_MD(exhaustionMinutes, sloID, "critical"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "critical", sloID),
+			},
+			// Import
+			{
+				ResourceName:            "honeycombio_burn_alert.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"recipient"},
+			},
+			// Update - exhaustion time to exhaustion time
+			{
+				Config: testAccConfigBurnAlertDefault_MD(updatedExhaustionMinutes, sloID, "info"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, updatedExhaustionMinutes, "info", sloID),
+			},
+			// Update - exhaustion time to budget rate
+			{
+				Config: testAccConfigBurnAlertBudgetRate_MD(budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, "info"),
+				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, "info", sloID),
+			},
+		},
+	})
+}
+
 func burnAlertAccTestSetup(t *testing.T) (string, string) {
 	t.Helper()
 
 	ctx := context.Background()
-	dataset := testAccDataset()
+	dataset := testAccDataset() // Ensure this returns a valid, known dataset value
 	c := testAccClient(t)
 
 	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
@@ -876,6 +919,49 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 	})
 
 	return dataset, slo.ID
+}
+
+func getNewDatasetAndSLO(t *testing.T) (string, string) {
+	t.Helper()
+
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	dataset, err := c.Datasets.Create(ctx, &client.Dataset{
+		Name: test.RandomStringWithPrefix("test.", 10),
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		c.Datasets.Update(ctx, &client.Dataset{
+			Slug: dataset.Slug,
+			Settings: client.DatasetSettings{
+				DeleteProtected: helper.ToPtr(false),
+			},
+		})
+		c.Datasets.Delete(ctx, dataset.Slug)
+	})
+	sli, err := c.DerivedColumns.Create(ctx, dataset.Slug, &client.DerivedColumn{
+		Alias:      "sli." + acctest.RandString(8),
+		Expression: "BOOL(1)",
+	})
+
+	require.NoError(t, err)
+
+	slo, err := c.SLOs.Create(ctx, dataset.Slug, &client.SLO{
+		Name:             acctest.RandString(8) + " SLO",
+		TimePeriodDays:   14,
+		TargetPerMillion: 995000,
+		SLI:              client.SLIRef{Alias: sli.Alias},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		// remove SLO, SLI DC at end of test run
+		c.SLOs.Delete(ctx, dataset.Slug, slo.ID)
+		c.DerivedColumns.Delete(ctx, dataset.Slug, sli.ID)
+	})
+
+	return dataset.Slug, slo.ID
 }
 
 func testAccConfigBurnAlert_withoutDescription(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
@@ -929,6 +1015,29 @@ resource "honeycombio_burn_alert" "test" {
     }
   }
 }`, exhaustionMinutes, dataset, sloID, pdseverity, testBADescription, tmplBody)
+}
+
+func testAccConfigBurnAlertDefault_MD(exhaustionMinutes int, sloID, pdseverity string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "test.pd-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = %[1]d
+
+  slo_id             = "%[2]s"
+  description        = "%[4]s"
+  
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[3]s"
+    }
+  }
+}`, exhaustionMinutes, sloID, pdseverity, testBADescription)
 }
 
 func testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes int, dataset, sloID, variableValue string) string {
@@ -1153,6 +1262,56 @@ resource "honeycombio_burn_alert" "test" {
     }
   }
 }`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, pdseverity, testBADescription)
+}
+
+func testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, sloID, pdseverity string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "test.pd-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  description                  = "%[5]s"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  slo_id  = "%[3]s"
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[4]s"
+    }
+  }
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), sloID, pdseverity, testBADescription)
+}
+
+func testAccConfigBurnAlertBudgetRate_MD(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, sloID, pdseverity string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_name = "test.pd-basic"
+}
+
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  description                  = "%[5]s"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  slo_id  = "%[3]s"
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[4]s"
+    }
+  }
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), sloID, pdseverity, testBADescription)
 }
 
 func testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, variableValue string) string {

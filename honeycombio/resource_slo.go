@@ -89,13 +89,16 @@ the column evaluation should consistently return nil, true, or false, as these a
 }
 
 func resourceSLOImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
-	// import ID is of the format <dataset>/<SLO ID>
 	dataset, id, found := strings.Cut(d.Id(), "/")
+
+	// if dataset separator not found, we will assume its the bare id
+	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
 	if !found {
-		return nil, errors.New("invalid import ID, supplied ID must be written as <dataset>/<SLO ID>")
+		id = dataset
+	} else {
+		d.Set("dataset", dataset)
 	}
 
-	d.Set("dataset", dataset)
 	d.SetId(id)
 
 	return []*schema.ResourceData{d}, nil
