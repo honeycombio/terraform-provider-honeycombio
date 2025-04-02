@@ -928,7 +928,7 @@ func getNewDatasetAndSLO(t *testing.T) (string, string) {
 	c := testAccClient(t)
 
 	dataset, err := c.Datasets.Create(ctx, &client.Dataset{
-		Name: acctest.RandomWithPrefix("test"),
+		Name: test.RandomStringWithPrefix("test.", 10),
 	})
 	require.NoError(t, err)
 
