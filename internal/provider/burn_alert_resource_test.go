@@ -23,6 +23,7 @@ const testBADescription = "burn alert description"
 
 func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
+	dataset2, slo2ID := getNewDatasetAndSLO(t)
 	burnAlert := &client.BurnAlert{}
 
 	// Create
@@ -69,9 +70,17 @@ func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 
 			// update the config to remove dataset and ensure nothing changes
 			{
-				Config:             testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, "info"),
-				PlanOnly:           true,
-				ExpectNonEmptyPlan: false,
+				Config:   testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, "info"),
+				PlanOnly: true,
+			},
+			// update the config to change the dataset and ensure it gets replaced
+			{
+				Config: testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset2, slo2ID, "info"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttrSet("honeycombio_burn_alert.test", "id"),
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "dataset", dataset2),
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "slo_id", slo2ID),
+				),
 			},
 		},
 	})
@@ -910,6 +919,43 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 	})
 
 	return dataset, slo.ID
+}
+
+func getNewDatasetAndSLO(t *testing.T) (string, string) {
+	t.Helper()
+
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	dataset, err := c.Datasets.Create(ctx, &client.Dataset{
+		Name: acctest.RandomWithPrefix("test"),
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		c.Datasets.Delete(ctx, dataset.Slug)
+	})
+	sli, err := c.DerivedColumns.Create(ctx, dataset.Slug, &client.DerivedColumn{
+		Alias:      "sli." + acctest.RandString(8),
+		Expression: "BOOL(1)",
+	})
+
+	require.NoError(t, err)
+
+	slo, err := c.SLOs.Create(ctx, dataset.Slug, &client.SLO{
+		Name:             acctest.RandString(8) + " SLO",
+		TimePeriodDays:   14,
+		TargetPerMillion: 995000,
+		SLI:              client.SLIRef{Alias: sli.Alias},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		// remove SLO, SLI DC at end of test run
+		c.SLOs.Delete(ctx, dataset.Slug, slo.ID)
+		c.DerivedColumns.Delete(ctx, dataset.Slug, sli.ID)
+	})
+
+	return dataset.Slug, slo.ID
 }
 
 func testAccConfigBurnAlert_withoutDescription(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
