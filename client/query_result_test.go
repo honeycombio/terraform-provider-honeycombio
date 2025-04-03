@@ -45,10 +45,10 @@ func TestQueryResults(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.True(t, result.Complete, "query result didn't complete")
-		assert.Empty(t, result.Data.Series, "data series should be empty")
-		assert.Empty(t, result.Data.Results, "data results should be empty")
+		assert.NotEmpty(t, result.Data.Results, "results should not be empty")
 		assert.NotEmpty(t, result.Links.GraphUrl, "empty result graph")
 		assert.NotEmpty(t, result.Links.Url, "empty result Url")
+		assert.Empty(t, result.Data.Series, "data series should be empty")
 	})
 
 	t.Run("Fail to Get bogus Query Result", func(t *testing.T) {
