@@ -2,8 +2,6 @@ module github.com/honeycombio/terraform-provider-honeycombio
 
 go 1.23.8
 
-toolchain go1.24.1
-
 require (
 	github.com/dunglas/httpsfv v1.1.0
 	github.com/google/go-querystring v1.1.0
