@@ -105,8 +105,8 @@ func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
 }
 
 func TestHoneycombSLO_MD(t *testing.T) {
-	client := testAccClient(t)
-	if client.IsClassic(context.Background()) {
+	c := testAccClient(t)
+	if c.IsClassic(context.Background()) {
 		t.Skip("MD SLOs are not supported in classic")
 	}
 	dataset1, dataset2, mdSLI := mdSLOAccTestSetup(t)
@@ -132,9 +132,15 @@ func TestHoneycombSLO_MD(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "time_period", "30"),
 				),
 			},
+			// tests imports
+			{
+				ResourceName:      "honeycombio_slo.md_test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     mdSLO.ID,
+			},
 		},
 	})
-
 }
 
 func testAccConfigSLO_basic(dataset, sliAlias string) string {
