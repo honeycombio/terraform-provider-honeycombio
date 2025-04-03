@@ -45,8 +45,8 @@ func TestQueryResults(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.True(t, result.Complete, "query result didn't complete")
-		assert.NotNil(t, result.Data.Series, "empty data series")
-		assert.NotNil(t, result.Data.Results, "empty data results")
+		assert.Empty(t, result.Data.Series, "data series should be empty")
+		assert.Empty(t, result.Data.Results, "data results should be empty")
 		assert.NotEmpty(t, result.Links.GraphUrl, "empty result graph")
 		assert.NotEmpty(t, result.Links.Url, "empty result Url")
 	})
