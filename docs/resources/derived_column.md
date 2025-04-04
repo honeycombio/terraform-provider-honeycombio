@@ -24,7 +24,7 @@ The following arguments are supported:
 
 * `dataset` - (Required) The dataset this derived column is added to. If not set, an Environment-wide derived column will be created.
 * `alias` - (Required) The name of the derived column. Must be unique per dataset.
-* `expression` - (Required) The formula of the derived column. See [Derived Column Syntax](https://docs.honeycomb.io/working-with-your-data/customizing-your-query/derived-columns/#derived-column-syntax).
+* `expression` - (Required) The formula of the derived column. See [Derived Column Syntax](https://docs.honeycomb.io/reference/derived-column-formula/syntax/).
 * `description` - (Optional) A description that is shown in the UI.
 
 ## Attribute Reference

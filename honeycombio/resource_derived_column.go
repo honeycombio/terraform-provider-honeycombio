@@ -37,7 +37,7 @@ func newDerivedColumn() *schema.Resource {
 			"expression": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "The formula of the derived column. See [Derived Column Syntax](https://docs.honeycomb.io/working-with-your-data/customizing-your-query/derived-columns/#derived-column-syntax).",
+				Description: "The formula of the derived column. See [Derived Column Syntax](https://docs.honeycomb.io/reference/derived-column-formula/syntax/).",
 				ValidateFunc: validation.All(
 					validation.StringLenBetween(1, 4095),
 					func(i interface{}, k string) ([]string, []error) {
