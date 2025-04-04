@@ -33,16 +33,13 @@ func (m datasetDeprecation) PlanModifyString(ctx context.Context, req planmodifi
 	}
 
 	if req.ConfigValue.IsNull() {
-		// default value is null
-		resp.PlanValue = types.StringNull()
-	}
-
-	// null now, but what was it previously?
-	if req.ConfigValue.IsNull() {
-		if m.allowAnyDataset || req.StateValue.ValueString() == client.EnvironmentWideSlug {
+		if req.StateValue.ValueString() == client.EnvironmentWideSlug || (m.allowAnyDataset && !req.StateValue.IsNull()) {
 			// if the previous value was `__all__`, or we're allowing any previous value, suppress the diff
 			resp.PlanValue = req.StateValue
 			return
+		} else {
+			// otherwise, the value is null
+			resp.PlanValue = types.StringNull()
 		}
 	}
 
@@ -51,7 +48,6 @@ func (m datasetDeprecation) PlanModifyString(ctx context.Context, req planmodifi
 		resp.RequiresReplace = true
 		return
 	}
-
 }
 
 // DatasetDeprecation avoids unnecessary diffs if dataset becomes omitted.
