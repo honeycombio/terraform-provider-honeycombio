@@ -853,7 +853,7 @@ resource "honeycombio_trigger" "test" {
 
   query_json = data.honeycombio_query_specification.test.json
 }`,
-				ExpectError: regexp.MustCompile(`frequency cannot be more than four times the query duration`),
+				ExpectError: regexp.MustCompile(`duration cannot be more than four times the frequency`),
 			},
 		},
 	})
