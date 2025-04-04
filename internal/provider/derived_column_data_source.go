@@ -47,8 +47,8 @@ func (d *derivedColumnDataSource) Schema(_ context.Context, _ datasource.SchemaR
 				Computed: true,
 			},
 			"dataset": schema.StringAttribute{
-				Description: "The dataset to fetch the derived column from. Use '__all__' to fetch an Environment-wide derived column.",
-				Required:    true,
+				Description: "The dataset to fetch the derived column from. If not set, an Environment-wide lookup will be performed.",
+				Optional:    true,
 			},
 			"alias": schema.StringAttribute{
 				Description: "The alias of the Derived Column.",
@@ -92,7 +92,9 @@ func (d *derivedColumnDataSource) Read(ctx context.Context, req datasource.ReadR
 		return
 	}
 
-	dc, err := d.client.DerivedColumns.GetByAlias(ctx, data.Dataset.ValueString(), data.Alias.ValueString())
+	dataset := helper.GetDatasetOrAll(data.Dataset)
+
+	dc, err := d.client.DerivedColumns.GetByAlias(ctx, dataset.ValueString(), data.Alias.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics,
 		fmt.Sprintf("Looking up Derived Column %q", data.ID.ValueString()),
 		err) {

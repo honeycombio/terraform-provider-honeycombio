@@ -25,7 +25,7 @@ data "honeycombio_derived_columns" "foo" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset to retrieve the columns list from. Use `__all__` for Environment-wide derived columns.
+* `dataset` - (Optional) The dataset to retrieve the columns list from. If not set, an Environment-wide lookup will be performed.
 * `starts_with` - (Optional) Only return derived columns starting with the given value.
 
 ## Attribute Reference

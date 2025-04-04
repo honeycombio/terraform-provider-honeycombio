@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/assert"
+
+	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func TestAccHoneycombioMarkerSetting_basic(t *testing.T) {
@@ -18,9 +20,14 @@ func TestAccHoneycombioMarkerSetting_basic(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccMarkerSettingConfig(dataset),
+				Config: fmt.Sprintf(`
+resource "honeycombio_marker_setting" "test" {
+  color   = "#7b1fa2"
+  type    = "test123"
+  dataset = "%s"
+}`, dataset),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMarkerSettingExists(t, "honeycombio_marker_setting.test"),
+					testAccCheckMarkerSettingExists(t, "honeycombio_marker_setting.test", dataset),
 					resource.TestCheckResourceAttr("honeycombio_marker_setting.test", "color", "#7b1fa2"),
 					resource.TestCheckResourceAttr("honeycombio_marker_setting.test", "type", "test123"),
 					resource.TestCheckResourceAttr("honeycombio_marker_setting.test", "dataset", dataset),
@@ -30,18 +37,42 @@ func TestAccHoneycombioMarkerSetting_basic(t *testing.T) {
 	})
 }
 
-func testAccMarkerSettingConfig(dataset string) string {
-	return fmt.Sprintf(`
+func TestAccHoneycombioMarkerSetting_AllToUnset(t *testing.T) {
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	if c.IsClassic(ctx) {
+		t.Skip("env-wide markers are not supported in classic")
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
 resource "honeycombio_marker_setting" "test" {
-  color = "#7b1fa2"
-  type    = "test123"
-  dataset = "%s"
-}`, dataset)
+  color   = "#000000"	
+  type    = "testy"
+  dataset = "__all__"
+}`,
+				Check: testAccCheckMarkerSettingExists(t, "honeycombio_marker_setting.test", honeycombio.EnvironmentWideSlug),
+			},
+			{
+				Config: `
+resource "honeycombio_marker_setting" "test" {
+  color = "#000000"	
+  type  = "testy"
+}`,
+				Check:              testAccCheckMarkerSettingExists(t, "honeycombio_marker_setting.test", honeycombio.EnvironmentWideSlug),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
 }
 
-// testAccCheckMarkerSettingExists queries the API to verify the Marker Setting exists and
-// matches with the Terraform state.
-func testAccCheckMarkerSettingExists(t *testing.T, name string) resource.TestCheckFunc {
+func testAccCheckMarkerSettingExists(t *testing.T, name, dataset string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -49,7 +80,7 @@ func testAccCheckMarkerSettingExists(t *testing.T, name string) resource.TestChe
 		}
 
 		c := testAccClient(t)
-		m, err := c.MarkerSettings.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+		m, err := c.MarkerSettings.Get(context.Background(), dataset, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not retrieve marker settings: %w", err)
 		}

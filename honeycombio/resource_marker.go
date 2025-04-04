@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/honeycombio/internal/verify"
 )
 
 func newMarker() *schema.Resource {
@@ -19,24 +20,29 @@ func newMarker() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"message": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `A message that appears above the marker and can be used to describe the marker.`,
 			},
 			"type": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `The type of the marker (e.g. "deploy", "job-run")`,
 			},
 			"url": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "A target URL for the Marker. Rendered as a link in the UI.",
 			},
 			"dataset": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				Description:      "The dataset where this marker is placed. If not set, it will be Environment-wide.",
+				DiffSuppressFunc: verify.SuppressEquivEnvWideDataset,
 			},
 		},
 	}
@@ -48,7 +54,7 @@ func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 
 	data := &honeycombio.Marker{
 		Message: d.Get("message").(string),
@@ -70,8 +76,10 @@ func resourceMarkerRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diagFromErr(err)
 	}
 
+	dataset := getDatasetOrAll(d)
+
 	var detailedErr honeycombio.DetailedError
-	marker, err := client.Markers.Get(ctx, d.Get("dataset").(string), d.Id())
+	marker, err := client.Markers.Get(ctx, dataset, d.Id())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
 			d.SetId("")

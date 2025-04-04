@@ -62,8 +62,7 @@ resource "honeycombio_query" "example" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset this query is scoped to.
-  Use `__all__` for Environment-wide queries.
+* `dataset` - (Optional) The dataset this query is scoped to.  If not set, an Environment-wide query will be created.
 * `query_json` - (Required) A JSON object describing the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification).
   While the JSON can be constructed manually, using the [`honeycombio_query_specification`](../data-sources/query_specification.md) data source provides deeper validation.
 

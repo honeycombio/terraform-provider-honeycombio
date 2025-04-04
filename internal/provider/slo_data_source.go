@@ -109,13 +109,9 @@ func (d *sloDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		return
 	}
 
-	dataset := data.Dataset.ValueString()
+	dataset := helper.GetDatasetOrAll(data.Dataset)
 
-	if data.Dataset.IsNull() {
-		dataset = "__all__"
-	}
-
-	slo, err := d.client.SLOs.Get(ctx, dataset, data.ID.ValueString())
+	slo, err := d.client.SLOs.Get(ctx, dataset.ValueString(), data.ID.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics,
 		fmt.Sprintf("Looking up SLO %q", data.ID.ValueString()),
 		err) {

@@ -184,6 +184,38 @@ EOT
 	})
 }
 
+func TestAcc_QueryAllToUnset(t *testing.T) {
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	if c.IsClassic(ctx) {
+		t.Skip("env-wide queries are not supported in classic")
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "honeycombio_query" "test" {
+  dataset    = "__all__"
+  query_json = "{}"
+}`,
+				Check: testAccEnsureQueryExists(t, "honeycombio_query.test"),
+			},
+			{
+				Config: `
+resource "honeycombio_query" "test" {
+  query_json = "{}"
+}`,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
 func testAccConfigBasicQueryTest(dataset, column string, value float64) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {

@@ -29,6 +29,16 @@ func coerceValueToType(i string) interface{} {
 	return i
 }
 
+// getDatasetOrAll returns the dataset from the resource data.
+// If the dataset is empty, it returns the 'magic' EnvironmentWideSlug `__all__`.
+func getDatasetOrAll(d *schema.ResourceData) string {
+	dataset := d.Get("dataset").(string)
+	if dataset == "" {
+		dataset = honeycombio.EnvironmentWideSlug
+	}
+	return dataset
+}
+
 func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*honeycombio.Recipient, error) {
 	r := &honeycombio.Recipient{
 		ID:   d.Id(),

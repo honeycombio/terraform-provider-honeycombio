@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/honeycombio/internal/verify"
 )
 
 func newQueryAnnotation() *schema.Resource {
@@ -21,23 +22,28 @@ func newQueryAnnotation() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"dataset": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				Description:      "The dataset this query annotation is added to. If not set, an Environment-wide query annotation will be created.",
+				DiffSuppressFunc: verify.SuppressEquivEnvWideDataset,
 			},
 			"query_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The ID of the query that the annotation will be created on. Note that a query can have more than one annotation.",
 			},
 			"name": {
 				Type:         schema.TypeString,
 				Required:     true,
+				Description:  "The name to display as the query annotation.",
 				ValidateFunc: validation.StringLenBetween(1, 320),
 			},
 			"description": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Description:  "The description to display as the query annotation.",
 				ValidateFunc: validation.StringLenBetween(1, 1023),
 			},
 		},
@@ -58,7 +64,7 @@ func resourceQueryAnnotationCreate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diagFromErr(err)
 	}
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 	queryAnnotation := buildQueryAnnotation(d)
 
 	queryAnnotation, err = client.QueryAnnotations.Create(ctx, dataset, queryAnnotation)
@@ -75,7 +81,7 @@ func resourceQueryAnnotationUpdate(ctx context.Context, d *schema.ResourceData, 
 	if err != nil {
 		return diagFromErr(err)
 	}
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 	queryAnnotation := buildQueryAnnotation(d)
 
 	_, err = client.QueryAnnotations.Update(ctx, dataset, queryAnnotation)
@@ -105,7 +111,7 @@ func resourceQueryAnnotationRead(ctx context.Context, d *schema.ResourceData, me
 	if err != nil {
 		return diagFromErr(err)
 	}
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 
 	var detailedErr honeycombio.DetailedError
 	queryAnnotation, err := client.QueryAnnotations.Get(ctx, dataset, d.Id())

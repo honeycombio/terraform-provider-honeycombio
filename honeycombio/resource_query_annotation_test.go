@@ -7,6 +7,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
+	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func TestAccHoneycombioQueryAnnotation_update(t *testing.T) {
@@ -40,6 +42,50 @@ func TestAccHoneycombioQueryAnnotation_update(t *testing.T) {
 	})
 }
 
+func TestAccHoneycombioQueryAnnotation_AllToUnset(t *testing.T) {
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	if c.IsClassic(ctx) {
+		t.Skip("env-wide query annotations are not supported in classic")
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "honeycombio_query" "test" {
+  query_json = "{}"
+}
+
+resource "honeycombio_query_annotation" "test" {
+  dataset     = "__all__"
+  query_id    = honeycombio_query.test.id
+	name        = "test annotation"
+	description = "Test query annotation description"
+}`,
+				Check: testAccCheckQueryAnnotationExists(t, honeycombio.EnvironmentWideSlug, "honeycombio_query_annotation.test"),
+			},
+			{
+				Config: `
+resource "honeycombio_query" "test" {
+  query_json = "{}"
+}
+
+resource "honeycombio_query_annotation" "test" {
+  query_id    = honeycombio_query.test.id
+	name        = "test annotation"
+	description = "Test query annotation description"
+}`,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
 func testAccResourceQueryAnnotationConfig(dataset string, name string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
@@ -65,11 +111,10 @@ resource "honeycombio_query_annotation" "test" {
 	query_id = honeycombio_query.test.id
 	name = "%s"
 	description = "Test query annotation description"
-}
-`, dataset, dataset, name)
+}`, dataset, dataset, name)
 }
 
-func testAccCheckQueryAnnotationExists(t *testing.T, dataset string, name string) resource.TestCheckFunc {
+func testAccCheckQueryAnnotationExists(t *testing.T, dataset, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {

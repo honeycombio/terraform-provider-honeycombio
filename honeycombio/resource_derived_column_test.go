@@ -1,6 +1,7 @@
 package honeycombio
 
 import (
+	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -110,6 +111,41 @@ EOF
 }`,
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func TestAccHoneycombioDerivedColumn_AllToUnset(t *testing.T) {
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	if c.IsClassic(ctx) {
+		t.Skip("env-wide Derived Columns are not supported in classic")
+	}
+
+	alias := test.RandomStringWithPrefix("test.", 10)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "honeycombio_derived_column" "test" {
+  alias       = "%s"
+  expression  = "BOOL(1)"
+  dataset     = "__all__"
+}`, alias),
+			},
+			{
+				Config: fmt.Sprintf(`
+resource "honeycombio_derived_column" "test" {
+  alias       = "%s"
+  expression  = "BOOL(1)"
+}`, alias),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
 			},
 		},
 	})
