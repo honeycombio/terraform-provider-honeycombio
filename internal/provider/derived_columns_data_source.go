@@ -47,8 +47,8 @@ func (d *derivedColumnsDataSource) Schema(_ context.Context, _ datasource.Schema
 				Computed: true,
 			},
 			"dataset": schema.StringAttribute{
-				Description: "The dataset to fetch the derived columns from. Use '__all__' to fetch Environment-wide derived columns.",
-				Required:    true,
+				Description: "The dataset to fetch the derived columns from. If not set, an Environment-wide lookup will be performed.",
+				Optional:    true,
 			},
 			"starts_with": schema.StringAttribute{
 				Description: "Only return columns starting with the given value.",
@@ -87,7 +87,9 @@ func (d *derivedColumnsDataSource) Read(ctx context.Context, req datasource.Read
 		return
 	}
 
-	columns, err := d.client.DerivedColumns.List(ctx, data.Dataset.ValueString())
+	dataset := helper.GetDatasetOrAll(data.Dataset)
+
+	columns, err := d.client.DerivedColumns.List(ctx, dataset.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Listing Derived Columns", err) {
 		return
 	}

@@ -5,14 +5,21 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-type datasetDeprecation struct{}
+type datasetDeprecation struct {
+	// if true, will allow the previous value of dataset to not strictly be `__all__`
+	allowAnyDataset bool
+}
 
 var _ planmodifier.String = &datasetDeprecation{}
 
 func (m datasetDeprecation) Description(_ context.Context) string {
-	return "Avoids unnecessary plans if dataset becomes omitted. Configuration should now behave the same."
+	return "Avoids unnecessary replacement if dataset is unset. " +
+		"Intended to allow removal of `__all__` from the dataset field, " +
+		"but if `allowAnyDataset` is true, will allow any previous value."
 }
 
 func (m datasetDeprecation) MarkdownDescription(ctx context.Context) string {
@@ -24,31 +31,30 @@ func (m datasetDeprecation) PlanModifyString(ctx context.Context, req planmodifi
 	if req.Plan.Raw.IsNull() {
 		return
 	}
-	// Assign null value if the plan value is unknown or theres no state value to fall back on
-	if req.PlanValue.IsUnknown() || req.StateValue.IsUnknown() {
-		resp.PlanValue = types.StringNull()
-		return
-	}
 
-	// Suppress diff if the old and new values are equal
-	if req.PlanValue.Equal(req.StateValue) {
-		resp.PlanValue = req.StateValue
-		return
-	}
-	// Suppress diff if the new value is empty
-	if req.PlanValue.IsNull() {
-		resp.PlanValue = req.StateValue
-		return
+	if req.ConfigValue.IsNull() {
+		if req.StateValue.ValueString() == client.EnvironmentWideSlug || (m.allowAnyDataset && !req.StateValue.IsNull()) {
+			// if the previous value was `__all__`, or we're allowing any previous value, suppress the diff
+			resp.PlanValue = req.StateValue
+			return
+		} else {
+			// otherwise, the value is null
+			resp.PlanValue = types.StringNull()
+		}
 	}
 
 	if !req.PlanValue.Equal(req.StateValue) {
-		// Require replacement only if the dataset value is explicitly changing
+		// require replacement only if the dataset value is otherwise changing
 		resp.RequiresReplace = true
 		return
 	}
 }
 
-// DatasetDeprecation avoids unnecessary plans if dataset becomes omitted. Configuration should now behave the same.
-func DatasetDeprecation() planmodifier.String {
-	return datasetDeprecation{}
+// DatasetDeprecation avoids unnecessary diffs if dataset becomes omitted.
+// Intended to allow removal of `__all__` from the dataset field,
+// but if `allowAnyDataset` is true, will allow any previous value of dataset.
+func DatasetDeprecation(allowAnyDataset bool) planmodifier.String {
+	return datasetDeprecation{
+		allowAnyDataset: allowAnyDataset,
+	}
 }

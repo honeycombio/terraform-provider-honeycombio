@@ -41,18 +41,20 @@ func newSLO() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI's dataset is `\"__all__\"`.",
+				Description: "The dataset this SLO is created in. Will be deprecated in a future release. Must be the same dataset as the SLI unless the SLI Derived Column is Environment-wide.",
 				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+					// not using the shared 'SuppressEquivEnvWideDataset' as SLOs aren't using
+					// `__all__` directly and need an explicit list of datasets (below)
 					if oldValue == newValue {
 						return true
 					}
-					// if the config moves away from deprecated dataset, nothing should change
+					// if the config moves away from to-be-deprecated dataset, nothing should change
 					if newValue == "" {
 						return true
 					}
 					return false
 				},
-				ExactlyOneOf: []string{"dataset", "datasets"},
+				ConflictsWith: []string{"datasets"},
 			},
 			"datasets": {
 				Type:         schema.TypeSet,
@@ -110,7 +112,7 @@ func resourceSLOCreate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diagFromErr(err)
 	}
 
-	dataset := getDataset(d)
+	dataset := getDatasetOrAll(d)
 
 	s, err := client.SLOs.Create(ctx, dataset, expandSLO(d))
 	if err != nil {
@@ -127,7 +129,7 @@ func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface
 		return diagFromErr(err)
 	}
 
-	dataset := getDataset(d)
+	dataset := getDatasetOrAll(d)
 
 	var detailedErr honeycombio.DetailedError
 	s, err := client.SLOs.Get(ctx, dataset, d.Id())
@@ -159,7 +161,7 @@ func resourceSLOUpdate(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diagFromErr(err)
 	}
 
-	dataset := getDataset(d)
+	dataset := getDatasetOrAll(d)
 
 	s, err := client.SLOs.Update(ctx, dataset, expandSLO(d))
 	if err != nil {
@@ -176,7 +178,7 @@ func resourceSLODelete(ctx context.Context, d *schema.ResourceData, meta interfa
 		return diagFromErr(err)
 	}
 
-	dataset := getDataset(d)
+	dataset := getDatasetOrAll(d)
 
 	err = client.SLOs.Delete(ctx, dataset, d.Id())
 	if err != nil {
@@ -202,12 +204,4 @@ func expandSLO(d *schema.ResourceData) *honeycombio.SLO {
 		SLI:              honeycombio.SLIRef{Alias: d.Get("sli").(string)},
 		DatasetSlugs:     datasets,
 	}
-}
-
-func getDataset(d *schema.ResourceData) string {
-	dataset := d.Get("dataset").(string)
-	if dataset == "" {
-		dataset = "__all__"
-	}
-	return dataset
 }

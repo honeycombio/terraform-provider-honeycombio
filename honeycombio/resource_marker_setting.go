@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/honeycombio/internal/verify"
 )
 
 func newMarkerSetting() *schema.Resource {
@@ -22,30 +23,36 @@ func newMarkerSetting() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"type": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: `The type of marker setting. (e.g. "deploy", "job-run")`,
 			},
 			"color": {
 				Type:         schema.TypeString,
 				Required:     true,
+				Description:  "The color set for the marker as a hex color code.",
 				ValidateFunc: validation.StringMatch(regexp.MustCompile(`^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$`), "invalid color hex code"),
 			},
 			"dataset": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				Description:      "The dataset this marker setting belongs to. If not set, it will be Environment-wide.",
+				DiffSuppressFunc: verify.SuppressEquivEnvWideDataset,
 			},
 			"created_at": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Required: false,
-				Optional: false,
+				Type:        schema.TypeString,
+				Description: "Timestamp when the marker setting was created.",
+				Computed:    true,
+				Required:    false,
+				Optional:    false,
 			},
 			"updated_at": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Required: false,
-				Optional: false,
+				Type:        schema.TypeString,
+				Description: "Timestamp when the marker setting was last modified.",
+				Computed:    true,
+				Required:    false,
+				Optional:    false,
 			},
 		},
 	}
@@ -57,7 +64,7 @@ func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, me
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 
 	data := &honeycombio.MarkerSetting{
 		Type:  d.Get("type").(string),
@@ -80,8 +87,10 @@ func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta
 		return diagFromErr(err)
 	}
 
+	dataset := getDatasetOrAll(d)
+
 	var detailedErr honeycombio.DetailedError
-	markerSetting, err := client.MarkerSettings.Get(ctx, d.Get("dataset").(string), d.Id())
+	markerSetting, err := client.MarkerSettings.Get(ctx, dataset, d.Id())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
 			d.SetId("")
@@ -107,7 +116,7 @@ func resourceMarkerSettingUpdate(ctx context.Context, d *schema.ResourceData, me
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 	markerType := d.Get("type").(string)
 	color := d.Get("color").(string)
 
@@ -130,7 +139,7 @@ func resourceMarkerSettingDelete(ctx context.Context, d *schema.ResourceData, me
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 
 	err = client.MarkerSettings.Delete(ctx, dataset, d.Id())
 	if err != nil {

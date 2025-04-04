@@ -16,7 +16,7 @@ variable "app_version" {
   type = string
 }
 
-resource "honeycombio_marker" "marker" {
+resource "honeycombio_marker" "app_deploy" {
   message = "deploy ${var.app_version}"
   type    = "deploy"
   url     = "http://www.example.com/"
@@ -29,10 +29,10 @@ resource "honeycombio_marker" "marker" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset this marker is placed on. Use `__all__` for Environment-wide markers.
-* `message` - (Optional) The message on the marker.
-* `type` - (Optional) The type of the marker, Honeycomb.io can display markers in different colors depending on their type.
-* `url` - (Optional) A target for the Marker. If you click on the Marker text, it will take you to this URL.
+* `dataset` - (Optional) The dataset where this marker is placed. If not set, an Environment-wide Marker will be created.
+* `message` - (Optional) A message that appears above the marker and can be used to describe the marker.
+* `type` - (Optional) The type of the marker (e.g. "deploy", "job-run")
+* `url` - (Optional) A target URL for the Marker. Rendered as a link in the UI..
 
 ## Attribute Reference
 

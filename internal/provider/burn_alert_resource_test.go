@@ -67,7 +67,6 @@ func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 				Config: testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "info"),
 				Check:  testAccEnsureSuccessBudgetRateAlert(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, "info", sloID),
 			},
-
 			// update the config to remove dataset and ensure nothing changes
 			{
 				Config:   testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, "info"),

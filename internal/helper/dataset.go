@@ -6,7 +6,9 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-func GetDatasetString(dataset types.String) types.String {
+// GetDatasetOrAll returns the dataset.
+// If the dataset is empty, it returns the 'magic' EnvironmentWideSlug `__all__`.
+func GetDatasetOrAll(dataset types.String) types.String {
 	if dataset == types.StringNull() || dataset.ValueString() == "" {
 		return types.StringValue(client.EnvironmentWideSlug)
 	}

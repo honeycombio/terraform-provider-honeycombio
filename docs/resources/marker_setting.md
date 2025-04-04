@@ -9,14 +9,9 @@ For more information on marker settings, check out the [Marker Settings API](htt
 variable "dataset" {
   type = string
 }
-
-variable "type" {
-  type = string
-}
-
-resource "honeycombio_marker_setting" "markerSetting" {
-  type =  var.type
-  color = "#DF4661"
+resource "honeycombio_marker_setting" "deploy_marker" {
+  type    =  "deploy"
+  color   = "#DF4661"
   dataset = var.dataset
 }
 ```
@@ -25,9 +20,9 @@ resource "honeycombio_marker_setting" "markerSetting" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset this marker setting is placed on. Use `__all__` for Environment-wide marker settings.
-* `type` - (Required) The type of the marker setting, Honeycomb.io can display markers in different colors depending on their type.
-* `color` - (Required) The color set for the marker as a hex color code (e.g. `#DF4661`)
+* `dataset` - (Optional) The dataset this marker setting belongs to. If not set, the marker setting will be Environment-wide.
+* `type` - (Required) The type of the marker setting. (e.g. "deploy", "job-run")
+* `color` - (Required) The color set for the marker as a hex color code.(e.g. `#DF4661`)
 
 ## Attribute Reference
 

@@ -36,7 +36,7 @@ output "event_count" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset this query is associated with. Use `__all__` for Environment-wide queries.
+* `dataset` - (Optional) The dataset to query. If not set, an Environment-wide query will be performed.
 * `query_json` - (Required) A JSON object describing the query according to the Query Specification. While the JSON can be constructed manually, it is easiest to use the honeycombio_query_specification data source.
 
 ## Attribute Reference

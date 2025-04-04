@@ -18,8 +18,9 @@ func dataSourceHoneycombioQueryResult() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"dataset": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The dataset to query. If not specified, an Environment-wide query will be run.",
 			},
 			"query_json": {
 				Type:             schema.TypeString,
@@ -57,7 +58,7 @@ func dataSourceHoneycombioQueryResultRead(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		return diagFromErr(err)
 	}
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 
 	err = json.Unmarshal([]byte(d.Get("query_json").(string)), &querySpec)
 	if err != nil {

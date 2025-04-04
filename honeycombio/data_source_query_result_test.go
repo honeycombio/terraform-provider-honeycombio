@@ -15,17 +15,7 @@ func TestAccDataSourceHoneycombioQueryResult_basic(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDataSourceQueryResultConfig(dataset),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckOutput("results", "COUNT"),
-				),
-			},
-		},
-	})
-}
-
-func testAccDataSourceQueryResultConfig(dataset string) string {
-	return fmt.Sprintf(`
+				Config: fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
   time_range = 86400
 
@@ -54,5 +44,11 @@ output "results" {
       ]
     )
   )
-}`, dataset, dataset)
+}`, dataset, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("results", "COUNT"),
+				),
+			},
+		},
+	})
 }

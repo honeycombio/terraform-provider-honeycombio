@@ -68,10 +68,11 @@ func (*queryResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				},
 			},
 			"dataset": schema.StringAttribute{
-				Description: "The dataset this Query is associated with. Use `__all__` for envionment-wide queries.",
-				Required:    true,
+				Description: "The dataset this Query is associated with. If not set, it will be Environment-wide.",
+				Optional:    true,
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+					modifiers.DatasetDeprecation(false),
 				},
 			},
 			"query_json": schema.StringAttribute{
@@ -91,19 +92,20 @@ func (*queryResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 }
 
 func (r *queryResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// import ID is of the format <dataset>/<query ID>
 	dataset, id, found := strings.Cut(req.ID, "/")
+
+	// if dataset separator not found, we will assume its the bare id
+	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
+	dsValue := types.StringNull()
 	if !found {
-		resp.Diagnostics.AddError(
-			"Invalid Import ID",
-			"The supplied ID must be wrtten as <dataset>/<query ID>.",
-		)
-		return
+		id = dataset
+	} else {
+		dsValue = types.StringValue(dataset)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.QueryResourceModel{
 		ID:      types.StringValue(id),
-		Dataset: types.StringValue(dataset),
+		Dataset: dsValue,
 	})...)
 }
 
@@ -119,7 +121,9 @@ func (r *queryResource) Create(ctx context.Context, req resource.CreateRequest, 
 		resp.Diagnostics.AddAttributeError(path.Root("query_json"), "Failed to unmarshal JSON", err.Error())
 		return
 	}
-	query, err := r.client.Queries.Create(ctx, plan.Dataset.ValueString(), &querySpec)
+
+	dataset := helper.GetDatasetOrAll(plan.Dataset)
+	query, err := r.client.Queries.Create(ctx, dataset.ValueString(), &querySpec)
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Query", err) {
 		return
 	}
@@ -141,8 +145,10 @@ func (r *queryResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		return
 	}
 
+	dataset := helper.GetDatasetOrAll(state.Dataset)
+
 	var detailedErr client.DetailedError
-	query, err := r.client.Queries.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
+	query, err := r.client.Queries.Get(ctx, dataset.ValueString(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
 			// if not found consider it deleted -- so just remove it from state

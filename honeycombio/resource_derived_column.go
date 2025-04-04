@@ -13,6 +13,7 @@ import (
 	dcparser "github.com/honeycombio/honeycomb-derived-column-validator/pkg/parser"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/honeycombio/internal/verify"
 )
 
 func newDerivedColumn() *schema.Resource {
@@ -30,11 +31,13 @@ func newDerivedColumn() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
+				Description:  "The alias of the derived column. Must be unique within the dataset or environment.",
 				ValidateFunc: validation.StringLenBetween(1, 255),
 			},
 			"expression": {
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The formula of the derived column. See [Derived Column Syntax](https://docs.honeycomb.io/reference/derived-column-formula/syntax/).",
 				ValidateFunc: validation.All(
 					validation.StringLenBetween(1, 4095),
 					func(i interface{}, k string) ([]string, []error) {
@@ -54,26 +57,33 @@ func newDerivedColumn() *schema.Resource {
 			"description": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Description:  "A description of the derived column.",
 				ValidateFunc: validation.StringLenBetween(1, 255),
 			},
 			"dataset": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				Description:      "The dataset this derived column belongs to. If not set, it will be Environment-wide.",
+				DiffSuppressFunc: verify.SuppressEquivEnvWideDataset,
 			},
 		},
 	}
 }
 
 func resourceDerivedColumnImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
-	// import ID is of the format <dataset>/<derived column alias>
 	dataset, alias, found := strings.Cut(d.Id(), "/")
+
+	// if dataset separator not found, we will assume its the bare alias
+	// if thats the case, we need to reassign values since strings.Cut would return (alias "", false)
 	if !found {
-		return nil, errors.New("invalid import ID, supplied ID must be written as <dataset>/<derived column alias>")
+		alias = dataset
+	} else {
+		d.Set("dataset", dataset)
 	}
 
 	d.Set("alias", alias)
-	d.Set("dataset", dataset)
+
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -83,7 +93,7 @@ func resourceDerivedColumnCreate(ctx context.Context, d *schema.ResourceData, me
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 	derivedColumn := readDerivedColumn(d)
 
 	derivedColumn, err = client.DerivedColumns.Create(ctx, dataset, derivedColumn)
@@ -101,7 +111,7 @@ func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 
 	var detailedErr honeycombio.DetailedError
 	derivedColumn, err := client.DerivedColumns.GetByAlias(ctx, dataset, d.Get("alias").(string))
@@ -129,7 +139,7 @@ func resourceDerivedColumnUpdate(ctx context.Context, d *schema.ResourceData, me
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 	derivedColumn := readDerivedColumn(d)
 
 	derivedColumn, err = client.DerivedColumns.Update(ctx, dataset, derivedColumn)
@@ -147,7 +157,7 @@ func resourceDerivedColumnDelete(ctx context.Context, d *schema.ResourceData, me
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset := getDatasetOrAll(d)
 
 	err = client.DerivedColumns.Delete(ctx, dataset, d.Id())
 	if err != nil {

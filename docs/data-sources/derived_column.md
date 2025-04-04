@@ -23,8 +23,8 @@ data "honeycombio_derived_column" "mydc" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset this derived column is associated with. Use `__all__` for Environment-wide derived columns.
 * `alias` - (Required) The alias of the column
+* `dataset` - (Optional) The dataset this derived column is associated with. If not set, an Environment-wide lookup will be performed.
 
 ## Attribute Reference
 
