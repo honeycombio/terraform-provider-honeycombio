@@ -100,9 +100,9 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"dataset": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "The dataset this Burn Alert is associated with.",
+				Description: "The dataset this Burn Alert is associated with. Will be deprecated in a future release.",
 				PlanModifiers: []planmodifier.String{
-					modifiers.DatasetDeprecation(true),
+					modifiers.DatasetDeprecation(true), // Burn Alerts switching to env-wide from any dataset is desirable
 				},
 			},
 			"description": schema.StringAttribute{

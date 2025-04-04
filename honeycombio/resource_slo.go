@@ -41,7 +41,7 @@ func newSLO() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI Derived Column is Environment-wide.",
+				Description: "The dataset this SLO is created in. Will be deprecated in a future release. Must be the same dataset as the SLI unless the SLI Derived Column is Environment-wide.",
 				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
 					// not using the shared 'SuppressEquivEnvWideDataset' as SLOs aren't using
 					// `__all__` directly and need an explicit list of datasets (below)
