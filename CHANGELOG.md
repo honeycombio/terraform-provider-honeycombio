@@ -1,3 +1,35 @@
+# 0.32.0 (Apr 7, 2025)
+
+NOTES: this release contains support for [Multi-Dataset SLOs and Burn Alerts](https://docs.honeycomb.io/notify/alert/slos/#multiple-services-on-slos)!
+  In addition, the `dataset` argument has become optional for resources that are Environment aware, which means using the magic `__all__` string is no longer required.
+  In order to allow cleaner configurations and avoid destructive recreation, removing `dataset = "__all__"` from a resource does not force re-creation as the lack of `dataset` argument is treated as equivalent.
+
+ENHANCEMENTS:
+
+* feat(r/slo, d/slo): multi-dataset support (#635, #641)
+* feat(r/burn_alert): multi-dataset support (#644)
+* feat(d/query_specification): 'order' validation support (#642)
+* chore(client): update default dataset definition values (#643)
+* chore(r/webhook_recipient): increase header value char limit (#648)
+* feat: remove need for magic environment-wide string (#654)
+
+BUGFIXES:
+
+* fix(r/trigger): adjust frequency<>duration validation error message for clarity (#655)
+
+HOUSEKEEPING:
+
+* chore(ci): don't highlight skipped tests (#638)
+* maint(deps): bump golangci/golangci-lint-action from 6.5.0 to 6.5.1 (#634)
+* maint(deps): bump github.com/dunglas/httpsfv from 1.0.2 to 1.1.0 (#633)
+* maint(deps): bump github.com/hashicorp/go-cty from 1.4.1 to 1.5.0 (#637)
+* maint(deps): bump golangci/golangci-lint-action from 6.5.1 to 6.5.2 (#636)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.11.0 to 1.12.0 (#639)
+* maint(deps): bump golang.org/x/net from 0.37.0 to 0.38.0 (#646)
+* maint(deps): bump github.com/hashicorp/jsonapi from 1.4.2 to 1.5.0 (#650)
+* maint(deps): bump Go from 1.23.6 to 1.23.8 (#649)
+* fix(build): remove incorrect 'toolchain' directive (#652)
+
 # 0.31.0 (Mar 6, 2025)
 
 ENHANCEMENTS:
