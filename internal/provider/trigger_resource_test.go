@@ -152,6 +152,37 @@ func TestAcc_TriggerResource(t *testing.T) {
 			},
 		})
 	})
+
+	t.Run("trigger resource with baselinedetails", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, "info"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "1200"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.exceeded_limit", "1"),
+						resource.TestCheckResourceAttrPair("honeycombio_trigger.test", "query_id", "honeycombio_query.test", "id"),
+						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_json"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "baseline_details.0.offset_minutes", "1440"),
+					),
+				},
+				// then update the PD Severity from info -> critical (the default)
+				{
+					Config: testAccConfigBasicTriggerTest(dataset, name, "critical"),
+				},
+				{
+					ResourceName:        "honeycombio_trigger.test",
+					ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+					ImportState:         true,
+				},
+			},
+		})
+	})
 }
 
 // TestAcc_TriggerResourceUpgradeFromVersion014 is intended to test the migration
@@ -946,6 +977,65 @@ resource "honeycombio_trigger" "test" {
     notification_details {
       pagerduty_severity = "%[3]s"
     }
+  }
+}`, dataset, name, pdseverity, email, pdKey, pdName)
+}
+
+func testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, pdseverity string) string {
+	email := test.RandomEmail()
+	pdKey := test.RandomString(32)
+	pdName := test.RandomStringWithPrefix("test.", 20)
+
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "db_dur_ms"
+  }
+  time_range = 1200
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "%[5]s"
+  integration_name = "%[6]s"
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  description = "My nice description"
+
+  query_id = honeycombio_query.test.id
+
+  threshold {
+    op    = ">="
+    value = 100
+  }
+
+	frequency = 1200
+
+  recipient {
+    type   = "email"
+    target = "%[4]s"
+  }
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+
+    notification_details {
+      pagerduty_severity = "%[3]s"
+    }
+  }
+
+  baseline_details {
+  	type = "value"
+  	offset_minutes = 1440
   }
 }`, dataset, name, pdseverity, email, pdKey, pdName)
 }
