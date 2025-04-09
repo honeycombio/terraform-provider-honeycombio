@@ -203,6 +203,7 @@ Defaults to 900 (15 minutes).
 When the time is within the scheduled window the trigger will be run at the specified frequency.
 Outside of the window, the trigger will not be run.
 If no schedule is specified, the trigger will be run at the specified frequency at all times.
+* `baseline_details` - (Optional) A configuration block (described below) allows you to receive notifications when the delta between values in your data, compared to a previous time period, cross thresholds you configure.
 * `recipient` - (Optional) Zero or more configuration blocks (described below) with the recipients to notify when the trigger fires.
 
 One of `query_id` or `query_json` are required.
@@ -223,6 +224,11 @@ Each trigger configuration may provide an `evaluation_schedule` block, which acc
 * `start_time` - (Required) UTC time to start evaluating the trigger in HH:mm format (e.g. `13:00`)
 * `end_time` - (Required) UTC time to stop evaluating the trigger in HH:mm format (e.g. `13:00`)
 * `days_of_week` - (Required) A list of days of the week (in lowercase) to evaluate the trigger on
+
+Each trigger configuration may provide an `baseline_details` block, which accepts the following arguments:
+
+* `type` - (Required) Either `value` or `percentage` to indicate either an absolute value or percentage delta.
+* `offset_minutes` - (Required) Either `60` (1 hour), `1440` (24 hours), `10080` (7 days), or `40320` (28 days) to indicate the length of the previous time period.
 
 Each trigger configuration may have zero or more `recipient` blocks, which each accept the following arguments. A trigger recipient block can either refer to an existing recipient (a recipient that is already present in another trigger) or a new recipient. When specifying an existing recipient, only `id` may be set. If you pass in a recipient without its ID and only include the type and target, Honeycomb will make a best effort to match to an existing recipient. To retrieve the ID of an existing recipient, refer to the [`honeycombio_recipient`](../data-sources/recipient.md) data source.
 
