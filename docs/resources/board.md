@@ -122,7 +122,7 @@ Currently supported toggles are:
   * `utc_xaxis`
   * `overlaid_charts`
 
-  See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-settings/) in the documentation for more information on any individual setting.
+  See [Display Settings](https://docs.honeycomb.io/investigate/query/customize-results/#display-settings-menu) in the documentation for more information on any individual setting.
 * `query_style` - (Optional) How the query should be displayed within the board, either `graph` (the default), `table` or `combo`.
 
 Each board configuration may have up to six `slo` blocks, which take the following arguments:
