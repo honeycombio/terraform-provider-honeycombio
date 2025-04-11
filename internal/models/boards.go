@@ -33,7 +33,8 @@ var BoardQueryModelAttrType = map[string]attr.Type{
 	"query_style":         types.StringType,
 	"graph_settings": types.ListType{
 		ElemType: types.ObjectType{
-			AttrTypes: BoardQueryGraphSettingsModelAttrType},
+			AttrTypes: BoardQueryGraphSettingsModelAttrType,
+		},
 	},
 }
 
