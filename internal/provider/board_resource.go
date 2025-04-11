@@ -307,8 +307,8 @@ func (r *boardResource) Create(ctx context.Context, req resource.CreateRequest, 
 			querysObj = append(querysObj, obj)
 		}
 
-		queries, diag := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: models.BoardQueryModelAttrType},
+		queries, diag := types.ListValueFrom(ctx,
+			types.ObjectType{AttrTypes: models.BoardQueryModelAttrType},
 			querysObj,
 		)
 		resp.Diagnostics.Append(diag...)
@@ -392,8 +392,8 @@ func (r *boardResource) Read(ctx context.Context, req resource.ReadRequest, resp
 			querysObj = append(querysObj, obj)
 		}
 
-		queries, diag := types.ListValueFrom(ctx, types.ObjectType{
-			AttrTypes: models.BoardQueryModelAttrType},
+		queries, diag := types.ListValueFrom(ctx,
+			types.ObjectType{AttrTypes: models.BoardQueryModelAttrType},
 			querysObj,
 		)
 		resp.Diagnostics.Append(diag...)
@@ -468,8 +468,7 @@ func (r *boardResource) Update(ctx context.Context, req resource.UpdateRequest, 
 			querysObj = append(querysObj, obj)
 		}
 
-		queries, diag := types.ListValueFrom(
-			ctx,
+		queries, diag := types.ListValueFrom(ctx,
 			types.ObjectType{AttrTypes: models.BoardQueryModelAttrType},
 			querysObj,
 		)
@@ -579,8 +578,8 @@ func flattenBoardQuery(
 	})
 	diags.Append(diag...)
 
-	graphSettings, diag := types.ListValueFrom(ctx, types.ObjectType{
-		AttrTypes: models.BoardQueryGraphSettingsModelAttrType},
+	graphSettings, diag := types.ListValueFrom(ctx,
+		types.ObjectType{AttrTypes: models.BoardQueryGraphSettingsModelAttrType},
 		[]attr.Value{graphObj},
 	)
 	diags.Append(diag...)
