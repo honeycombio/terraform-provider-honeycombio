@@ -213,23 +213,22 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"recipient": notificationRecipientSchema(client.TriggerRecipientTypes()),
 			"baseline_details": schema.ListNestedBlock{
-				Description: "The schedule that determines when the trigger is run. When the time is within the scheduled window, " +
-					" the trigger will be run at the specified frequency. Outside of the window, the trigger will not be run." +
-					"If no schedule is specified, the trigger will be run at the specified frequency at all times.",
+				Description: "A configuration block that allows you to receive notifications when the delta between values in your data, " +
+					"compared to a previous time period, cross thresholds you configure.",
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(1),
 				},
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
-							Description: "UTC time to start evaluating the trigger in HH:mm format",
+							Description: "Whether to use an absolute value or percentage delta.",
 							Required:    true,
 							Validators: []validator.String{
 								stringvalidator.OneOf("value", "percentage"),
 							},
 						},
 						"offset_minutes": schema.Int64Attribute{
-							Description: "UTC time to stop evaluating the trigger in HH:mm format",
+							Description: "What previous time period to evaluate against: 1 hour, 1 day, 1 week, or 4 weeks.",
 							Required:    true,
 							Validators: []validator.Int64{
 								int64validator.OneOf(60, 1440, 10080, 40320),
@@ -713,10 +712,6 @@ func expandBaselineDetails(
 	if diags.HasError() || len(s) == 0 {
 		return nil
 	}
-
-	// if s[0].Type.IsNull() || s[0].OffsetMinutes.IsNull() {
-	// 	return nil
-	// }
 
 	return &client.TriggerBaselineDetails{
 		Type:          s[0].Type.ValueString(),
