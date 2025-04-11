@@ -104,7 +104,7 @@ The following arguments are supported:
 * `column_layout` - (Optional) the number of columns to layout on the board, either `multi` (the default) or `single`. Only `visual` style boards (see below) have a column layout.
 * `style` - (Optional) Deprecated: All Boards are now displayed as `visual` style. How the board should be displayed in the UI, either `visual` (the default) or `list`.
 * `query` - (Optional) Zero or more configurations blocks (described below) with the queries of the board.
-* `slo` - (Optional) Up to six configuration blocks (described below) to place SLOs on the board.
+* `slo` - (Optional) Up to twenty-four (24) configuration blocks (described below) to place SLOs on the board.
 
 Each board configuration may have zero or more `query` blocks, which accept the following arguments:
 
@@ -122,7 +122,7 @@ Currently supported toggles are:
   * `utc_xaxis`
   * `overlaid_charts`
 
-  See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-settings/) in the documentation for more information on any individual setting.
+  See [Display Settings](https://docs.honeycomb.io/investigate/query/customize-results/#display-settings-menu) in the documentation for more information on any individual setting.
 * `query_style` - (Optional) How the query should be displayed within the board, either `graph` (the default), `table` or `combo`.
 
 Each board configuration may have up to six `slo` blocks, which take the following arguments:

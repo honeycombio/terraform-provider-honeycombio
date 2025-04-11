@@ -76,6 +76,7 @@ func (p *HoneycombioProvider) Schema(_ context.Context, _ provider.SchemaRequest
 
 func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
+		NewBoardResource,
 		NewBurnAlertResource,
 		NewDatasetResource,
 		NewTriggerResource,
