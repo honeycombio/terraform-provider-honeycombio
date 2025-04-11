@@ -179,7 +179,7 @@ func (*boardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 					Blocks: map[string]schema.Block{
 						"graph_settings": schema.ListNestedBlock{
 							Description: `Manages the settings for this query's graph on the board.
-See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-settings/) in the documentation for more information.`,
+See [Display Settings](https://docs.honeycomb.io/investigate/query/customize-results/#display-settings-menu) in the documentation for more information.`,
 							Validators: []validator.List{
 								listvalidator.SizeAtMost(1),
 							},
