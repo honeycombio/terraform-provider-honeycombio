@@ -39,7 +39,7 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.1.query_id", "honeycombio_query.test.1", "id"),
 					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.1.query_annotation_id", "honeycombio_query_annotation.test.1", "id"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.1.graph_settings.0.omit_missing_values", "true"),
-					resource.TestCheckResourceAttr("honeycombio_board.test", "query.1.graph_settings.0.utc_xaxis", "true"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "query.1.graph_settings.0.utc_xaxis", "false"),
 				),
 			},
 			{
@@ -407,7 +407,6 @@ resource "honeycombio_board" "test" {
 
     graph_settings {
       omit_missing_values = true
-      utc_xaxis           = true
     }
   }
 }`, dataset)
