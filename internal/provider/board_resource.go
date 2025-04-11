@@ -116,6 +116,9 @@ func (*boardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				Required:    false,
 				Optional:    false,
 				Description: "The URL of the Board in the Honeycomb UI.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -151,6 +154,9 @@ func (*boardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 							Computed:           true,
 							Description:        "The Dataset this Query is associated with.",
 							DeprecationMessage: "Board Queries no longer require the dataset as they rely on the provided Query ID's dataset.",
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
 						},
 						"query_id": schema.StringAttribute{
 							Required:    true,
