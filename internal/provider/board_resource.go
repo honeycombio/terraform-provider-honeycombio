@@ -184,7 +184,6 @@ See [Graph Settings](https://docs.honeycomb.io/working-with-your-data/graph-sett
 								listvalidator.SizeAtMost(1),
 							},
 							PlanModifiers: []planmodifier.List{
-								//modifiers.DefaultGraphSettingsModifier(),
 								listplanmodifier.UseStateForUnknown(),
 							},
 							NestedObject: schema.NestedBlockObject{
@@ -330,7 +329,7 @@ func (r *boardResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	board, err := r.client.Boards.Get(ctx, state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
-			// if not found consider it delete -- so remove it from state
+			// if not found consider it deleted -- remove it from state
 			resp.State.RemoveResource(ctx)
 			return
 		} else {
