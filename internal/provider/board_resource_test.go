@@ -346,6 +346,7 @@ func TestAcc_BoardResourceUpgradeFromVersion032(t *testing.T) {
 			{
 				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 				Config:                   config,
+				PlanOnly:                 true,
 			},
 		},
 	})

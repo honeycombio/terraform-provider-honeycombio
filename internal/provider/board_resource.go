@@ -91,7 +91,7 @@ func (*boardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				Optional:    true,
 				Computed:    true,
 				Description: "The number of columns to layout on the Board.",
-				Default:     stringdefault.StaticString(string(client.BoardColumnStyleSingle)),
+				Default:     stringdefault.StaticString(string(client.BoardColumnStyleMulti)),
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						string(client.BoardColumnStyleSingle),
