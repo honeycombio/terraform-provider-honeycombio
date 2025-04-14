@@ -16,6 +16,10 @@ data "honeycombio_query_specification" "query" {
   
 }
 
+variable "dataset" {
+  type = string
+}
+
 resource "honeycombio_trigger" "trigger" {
   name        = "Requests are slower than usual"
   description = "Average duration of all requests for ThatSpecialTenant for the last 15 minutes."
