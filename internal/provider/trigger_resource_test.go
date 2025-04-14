@@ -990,7 +990,7 @@ func testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, pdseverity 
 data "honeycombio_query_specification" "test" {
   calculation {
     op     = "AVG"
-    column = "db_dur_ms"
+    column = "duration_ms"
   }
   time_range = 1200
 }
