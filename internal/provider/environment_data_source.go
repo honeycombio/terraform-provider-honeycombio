@@ -104,7 +104,7 @@ func (d *environmentDataSource) Configure(ctx context.Context, req datasource.Co
 }
 
 func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data models.EnvironmentResourceModel
+	var data models.EnvironmentDataSourceModel
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return

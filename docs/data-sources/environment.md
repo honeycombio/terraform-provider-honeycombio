@@ -22,8 +22,10 @@ data "honeycombio_environment" "prod" {
 
 ```hcl
 data "honeycombio_environment" "classic" {
-  detail_filter = "name"
-  value         = "Classic"
+  detail_filter {
+    name  = "name"
+    value = "Classic"
+  }
 }
 
 data "honeycombio_environment" "prod" {
