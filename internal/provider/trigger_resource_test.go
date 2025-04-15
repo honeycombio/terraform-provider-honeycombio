@@ -173,7 +173,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 				},
 				// then update the PD Severity from info -> critical (the default)
 				{
-					Config: testAccConfigBasicTriggerTest(dataset, name, "critical"),
+					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, "critical"),
 				},
 				{
 					ResourceName:        "honeycombio_trigger.test",
