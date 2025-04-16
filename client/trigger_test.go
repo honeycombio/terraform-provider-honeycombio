@@ -219,6 +219,11 @@ func TestTriggersWithBaselineDetails(t *testing.T) {
 	dataset := testDataset(t)
 	floatCol, _, _ := createRandomTestColumns(t, c, dataset)
 
+	// delete the trigger after the tests run
+	t.Cleanup(func() {
+		c.Triggers.Delete(ctx, dataset, trigger.ID)
+	})
+
 	t.Run("Create - with baseline_details", func(t *testing.T) {
 		data := &client.Trigger{
 			Name:        test.RandomStringWithPrefix("test.", 8),

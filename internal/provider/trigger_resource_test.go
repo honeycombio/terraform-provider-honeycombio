@@ -153,13 +153,14 @@ func TestAcc_TriggerResource(t *testing.T) {
 		})
 	})
 
-	t.Run("trigger resource with baselinedetails", func(t *testing.T) {
+	t.Run("trigger resource with baseline_details", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 			Steps: []resource.TestStep{
+				// create a trigger with baseline_details
 				{
-					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, "info"),
+					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, client.TriggerBaselineDetails{Type: "value", OffsetMinutes: 1440}, false),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
@@ -171,9 +172,22 @@ func TestAcc_TriggerResource(t *testing.T) {
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "baseline_details.0.offset_minutes", "1440"),
 					),
 				},
-				// then update the PD Severity from info -> critical (the default)
+				// update with no baseline_details (""), baseline_details should stay the same
 				{
-					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, "critical"),
+					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, client.TriggerBaselineDetails{}, false),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_json"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "baseline_details.0.offset_minutes", "1440"),
+					),
+				},
+				// // update with empty baseline_details object (baseline_details {} ), baseline_details should be removed from trigger
+				{
+					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, client.TriggerBaselineDetails{}, true),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "baseline_details.#"),
+					),
 				},
 				{
 					ResourceName:        "honeycombio_trigger.test",
@@ -981,16 +995,30 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, name, pdseverity, email, pdKey, pdName)
 }
 
-func testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, pdseverity string) string {
+func testAccConfigBasicTriggerWithBaselineDetailsTest(dataset string, name string, baseline_details client.TriggerBaselineDetails, omitBaselineDetails bool) string {
 	email := test.RandomEmail()
 	pdKey := test.RandomString(32)
 	pdName := test.RandomStringWithPrefix("test.", 20)
+
+	baselineDetails := ""
+
+	if baseline_details.Type != "" {
+		baselineDetails = fmt.Sprintf(`
+  baseline_details {
+    type           = "%s"
+    offset_minutes = %d
+  }`, baseline_details.Type, baseline_details.OffsetMinutes)
+	}
+
+	if omitBaselineDetails {
+		baselineDetails = `baseline_details {}`
+	}
 
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
   calculation {
     op     = "AVG"
-    column = "duration_ms"
+    column = "db_dur_ms"
   }
   time_range = 1200
 }
@@ -1029,15 +1057,12 @@ resource "honeycombio_trigger" "test" {
     id = honeycombio_pagerduty_recipient.test.id
 
     notification_details {
-      pagerduty_severity = "%[3]s"
+      pagerduty_severity = "info"
     }
   }
 
-  baseline_details {
-  	type = "value"
-  	offset_minutes = 1440
-  }
-}`, dataset, name, pdseverity, email, pdKey, pdName)
+  %[3]s
+}`, dataset, name, baselineDetails, email, pdKey, pdName)
 }
 
 func testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, varValue string) string {
