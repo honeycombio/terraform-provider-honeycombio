@@ -13,6 +13,7 @@ type APIKeyResourceModel struct {
 	Disabled      types.Bool   `tfsdk:"disabled"`
 	Permissions   types.List   `tfsdk:"permissions"` // APIKeyPermissionModel
 	Secret        types.String `tfsdk:"secret"`
+	Key           types.String `tfsdk:"key"`
 }
 
 type APIKeyPermissionModel struct {

@@ -104,6 +104,13 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				Description: "Whether the API key is disabled.",
 				Default:     booldefault.StaticBool(false),
 			},
+			"key": schema.StringAttribute{
+				Computed:    true,
+				Required:    false,
+				Optional:    false,
+				Sensitive:   true,
+				Description: "The API key as a string. This is only available when creating a new key.",
+			},
 			"secret": schema.StringAttribute{
 				Computed:    true,
 				Required:    false,
@@ -171,6 +178,16 @@ func (r *apiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		state.Permissions = flattenAPIKeyPermissions(ctx, key.Permissions, &resp.Diagnostics)
 	} else {
 		state.Permissions = types.ListNull(types.ObjectType{AttrTypes: models.APIKeyPermissionsAttrType})
+	}
+
+	switch key.KeyType {
+	case "ingest":
+		state.Key = types.StringValue(key.ID + key.Secret)
+	default:
+		resp.Diagnostics.AddError(
+			"Unknown API Key Type",
+			"API Key Type "+key.KeyType+" is not supported. Supported types are: ingest",
+		)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
@@ -270,10 +287,12 @@ func (r *apiKeyResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	var detailedErr client.DetailedError
 	if err != nil {
 		if errors.As(err, &detailedErr) {
-			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
-				"Error Deleting Honeycomb API Key",
-				&detailedErr,
-			))
+			if !detailedErr.IsNotFound() {
+				resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
+					"Error Deleting Honeycomb API Key",
+					&detailedErr,
+				))
+			}
 		} else {
 			resp.Diagnostics.AddError(
 				"Error Deleting Honeycomb API Key",
