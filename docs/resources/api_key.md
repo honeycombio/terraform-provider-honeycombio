@@ -20,7 +20,7 @@ resource "honeycombio_api_key" "prod_ingest" {
 }
 
 output "ingest_key" {
-  value = "${honeycomb_api_key.prod_ingest.id}${honeycomb_api_key.prod_ingest.secret}"
+  value = "${honeycomb_api_key.prod_ingest.key}"
 }
 ```
 
@@ -44,6 +44,7 @@ In addition to all arguments above, the following attributes are exported:
 
 * `id` - The ID of the API Key.
 * `secret` - The secret portion of the API Key.
+* `key` - The API key formatted for use based on its type.
 
 ## Import
 
