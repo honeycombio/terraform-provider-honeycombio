@@ -160,7 +160,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 			Steps: []resource.TestStep{
 				// create a trigger with baseline_details
 				{
-					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, client.TriggerBaselineDetails{Type: "value", OffsetMinutes: 1440}, false),
+					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, true, false),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
@@ -172,18 +172,9 @@ func TestAcc_TriggerResource(t *testing.T) {
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "baseline_details.0.offset_minutes", "1440"),
 					),
 				},
-				// update with no baseline_details (""), baseline_details should stay the same
+				// update trigger with no baseline_details
 				{
-					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, client.TriggerBaselineDetails{}, false),
-					Check: resource.ComposeAggregateTestCheckFunc(
-						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
-						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_json"),
-						resource.TestCheckResourceAttr("honeycombio_trigger.test", "baseline_details.0.offset_minutes", "1440"),
-					),
-				},
-				// // update with empty baseline_details object (baseline_details {} ), baseline_details should be removed from trigger
-				{
-					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, client.TriggerBaselineDetails{}, true),
+					Config: testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, false, false),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
 						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "baseline_details.#"),
@@ -193,6 +184,19 @@ func TestAcc_TriggerResource(t *testing.T) {
 					ResourceName:        "honeycombio_trigger.test",
 					ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
 					ImportState:         true,
+				},
+			},
+		})
+	})
+
+	t.Run("trigger with partial baseline_details errors", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config:      testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, true, true),
+					ExpectError: regexp.MustCompile(`The argument "offset_minutes" is required, but no definition was found.`),
 				},
 			},
 		})
@@ -995,23 +999,25 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, name, pdseverity, email, pdKey, pdName)
 }
 
-func testAccConfigBasicTriggerWithBaselineDetailsTest(dataset string, name string, baseline_details client.TriggerBaselineDetails, omitBaselineDetails bool) string {
+func testAccConfigBasicTriggerWithBaselineDetailsTest(dataset string, name string, includeBaselineDetails bool, includePartialBaselineDetails bool) string {
 	email := test.RandomEmail()
 	pdKey := test.RandomString(32)
 	pdName := test.RandomStringWithPrefix("test.", 20)
 
 	baselineDetails := ""
-
-	if baseline_details.Type != "" {
-		baselineDetails = fmt.Sprintf(`
-  baseline_details {
-    type           = "%s"
-    offset_minutes = %d
-  }`, baseline_details.Type, baseline_details.OffsetMinutes)
+	if includeBaselineDetails {
+		baselineDetails =
+			`baseline_details {
+		type           = "value"
+		offset_minutes = 1440
+}`
 	}
 
-	if omitBaselineDetails {
-		baselineDetails = `baseline_details {}`
+	if includePartialBaselineDetails {
+		baselineDetails =
+			`baseline_details {
+	type           = "value"
+}`
 	}
 
 	return fmt.Sprintf(`

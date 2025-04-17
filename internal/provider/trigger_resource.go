@@ -222,14 +222,14 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
 							Description: "Whether to use an absolute value or percentage delta.",
-							Optional:    true,
+							Required:    true,
 							Validators: []validator.String{
 								stringvalidator.OneOf("value", "percentage"),
 							},
 						},
 						"offset_minutes": schema.Int64Attribute{
 							Description: "What previous time period to evaluate against: 1 hour, 1 day, 1 week, or 4 weeks.",
-							Optional:    true,
+							Required:    true,
 							Validators: []validator.Int64{
 								int64validator.OneOf(60, 1440, 10080, 40320),
 							},
@@ -703,8 +703,9 @@ func expandBaselineDetails(
 	l types.List,
 	diags *diag.Diagnostics,
 ) *client.TriggerBaselineDetails {
+	// if plan doesn't include baseline_details, send the API an empty object so trigger becomes a static threshold
 	if l.IsNull() || l.IsUnknown() {
-		return nil
+		return &client.TriggerBaselineDetails{}
 	}
 
 	var s []models.TriggerBaselineDetailsModel
