@@ -18,6 +18,17 @@ type TriggerResourceModel struct {
 	Threshold          types.List   `tfsdk:"threshold"`           // TriggerThresholdModel
 	Recipients         types.Set    `tfsdk:"recipient"`           // NotificationRecipientModel
 	EvaluationSchedule types.List   `tfsdk:"evaluation_schedule"` // TriggerEvaluationScheduleModel
+	BaselineDetails    types.List   `tfsdk:"baseline_details"`
+}
+
+type TriggerBaselineDetailsModel struct {
+	Type          types.String `tfsdk:"type"`
+	OffsetMinutes types.Int64  `tfsdk:"offset_minutes"`
+}
+
+var TriggerBaselineDetailsAttrType = map[string]attr.Type{
+	"type":           types.StringType,
+	"offset_minutes": types.Int64Type,
 }
 
 type TriggerThresholdModel struct {
