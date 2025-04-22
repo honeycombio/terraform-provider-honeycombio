@@ -122,11 +122,17 @@ data "honeycombio_slos" "exact" {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: `
-data "honeycombio_slos" "all" {}
-`,
+				Config: fmt.Sprintf(`
+data "honeycombio_slos" "regex" {
+
+  detail_filter {
+    name        = "name"
+    value_regex = "%[1]s*"
+  }
+}
+`, testPrefix),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.honeycombio_slos.all", "ids.#", "4"),
+					resource.TestCheckResourceAttr("data.honeycombio_slos.regex", "ids.#", "2"),
 				),
 			},
 		},

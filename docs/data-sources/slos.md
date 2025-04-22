@@ -31,7 +31,7 @@ data "honeycombio_slos" "foo" {
 
 The following arguments are supported:
 
-* `dataset` - (Optional) The dataset to retrieve the SLOs list from. If omitted, all SLOs in the environment will be returned.
+* `dataset` - (Optional) The dataset to retrieve the SLOs list from. If omitted, the lookup will be Environment-wide.
 * `detail_filter` - (Optional) a block to further filter results as described below. `name` must be set when providing a filter.
 
 To further filter the SLO results, a `detail_filter` block can be provided which accepts the following arguments:
