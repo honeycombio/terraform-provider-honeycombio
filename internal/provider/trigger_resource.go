@@ -212,6 +212,31 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"recipient": notificationRecipientSchema(client.TriggerRecipientTypes()),
+			"baseline_details": schema.ListNestedBlock{
+				Description: "A configuration block that allows you to receive notifications when the delta between values in your data, " +
+					"compared to a previous time period, cross thresholds you configure.",
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
+				},
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							Description: "Whether to use an absolute value or percentage delta.",
+							Required:    true,
+							Validators: []validator.String{
+								stringvalidator.OneOf("value", "percentage"),
+							},
+						},
+						"offset_minutes": schema.Int64Attribute{
+							Description: "What previous time period to evaluate against: 1 hour, 1 day, 1 week, or 4 weeks.",
+							Required:    true,
+							Validators: []validator.Int64{
+								int64validator.OneOf(60, 1440, 10080, 40320),
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -247,6 +272,7 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		Frequency:          int(plan.Frequency.ValueInt64()),
 		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
+		BaselineDetails:    expandBaselineDetails(ctx, plan.BaselineDetails, &resp.Diagnostics),
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -291,6 +317,7 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
+	state.BaselineDetails = flattenBaselineDetails(ctx, trigger.BaselineDetails, &resp.Diagnostics)
 
 	if specifiedByID {
 		state.QueryID = types.StringValue(trigger.QueryID)
@@ -344,6 +371,7 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
 	state.Recipients = reconcileReadNotificationRecipientState(ctx, trigger.Recipients, state.Recipients, &resp.Diagnostics)
+	state.BaselineDetails = flattenBaselineDetails(ctx, trigger.BaselineDetails, &resp.Diagnostics)
 
 	specifiedByID := !state.QueryID.IsNull()
 	if specifiedByID {
@@ -385,6 +413,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		Threshold:          expandTriggerThreshold(ctx, plan.Threshold, &resp.Diagnostics),
 		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
+		BaselineDetails:    expandBaselineDetails(ctx, plan.BaselineDetails, &resp.Diagnostics),
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -436,6 +465,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
+	state.BaselineDetails = flattenBaselineDetails(ctx, trigger.BaselineDetails, &resp.Diagnostics)
 
 	if specifiedByID {
 		state.QueryID = types.StringValue(trigger.QueryID)
@@ -496,6 +526,7 @@ func (r *triggerResource) ImportState(ctx context.Context, req resource.ImportSt
 		Recipients:         types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
 		Threshold:          types.ListUnknown(types.ObjectType{AttrTypes: models.TriggerThresholdAttrType}),
 		EvaluationSchedule: types.ListUnknown(types.ObjectType{AttrTypes: models.TriggerEvaluationScheduleAttrType}),
+		BaselineDetails:    types.ListUnknown(types.ObjectType{AttrTypes: models.TriggerBaselineDetailsAttrType}),
 	})...)
 }
 
@@ -640,6 +671,53 @@ func flattenTriggerThreshold(
 	diags.Append(d...)
 
 	return result
+}
+
+func flattenBaselineDetails(
+	ctx context.Context,
+	t *client.TriggerBaselineDetails,
+	diags *diag.Diagnostics,
+) types.List {
+	if t == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: models.TriggerBaselineDetailsAttrType})
+	}
+
+	detailsObj, d := types.ObjectValue(models.TriggerBaselineDetailsAttrType, map[string]attr.Value{
+		"type":           types.StringValue(t.Type),
+		"offset_minutes": types.Int64Value(int64(t.OffsetMinutes)),
+	})
+	diags.Append(d...)
+
+	result, d := types.ListValueFrom(
+		ctx,
+		types.ObjectType{AttrTypes: models.TriggerBaselineDetailsAttrType},
+		[]attr.Value{detailsObj},
+	)
+	diags.Append(d...)
+
+	return result
+}
+
+func expandBaselineDetails(
+	ctx context.Context,
+	l types.List,
+	diags *diag.Diagnostics,
+) *client.TriggerBaselineDetails {
+	// if plan doesn't include baseline_details, send the API an empty object so trigger becomes a static threshold
+	if l.IsNull() || l.IsUnknown() {
+		return &client.TriggerBaselineDetails{}
+	}
+
+	var s []models.TriggerBaselineDetailsModel
+	diags.Append(l.ElementsAs(ctx, &s, false)...)
+	if diags.HasError() || len(s) == 0 {
+		return nil
+	}
+
+	return &client.TriggerBaselineDetails{
+		Type:          s[0].Type.ValueString(),
+		OffsetMinutes: int(s[0].OffsetMinutes.ValueInt64()),
+	}
 }
 
 func expandTriggerEvaluationSchedule(

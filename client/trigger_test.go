@@ -206,3 +206,102 @@ func TestMatchesTriggerSubset(t *testing.T) {
 		assert.Equal(t, c.expectedErr, err, "Test case %d, QuerySpec: %v", i, c.in)
 	}
 }
+
+func TestTriggersWithBaselineDetails(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	var trigger *client.Trigger
+	var err error
+
+	c := newTestClient(t)
+	dataset := testDataset(t)
+	floatCol, _, _ := createRandomTestColumns(t, c, dataset)
+
+	// delete the trigger after the tests run
+	t.Cleanup(func() {
+		c.Triggers.Delete(ctx, dataset, trigger.ID)
+	})
+
+	t.Run("Create - with baseline_details", func(t *testing.T) {
+		data := &client.Trigger{
+			Name:        test.RandomStringWithPrefix("test.", 8),
+			Description: "Some description",
+			Disabled:    true,
+			Query: &client.QuerySpec{
+				Breakdowns: nil,
+				Calculations: []client.CalculationSpec{
+					{
+						Op:     client.CalculationOpRateAvg,
+						Column: &floatCol.KeyName,
+					},
+				},
+				TimeRange: client.ToPtr(900),
+			},
+			Frequency: 900,
+			Threshold: &client.TriggerThreshold{
+				Op:    client.TriggerThresholdOpGreaterThanOrEqual,
+				Value: 10000,
+			},
+			Recipients: []client.NotificationRecipient{
+				{
+					Type:   client.RecipientTypeMarker,
+					Target: "This marker is created by a trigger",
+				},
+			},
+			BaselineDetails: &client.TriggerBaselineDetails{
+				Type:          "percentage",
+				OffsetMinutes: 1440,
+			},
+		}
+		trigger, err = c.Triggers.Create(ctx, dataset, data)
+		require.NoError(t, err)
+		assert.NotNil(t, trigger.ID)
+
+		// copy IDs before asserting equality
+		data.ID = trigger.ID
+		data.QueryID = trigger.QueryID
+		data.AlertType = trigger.AlertType
+		data.Recipients[0].ID = trigger.Recipients[0].ID
+		// set default time range
+		data.Query.TimeRange = client.ToPtr(900)
+
+		// set the default alert type
+		data.AlertType = client.TriggerAlertTypeOnChange
+		// set the default evaluation window type
+		data.EvaluationScheduleType = client.TriggerEvaluationScheduleFrequency
+		// set the default threshold exceeded limit
+		data.Threshold.ExceededLimit = 1
+		data.BaselineDetails = &client.TriggerBaselineDetails{
+			Type:          "percentage",
+			OffsetMinutes: 1440,
+		}
+		assert.Equal(t, data, trigger)
+	})
+
+	t.Run("Get - with baseline details", func(t *testing.T) {
+		trigger.BaselineDetails = &client.TriggerBaselineDetails{
+			Type:          "percentage",
+			OffsetMinutes: 1440,
+		}
+		getTrigger, err := c.Triggers.Get(ctx, dataset, trigger.ID)
+
+		require.NoError(t, err)
+		assert.Equal(t, trigger.BaselineDetails.Type, getTrigger.BaselineDetails.Type)
+		assert.Equal(t, trigger.BaselineDetails.OffsetMinutes, getTrigger.BaselineDetails.OffsetMinutes)
+	})
+
+	t.Run("Update - with baseline_details", func(t *testing.T) {
+		trigger.BaselineDetails = &client.TriggerBaselineDetails{
+			Type:          "percentage",
+			OffsetMinutes: 1440,
+		}
+		result, err := c.Triggers.Update(ctx, dataset, trigger)
+
+		require.NoError(t, err)
+		assert.Equal(t, trigger.BaselineDetails.Type, result.BaselineDetails.Type)
+		assert.Equal(t, trigger.BaselineDetails.OffsetMinutes, result.BaselineDetails.OffsetMinutes)
+	})
+
+}

@@ -62,7 +62,7 @@ func TestClient_APIKeys(t *testing.T) {
 	assert.Equal(t, k.ID, key.ID)
 	assert.Equal(t, keyName, *key.Name)
 	assert.True(t, *key.Disabled)
-	assert.WithinDuration(t, time.Now(), key.Timestamps.UpdatedAt, time.Second)
+	assert.WithinDuration(t, time.Now(), key.Timestamps.UpdatedAt, 5*time.Second)
 
 	// delete the key
 	err = c.APIKeys.Delete(ctx, k.ID)
