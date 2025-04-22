@@ -116,4 +116,19 @@ data "honeycombio_slos" "exact" {
 			},
 		},
 	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_slos" "all" {}
+`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("data.honeycombio_slos.all", "ids.#", "7"),
+				),
+			},
+		},
+	})
 }
