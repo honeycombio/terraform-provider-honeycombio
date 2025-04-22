@@ -1,5 +1,5 @@
 # Data Source: honeycombio_slos
-The SLOs data source retrieves the SLOs of a dataset, with the option of narrowing the retrieval by providing a `detail_filter`.
+The SLOs data source retrieves the SLOs of a dataset or environment, with the option of narrowing the retrieval by providing a `detail_filter`.
 
 ~> **Note** Multi-Dataset SLOs are not supported yet for this data source.
 
@@ -31,7 +31,7 @@ data "honeycombio_slos" "foo" {
 
 The following arguments are supported:
 
-* `dataset` - (Required) The dataset to retrieve the SLOs list from
+* `dataset` - (Optional) The dataset to retrieve the SLOs list from. If omitted, the lookup will be Environment-wide.
 * `detail_filter` - (Optional) a block to further filter results as described below. `name` must be set when providing a filter.
 
 To further filter the SLO results, a `detail_filter` block can be provided which accepts the following arguments:

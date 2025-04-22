@@ -44,7 +44,7 @@ func (d *slosDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			},
 			"dataset": schema.StringAttribute{
 				Description: "The dataset to fetch the SLOs from.",
-				Required:    true,
+				Optional:    true,
 			},
 			"ids": schema.ListAttribute{
 				Description: "The list of SLO IDs.",
@@ -81,7 +81,9 @@ func (d *slosDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	slos, err := d.client.SLOs.List(ctx, data.Dataset.ValueString())
+	datasetOrAll := helper.GetDatasetOrAll(data.Dataset)
+
+	slos, err := d.client.SLOs.List(ctx, datasetOrAll.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Listing SLOs", err) {
 		return
 	}

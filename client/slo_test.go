@@ -57,8 +57,15 @@ func TestSLOs(t *testing.T) {
 		assert.Equal(t, data, slo)
 	})
 
-	t.Run("List", func(t *testing.T) {
+	t.Run("List all slos for a dataset", func(t *testing.T) {
 		results, err := c.SLOs.List(ctx, dataset)
+
+		require.NoError(t, err, "unable to list SLOs")
+		assert.Contains(t, results, *slo, "could not find newly created SLO with List")
+	})
+
+	t.Run("List all slos in an environment", func(t *testing.T) {
+		results, err := c.SLOs.List(ctx, client.EnvironmentWideSlug)
 
 		require.NoError(t, err, "unable to list SLOs")
 		assert.Contains(t, results, *slo, "could not find newly created SLO with List")
