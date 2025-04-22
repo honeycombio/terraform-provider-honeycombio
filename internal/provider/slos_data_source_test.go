@@ -126,7 +126,7 @@ data "honeycombio_slos" "exact" {
 data "honeycombio_slos" "all" {}
 `,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.honeycombio_slos.all", "ids.#", "7"),
+					resource.TestCheckResourceAttr("data.honeycombio_slos.all", "ids.#", "4"),
 				),
 			},
 		},
