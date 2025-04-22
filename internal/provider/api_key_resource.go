@@ -287,6 +287,7 @@ func (r *apiKeyResource) Delete(ctx context.Context, req resource.DeleteRequest,
 	var detailedErr client.DetailedError
 	if err != nil {
 		if errors.As(err, &detailedErr) {
+			// if not found consider it deleted -- so don't error
 			if !detailedErr.IsNotFound() {
 				resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
 					"Error Deleting Honeycomb API Key",
