@@ -33,6 +33,12 @@ func TestQuerySpec(t *testing.T) {
 				Column: client.ToPtr("duration_ms"),
 			},
 		},
+		CalculatedFields: []client.CalculatedFieldSpec{
+			{
+				Name:       "fast_enough",
+				Expression: "LTE($duration_ms, 200)",
+			},
+		},
 		Filters: []client.FilterSpec{
 			{
 				Column: "column_1",
@@ -47,6 +53,11 @@ func TestQuerySpec(t *testing.T) {
 				Column: "column_1",
 				Op:     client.FilterOpNotEquals,
 				Value:  "",
+			},
+			{
+				Column: "fast_enough",
+				Op:     client.FilterOpEquals,
+				Value:  true,
 			},
 		},
 		FilterCombination: client.FilterCombinationOr,

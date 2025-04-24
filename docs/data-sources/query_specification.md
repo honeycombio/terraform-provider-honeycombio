@@ -15,7 +15,11 @@ data "honeycombio_query_specification" "example" {
     column = "duration_ms"
   }
 
-  # zero or more filter blocks
+  calculated_field {
+    name       = "fast_enough"
+    expression = "LTE($response.duration_ms, 200)"
+  }
+
   filter {
     column = "trace.parent_id"
     op     = "does-not-exist"
@@ -25,6 +29,12 @@ data "honeycombio_query_specification" "example" {
     column = "app.tenant"
     op     = "="
     value  = "ThatSpecialTenant" 
+  }
+
+  filter {
+    column = "fast_enough"
+    op     = "="
+    value  = false
   }
 
   filter_combination = "AND"
@@ -44,6 +54,7 @@ output "json_query" {
 The following arguments are supported:
 
 * `calculation` - (Optional) Zero or more configuration blocks (described below) with the calculations that should be displayed. If no calculations are specified, `COUNT` will be used.
+* `calculated_field` - (Optional) Zero or more configuration blocks (described below) of inline Calculated Fields.
 * `filter` - (Optional) Zero or more configuration blocks (described below) with the filters that should be applied.
 * `filter_combination` - (Optional) How to combine multiple filters, either `AND` (default) or `OR`.
 * `breakdowns` - (Optional) A list of fields to group by.
@@ -61,6 +72,11 @@ Each query configuration may have zero or more `calculation` blocks, which each 
 
 * `op` - (Required) The operator to apply, see the supported list of calculation operators at [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators).
 * `column` - (Optional) The column to apply the operator to, not needed with `COUNT` or `CONCURRENCY`.
+
+Each query configuration may have zero or more `calculated_field` blocks, which each accept the following arguments:
+
+* `name` - (Required) The name of this Temporary Calculated Field.
+* `expression` - (Required) The formula for your Calculated Field. To learn more about syntax and available functions, and to explore some example formulas, visit the [Calculated Field Formula Reference](https://docs.honeycomb.io/reference/derived-column-formula/).
 
 Each query configuration may have zero or more `filter` blocks, which each accept the following arguments:
 

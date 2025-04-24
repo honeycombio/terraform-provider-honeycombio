@@ -9,24 +9,30 @@ type QueryResourceModel struct {
 }
 
 type QuerySpecificationModel struct {
-	ID                types.String                         `tfsdk:"id"`
-	FilterCombination types.String                         `tfsdk:"filter_combination"`
-	Breakdowns        []types.String                       `tfsdk:"breakdowns"`
-	Limit             types.Int64                          `tfsdk:"limit"`
-	TimeRange         types.Int64                          `tfsdk:"time_range"`
-	StartTime         types.Int64                          `tfsdk:"start_time"`
-	EndTime           types.Int64                          `tfsdk:"end_time"`
-	Granularity       types.Int64                          `tfsdk:"granularity"`
-	Calculations      []QuerySpecificationCalculationModel `tfsdk:"calculation"`
-	Filters           []QuerySpecificationFilterModel      `tfsdk:"filter"`
-	Havings           []QuerySpecificationHavingModel      `tfsdk:"having"`
-	Orders            []QuerySpecificationOrderModel       `tfsdk:"order"`
-	Json              types.String                         `tfsdk:"json"` // Computed JSON query specification output
+	ID                types.String                             `tfsdk:"id"`
+	FilterCombination types.String                             `tfsdk:"filter_combination"`
+	Breakdowns        []types.String                           `tfsdk:"breakdowns"`
+	Limit             types.Int64                              `tfsdk:"limit"`
+	TimeRange         types.Int64                              `tfsdk:"time_range"`
+	StartTime         types.Int64                              `tfsdk:"start_time"`
+	EndTime           types.Int64                              `tfsdk:"end_time"`
+	Granularity       types.Int64                              `tfsdk:"granularity"`
+	Calculations      []QuerySpecificationCalculationModel     `tfsdk:"calculation"`
+	CalculatedFields  []QuerySpecificationCalculatedFieldModel `tfsdk:"calculated_field"`
+	Filters           []QuerySpecificationFilterModel          `tfsdk:"filter"`
+	Havings           []QuerySpecificationHavingModel          `tfsdk:"having"`
+	Orders            []QuerySpecificationOrderModel           `tfsdk:"order"`
+	Json              types.String                             `tfsdk:"json"` // Computed JSON query specification output
 }
 
 type QuerySpecificationCalculationModel struct {
 	Column types.String `tfsdk:"column"`
 	Op     types.String `tfsdk:"op"`
+}
+
+type QuerySpecificationCalculatedFieldModel struct {
+	Name       types.String `tfsdk:"name"`
+	Expression types.String `tfsdk:"expression"`
 }
 
 type QuerySpecificationFilterModel struct {
