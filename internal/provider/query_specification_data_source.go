@@ -17,6 +17,7 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
@@ -111,6 +112,24 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Description: "The column to apply the operator on. " +
 								"Not allowed with \"COUNT\" or \"CONCURRENCY\", required for all other operators.",
 							Optional: true,
+						},
+					},
+				},
+			},
+			"calculated_field": schema.ListNestedBlock{
+				Description: "Zero or more configuration blocks describing the Calculated Fields to create for use in this query.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: "The name of the Calculated Field.",
+							Required:    true,
+						},
+						"expression": schema.StringAttribute{
+							Description: "The formula to use for the Calculated Field.",
+							Required:    true,
+							Validators: []validator.String{
+								validation.IsValidCalculatedField(),
+							},
 						},
 					},
 				},
@@ -231,6 +250,14 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 	// we'll set the default here if we haven't parsed any
 	if len(calculations) == 0 {
 		calculations = []client.CalculationSpec{{Op: client.CalculationOpCount}}
+	}
+
+	calculatedFields := make([]client.CalculatedFieldSpec, len(data.CalculatedFields))
+	for i, f := range data.CalculatedFields {
+		calculatedFields[i] = client.CalculatedFieldSpec{
+			Name:       f.Name.ValueString(),
+			Expression: f.Expression.ValueString(),
+		}
 	}
 
 	filters := make([]client.FilterSpec, 0, len(data.Filters))
@@ -385,6 +412,7 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	querySpec := &client.QuerySpec{
 		Calculations:      calculations,
+		CalculatedFields:  calculatedFields,
 		Filters:           filters,
 		Havings:           havings,
 		FilterCombination: client.FilterCombination(data.FilterCombination.ValueString()),

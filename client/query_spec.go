@@ -21,6 +21,11 @@ type QuerySpec struct {
 	// The calculations to return as a time series and summary table. If no
 	// calculations are provided, COUNT is applied.
 	Calculations []CalculationSpec `json:"calculations,omitempty"`
+	// CalculatedFields are temporary Calculated Fields that are
+	// created for the query.
+	// They are not saved in the dataset and are not available in the dataset
+	// after the query is run.
+	CalculatedFields []CalculatedFieldSpec `json:"calculated_fields,omitempty"`
 	// The filters with which to restrict the considered events.
 	Filters []FilterSpec `json:"filters,omitempty"`
 	// If multiple filters are specified, filter_combination determines how
@@ -154,6 +159,12 @@ type CalculationSpec struct {
 	Op CalculationOp `json:"op"`
 	// Column to perform the operation on. Not needed with COUNT or CONCURRENCY
 	Column *string `json:"column,omitempty"`
+}
+
+// CalculatedFieldSpec represents a Temporary Calculated Field within a query.
+type CalculatedFieldSpec struct {
+	Name       string `json:"name"`
+	Expression string `json:"expression"`
 }
 
 // CalculationOp represents the operator of a calculation.

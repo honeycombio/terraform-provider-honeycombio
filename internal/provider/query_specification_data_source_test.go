@@ -45,6 +45,12 @@ func TestAcc_QuerySpecificationDataSource_basic(t *testing.T) {
       "column": "duration_ms"
     }
   ],
+  "calculated_fields": [
+    {
+      "name": "adhoc_test",
+      "expression": "BOOL(1)"
+    }
+  ],
   "filters": [
     {
       "column": "trace.parent_id",
@@ -118,6 +124,11 @@ data "honeycombio_query_specification" "test" {
     calculation {
         op     = "P99"
         column = "duration_ms"
+    }
+
+    calculated_field {
+      name       = "adhoc_test"
+      expression = "BOOL(1)"
     }
 
     filter {
