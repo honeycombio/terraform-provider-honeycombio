@@ -376,7 +376,7 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 		orders[i] = order
 	}
-	// ensure all orders have a matching calculation or breakdown
+	// ensure all orders have a matching calculation, calculated_field or breakdown
 	for i, order := range orders {
 		if order.Op != nil && *order.Op == client.CalculationOpHeatmap {
 			resp.Diagnostics.AddAttributeError(
@@ -391,6 +391,14 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 			if reflect.DeepEqual(order.Column, calc.Column) {
 				found = true
 				break
+			}
+		}
+		if !found {
+			for _, calc := range calculatedFields {
+				if reflect.DeepEqual(order.Column, calc.Name) {
+					found = true
+					break
+				}
 			}
 		}
 		if !found {
