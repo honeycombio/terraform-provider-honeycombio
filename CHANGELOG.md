@@ -1,3 +1,20 @@
+# 0.33.0 (Apr 24, 2025)
+
+NOTES: this release contains support for [Dynamic Baseline Triggers](https://docs.honeycomb.io/notify/alert/triggers/create/#trigger-alert-type).
+
+ENHANCEMENTS:
+
+* feat(d/environment): add `detail_filter` to simplify environment lookup (#660)
+* feat(r/trigger): add `baseline_details` support (#658)
+* feat(r/api_key): add computed `key` field (#661)
+* feat(r/slos): get all SLOs per environment (#662)
+* feat(d/query_specification): temporary calculated field support (#663)
+
+HOUSEKEEPING:
+
+* chore(r/board): migrate to Plugin Framework (#659)
+* maint(deps): bump golang.org/x/net from 0.38.0 to 0.39.0 (#657)
+
 # 0.32.0 (Apr 7, 2025)
 
 NOTES: this release contains support for [Multi-Dataset SLOs and Burn Alerts](https://docs.honeycomb.io/notify/alert/slos/#multiple-services-on-slos)!
