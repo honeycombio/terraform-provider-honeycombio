@@ -54,6 +54,11 @@ func TestQuerySpec(t *testing.T) {
 				Op:     client.FilterOpNotEquals,
 				Value:  "",
 			},
+			{
+				Column: "fast_enough",
+				Op:     client.FilterOpEquals,
+				Value:  true,
+			},
 		},
 		FilterCombination: client.FilterCombinationOr,
 		Breakdowns:        []string{"column_1", "column_2"},
