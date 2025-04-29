@@ -220,24 +220,6 @@ func expandNotificationRecipients(ctx context.Context, set types.Set, diags *dia
 
 	return clientRecips
 }
-
-func notificationRecipientToObjectValue(ctx context.Context, r client.NotificationRecipient, diags *diag.Diagnostics) basetypes.ObjectValue {
-	recipObj := map[string]attr.Value{
-		"id":                   types.StringValue(r.ID),
-		"type":                 types.StringValue(string(r.Type)),
-		"target":               types.StringValue(r.Target),
-		"notification_details": types.ListNull(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}),
-	}
-
-	if r.Type == client.RecipientTypeWebhook || r.Type == client.RecipientTypePagerDuty {
-		recipObj["notification_details"] = notificationRecipientDetailsToList(ctx, r.Details, diags)
-	}
-	recipObjVal, d := types.ObjectValue(models.NotificationRecipientAttrType, recipObj)
-	diags.Append(d...)
-
-	return recipObjVal
-}
-
 func notificationRecipientModelToObjectValue(ctx context.Context, r models.NotificationRecipientModel, diags *diag.Diagnostics) basetypes.ObjectValue {
 	recipObj := map[string]attr.Value{
 		"id":     r.ID,
