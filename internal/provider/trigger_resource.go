@@ -517,17 +517,11 @@ func (r *triggerResource) ImportState(ctx context.Context, req resource.ImportSt
 		)
 		return
 	}
+	req.ID = id
+	resp.State.SetAttribute(ctx, path.Root("dataset"), dataset)
+	resp.State.SetAttribute(ctx, path.Root("query_id"), types.StringNull()) // favor query_json on import
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &models.TriggerResourceModel{
-		ID:                 types.StringValue(id),
-		Dataset:            types.StringValue(dataset),
-		QueryID:            types.StringNull(),
-		QueryJson:          types.StringUnknown(), // favor QueryJSON on import
-		Recipients:         types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
-		Threshold:          types.ListUnknown(types.ObjectType{AttrTypes: models.TriggerThresholdAttrType}),
-		EvaluationSchedule: types.ListUnknown(types.ObjectType{AttrTypes: models.TriggerEvaluationScheduleAttrType}),
-		BaselineDetails:    types.ListUnknown(types.ObjectType{AttrTypes: models.TriggerBaselineDetailsAttrType}),
-	})...)
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
 func (r *triggerResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {

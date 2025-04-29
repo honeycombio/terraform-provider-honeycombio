@@ -38,7 +38,7 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 				state: types.SetNull(elemType),
 			},
 			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
-				{ID: types.StringValue("abcd12345"), Type: types.StringValue("email"), Target: types.StringValue("test@example.com")},
+				{ID: types.StringValue("abcd12345")}, // we use ID over type+target when there is no state
 			}),
 		},
 		{
