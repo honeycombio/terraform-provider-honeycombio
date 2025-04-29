@@ -229,11 +229,10 @@ func (r *burnAlertResource) ImportState(ctx context.Context, req resource.Import
 		dsValue = types.StringValue(dataset)
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &models.BurnAlertResourceModel{
-		ID:         types.StringValue(id),
-		Dataset:    dsValue,
-		Recipients: types.SetUnknown(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}),
-	})...)
+	req.ID = id
+	resp.State.SetAttribute(ctx, path.Root("dataset"), dsValue)
+
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
 func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
