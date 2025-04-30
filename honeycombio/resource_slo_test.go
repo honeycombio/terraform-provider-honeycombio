@@ -163,16 +163,16 @@ func TestHoneycombSLO_MD(t *testing.T) {
 			{
 				Config: testAccConfigSLO_md(dataset1.Slug, dataset2.Slug, mdSLI.Alias),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckSLOExists(t, "honeycombio_slo.md_test", mdSLO),
-					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "name", "TestAcc MD SLO"),
-					resource.TestCheckNoResourceAttr("honeycombio_slo.md_test", "dataset"),
-					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "datasets.#", "2"),
-					resource.TestCheckTypeSetElemAttr("honeycombio_slo.md_test", "datasets.*", dataset1.Slug),
-					resource.TestCheckTypeSetElemAttr("honeycombio_slo.md_test", "datasets.*", dataset2.Slug),
-					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "description", "integration test MD SLO"),
-					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "sli", mdSLI.Alias),
-					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "target_percentage", "99.95"),
-					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "time_period", "30"),
+					testAccCheckSLOExists(t, "honeycombio_slo.test", mdSLO),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "name", "TestAcc MD SLO"),
+					resource.TestCheckNoResourceAttr("honeycombio_slo.test", "dataset"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "datasets.#", "2"),
+					resource.TestCheckTypeSetElemAttr("honeycombio_slo.test", "datasets.*", dataset1.Slug),
+					resource.TestCheckTypeSetElemAttr("honeycombio_slo.test", "datasets.*", dataset2.Slug),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", "integration test MD SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "sli", mdSLI.Alias),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "target_percentage", "99.95"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "time_period", "30"),
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.%", "2"),
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.env", "test"),
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.team", "red"),
@@ -180,7 +180,7 @@ func TestHoneycombSLO_MD(t *testing.T) {
 			},
 			// tests imports
 			{
-				ResourceName:      "honeycombio_slo.md_test",
+				ResourceName:      "honeycombio_slo.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateId:     mdSLO.ID,
@@ -225,13 +225,18 @@ resource "honeycombio_slo" "test" {
 
 func testAccConfigSLO_md(dataset1Slug, dataset2Slug, sliAlias string) string {
 	return fmt.Sprintf(`
-resource "honeycombio_slo" "md_test" {
+resource "honeycombio_slo" "test" {
   name              = "TestAcc MD SLO"
   description       = "integration test MD SLO"
-  datasets     	    = ["%s", "%s"]
   sli               = "%s"
+  datasets     	    = ["%s", "%s"]
   target_percentage = 99.95
   time_period       = 30
+
+  tags = {
+    env  = "test"
+    team = "red"
+  }
 }`, sliAlias, dataset1Slug, dataset2Slug)
 }
 
