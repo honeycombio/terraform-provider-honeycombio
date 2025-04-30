@@ -11,9 +11,9 @@ var (
 	TagKeyValidationRegex = regexp.MustCompile(`^[a-z]{1,32}$`)
 
 	// TagValueValidationRegex is the regex used to validate tag values.
-	// It must begin with a lowercase letter, be between 1 and 128 characters long,
+	// It must begin with a lowercase letter, be between 1 and 32 characters long,
 	// and only contain alphanumeric characters, -, or /.
-	TagValueValidationRegex = regexp.MustCompile(`^[a-z][a-z0-9\/-]{1,128}$`)
+	TagValueValidationRegex = regexp.MustCompile(`^[a-z][a-z0-9\/-]{1,32}$`)
 )
 
 // Tag represents a key-value pair used for tagging resources.
