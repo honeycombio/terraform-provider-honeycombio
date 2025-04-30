@@ -1,3 +1,9 @@
+# 0.33.1 (Apr 30, 2025)
+
+BUGFIXES:
+
+* fix(r/trigger,r/burn_alert): gracefully handle recipients with notification details on import (#665)
+
 # 0.33.0 (Apr 24, 2025)
 
 NOTES: this release contains support for [Dynamic Baseline Triggers](https://docs.honeycomb.io/notify/alert/triggers/create/#trigger-alert-type).
