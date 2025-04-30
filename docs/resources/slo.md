@@ -27,6 +27,11 @@ resource "honeycombio_slo" "slo" {
   sli               = honeycombio_derived_column.request_latency_sli.alias
   target_percentage = 99.9
   time_period       = 30
+
+  tags = {
+    team    = "blue"
+    project = "secret"
+  }
 }
 ```
 
@@ -52,6 +57,11 @@ resource "honeycombio_slo" "slo" {
   sli               = honeycombio_derived_column.request_latency_sli.alias
   target_percentage = 99.9
   time_period       = 30
+
+  tags = {
+    team         = "red"
+    experimental = "true"
+  }
 }
 ```
 
@@ -69,6 +79,7 @@ The following arguments are supported:
 -   `sli` - (Required) The alias of the Derived Column that will be used as the SLI to indicate event success.
     The derived column used as the SLI must be in the same dataset as the SLO. Additionally,
     the column evaluation should consistently return nil, true, or false, as these are the only valid values for an SLI.
+-   `tags` - (Optional) Map of tags to assign to the resource.
 -   `target_percentage` - (Required) The percentage of qualified events that you expect to succeed during the `time_period`.
 -   `time_period` - (Required) The time period, in days, over which your SLO will be evaluated.
 

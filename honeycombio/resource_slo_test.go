@@ -25,7 +25,20 @@ func TestAccHoneycombioSLO_basic(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccConfigSLO_basic(dataset, sliAlias),
+				Config: fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO"
+  description       = "integration test SLO"
+  dataset           = "%s"
+  sli               = "%s"
+  target_percentage = 99.95
+  time_period       = 30
+
+  tags = {
+    env  = "test"
+    team = "blue"
+  }
+}`, dataset, sliAlias),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "dataset", dataset),
@@ -34,7 +47,37 @@ func TestAccHoneycombioSLO_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "sli", sliAlias),
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "target_percentage", "99.95"),
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "time_period", "30"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.%", "2"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.env", "test"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.team", "blue"),
 				),
+			},
+			{ // update the config to remove the tags and change the description and percentage
+				Config: fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO"
+  description       = "updated integration test SLO"
+  dataset           = "%s"
+  sli               = "%s"
+  target_percentage = 99.99
+  time_period       = 30
+}`, dataset, sliAlias),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "dataset", dataset),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "name", "TestAcc SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", "updated integration test SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "sli", sliAlias),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "target_percentage", "99.99"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "time_period", "30"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.%", "0"),
+				),
+			},
+			{
+				ResourceName:        "honeycombio_slo.test",
+				ImportStateIdPrefix: fmt.Sprintf("%s/", dataset),
+				ImportState:         true,
+				ImportStateVerify:   true,
 			},
 		},
 	})
@@ -130,6 +173,9 @@ func TestHoneycombSLO_MD(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "sli", mdSLI.Alias),
 					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "target_percentage", "99.95"),
 					resource.TestCheckResourceAttr("honeycombio_slo.md_test", "time_period", "30"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.%", "2"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.env", "test"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.team", "red"),
 				),
 			},
 			// tests imports
@@ -145,41 +191,48 @@ func TestHoneycombSLO_MD(t *testing.T) {
 
 func testAccConfigSLO_basic(dataset, sliAlias string) string {
 	return fmt.Sprintf(`
-	resource "honeycombio_slo" "test" {
-		name              = "TestAcc SLO"
-		description       = "integration test SLO"
-		dataset           = "%s"
-		sli               = "%s"
-		target_percentage = 99.95
-		time_period       = 30
-	}
-	`, dataset, sliAlias)
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO"
+  description       = "integration test SLO"
+  dataset           = "%s"
+  sli               = "%s"
+  target_percentage = 99.95
+  time_period       = 30
+
+  tags = {
+    env  = "test"
+    team = "blue"
+  }
+}`, dataset, sliAlias)
 }
 
 func testAccConfigSLO_dataset_deprecation(dataset, sliAlias string) string {
 	return fmt.Sprintf(`
-	resource "honeycombio_slo" "test" {
-		name              = "TestAcc SLO"
-		description       = "integration test SLO"
-		datasets          = ["%s"]
-		sli               = "%s"
-		target_percentage = 99.95
-		time_period       = 30
-	}
-	`, dataset, sliAlias)
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO"
+  description       = "integration test SLO"
+  datasets          = ["%s"]
+  sli               = "%s"
+  target_percentage = 99.95
+  time_period       = 30
+
+  tags = {
+    env  = "test"
+    team = "blue"
+  }
+}`, dataset, sliAlias)
 }
 
 func testAccConfigSLO_md(dataset1Slug, dataset2Slug, sliAlias string) string {
 	return fmt.Sprintf(`
-	resource "honeycombio_slo" "md_test" {
-		name              = "TestAcc MD SLO"
-		description       = "integration test MD SLO"
-		sli               = "%s"
-		target_percentage = 99.95
-		time_period       = 30
-		datasets     	  = ["%s", "%s"]
-	}
-	`, sliAlias, dataset1Slug, dataset2Slug)
+resource "honeycombio_slo" "md_test" {
+  name              = "TestAcc MD SLO"
+  description       = "integration test MD SLO"
+  datasets     	    = ["%s", "%s"]
+  sli               = "%s"
+  target_percentage = 99.95
+  time_period       = 30
+}`, sliAlias, dataset1Slug, dataset2Slug)
 }
 
 func testAccCheckSLOExists(t *testing.T, name string, slo *honeycombio.SLO) resource.TestCheckFunc {

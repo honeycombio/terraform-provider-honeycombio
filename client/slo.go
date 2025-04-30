@@ -46,6 +46,7 @@ type SLO struct {
 	TimePeriodDays   int       `json:"time_period_days"`
 	TargetPerMillion int       `json:"target_per_million"`
 	DatasetSlugs     []string  `json:"dataset_slugs,omitempty"`
+	Tags             []Tag     `json:"tags"`
 	SLI              SLIRef    `json:"sli"`
 	CreatedAt        time.Time `json:"created_at,omitempty"`
 	UpdatedAt        time.Time `json:"updated_at,omitempty"`

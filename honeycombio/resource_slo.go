@@ -3,8 +3,10 @@ package honeycombio
 import (
 	"context"
 	"errors"
+	"reflect"
 	"strings"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -42,7 +44,7 @@ func newSLO() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The dataset this SLO is created in. Will be deprecated in a future release. Must be the same dataset as the SLI unless the SLI Derived Column is Environment-wide.",
-				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
+				DiffSuppressFunc: func(_, oldValue, newValue string, _ *schema.ResourceData) bool {
 					// not using the shared 'SuppressEquivEnvWideDataset' as SLOs aren't using
 					// `__all__` directly and need an explicit list of datasets (below)
 					if oldValue == newValue {
@@ -85,6 +87,36 @@ the column evaluation should consistently return nil, true, or false, as these a
 				Required:     true,
 				Description:  "The time period, in days, over which your SLO will be evaluated.",
 				ValidateFunc: validation.IntAtLeast(1),
+			},
+			"tags": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "A map of tags to assign to the resource.",
+				DiffSuppressFunc: func(_, _, _ string, d *schema.ResourceData) bool {
+					// suppress the diff if the tag maps are equivalent
+					old, new := d.GetChange("tags")
+					return reflect.DeepEqual(old.(map[string]any), new.(map[string]any))
+				},
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+				ValidateDiagFunc: validation.AllDiag(
+					validation.MapKeyMatch(
+						honeycombio.TagKeyValidationRegex,
+						"must only contain lowercase letters, and be 1-32 characters long",
+					),
+					validation.MapValueMatch(
+						honeycombio.TagValueValidationRegex,
+						"must begin with a lowercase letter, be between 1-128 characters long, and only contain alphanumeric characters, -, or /",
+					),
+					func(v any, path cty.Path) diag.Diagnostics {
+						// ensure the number of tags is within the resource limit
+						if len(v.(map[string]any)) > honeycombio.MaxTagsPerResource {
+							return diag.Errorf("Max %d tags per resource", honeycombio.MaxTagsPerResource)
+						}
+						return nil
+					},
+				),
 			},
 		},
 	}
@@ -152,6 +184,12 @@ func resourceSLORead(ctx context.Context, d *schema.ResourceData, meta interface
 	d.Set("time_period", s.TimePeriodDays)
 	d.Set("datasets", s.DatasetSlugs)
 
+	tags := make(map[string]string, len(s.Tags))
+	for _, tag := range s.Tags {
+		tags[tag.Key] = tag.Value
+	}
+	d.Set("tags", tags)
+
 	return nil
 }
 
@@ -188,11 +226,27 @@ func resourceSLODelete(ctx context.Context, d *schema.ResourceData, meta interfa
 }
 
 func expandSLO(d *schema.ResourceData) *honeycombio.SLO {
-	var datasets []string
+	datasets := make([]string, len(d.Get("datasets").(*schema.Set).List()))
 	if v, ok := d.GetOk("datasets"); ok {
-		for _, v := range v.(*schema.Set).List() {
-			datasets = append(datasets, v.(string))
+		for i, v := range v.(*schema.Set).List() {
+			datasets[i] = v.(string)
 		}
+	}
+
+	var tags []honeycombio.Tag
+	rawTags, _ := d.GetRawConfigAt(cty.GetAttrPath("tags"))
+	// if 'tags' is present in the config, build the tags slice
+	if !rawTags.IsNull() && rawTags.LengthInt() > 0 {
+		tags = make([]honeycombio.Tag, 0, len(d.Get("tags").(map[string]any)))
+		if v, ok := d.GetOk("tags"); ok {
+			for k, v := range v.(map[string]any) {
+				tags = append(tags, honeycombio.Tag{Key: k, Value: v.(string)})
+			}
+		}
+	} else {
+		// if 'tags' is not present in the config, set to empty slice
+		// to clear the tags
+		tags = make([]honeycombio.Tag, 0)
 	}
 
 	return &honeycombio.SLO{
@@ -203,5 +257,6 @@ func expandSLO(d *schema.ResourceData) *honeycombio.SLO {
 		TargetPerMillion: helper.FloatToPPM(d.Get("target_percentage").(float64)),
 		SLI:              honeycombio.SLIRef{Alias: d.Get("sli").(string)},
 		DatasetSlugs:     datasets,
+		Tags:             tags,
 	}
 }
