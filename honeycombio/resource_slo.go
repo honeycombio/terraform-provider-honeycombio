@@ -94,8 +94,8 @@ the column evaluation should consistently return nil, true, or false, as these a
 				Description: "A map of tags to assign to the resource.",
 				DiffSuppressFunc: func(_, _, _ string, d *schema.ResourceData) bool {
 					// suppress the diff if the tag maps are equivalent
-					old, new := d.GetChange("tags")
-					return reflect.DeepEqual(old.(map[string]any), new.(map[string]any))
+					oldMap, newMap := d.GetChange("tags")
+					return reflect.DeepEqual(oldMap.(map[string]any), newMap.(map[string]any))
 				},
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
