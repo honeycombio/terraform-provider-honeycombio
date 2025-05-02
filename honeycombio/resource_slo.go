@@ -107,7 +107,7 @@ the column evaluation should consistently return nil, true, or false, as these a
 					),
 					validation.MapValueMatch(
 						honeycombio.TagValueValidationRegex,
-						"must begin with a lowercase letter, be between 1-32 characters long, and only contain alphanumeric characters, -, or /",
+						"must begin with a lowercase letter, be between 1-32 characters long, and only contain lowercase alphanumeric characters, -, or /",
 					),
 					func(v any, path cty.Path) diag.Diagnostics {
 						// ensure the number of tags is within the resource limit

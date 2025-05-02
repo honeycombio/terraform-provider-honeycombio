@@ -32,7 +32,7 @@ func (t *Tag) Validate() error {
 	}
 	if !TagValueValidationRegex.MatchString(t.Value) {
 		return fmt.Errorf("tag value %q is invalid: must begin with a lowercase letter,"+
-			" be 1-32 characters long, and only contain alphanumeric characters, -, or /", t.Value)
+			" be 1-32 characters long, and only contain lowercase alphanumeric characters, -, or /", t.Value)
 	}
 	return nil
 }
