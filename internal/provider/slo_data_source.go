@@ -72,6 +72,13 @@ func (d *sloDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 				Optional:    false,
 				Required:    false,
 			},
+			"tags": schema.MapAttribute{
+				ElementType: types.StringType,
+				Description: "A map of tags associated with the resource.",
+				Computed:    true,
+				Optional:    false,
+				Required:    false,
+			},
 			"target_percentage": schema.Float64Attribute{
 				Description: "The percentage of qualified events expected to succeed during the `time_period`.",
 				Computed:    true,
@@ -124,11 +131,19 @@ func (d *sloDataSource) Read(ctx context.Context, req datasource.ReadRequest, re
 	data.SLI = types.StringValue(slo.SLI.Alias)
 	data.TargetPercentage = types.Float64Value(float64(slo.TargetPerMillion) / 10000)
 	data.TimePeriod = types.Int64Value(int64(slo.TimePeriodDays))
+
 	data.Datasets = make([]types.String, len(slo.DatasetSlugs))
 	for i, slug := range slo.DatasetSlugs {
 		data.Datasets[i] = types.StringValue(slug)
 	}
 
-	diags := resp.State.Set(ctx, &data)
+	tags := make(map[string]types.String, len(slo.Tags))
+	for _, tag := range slo.Tags {
+		tags[tag.Key] = types.StringValue(tag.Value)
+	}
+	tagsObj, diags := types.MapValueFrom(ctx, types.StringType, tags)
 	resp.Diagnostics.Append(diags...)
+	data.Tags = tagsObj
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -27,5 +27,6 @@ In addition to all arguments above, the following attributes are exported:
 * `description` - the SLO's description.
 * `sli` - the alias of the Derived Column used as the SLO's SLI.
 * `datasets` - A list of dataset slugs the SLO is evaluated on.
+* `tags` - A map of the tags assigned to the resource.
 * `target_percentage` - the percentage of qualified events expected to succeed during the `time_period`.
 * `time_period` - The time period, in days, over which the SLO is evaluated.

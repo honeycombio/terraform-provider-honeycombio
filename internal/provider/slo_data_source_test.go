@@ -32,6 +32,10 @@ func TestAcc_SLODataSource(t *testing.T) {
 		TimePeriodDays:   30,
 		TargetPerMillion: 995000,
 		SLI:              client.SLIRef{Alias: sli.Alias},
+		Tags: []client.Tag{
+			{Key: "env", Value: "test"},
+			{Key: "team", Value: "test"},
+		},
 	})
 	require.NoError(t, err)
 
@@ -57,6 +61,11 @@ data "honeycombio_slo" "test" {
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "target_percentage", "99.5"),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "time_period", "30"),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "dataset", dataset),
+					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "datasets.#", "1"),
+					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "datasets.0", dataset),
+					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "tags.%", "2"),
+					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "tags.env", "test"),
+					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "tags.team", "test"),
 				),
 			},
 		},
@@ -96,6 +105,10 @@ func TestAcc_MDSLODataSource(t *testing.T) {
 		TargetPerMillion: 995000,
 		SLI:              client.SLIRef{Alias: sli.Alias},
 		DatasetSlugs:     []string{dataset1.Slug, dataset2.Slug},
+		Tags: []client.Tag{
+			{Key: "env", Value: "test"},
+			{Key: "team", Value: "test"},
+		},
 	})
 	require.NoError(t, err)
 
@@ -139,6 +152,9 @@ data "honeycombio_slo" "test" {
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "datasets.#", "2"),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "datasets.0", dataset1.Slug),
 					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "datasets.1", dataset2.Slug),
+					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "tags.%", "2"),
+					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "tags.env", "test"),
+					resource.TestCheckResourceAttr("data.honeycombio_slo.test", "tags.team", "test"),
 				),
 			},
 		},

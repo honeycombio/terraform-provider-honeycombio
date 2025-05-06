@@ -18,6 +18,7 @@ type SLODataSourceModel struct {
 	Name             types.String   `tfsdk:"name"`
 	Description      types.String   `tfsdk:"description"`
 	SLI              types.String   `tfsdk:"sli"`
+	Tags             types.Map      `tfsdk:"tags"`
 	TargetPercentage types.Float64  `tfsdk:"target_percentage"`
 	TimePeriod       types.Int64    `tfsdk:"time_period"`
 }

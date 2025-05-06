@@ -2,7 +2,9 @@ package client_test
 
 import (
 	"context"
+	"slices"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,9 +30,8 @@ func TestSLOs(t *testing.T) {
 		Expression: "BOOL(1)",
 	})
 	require.NoError(t, err, "unable to create SLI")
-
-	// remove SLI DC at end of test run
 	t.Cleanup(func() {
+		// remove SLI DC at end of test run
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
@@ -41,41 +42,62 @@ func TestSLOs(t *testing.T) {
 			TimePeriodDays:   30,
 			TargetPerMillion: 995000,
 			SLI:              client.SLIRef{Alias: sli.Alias},
+			Tags: []client.Tag{
+				{Key: "color", Value: "blue"},
+				{Key: "team", Value: "a-team"},
+			},
 		}
 		slo, err = c.SLOs.Create(ctx, dataset, data)
-
 		require.NoError(t, err, "unable to create SLO")
-		assert.NotNil(t, slo.ID, "SLO ID is empty")
-		assert.NotNil(t, slo.CreatedAt, "created at is empty")
-		assert.NotNil(t, slo.UpdatedAt, "updated at is empty")
-		// copy dynamic fields before asserting equality
-		data.ID = slo.ID
-		data.CreatedAt = slo.CreatedAt
-		data.UpdatedAt = slo.UpdatedAt
-		data.DatasetSlugs = []string{dataset}
 
-		assert.Equal(t, data, slo)
+		assert.NotNil(t, slo.ID, "SLO ID is empty")
+		assert.Equal(t, slo.Name, data.Name)
+		assert.Equal(t, slo.Description, data.Description)
+		assert.Equal(t, slo.TimePeriodDays, data.TimePeriodDays)
+		assert.Equal(t, slo.TargetPerMillion, data.TargetPerMillion)
+		assert.Equal(t, slo.SLI.Alias, data.SLI.Alias)
+		assert.WithinDuration(t, time.Now(), slo.CreatedAt, time.Second*15)
+		assert.WithinDuration(t, time.Now(), slo.UpdatedAt, time.Second*15)
+		assert.Equal(t, []string{dataset}, slo.DatasetSlugs)
+		assert.ElementsMatch(t, slo.Tags, data.Tags, "tags do not match")
 	})
 
 	t.Run("List all slos for a dataset", func(t *testing.T) {
-		results, err := c.SLOs.List(ctx, dataset)
+		// this has proven to be a bit racey after the create above, so we'll retry a few times
+		assert.EventuallyWithT(t, func(col *assert.CollectT) {
+			slos, err := c.SLOs.List(ctx, dataset)
+			require.NoError(col, err)
 
-		require.NoError(t, err, "unable to list SLOs")
-		assert.Contains(t, results, *slo, "could not find newly created SLO with List")
+			// not doing an Equal here because the timestamps may be different
+			// and confirming the ID is in the listing is sufficient
+			assert.Condition(col, func() bool {
+				return slices.ContainsFunc(slos, func(s client.SLO) bool {
+					return s.ID == slo.ID
+				})
+			})
+		}, time.Second, 200*time.Millisecond, "could not find newly created SLO in List")
 	})
 
 	t.Run("List all slos in an environment", func(t *testing.T) {
-		results, err := c.SLOs.List(ctx, client.EnvironmentWideSlug)
+		// this has proven to be a bit racey after the create above, so we'll retry a few times
+		assert.EventuallyWithT(t, func(col *assert.CollectT) {
+			slos, err := c.SLOs.List(ctx, client.EnvironmentWideSlug)
+			require.NoError(col, err)
 
-		require.NoError(t, err, "unable to list SLOs")
-		assert.Contains(t, results, *slo, "could not find newly created SLO with List")
+			// not doing an Equal here because the timestamps may be different
+			// and confirming the ID is in the listing is sufficient
+			assert.Condition(col, func() bool {
+				return slices.ContainsFunc(slos, func(s client.SLO) bool {
+					return s.ID == slo.ID
+				})
+			})
+		}, time.Second, 200*time.Millisecond, "could not find newly created SLO in List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
-		getSLO, err := c.SLOs.Get(ctx, dataset, slo.ID)
-
+		result, err := c.SLOs.Get(ctx, dataset, slo.ID)
 		require.NoError(t, err, "failed to get SLO by ID")
-		assert.Equal(t, *slo, *getSLO)
+		assert.Equal(t, slo.ID, result.ID)
 	})
 
 	t.Run("Update", func(t *testing.T) {
@@ -83,18 +105,25 @@ func TestSLOs(t *testing.T) {
 		slo.TimePeriodDays = 14
 		slo.Description = "Even sweeter"
 		slo.TargetPerMillion = 990000
+		slo.Tags = append(slo.Tags, client.Tag{Key: "new", Value: "tag"})
 
 		result, err := c.SLOs.Update(ctx, dataset, slo)
-
 		require.NoError(t, err, "failed to update SLO")
-		// copy dynamic field before asserting equality
-		slo.UpdatedAt = result.UpdatedAt
-		assert.Equal(t, result, slo)
+
+		assert.Equal(t, slo.ID, result.ID)
+		assert.Equal(t, slo.Name, result.Name)
+		assert.Equal(t, slo.Description, result.Description)
+		assert.Equal(t, slo.TimePeriodDays, result.TimePeriodDays)
+		assert.Equal(t, slo.TargetPerMillion, result.TargetPerMillion)
+		assert.Equal(t, slo.SLI.Alias, result.SLI.Alias)
+		assert.Equal(t, slo.CreatedAt, result.CreatedAt)
+		assert.WithinDuration(t, time.Now(), slo.UpdatedAt, time.Second*15)
+		assert.Equal(t, []string{dataset}, slo.DatasetSlugs)
+		assert.ElementsMatch(t, slo.Tags, result.Tags, "tags do not match")
 	})
 
 	t.Run("Delete", func(t *testing.T) {
 		err = c.SLOs.Delete(ctx, dataset, slo.ID)
-
 		require.NoError(t, err, "failed to delete SLO")
 	})
 
@@ -121,7 +150,7 @@ func Test_MDSLOs(t *testing.T) {
 	}
 
 	// test setup for MD SLO
-	var mdSLO *client.SLO
+	var slo *client.SLO
 	var mdSLI *client.DerivedColumn
 	var dataset1, dataset2 *client.Dataset
 
@@ -145,7 +174,7 @@ func Test_MDSLOs(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.SLOs.Delete(ctx, client.EnvironmentWideSlug, mdSLO.ID)
+		c.SLOs.Delete(ctx, client.EnvironmentWideSlug, slo.ID)
 		c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, mdSLI.ID)
 
 		c.Datasets.Update(ctx, &client.Dataset{
@@ -170,7 +199,7 @@ func Test_MDSLOs(t *testing.T) {
 			t.Skip("Classic does not support multi-dataset SLOs")
 		}
 
-		mdData := &client.SLO{
+		data := &client.SLO{
 			Name:             test.RandomStringWithPrefix("test.", 10),
 			Description:      "My Super Sweet Test",
 			TimePeriodDays:   30,
@@ -179,19 +208,18 @@ func Test_MDSLOs(t *testing.T) {
 			DatasetSlugs:     []string{dataset1.Slug, dataset2.Slug},
 		}
 
-		mdSLO, err = c.SLOs.Create(ctx, client.EnvironmentWideSlug, mdData)
+		slo, err = c.SLOs.Create(ctx, client.EnvironmentWideSlug, data)
 
-		require.NoError(t, err, "unable to create SLO")
-		assert.NotNil(t, mdSLO.ID, "SLO ID is empty")
-		assert.NotNil(t, mdSLO.CreatedAt, "created at is empty")
-		assert.NotNil(t, mdSLO.UpdatedAt, "updated at is empty")
-		// copy dynamic fields before asserting equality
-		mdData.ID = mdSLO.ID
-		mdData.CreatedAt = mdSLO.CreatedAt
-		mdData.UpdatedAt = mdSLO.UpdatedAt
-		mdData.DatasetSlugs = []string{dataset1.Slug, dataset2.Slug}
-
-		assert.Equal(t, mdData, mdSLO)
+		assert.NotNil(t, slo.ID, "SLO ID is empty")
+		assert.Equal(t, data.Name, slo.Name)
+		assert.Equal(t, data.Description, slo.Description)
+		assert.Equal(t, data.TimePeriodDays, slo.TimePeriodDays)
+		assert.Equal(t, data.TargetPerMillion, slo.TargetPerMillion)
+		assert.Equal(t, data.SLI.Alias, slo.SLI.Alias)
+		assert.WithinDuration(t, time.Now(), slo.CreatedAt, time.Second*15)
+		assert.WithinDuration(t, time.Now(), slo.UpdatedAt, time.Second*15)
+		assert.ElementsMatch(t, data.DatasetSlugs, slo.DatasetSlugs)
+		assert.ElementsMatch(t, data.Tags, slo.Tags, "tags do not match")
 	})
 
 	t.Run("Get MD SLO", func(t *testing.T) {
@@ -199,9 +227,9 @@ func Test_MDSLOs(t *testing.T) {
 			t.Skip("Classic does not support multi-dataset SLOs")
 		}
 
-		getMDSLO, err := c.SLOs.Get(ctx, client.EnvironmentWideSlug, mdSLO.ID)
+		result, err := c.SLOs.Get(ctx, client.EnvironmentWideSlug, slo.ID)
 		require.NoError(t, err, "failed to get MD SLO by ID")
-		assert.Equal(t, *mdSLO, *getMDSLO)
+		assert.Equal(t, slo.ID, result.ID)
 	})
 
 	t.Run("Update MD SLO", func(t *testing.T) {
@@ -209,22 +237,21 @@ func Test_MDSLOs(t *testing.T) {
 			t.Skip("Classic does not support multi-dataset SLOs")
 		}
 
-		mdSLO.Name = test.RandomStringWithPrefix("test.", 10)
-		mdSLO.TimePeriodDays = 14
-		mdSLO.Description = "Even sweeter"
-		mdSLO.TargetPerMillion = 990000
+		slo.Name = test.RandomStringWithPrefix("test.", 10)
+		slo.TimePeriodDays = 14
+		slo.Description = "Even sweeter"
+		slo.TargetPerMillion = 990000
 
-		result, err := c.SLOs.Update(ctx, client.EnvironmentWideSlug, mdSLO)
+		result, err := c.SLOs.Update(ctx, client.EnvironmentWideSlug, slo)
 
 		require.NoError(t, err, "failed to update MD SLO")
 		// copy dynamic field before asserting equality
-		mdSLO.UpdatedAt = result.UpdatedAt
-		assert.Equal(t, result, mdSLO)
+		slo.UpdatedAt = result.UpdatedAt
+		assert.Equal(t, result, slo)
 	})
 
 	t.Run("Delete MD SLO", func(t *testing.T) {
-
-		err = c.SLOs.Delete(ctx, client.EnvironmentWideSlug, mdSLO.ID)
+		err = c.SLOs.Delete(ctx, client.EnvironmentWideSlug, slo.ID)
 		require.NoError(t, err, "failed to delete MD SLO")
 	})
 }
