@@ -1,3 +1,15 @@
+# 0.34.0 (May 6, 2025)
+
+ENHANCEMENTS:
+
+* feat(d/slo,r/slo): add 'tags' support (#667)
+
+HOUSEKEEPING:
+
+* chore(ci): fix CI status badge (#671)
+* maint(deps): bump goreleaser/goreleaser-action from 6.2.1 to 6.3.0 (#647)
+* maint(deps): bump golang.org/x/net from 0.39.0 to 0.40.0 (#668)
+
 # 0.33.1 (Apr 30, 2025)
 
 BUGFIXES:
