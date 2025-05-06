@@ -1,10 +1,10 @@
 # Resource: honeycombio_board
 
-Creates a board. For more information about boards, check out [Collaborate with Boards](https://docs.honeycomb.io/working-with-your-data/collaborating/boards/#docs-sidebar).
+Creates a board. For more information about boards, check out [Create Custom Boards](https://docs.honeycomb.io/observe/boards).
 
 ## Example Usage
 
-### Simple Board
+### Simple Classic Board
 
 ```hcl
 data "honeycombio_query_specification" "query" {
@@ -35,7 +35,7 @@ resource "honeycombio_board" "board" {
 }
 ```
 
-### Annotated Board
+### Board with an annotated query and SLO
 
 ```hcl
 data "honeycombio_query_specification" "latency_by_userid" {
@@ -95,9 +95,9 @@ resource "honeycombio_board" "overview" {
 }
 ```
 
-## Argument Reference
+## Argument Reference - classic board
 
-The following arguments are supported:
+The following arguments are supported for classic boards:
 
 * `name` - (Required) Name of the board.
 * `description` - (Optional) Description of the board. Supports Markdown.

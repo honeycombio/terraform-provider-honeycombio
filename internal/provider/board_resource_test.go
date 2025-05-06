@@ -28,6 +28,7 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_board.test", "name", "Test board from terraform-provider-honeycombio"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "style", "visual"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "description", ""),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "type", "classic"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.#", "2"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.caption", "test query 0"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.dataset", dataset),

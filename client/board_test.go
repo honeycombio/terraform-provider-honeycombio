@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
-func TestBoards(t *testing.T) {
+func TestClassicBoards(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -52,15 +53,17 @@ func TestBoards(t *testing.T) {
 		TargetPerMillion: 990000,
 		SLI:              client.SLIRef{Alias: sli.Alias},
 	})
+
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		c.SLOs.Delete(ctx, dataset, slo.ID)
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
-	t.Run("Create", func(t *testing.T) {
+	t.Run("Create classic board", func(t *testing.T) {
 		data := &client.Board{
 			Name:         test.RandomStringWithPrefix("test.", 8),
+			BoardType:    "classic",
 			Description:  "A board with some queries",
 			Style:        client.BoardStyleVisual,
 			ColumnLayout: client.BoardColumnStyleSingle,
@@ -81,7 +84,7 @@ func TestBoards(t *testing.T) {
 
 		// copy ID before asserting equality
 		data.ID = b.ID
-		data.Queries[0].QueryID = b.Queries[0].QueryID
+		// data.Queries[0].QueryID = b.Queries[0].QueryID
 
 		// ensure the board URL got populated
 		assert.NotEqual(t, "", b.Links.BoardURL)
@@ -139,6 +142,134 @@ func TestBoards(t *testing.T) {
 
 		var de client.DetailedError
 		require.Error(t, err)
+		require.ErrorAs(t, err, &de)
+		assert.True(t, de.IsNotFound())
+	})
+}
+
+func TestFlexibleBoards(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	var board *client.Board
+	var err error
+
+	c := newTestClient(t)
+	dataset := testDataset(t)
+
+	column, err := c.Columns.Create(ctx, dataset, &client.Column{
+		KeyName: test.RandomStringWithPrefix("test.", 8),
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		c.Columns.Delete(ctx, dataset, column.ID)
+	})
+
+	query, err := c.Queries.Create(ctx, dataset, &client.QuerySpec{
+		Calculations: []client.CalculationSpec{
+			{
+				Op:     client.CalculationOpAvg,
+				Column: &column.KeyName,
+			},
+		},
+		TimeRange: client.ToPtr(3600), // 1 hour
+	})
+	require.NoError(t, err)
+	require.NotNil(t, query.ID)
+
+	qa := &client.QueryAnnotation{
+		Name:        test.RandomStringWithPrefix("test.", 20),
+		Description: "This derived column is created by a test",
+		QueryID:     *query.ID,
+	}
+	queryAnnotation, err := c.QueryAnnotations.Create(ctx, dataset, qa)
+	require.NoError(t, err)
+	require.NotNil(t, queryAnnotation.ID)
+
+	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
+		Alias:      test.RandomStringWithPrefix("test.", 8),
+		Expression: "BOOL(1)",
+	})
+	require.NoError(t, err)
+	slo, err := c.SLOs.Create(ctx, dataset, &client.SLO{
+		Name:             test.RandomStringWithPrefix("test.", 8),
+		TimePeriodDays:   7,
+		TargetPerMillion: 990000,
+		SLI:              client.SLIRef{Alias: sli.Alias},
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		c.SLOs.Delete(ctx, dataset, slo.ID)
+		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+	})
+
+	t.Run("Create flexible board", func(t *testing.T) {
+		data := &client.Board{
+			Name:        test.RandomStringWithPrefix("test.", 8),
+			BoardType:   "flexible",
+			Description: "A board with some panels",
+			Panels: []client.BoardPanel{
+				// {
+				// 	PanelType: client.BoardPanelTypeQuery,
+				// 	PanelPosition: client.BoardPanelPosition{
+				// 		X:      0,
+				// 		Y:      0,
+				// 		Height: 3,
+				// 		Width:  4,
+				// 	},
+				// 	QueryPanel: &client.BoardQueryPanel{
+				// 		QueryID:           *query.ID,
+				// 		QueryAnnotationID: queryAnnotation.ID,
+				// 		Style:             client.BoardQueryStyleTable,
+				// 	},
+				// },
+				{
+					PanelType: client.BoardPanelTypeSLO,
+					PanelPosition: client.BoardPanelPosition{
+						X:      0,
+						Y:      4,
+						Height: 3,
+						Width:  4,
+					},
+					SLOPanel: &client.BoardSLOPanel{
+						SLOID: slo.ID,
+					},
+				},
+			},
+		}
+		board, err = c.Boards.Create(ctx, data)
+		spew.Dump(board)
+		require.NoError(t, err)
+		assert.NotNil(t, board.ID)
+
+		// copy ID before asserting equality
+		data.ID = board.ID
+
+		// ensure the board URL got populated
+		assert.NotEmpty(t, board.Links.BoardURL)
+		data.Links.BoardURL = board.Links.BoardURL
+
+		assert.Equal(t, data, board)
+	})
+
+	t.Run("List", func(t *testing.T) {
+		result, err := c.Boards.List(ctx)
+		require.NoError(t, err)
+
+		assert.Contains(t, result, *board, "could not find newly created board with List")
+	})
+
+	t.Run("Delete", func(t *testing.T) {
+		err := c.Boards.Delete(ctx, board.ID)
+
+		require.NoError(t, err)
+	})
+
+	t.Run("Fail to get deleted Board", func(t *testing.T) {
+		_, err := c.Boards.Get(ctx, board.ID)
+		require.Error(t, err)
+
+		var de client.DetailedError
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})

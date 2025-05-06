@@ -99,6 +99,18 @@ func (*boardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 					),
 				},
 			},
+			"type": schema.StringAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "The type of board.",
+				Default:     stringdefault.StaticString("classic"),
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"classic",
+						"flexible",
+					),
+				},
+			},
 			"style": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
@@ -122,6 +134,137 @@ func (*boardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 			},
 		},
 		Blocks: map[string]schema.Block{
+			"panel": schema.ListNestedBlock{
+				Description: "List of panels to render on the board.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"type": schema.StringAttribute{
+							Required:    true,
+							Description: `The panel type, either "query" or "slo".`,
+							Validators: []validator.String{
+								stringvalidator.OneOf("query", "slo"),
+							},
+						},
+					},
+					Blocks: map[string]schema.Block{
+						"position": schema.ListNestedBlock{
+							Description: `Manages the position of the panel on the board.`,
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"x_coordinate": schema.Int64Attribute{
+										Optional:    true,
+										Description: "The X coordinate of the panel.",
+									},
+									"y_coordinate": schema.Int64Attribute{
+										Optional:    true,
+										Description: "The Y coordinate of the panel.",
+									},
+									"height": schema.Int64Attribute{
+										Optional:    true,
+										Description: "The height of the panel.",
+									},
+									"width": schema.Int64Attribute{
+										Optional:    true,
+										Description: "The width of the panel.",
+									},
+								},
+							},
+						},
+						"slo_panel": schema.ListNestedBlock{
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"slo_id": schema.StringAttribute{
+										Required:    true,
+										Description: "SLO ID to display in this panel.",
+									},
+								},
+							},
+						},
+						"query_panel": schema.ListNestedBlock{
+							Description: "A query panel to be displayed on the Board.",
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"query_id": schema.StringAttribute{
+										Required:    true,
+										Description: "Query ID to be rendered in the panel.",
+									},
+									"query_annotation_id": schema.StringAttribute{
+										Required:    true,
+										Description: "Query annotation ID.",
+									},
+									"dataset": schema.StringAttribute{
+										Optional:    true,
+										Description: "Dataset associated with the query.",
+									},
+									"query_style": schema.StringAttribute{
+										Required:    true,
+										Description: "The visual style of the query (e.g., 'graph', 'combo').",
+									},
+								},
+								Blocks: map[string]schema.Block{
+									"visualization_settings": schema.ListNestedBlock{
+										Validators: []validator.List{
+											listvalidator.SizeAtMost(1),
+										},
+										NestedObject: schema.NestedBlockObject{
+											Attributes: map[string]schema.Attribute{
+												"use_utc_xaxis": schema.BoolAttribute{
+													Optional:    true,
+													Description: "Render the X axis in UTC time.",
+												},
+												"hide_markers": schema.BoolAttribute{
+													Optional:    true,
+													Description: "Hide markers on the chart.",
+												},
+												"hide_hovers": schema.BoolAttribute{
+													Optional:    true,
+													Description: "Disable hover tooltips.",
+												},
+												"prefer_overlaid_charts": schema.BoolAttribute{
+													Optional:    true,
+													Description: "Prefer overlaid rendering for multiple charts.",
+												},
+												"hide_compare": schema.BoolAttribute{
+													Optional:    true,
+													Description: "Hide comparison values.",
+												},
+											},
+											Blocks: map[string]schema.Block{
+												"chart": schema.ListNestedBlock{
+													NestedObject: schema.NestedBlockObject{
+														Attributes: map[string]schema.Attribute{
+															"chart_type": schema.StringAttribute{
+																Optional:    true,
+																Description: "Type of chart (e.g., 'line', 'bar').",
+															},
+															"chart_index": schema.Int64Attribute{
+																Required:    true,
+																Description: "Index of the chart in the layout.",
+															},
+															"omit_missing_values": schema.BoolAttribute{
+																Optional:    true,
+																Computed:    true,
+																Default:     booldefault.StaticBool(false),
+																Description: "Omit missing values from the visualization.",
+															},
+															"use_log_scale": schema.BoolAttribute{
+																Optional:    true,
+																Computed:    true,
+																Default:     booldefault.StaticBool(false),
+																Description: "Use logarithmic scale on Y axis.",
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"slo": schema.SetNestedBlock{
 				Description: "An SLO to be displayed on the Board.",
 				Validators: []validator.Set{
@@ -254,6 +397,7 @@ func (r *boardResource) Create(ctx context.Context, req resource.CreateRequest, 
 	createRequest := &client.Board{
 		Name:         plan.Name.ValueString(),
 		Description:  plan.Description.ValueString(),
+		BoardType:    plan.BoardType.ValueString(),
 		ColumnLayout: client.BoardColumnStyle(plan.ColumnLayout.ValueString()),
 		Style:        client.BoardStyle(plan.Style.ValueString()),
 		Queries:      expandBoardQueries(ctx, plan.Queries, &resp.Diagnostics),
@@ -271,11 +415,16 @@ func (r *boardResource) Create(ctx context.Context, req resource.CreateRequest, 
 	var state models.BoardResourceModel
 	state.ID = types.StringValue(board.ID)
 	state.Name = types.StringValue(board.Name)
+	state.BoardType = types.StringValue(board.BoardType)
 	state.Description = types.StringValue(board.Description)
 	state.ColumnLayout = types.StringValue(string(board.ColumnLayout))
 	state.Style = types.StringValue(string(board.Style))
 	state.SLOs = flattenBoardSLOs(ctx, board.SLOs, &resp.Diagnostics)
 	state.URL = types.StringValue(board.Links.BoardURL)
+
+	if len(board.Panels) == 0 {
+		state.Panels = types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelModelAttrType})
+	}
 
 	if len(board.Queries) == 0 {
 		state.Queries = types.ListNull(types.ObjectType{AttrTypes: models.BoardQueryModelAttrType})
@@ -351,6 +500,7 @@ func (r *boardResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	state.ID = types.StringValue(board.ID)
 	state.Name = types.StringValue(board.Name)
 	state.Description = types.StringValue(board.Description)
+	state.BoardType = types.StringValue(board.BoardType)
 	state.ColumnLayout = types.StringValue(string(board.ColumnLayout))
 	state.Style = types.StringValue(string(board.Style))
 	state.SLOs = flattenBoardSLOs(ctx, board.SLOs, &resp.Diagnostics)
@@ -400,6 +550,10 @@ func (r *boardResource) Read(ctx context.Context, req resource.ReadRequest, resp
 		state.Queries = queries
 	}
 
+	if len(board.Panels) == 0 {
+		state.Panels = types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelModelAttrType})
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -419,6 +573,7 @@ func (r *boardResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		Style:        client.BoardStyle(plan.Style.ValueString()),
 		Queries:      expandBoardQueries(ctx, plan.Queries, &resp.Diagnostics),
 		SLOs:         expandBoardSLOs(ctx, plan.SLOs, &resp.Diagnostics),
+		Panels:       expandBoardPanels(ctx, plan.Panels, &resp.Diagnostics),
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -433,10 +588,15 @@ func (r *boardResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	state.ID = types.StringValue(board.ID)
 	state.Name = types.StringValue(board.Name)
 	state.Description = types.StringValue(board.Description)
+	state.BoardType = types.StringValue(board.BoardType)
 	state.ColumnLayout = types.StringValue(string(board.ColumnLayout))
 	state.Style = types.StringValue(string(board.Style))
 	state.SLOs = flattenBoardSLOs(ctx, board.SLOs, &resp.Diagnostics)
 	state.URL = types.StringValue(board.Links.BoardURL)
+
+	if len(board.Panels) == 0 {
+		state.Panels = types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelModelAttrType})
+	}
 
 	if len(board.Queries) == 0 {
 		state.Queries = types.ListNull(types.ObjectType{AttrTypes: models.BoardQueryModelAttrType})
@@ -547,6 +707,26 @@ func expandBoardQueries(
 			},
 		})
 	}
+
+	return result
+}
+
+func expandBoardPanels(
+	ctx context.Context,
+	l types.List,
+	diags *diag.Diagnostics,
+) []client.BoardPanel {
+	if l.IsNull() || l.IsUnknown() {
+		return []client.BoardPanel{}
+	}
+
+	var panels []models.BoardPanelModel
+	diags.Append(l.ElementsAs(ctx, &panels, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	result := make([]client.BoardPanel, 0, len(panels))
 
 	return result
 }
