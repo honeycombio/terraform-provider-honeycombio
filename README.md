@@ -1,7 +1,7 @@
 # Honeycomb.io Terraform Provider
 
 [![OSS Lifecycle](https://img.shields.io/osslifecycle/honeycombio/terraform-provider-honeycombio)](https://github.com/honeycombio/home/blob/main/honeycomb-oss-lifecycle-and-practices.md)
-[![CI](https://github.com/honeycombio/terraform-provider-honeycombio/workflows/CI/badge.svg)](https://github.com/honeycombio/terraform-provider-honeycombio/actions)
+[![CI](https://github.com/honeycombio/terraform-provider-honeycombio/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/honeycombio/terraform-provider-honeycombio/actions/workflows/ci.yaml)
 [![Terraform Registry](https://img.shields.io/github/v/release/honeycombio/terraform-provider-honeycombio?color=5e4fe3&label=Terraform%20Registry&logo=terraform&sort=semver)](https://registry.terraform.io/providers/honeycombio/honeycombio/latest)
 
 A Terraform provider for Honeycomb.io.
