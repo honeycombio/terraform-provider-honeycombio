@@ -7,8 +7,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	hnyclient "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func TestAccHoneycombioFlexibleBoard_basic(t *testing.T) {
@@ -16,16 +17,16 @@ func TestAccHoneycombioFlexibleBoard_basic(t *testing.T) {
 	dataset := testAccDataset()
 	c := testAccClient(t)
 
-	sli, err := c.DerivedColumns.Create(ctx, dataset, &hnyclient.DerivedColumn{
+	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
 		Alias:      "sli." + acctest.RandString(8),
 		Expression: "BOOL(1)",
 	})
 	require.NoError(t, err)
-	slo, err := c.SLOs.Create(ctx, dataset, &hnyclient.SLO{
+	slo, err := c.SLOs.Create(ctx, dataset, &client.SLO{
 		Name:             acctest.RandString(8) + " SLO",
 		TimePeriodDays:   14,
 		TargetPerMillion: 995000,
-		SLI:              hnyclient.SLIRef{Alias: sli.Alias},
+		SLI:              client.SLIRef{Alias: sli.Alias},
 	})
 	require.NoError(t, err)
 
