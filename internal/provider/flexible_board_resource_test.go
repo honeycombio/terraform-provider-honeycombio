@@ -68,7 +68,7 @@ func TestAccHoneycombioFlexibleBoard_basic(t *testing.T) {
 	})
 }
 
-func testFlexibleBoardConfig(dataset string, sloID string) string {
+func testFlexibleBoardConfig(dataset, sloID string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
   count = 2
