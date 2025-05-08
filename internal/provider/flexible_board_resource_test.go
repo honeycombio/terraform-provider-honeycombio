@@ -47,7 +47,7 @@ func TestAccHoneycombioFlexibleBoard_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "name", "Test flexible board from terraform-provider-honeycombio"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "description", "Test flexible board description"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "type", "flexible"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "2"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.type", "slo"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.#", "0"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.slo_panel.#", "1"),
@@ -57,6 +57,10 @@ func TestAccHoneycombioFlexibleBoard_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.position.0.y_coordinate", "0"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.position.0.height", "1"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.position.0.width", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.type", "query"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.slo_panel.#", "0"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.query_style", "combo"),
 				),
 			},
 			{
@@ -71,36 +75,21 @@ func TestAccHoneycombioFlexibleBoard_basic(t *testing.T) {
 func testFlexibleBoardConfig(dataset, sloID string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
-  count = 2
-
   calculation {
-    op     = "AVG"
-    column = "duration_ms"
-  }
-
-  filter_combination = "AND"
-
-  filter {
-    column = "duration_ms"
-    op     = ">"
-    value  = count.index
+    op = "COUNT"
   }
 }
 
 resource "honeycombio_query" "test" {
-  count = 2
-
-  dataset    = "%[1]s"
-  query_json = data.honeycombio_query_specification.test[count.index].json
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
 }
 
 resource "honeycombio_query_annotation" "test" {
-  count = 2
-
   dataset     = "%[1]s"
   name        = "My annotated query"
   description = "My lovely description"
-  query_id    = honeycombio_query.test[count.index].id
+  query_id    = honeycombio_query.test.id
 }
 
 resource "honeycombio_flexible_board" "test" {
@@ -120,5 +109,20 @@ resource "honeycombio_flexible_board" "test" {
 		width       = 1
 	}
   }
+
+  panel {
+    type = "query"
+	query_panel {
+		query_id = honeycombio_query.test.id
+		query_annotation_id = honeycombio_query_annotation.test.id
+		query_style = "combo"
+	}
+	position {
+		x_coordinate = 0
+		y_coordinate = 0
+		height      = 6
+		width       = 6
+	}
+ }
 }`, dataset, sloID)
 }

@@ -180,6 +180,8 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 									},
 									"dataset": schema.StringAttribute{
 										Optional:    true,
+										Computed:    true,
+										Required:    false,
 										Description: "Dataset associated with the query.",
 									},
 									"query_style": schema.StringAttribute{
@@ -544,7 +546,67 @@ func expandBoardQueryPanel(
 	if len(queryPanels) == 0 {
 		return nil
 	}
-	return &client.BoardQueryPanel{}
+
+	return &client.BoardQueryPanel{
+		QueryID:               queryPanels[0].QueryID.ValueString(),
+		QueryAnnotationID:     queryPanels[0].QueryAnnotationID.ValueString(),
+		Dataset:               queryPanels[0].Dataset.ValueString(),
+		Style:                 client.BoardQueryStyle(queryPanels[0].QueryStyle.ValueString()),
+		VisualizationSettings: expandBoardQueryVisualizationSettings(ctx, queryPanels[0].VisualizationSettings, diags),
+	}
+}
+
+func expandBoardQueryVisualizationSettings(
+	ctx context.Context,
+	settingsList types.List,
+	diags *diag.Diagnostics,
+) *client.BoardQueryVisualizationSettings {
+	if settingsList.IsNull() || settingsList.IsUnknown() {
+		return nil
+	}
+
+	var settings []models.VisualizationSettingsModel
+	diags.Append(settingsList.ElementsAs(ctx, &settings, false)...)
+
+	if len(settings) == 0 {
+		return nil
+	}
+
+	return &client.BoardQueryVisualizationSettings{
+		UseUTCXAxis:          settings[0].UseUTCXAxis.ValueBool(),
+		HideMarkers:          settings[0].HideMarkers.ValueBool(),
+		HideHovers:           settings[0].HideHovers.ValueBool(),
+		PreferOverlaidCharts: settings[0].PreferOverlaidCharts.ValueBool(),
+		HideCompare:          settings[0].HideCompare.ValueBool(),
+		Charts:               expandBoardQueryVizCharts(ctx, settings[0].Charts, diags),
+	}
+}
+
+func expandBoardQueryVizCharts(
+	ctx context.Context,
+	chartsList types.List,
+	diags *diag.Diagnostics,
+) []*client.ChartSettings {
+	if chartsList.IsNull() || chartsList.IsUnknown() {
+		return nil
+	}
+	var charts []models.ChartSettingsModel
+	diags.Append(chartsList.ElementsAs(ctx, &charts, false)...)
+	if len(charts) == 0 {
+		return nil
+	}
+
+	result := make([]*client.ChartSettings, 0, len(charts))
+	for _, chart := range charts {
+		result = append(result, &client.ChartSettings{
+			ChartType:         chart.ChartType.ValueString(),
+			ChartIndex:        int(chart.ChartIndex.ValueInt64()),
+			OmitMissingValues: chart.OmitMissingValues.ValueBool(),
+			UseLogScale:       chart.LogScale.ValueBool(),
+		})
+	}
+
+	return result
 }
 
 func flattenBoardPanel(
@@ -585,32 +647,96 @@ func flattenBoardPanelPosition(
 }
 
 func flattenBoardQueryPanel(
-	_ context.Context,
-	_ *client.BoardQueryPanel,
-	_ *diag.Diagnostics,
+	ctx context.Context,
+	queryPanel *client.BoardQueryPanel,
+	diags *diag.Diagnostics,
 ) types.List {
-	// if queryPanel == nil {
+	if queryPanel == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: models.QueryPanelModelAttrType})
+	}
 
-	// }
+	obj, d := types.ObjectValue(models.QueryPanelModelAttrType, map[string]attr.Value{
+		"query_id":               types.StringValue(queryPanel.QueryID),
+		"query_annotation_id":    types.StringValue(queryPanel.QueryAnnotationID),
+		"dataset":                types.StringValue(queryPanel.Dataset),
+		"query_style":            types.StringValue(string(queryPanel.Style)),
+		"visualization_settings": flattenBoardQueryVisualizationSettings(ctx, queryPanel.VisualizationSettings, diags),
+	})
+	diags.Append(d...)
 
-	return types.ListNull(types.ObjectType{AttrTypes: models.QueryPanelModelAttrType})
+	result, d := types.ListValueFrom(
+		ctx,
+		types.ObjectType{AttrTypes: models.QueryPanelModelAttrType},
+		[]attr.Value{obj},
+	)
+	diags.Append(d...)
 
-	// obj, d := types.ObjectValue(models.QueryPanelModelAttrType, map[string]attr.Value{
-	// 	"query_id":         types.StringValue(queryPanel.QueryID),
-	// 	"query_annotation_id": types.StringValue(queryPanel.QueryAnnotationID),
-	// 	"dataset":          types.StringValue(queryPanel.Dataset),
-	// 	"query_style":      types.StringValue(string(queryPanel.Style)),
-	// })
-	// diags.Append(d...)
+	return result
+}
 
-	// result, d := types.ListValueFrom(
-	// 	ctx,
-	// 	types.ObjectType{AttrTypes: models.QueryPanelModelAttrType},
-	// 	[]attr.Value{obj},
-	// )
-	// diags.Append(d...)
+func flattenBoardQueryVisualizationSettings(
+	ctx context.Context,
+	settings *client.BoardQueryVisualizationSettings,
+	diags *diag.Diagnostics,
+) types.List {
+	if settings == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: models.VisualizationSettingsModelAttrType})
+	}
 
-	// return result
+	obj, d := types.ObjectValue(models.VisualizationSettingsModelAttrType, map[string]attr.Value{
+		"use_utc_xaxis":          types.BoolValue(settings.UseUTCXAxis),
+		"hide_markers":           types.BoolValue(settings.HideMarkers),
+		"hide_hovers":            types.BoolValue(settings.HideHovers),
+		"prefer_overlaid_charts": types.BoolValue(settings.PreferOverlaidCharts),
+		"hide_compare":           types.BoolValue(settings.HideCompare),
+		"charts":                 flattenBoardQueryVizCharts(ctx, settings.Charts, diags),
+	})
+	diags.Append(d...)
+
+	result, d := types.ListValueFrom(
+		ctx,
+		types.ObjectType{AttrTypes: models.VisualizationSettingsModelAttrType},
+		[]attr.Value{obj},
+	)
+	diags.Append(d...)
+
+	return result
+}
+
+func flattenBoardQueryVizCharts(
+	ctx context.Context,
+	charts []*client.ChartSettings,
+	diags *diag.Diagnostics,
+) types.List {
+	if charts == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: models.ChartSettingsModelAttrType})
+	}
+
+	chartsObj := make([]attr.Value, 0, len(charts))
+	for _, chart := range charts {
+		if chart == nil {
+			continue
+		}
+
+		obj, d := types.ObjectValue(models.ChartSettingsModelAttrType, map[string]attr.Value{
+			"chart_type":          types.StringValue(chart.ChartType),
+			"chart_index":         types.Int64Value(int64(chart.ChartIndex)),
+			"omit_missing_values": types.BoolValue(chart.OmitMissingValues),
+			"use_log_scale":       types.BoolValue(chart.UseLogScale),
+		})
+		diags.Append(d...)
+
+		chartsObj = append(chartsObj, obj)
+	}
+
+	result, d := types.ListValueFrom(
+		ctx,
+		types.ObjectType{AttrTypes: models.ChartSettingsModelAttrType},
+		chartsObj,
+	)
+	diags.Append(d...)
+
+	return result
 }
 
 func flattenBoardSloPanel(
