@@ -14,7 +14,7 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-func TestAccHoneycombioBoard_basic(t *testing.T) {
+func TestAccHoneycombioBoard_classic_basic(t *testing.T) {
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -22,7 +22,7 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBoardConfig(dataset),
+				Config: testClassicBoardConfig(dataset),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBoardExists(t, "honeycombio_board.test"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "name", "Test board from terraform-provider-honeycombio"),
@@ -329,7 +329,7 @@ resource "honeycombio_board" "test" {
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_BoardResourceUpgradeFromVersion032(t *testing.T) {
 	dataset := testAccDataset()
-	config := testAccBoardConfig(dataset)
+	config := testClassicBoardConfig(dataset)
 
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -358,7 +358,7 @@ func TestAcc_BoardResourceUpgradeFromVersion032(t *testing.T) {
 	})
 }
 
-func testAccBoardConfig(dataset string) string {
+func testClassicBoardConfig(dataset string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
   count = 2
@@ -415,6 +415,99 @@ resource "honeycombio_board" "test" {
     graph_settings {
       omit_missing_values = true
     }
+  }
+}`, dataset)
+}
+
+func testFlexibleBoardConfig(dataset string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  count = 2
+
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  filter_combination = "AND"
+
+  filter {
+    column = "duration_ms"
+    op     = ">"
+    value  = count.index
+  }
+}
+
+resource "honeycombio_query" "test" {
+  count = 2
+
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test[count.index].json
+}
+
+resource "honeycombio_query_annotation" "test" {
+  count = 2
+
+  dataset     = "%[1]s"
+  name        = "My annotated query"
+  description = "My lovely description"
+  query_id    = honeycombio_query.test[count.index].id
+}
+
+resource "honeycombio_board" "test" {
+  name  = "Test board from terraform-provider-honeycombio"
+  type  = "flexible"
+
+  panel {
+	type = "query"
+
+	position {
+	  x_coordinate = 0
+	  y_coordinate = 0
+	  width       = 6
+	  height      = 6
+	}
+
+	query_panel {
+	  query_id            = honeycombio_query.test[0].id
+	  query_annotation_id = honeycombio_query_annotation.test[0].id
+	  query_style         = "table"
+        visualization_settings {
+            use_utc_xaxis = true
+            chart {
+                chart_type = "line"
+                chart_index = 0
+                omit_missing_values = true 
+                use_log_scale = true
+            }
+        }
+	}
+  }
+
+  panel {
+	type = "query"
+
+	position {
+	  x_coordinate = 0
+	  y_coordinate = 0
+	  width       = 6
+	  height      = 6
+	}
+
+	query_panel {
+	  query_id            = honeycombio_query.test[1].id
+	  query_annotation_id = honeycombio_query_annotation.test[1].id
+	  query_style         = "table"
+        visualization_settings {
+            use_utc_xaxis = false
+            chart {
+                chart_type = "line"
+                chart_index = 0
+                omit_missing_values = true 
+                use_log_scale = true
+            }
+        }
+	}
   }
 }`, dataset)
 }

@@ -402,6 +402,7 @@ func (r *boardResource) Create(ctx context.Context, req resource.CreateRequest, 
 		Style:        client.BoardStyle(plan.Style.ValueString()),
 		Queries:      expandBoardQueries(ctx, plan.Queries, &resp.Diagnostics),
 		SLOs:         expandBoardSLOs(ctx, plan.SLOs, &resp.Diagnostics),
+		Panels:       expandBoardPanels(ctx, plan.Panels, &resp.Diagnostics),
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -424,6 +425,32 @@ func (r *boardResource) Create(ctx context.Context, req resource.CreateRequest, 
 
 	if len(board.Panels) == 0 {
 		state.Panels = types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelModelAttrType})
+	} else {
+		var statePanels []models.BoardPanelModel
+		resp.Diagnostics.Append(state.Panels.ElementsAs(ctx, &statePanels, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		panelsObj := make([]attr.Value, 0, len(board.Panels))
+		for _, panel := range board.Panels {
+			panelValue := flattenBoardPanel(ctx, panel, &resp.Diagnostics)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
+			obj, diag := types.ObjectValue(models.BoardPanelModelAttrType, panelValue)
+			resp.Diagnostics.Append(diag...)
+
+			panelsObj = append(panelsObj, obj)
+		}
+
+		panels, diag := types.ListValueFrom(ctx,
+			types.ObjectType{AttrTypes: models.BoardPanelModelAttrType},
+			panelsObj,
+		)
+		resp.Diagnostics.Append(diag...)
+		state.Panels = panels
 	}
 
 	if len(board.Queries) == 0 {
@@ -570,6 +597,7 @@ func (r *boardResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		Name:         plan.Name.ValueString(),
 		Description:  plan.Description.ValueString(),
 		ColumnLayout: client.BoardColumnStyle(plan.ColumnLayout.ValueString()),
+		BoardType:    plan.BoardType.ValueString(),
 		Style:        client.BoardStyle(plan.Style.ValueString()),
 		Queries:      expandBoardQueries(ctx, plan.Queries, &resp.Diagnostics),
 		SLOs:         expandBoardSLOs(ctx, plan.SLOs, &resp.Diagnostics),
@@ -727,6 +755,24 @@ func expandBoardPanels(
 	}
 
 	result := make([]client.BoardPanel, 0, len(panels))
+	for _, panel := range panels {
+		// var position []models.BoardPanelPositionModel
+		// diags.Append(panel.Position.ElementsAs(ctx, &position, false)...)
+
+		// if len(position) == 0 {
+		// 	position = []models.BoardPanelPositionModel{{}}
+		// }
+
+		result = append(result, client.BoardPanel{
+			PanelType: client.BoardPanelType(panel.PanelType.ValueString()),
+			// PanelPosition: client.BoardPanelPosition{
+			// 	X:      int(position[0].XCoordinate.ValueInt64()),
+			// 	Y:      int(position[0].YCoordinate.ValueInt64()),
+			// 	Height: int(position[0].Height.ValueInt64()),
+			// 	Width:  int(position[0].Width.ValueInt64()),
+			// },
+		})
+	}
 
 	return result
 }
@@ -767,6 +813,31 @@ func flattenBoardQuery(
 	queryValue["graph_settings"] = graphSettings
 
 	return queryValue
+}
+
+func flattenBoardPanel(
+	ctx context.Context,
+	panel client.BoardPanel,
+	diags *diag.Diagnostics,
+) map[string]attr.Value {
+	panelValue := make(map[string]attr.Value)
+	panelValue["type"] = types.StringValue(string(panel.PanelType))
+
+	// positionObj, diag := types.ObjectValue(models.BoardPanelPositionModelAttrType, map[string]attr.Value{
+	// 	"x_coordinate": types.Int64Value(int64(panel.PanelPosition.X)),
+	// 	"y_coordinate": types.Int64Value(int64(panel.PanelPosition.Y)),
+	// 	"height":       types.Int64Value(int64(panel.PanelPosition.Height)),
+	// 	"width":        types.Int64Value(int64(panel.PanelPosition.Width)),
+	// })
+	// diags.Append(diag...)
+	// position, diag := types.ListValueFrom(ctx,
+	// 	types.ObjectType{AttrTypes: models.BoardPanelPositionModelAttrType},
+	// 	[]attr.Value{positionObj},
+	// )
+	// diags.Append(diag...)
+	// panelValue["position"] = position
+
+	return panelValue
 }
 
 func expandBoardSLOs(

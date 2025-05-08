@@ -68,7 +68,7 @@ var BoardSLOModelAttrType = map[string]attr.Type{
 
 type BoardPanelModel struct {
 	PanelType  types.String       `tfsdk:"type"` // "query" or "slo"
-	Position   PanelPositionModel `tfsdk:"position"`
+	Position   BoardPanelPositionModel `tfsdk:"position"`
 	QueryPanel QueryPanelModel    `tfsdk:"query_panel"`
 	SLOPanel   SLOPanelModel      `tfsdk:"slo_panel"`
 }
@@ -77,7 +77,7 @@ var BoardPanelModelAttrType = map[string]attr.Type{
 	"type": types.StringType,
 	"position": types.ListType{
 		ElemType: types.ObjectType{
-			AttrTypes: PanelPositionModelAttrType,
+			AttrTypes: BoardPanelPositionModelAttrType,
 		},
 	},
 	"query_panel": types.ListType{
@@ -92,14 +92,14 @@ var BoardPanelModelAttrType = map[string]attr.Type{
 	},
 }
 
-type PanelPositionModel struct {
+type BoardPanelPositionModel struct {
 	XCoordinate types.Int64 `tfsdk:"x_coordinate"`
 	YCoordinate types.Int64 `tfsdk:"y_coordinate"`
 	Height      types.Int64 `tfsdk:"height"`
 	Width       types.Int64 `tfsdk:"width"`
 }
 
-var PanelPositionModelAttrType = map[string]attr.Type{
+var BoardPanelPositionModelAttrType = map[string]attr.Type{
 	"x_coordinate": types.Int64Type,
 	"y_coordinate": types.Int64Type,
 	"height":       types.Int64Type,
