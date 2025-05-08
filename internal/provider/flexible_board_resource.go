@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -198,22 +197,27 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 											Attributes: map[string]schema.Attribute{
 												"use_utc_xaxis": schema.BoolAttribute{
 													Optional:    true,
+													Computed:    true,
 													Description: "Render the X axis in UTC time.",
 												},
 												"hide_markers": schema.BoolAttribute{
 													Optional:    true,
+													Computed:    true,
 													Description: "Hide markers on the chart.",
 												},
 												"hide_hovers": schema.BoolAttribute{
 													Optional:    true,
+													Computed:    true,
 													Description: "Disable hover tooltips.",
 												},
 												"prefer_overlaid_charts": schema.BoolAttribute{
 													Optional:    true,
+													Computed:    true,
 													Description: "Prefer overlaid rendering for multiple charts.",
 												},
 												"hide_compare": schema.BoolAttribute{
 													Optional:    true,
+													Computed:    true,
 													Description: "Hide comparison values.",
 												},
 											},
@@ -223,22 +227,22 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 														Attributes: map[string]schema.Attribute{
 															"chart_type": schema.StringAttribute{
 																Optional:    true,
+																Computed:    true,
 																Description: "Type of chart (e.g., 'line', 'bar').",
 															},
 															"chart_index": schema.Int64Attribute{
-																Required:    true,
+																Optional:    true,
+																Computed:    true,
 																Description: "Index of the chart in the layout.",
 															},
 															"omit_missing_values": schema.BoolAttribute{
 																Optional:    true,
 																Computed:    true,
-																Default:     booldefault.StaticBool(false),
 																Description: "Omit missing values from the visualization.",
 															},
 															"use_log_scale": schema.BoolAttribute{
 																Optional:    true,
 																Computed:    true,
-																Default:     booldefault.StaticBool(false),
 																Description: "Use logarithmic scale on Y axis.",
 															},
 														},
@@ -689,7 +693,7 @@ func flattenBoardQueryVisualizationSettings(
 		"hide_hovers":            types.BoolValue(settings.HideHovers),
 		"prefer_overlaid_charts": types.BoolValue(settings.PreferOverlaidCharts),
 		"hide_compare":           types.BoolValue(settings.HideCompare),
-		"charts":                 flattenBoardQueryVizCharts(ctx, settings.Charts, diags),
+		"chart":                  flattenBoardQueryVizCharts(ctx, settings.Charts, diags),
 	})
 	diags.Append(d...)
 
@@ -708,7 +712,7 @@ func flattenBoardQueryVizCharts(
 	charts []*client.ChartSettings,
 	diags *diag.Diagnostics,
 ) types.List {
-	if charts == nil {
+	if len(charts) == 0 {
 		return types.ListNull(types.ObjectType{AttrTypes: models.ChartSettingsModelAttrType})
 	}
 

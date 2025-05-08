@@ -61,6 +61,16 @@ func TestAccHoneycombioFlexibleBoard_basic(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.slo_panel.#", "0"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.#", "1"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.query_style", "combo"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.0.use_utc_xaxis", "true"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.0.hide_markers", "false"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.0.hide_hovers", "false"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.0.prefer_overlaid_charts", "false"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.0.chart.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.0.chart.0.chart_type", "line"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.0.chart.0.chart_index", "0"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.0.chart.0.omit_missing_values", "true"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.0.chart.0.use_log_scale", "false"),
 				),
 			},
 			{
@@ -116,6 +126,14 @@ resource "honeycombio_flexible_board" "test" {
 		query_id = honeycombio_query.test.id
 		query_annotation_id = honeycombio_query_annotation.test.id
 		query_style = "combo"
+		visualization_settings {
+            use_utc_xaxis = true
+			chart {
+                chart_type = "line"
+                chart_index = 0
+                omit_missing_values = true
+            }
+        }
 	}
 	position {
 		x_coordinate = 0

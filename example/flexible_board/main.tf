@@ -100,7 +100,7 @@ resource "honeycombio_flexible_board" "overview" {
             chart {
                 chart_type = "line"
                 chart_index = 0
-                omit_missing_values = true 
+                omit_missing_values = true
                 use_log_scale = true
             }
         }
