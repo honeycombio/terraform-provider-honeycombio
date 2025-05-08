@@ -95,7 +95,7 @@ resource "honeycombio_board" "overview" {
 }
 ```
 
-## Argument Reference - classic board
+## Argument Reference
 
 The following arguments are supported for classic boards:
 

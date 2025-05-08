@@ -76,7 +76,7 @@ resource "honeycombio_slo" "slo" {
   }
 }
 
-resource "honeycombio_board" "overview" {
+resource "honeycombio_flexible_board" "overview" {
   name        = "Service Overview"
   description = "My flexible baord description"
   type  = "flexible"
@@ -94,7 +94,7 @@ resource "honeycombio_board" "overview" {
     query_panel {
         query_id =  honeycombio_query.latency_by_userid.id
         query_annotation_id = honeycombio_query_annotation.latency_by_userid.id
-        query_style         = "table"
+        query_style         = "combo"
         visualization_settings {
             use_utc_xaxis = true
             chart {

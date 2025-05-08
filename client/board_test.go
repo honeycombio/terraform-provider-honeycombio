@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -84,7 +83,6 @@ func TestClassicBoards(t *testing.T) {
 
 		// copy ID before asserting equality
 		data.ID = b.ID
-		// data.Queries[0].QueryID = b.Queries[0].QueryID
 
 		// ensure the board URL got populated
 		assert.NotEqual(t, "", b.Links.BoardURL)
@@ -209,6 +207,7 @@ func TestFlexibleBoards(t *testing.T) {
 			BoardType:   "flexible",
 			Description: "A board with some panels",
 			Panels: []client.BoardPanel{
+				// todo: figure out why client always sets this to nil
 				// {
 				// 	PanelType: client.BoardPanelTypeQuery,
 				// 	PanelPosition: client.BoardPanelPosition{
@@ -226,8 +225,8 @@ func TestFlexibleBoards(t *testing.T) {
 				{
 					PanelType: client.BoardPanelTypeSLO,
 					PanelPosition: client.BoardPanelPosition{
-						X:      0,
-						Y:      4,
+						X:      6,
+						Y:      0,
 						Height: 3,
 						Width:  4,
 					},
@@ -238,7 +237,6 @@ func TestFlexibleBoards(t *testing.T) {
 			},
 		}
 		board, err = c.Boards.Create(ctx, data)
-		spew.Dump(board)
 		require.NoError(t, err)
 		assert.NotNil(t, board.ID)
 

@@ -13,3 +13,4 @@ terraform-provider-honeycombio*
 .idea
 .env
 .vscode/*
+.tool-versions
