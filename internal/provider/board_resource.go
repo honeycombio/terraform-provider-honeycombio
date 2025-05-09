@@ -99,6 +99,18 @@ func (*boardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 					),
 				},
 			},
+			"type": schema.StringAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "The type of board.",
+				Default:     stringdefault.StaticString("classic"),
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						"classic",
+						"flexible",
+					),
+				},
+			},
 			"style": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
@@ -254,6 +266,7 @@ func (r *boardResource) Create(ctx context.Context, req resource.CreateRequest, 
 	createRequest := &client.Board{
 		Name:         plan.Name.ValueString(),
 		Description:  plan.Description.ValueString(),
+		BoardType:    plan.BoardType.ValueString(),
 		ColumnLayout: client.BoardColumnStyle(plan.ColumnLayout.ValueString()),
 		Style:        client.BoardStyle(plan.Style.ValueString()),
 		Queries:      expandBoardQueries(ctx, plan.Queries, &resp.Diagnostics),
@@ -271,6 +284,7 @@ func (r *boardResource) Create(ctx context.Context, req resource.CreateRequest, 
 	var state models.BoardResourceModel
 	state.ID = types.StringValue(board.ID)
 	state.Name = types.StringValue(board.Name)
+	state.BoardType = types.StringValue(board.BoardType)
 	state.Description = types.StringValue(board.Description)
 	state.ColumnLayout = types.StringValue(string(board.ColumnLayout))
 	state.Style = types.StringValue(string(board.Style))
@@ -351,6 +365,7 @@ func (r *boardResource) Read(ctx context.Context, req resource.ReadRequest, resp
 	state.ID = types.StringValue(board.ID)
 	state.Name = types.StringValue(board.Name)
 	state.Description = types.StringValue(board.Description)
+	state.BoardType = types.StringValue(board.BoardType)
 	state.ColumnLayout = types.StringValue(string(board.ColumnLayout))
 	state.Style = types.StringValue(string(board.Style))
 	state.SLOs = flattenBoardSLOs(ctx, board.SLOs, &resp.Diagnostics)
@@ -416,6 +431,7 @@ func (r *boardResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		Name:         plan.Name.ValueString(),
 		Description:  plan.Description.ValueString(),
 		ColumnLayout: client.BoardColumnStyle(plan.ColumnLayout.ValueString()),
+		BoardType:    plan.BoardType.ValueString(),
 		Style:        client.BoardStyle(plan.Style.ValueString()),
 		Queries:      expandBoardQueries(ctx, plan.Queries, &resp.Diagnostics),
 		SLOs:         expandBoardSLOs(ctx, plan.SLOs, &resp.Diagnostics),
@@ -433,6 +449,7 @@ func (r *boardResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	state.ID = types.StringValue(board.ID)
 	state.Name = types.StringValue(board.Name)
 	state.Description = types.StringValue(board.Description)
+	state.BoardType = types.StringValue(board.BoardType)
 	state.ColumnLayout = types.StringValue(string(board.ColumnLayout))
 	state.Style = types.StringValue(string(board.Style))
 	state.SLOs = flattenBoardSLOs(ctx, board.SLOs, &resp.Diagnostics)

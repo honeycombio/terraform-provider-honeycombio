@@ -14,7 +14,7 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
-func TestAccHoneycombioBoard_basic(t *testing.T) {
+func TestAccHoneycombioBoard_classic_basic(t *testing.T) {
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -22,12 +22,13 @@ func TestAccHoneycombioBoard_basic(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBoardConfig(dataset),
+				Config: testClassicBoardConfig(dataset),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBoardExists(t, "honeycombio_board.test"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "name", "Test board from terraform-provider-honeycombio"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "style", "visual"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "description", ""),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "type", "classic"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.#", "2"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.caption", "test query 0"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.dataset", dataset),
@@ -328,7 +329,7 @@ resource "honeycombio_board" "test" {
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_BoardResourceUpgradeFromVersion032(t *testing.T) {
 	dataset := testAccDataset()
-	config := testAccBoardConfig(dataset)
+	config := testClassicBoardConfig(dataset)
 
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -357,7 +358,7 @@ func TestAcc_BoardResourceUpgradeFromVersion032(t *testing.T) {
 	})
 }
 
-func testAccBoardConfig(dataset string) string {
+func testClassicBoardConfig(dataset string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
   count = 2

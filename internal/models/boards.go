@@ -7,6 +7,7 @@ import (
 
 type BoardResourceModel struct {
 	ID           types.String `tfsdk:"id"`
+	BoardType    types.String `tfsdk:"type"`
 	Name         types.String `tfsdk:"name"`
 	Description  types.String `tfsdk:"description"`
 	ColumnLayout types.String `tfsdk:"column_layout"`

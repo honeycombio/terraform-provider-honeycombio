@@ -43,6 +43,18 @@ type Board struct {
 	// Name of the board, this is displayed in the Honeycomb UI. This field is
 	// required.
 	Name string `json:"name"`
+
+	// Type of the board, this is controls the display between flexible and classic boards in the Honeycomb UI.
+	// Defaults to "classic".
+	BoardType string `json:"type,omitempty"`
+
+	// Board panels are the individual panels that make up a board. Each panel can
+	// be a query or an SLO panel. The panels are laid out in a grid.
+	Panels []BoardPanel `json:"panels,omitempty"`
+
+	// Links returned by the board API for the Board
+	Links BoardLinks `json:"links,omitempty"`
+
 	// Description of the board.
 	Description string `json:"description,omitempty"`
 	// The number of columns to be laid out when displaying the board.
@@ -53,13 +65,62 @@ type Board struct {
 	// How the board should be displayed in the UI, defaults to "visual".
 	// Deprecated: All Boards are visual now. This field is ignored.
 	Style BoardStyle `json:"style,omitempty"`
-	// Links returned by the board API for the Board
-	Links BoardLinks `json:"links,omitempty"`
 	// A list of queries displayed on the board, in order of appearance.
 	Queries []BoardQuery `json:"queries"`
 	// A list of SLO IDs to be added to the board
 	SLOs []string `json:"slos"`
 }
+
+// BoardPanel represents a single panel on a board.
+type BoardPanel struct {
+	PanelType     BoardPanelType     `json:"type,omitempty"` // "query" or "slo"
+	PanelPosition BoardPanelPosition `json:"position,omitempty"`
+
+	QueryPanel *BoardQueryPanel `json:"query_panel,omitempty"`
+	SLOPanel   *BoardSLOPanel   `json:"slo_panel,omitempty"`
+}
+
+type BoardSLOPanel struct {
+	SLOID string `json:"slo_id,omitempty"`
+}
+
+type BoardPanelPosition struct {
+	X      int `json:"x_coordinate"`
+	Y      int `json:"y_coordinate"`
+	Height int `json:"height"`
+	Width  int `json:"width"`
+}
+
+type BoardQueryPanel struct {
+	QueryID               string                           `json:"query_id,omitempty"`
+	QueryAnnotationID     string                           `json:"query_annotation_id,omitempty"`
+	VisualizationSettings *BoardQueryVisualizationSettings `json:"visualization_settings,omitempty"`
+	Style                 BoardQueryStyle                  `json:"query_style,omitempty"`
+	Dataset               string                           `json:"dataset,omitempty"`
+}
+
+type BoardQueryVisualizationSettings struct {
+	UseUTCXAxis          bool             `json:"utc_xaxis,omitempty"`
+	HideMarkers          bool             `json:"hide_markers,omitempty"`
+	HideHovers           bool             `json:"hide_hovers,omitempty"`
+	PreferOverlaidCharts bool             `json:"overlaid_charts,omitempty"`
+	HideCompare          bool             `json:"hide_compare,omitempty"`
+	Charts               []*ChartSettings `json:"charts,omitempty"`
+}
+
+type ChartSettings struct {
+	ChartType         string `json:"chart_type,omitempty"` // "default", "line", "stacked", "stat", "tsbar"
+	ChartIndex        int    `json:"chart_index"`
+	OmitMissingValues bool   `json:"omit_missing_values,omitempty"`
+	UseLogScale       bool   `json:"log_scale,omitempty"`
+}
+
+type BoardPanelType string
+
+const (
+	BoardPanelTypeQuery BoardPanelType = "query"
+	BoardPanelTypeSLO   BoardPanelType = "slo"
+)
 
 // BoardStyle determines how a Board should be displayed within the Honeycomb UI.
 type BoardStyle string
