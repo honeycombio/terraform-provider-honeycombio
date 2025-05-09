@@ -114,6 +114,7 @@ resource "honeycombio_board" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBoardExists(t, "honeycombio_board.test"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "name", "simple board"),
+					resource.TestCheckResourceAttr("honeycombio_board.test", "description", ""),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.#", "1"),
 					resource.TestCheckResourceAttrPair("honeycombio_board.test", "query.0.query_id", "honeycombio_query.test", "id"),
 					resource.TestCheckResourceAttr("honeycombio_board.test", "query.0.graph_settings.0.log_scale", "true"),

@@ -11,7 +11,7 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
-func TestBoards(t *testing.T) {
+func TestClassicBoards(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -61,6 +61,7 @@ func TestBoards(t *testing.T) {
 	t.Run("Create", func(t *testing.T) {
 		data := &client.Board{
 			Name:         test.RandomStringWithPrefix("test.", 8),
+			BoardType:    client.BoardTypeClassic,
 			Description:  "A board with some queries",
 			Style:        client.BoardStyleVisual,
 			ColumnLayout: client.BoardColumnStyleSingle,
@@ -81,7 +82,6 @@ func TestBoards(t *testing.T) {
 
 		// copy ID before asserting equality
 		data.ID = b.ID
-		data.Queries[0].QueryID = b.Queries[0].QueryID
 
 		// ensure the board URL got populated
 		assert.NotEqual(t, "", b.Links.BoardURL)

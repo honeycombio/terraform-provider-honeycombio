@@ -271,6 +271,7 @@ func (r *boardResource) Create(ctx context.Context, req resource.CreateRequest, 
 	var state models.BoardResourceModel
 	state.ID = types.StringValue(board.ID)
 	state.Name = types.StringValue(board.Name)
+	// state.BoardType = types.StringValue(string(board.BoardType))
 	state.Description = types.StringValue(board.Description)
 	state.ColumnLayout = types.StringValue(string(board.ColumnLayout))
 	state.Style = types.StringValue(string(board.Style))
@@ -350,6 +351,7 @@ func (r *boardResource) Read(ctx context.Context, req resource.ReadRequest, resp
 
 	state.ID = types.StringValue(board.ID)
 	state.Name = types.StringValue(board.Name)
+	// state.BoardType = types.StringValue(string(board.BoardType))
 	state.Description = types.StringValue(board.Description)
 	state.ColumnLayout = types.StringValue(string(board.ColumnLayout))
 	state.Style = types.StringValue(string(board.Style))
@@ -412,8 +414,9 @@ func (r *boardResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	}
 
 	updateRequest := &client.Board{
-		ID:           plan.ID.ValueString(),
-		Name:         plan.Name.ValueString(),
+		ID:   plan.ID.ValueString(),
+		Name: plan.Name.ValueString(),
+		// BoardType:    client.BoardType(plan.BoardType.ValueString()),
 		Description:  plan.Description.ValueString(),
 		ColumnLayout: client.BoardColumnStyle(plan.ColumnLayout.ValueString()),
 		Style:        client.BoardStyle(plan.Style.ValueString()),
@@ -432,6 +435,7 @@ func (r *boardResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	var state models.BoardResourceModel
 	state.ID = types.StringValue(board.ID)
 	state.Name = types.StringValue(board.Name)
+	// state.BoardType = types.StringValue(string(board.BoardType))
 	state.Description = types.StringValue(board.Description)
 	state.ColumnLayout = types.StringValue(string(board.ColumnLayout))
 	state.Style = types.StringValue(string(board.Style))

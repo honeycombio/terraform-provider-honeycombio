@@ -40,6 +40,10 @@ var _ Boards = (*boards)(nil)
 type Board struct {
 	ID string `json:"id,omitempty"`
 
+	// Type of the board, this controls the display between flexible and classic boards in the Honeycomb UI.
+	// Defaults to "classic".
+	BoardType BoardType `json:"type,omitempty"`
+
 	// Name of the board, this is displayed in the Honeycomb UI. This field is
 	// required.
 	Name string `json:"name"`
@@ -60,6 +64,13 @@ type Board struct {
 	// A list of SLO IDs to be added to the board
 	SLOs []string `json:"slos"`
 }
+
+type BoardType string
+
+const (
+	BoardTypeClassic  BoardType = "classic"
+	BoardTypeFlexible BoardType = "flexible"
+)
 
 // BoardStyle determines how a Board should be displayed within the Honeycomb UI.
 type BoardStyle string
