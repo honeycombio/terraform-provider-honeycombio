@@ -247,5 +247,4 @@ func TestFlexibleBoards(t *testing.T) {
 
 		assert.Equal(t, *board, *flexibleBoard)
 	})
-
 }
