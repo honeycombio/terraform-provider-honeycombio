@@ -693,6 +693,9 @@ func flattenBoardPanelPosition(
 	diags *diag.Diagnostics,
 	statePosition client.BoardPanelPosition,
 ) types.List {
+	// we use negative numbers to indicate that the panel position was never set. We use this to not write to state when panel position is not set.
+	// This is a workaround for the various limitations that terraform v5 protocol presents.
+	// Without this workaround, whenever the API generates a default position, terraform would complain about a schema mismatch between config and applied results.
 	if statePosition.Height == 0 && statePosition.Width == 0 && statePosition.X == -1 && statePosition.Y == -1 {
 		return types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelPositionModelAttrType})
 	}
