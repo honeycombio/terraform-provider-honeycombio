@@ -2,7 +2,7 @@
 
 ENHANCEMENTS:
 
-* feat: add flexible board resource (#667, #676, #675)
+* feat: add flexible board resource (#677, #676, #675)
 
 HOUSEKEEPING:
 
