@@ -1,3 +1,14 @@
+# 0.35.0 (May 14, 2025)
+
+ENHANCEMENTS
+
+* feat: add flexible board resource (#667, #676, #675)
+
+HOUSEKEEPING:
+
+* maint(deps): bump slackapi/slack-github-action from 2.0.0 to 2.1.0 (#674)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.17.0 to 0.18.0 (#678)
+
 # 0.34.0 (May 6, 2025)
 
 ENHANCEMENTS:
