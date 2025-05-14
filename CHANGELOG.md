@@ -1,6 +1,6 @@
 # 0.35.0 (May 14, 2025)
 
-ENHANCEMENTS
+ENHANCEMENTS:
 
 * feat: add flexible board resource (#667, #676, #675)
 
