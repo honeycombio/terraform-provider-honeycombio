@@ -207,6 +207,20 @@ func TestFlexibleBoards(t *testing.T) {
 			Description: "A board with some panels",
 			Panels: []client.BoardPanel{
 				{
+					PanelType: client.BoardPanelTypeQuery,
+					PanelPosition: client.BoardPanelPosition{
+						X:      0,
+						Y:      0,
+						Height: 3,
+						Width:  4,
+					},
+					QueryPanel: &client.BoardQueryPanel{
+						QueryID:           *query.ID,
+						QueryAnnotationID: queryAnnotation.ID,
+						Style:             client.BoardQueryStyleGraph,
+					},
+				},
+				{
 					PanelType: client.BoardPanelTypeSLO,
 					PanelPosition: client.BoardPanelPosition{
 						X:      6,

@@ -60,7 +60,8 @@ func (r *boardResource) Configure(_ context.Context, req resource.ConfigureReque
 
 func (*boardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a Board in a Honeycomb Environment.",
+		Description:        "Manages a classic Board in a Honeycomb Environment.",
+		DeprecationMessage: "Use honeycombio_flexible_board resource instead.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,

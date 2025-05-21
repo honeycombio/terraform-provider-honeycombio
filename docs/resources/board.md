@@ -1,6 +1,6 @@
 # Resource: honeycombio_board
 
-Creates a classic board. For more information about boards, check out [Create Custom Boards](https://docs.honeycomb.io/observe/boards).
+Creates a classic board. Classic boards are deprecated, use [honeycombio_flexible_board](./flexible_board.md) resource instead. For more information about boards, check out [Create Custom Boards](https://docs.honeycomb.io/observe/boards).
 
 ## Example Usage
 
