@@ -382,20 +382,9 @@ func expandSLO(ctx context.Context, plan models.SLOResourceModel) (*client.SLO, 
 		}
 	}
 
-	var tags []client.Tag
-	if !plan.Tags.IsNull() {
-		var tagMap map[string]string
-		diags := plan.Tags.ElementsAs(ctx, &tagMap, false)
-		if diags.HasError() {
-			return nil, fmt.Errorf("error extracting tags: %v", diags)
-		}
-		for k, v := range tagMap {
-			tags = append(tags, client.Tag{Key: k, Value: v})
-		}
-	} else {
-		// if 'tags' is not present in the config, set to empty slice
-		// to clear the tags
-		tags = make([]client.Tag, 0)
+	tags, diags := helper.MapToTags(ctx, plan.Tags)
+	if diags.HasError() {
+		return nil, fmt.Errorf("error extracting tags: %v", diags)
 	}
 
 	slo := &client.SLO{

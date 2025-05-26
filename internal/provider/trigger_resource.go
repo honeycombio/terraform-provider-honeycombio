@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -141,6 +142,23 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					),
 				},
 			},
+			"tags": schema.MapAttribute{
+				Description: "A map of tags to assign to the resource.",
+				Optional:    true,
+				ElementType: types.StringType,
+				PlanModifiers: []planmodifier.Map{
+					modifiers.EquivalentTags(),
+				},
+				Validators: []validator.Map{
+					mapvalidator.SizeAtMost(client.MaxTagsPerResource),
+					mapvalidator.KeysAre(
+						stringvalidator.RegexMatches(client.TagKeyValidationRegex, "must only contain lowercase letters, and be 1-32 characters long"),
+					),
+					mapvalidator.ValueStringsAre(
+						stringvalidator.RegexMatches(client.TagValueValidationRegex, "must begin with a lowercase letter, be between 1-32 characters long, and only contain lowercase alphanumeric characters, -, or /"),
+					),
+				},
+			},
 		},
 		Blocks: map[string]schema.Block{
 			"threshold": schema.ListNestedBlock{
@@ -263,6 +281,11 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	planTags, diags := helper.MapToTags(ctx, plan.Tags)
+	if diags.HasError() {
+		return
+	}
+
 	newTrigger := &client.Trigger{
 		Name:               plan.Name.ValueString(),
 		Description:        plan.Description.ValueString(),
@@ -273,6 +296,7 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
 		BaselineDetails:    expandBaselineDetails(ctx, plan.BaselineDetails, &resp.Diagnostics),
+		Tags:               planTags,
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -328,6 +352,13 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		// to handle the rest when we read it back
 		state.QueryJson = plan.QueryJson
 	}
+
+	stateTags, diags := helper.TagsToMap(ctx, trigger.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = stateTags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -392,6 +423,13 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 		}
 	}
 
+	tags, diags := helper.TagsToMap(ctx, trigger.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = tags
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -400,6 +438,11 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	planTags, diags := helper.MapToTags(ctx, plan.Tags)
+	if diags.HasError() {
 		return
 	}
 
@@ -414,6 +457,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
 		BaselineDetails:    expandBaselineDetails(ctx, plan.BaselineDetails, &resp.Diagnostics),
+		Tags:               planTags,
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -476,6 +520,13 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		// to handle the rest when we read it back
 		state.QueryJson = plan.QueryJson
 	}
+
+	stateTags, diags := helper.TagsToMap(ctx, trigger.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = stateTags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }

@@ -201,6 +201,79 @@ func TestAcc_TriggerResource(t *testing.T) {
 			},
 		})
 	})
+
+	t.Run("trigger resource with tags", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: testAccConfigTriggerWithTags(dataset, name, map[string]string{
+						"environment": "dev",
+						"team":        "platform",
+					}),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "tags.%", "2"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "tags.environment", "dev"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "tags.team", "platform"),
+					),
+				},
+				// Update tags
+				{
+					Config: testAccConfigTriggerWithTags(dataset, name, map[string]string{
+						"environment": "prod",
+						"priority":    "high",
+					}),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "tags.%", "2"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "tags.environment", "prod"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "tags.priority", "high"),
+						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "tags.team"),
+					),
+				},
+				// Remove all tags
+				{
+					Config: testAccConfigTriggerWithTags(dataset, name, map[string]string{}),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "tags.%", "0"),
+					),
+				},
+				// Import state
+				{
+					ResourceName:        "honeycombio_trigger.test",
+					ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+					ImportState:         true,
+				},
+			},
+		})
+	})
+
+	t.Run("trigger resource with invalid tags", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					// invalid tag key - uppercase letters
+					Config: testAccConfigTriggerWithTags(dataset, name, map[string]string{
+						"Environment": "dev",
+					}),
+					ExpectError: regexp.MustCompile(`must only contain lowercase letters`),
+				},
+				{
+					// invalid tag value - uppercase letters
+					Config: testAccConfigTriggerWithTags(dataset, name, map[string]string{
+						"environment": "Dev",
+					}),
+					ExpectError: regexp.MustCompile(`must begin with a lowercase letter`),
+				},
+			},
+		})
+	})
 }
 
 // TestAcc_TriggerResourceUpgradeFromVersion014 is intended to test the migration
@@ -1383,6 +1456,47 @@ resource "honeycombio_trigger" "test" {
     target = "%[2]s"
   }
 }`, dataset, channel)
+}
+
+func testAccConfigTriggerWithTags(dataset, name string, tags map[string]string) string {
+	tagsConfig := ""
+	if len(tags) > 0 {
+		tagsConfig = "tags = {\n"
+		for k, v := range tags {
+			tagsConfig += fmt.Sprintf("    %s = \"%s\"\n", k, v)
+		}
+		tagsConfig += "  }"
+	}
+
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT"
+  }
+
+  time_range = 1800
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_id = honeycombio_query.test.id
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = 1800
+
+  %[3]s
+}`, dataset, name, tagsConfig)
 }
 
 func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFunc {
