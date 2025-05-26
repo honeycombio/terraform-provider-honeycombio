@@ -3,10 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/stretchr/testify/require"
@@ -184,6 +186,104 @@ func TestHoneycombSLO_MD(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateId:     mdSLO.ID,
+			},
+		},
+	})
+}
+
+func TestAccHoneycombioSLO_UpgradeFromSDK(t *testing.T) {
+	dataset, sliAlias := sloAccTestSetup(t)
+	slo := &honeycombio.SLO{}
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"honeycombio": {
+						VersionConstraint: "0.35.0",
+						Source:            "honeycombio/honeycombio",
+					},
+				},
+				Config: fmt.Sprintf(`
+					resource "honeycombio_slo" "test" {
+						name              = "TestAcc SLO Upgrade"
+						description       = "integration test SLO for SDK upgrade"
+						dataset           = "%s"
+						sli               = "%s" 
+						target_percentage = 99.95
+						time_period       = 30
+
+						tags = {
+							env  = "test"
+							team = "upgrade"
+						}
+					}`,
+					dataset, sliAlias),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "dataset", dataset),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "name", "TestAcc SLO Upgrade"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "target_percentage", "99.95"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+				Config: fmt.Sprintf(`
+					resource "honeycombio_slo" "test" {
+						name              = "TestAcc SLO Upgrade" 
+						description       = "integration test SLO for SDK upgrade"
+						dataset           = "%s"
+						sli               = "%s"
+						target_percentage = 99.95
+						time_period       = 30
+
+						tags = {
+							env  = "test"
+							team = "upgrade" 
+						}
+					}`,
+					dataset, sliAlias),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestAccHoneycombioSLO_DatasetConstraint(t *testing.T) {
+	dataset, sliAlias := sloAccTestSetup(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+					resource "honeycombio_slo" "test" {
+						name              = "TestAcc SLO Constraint"
+						description       = "integration test SLO constraint"
+						dataset           = "%s"
+						datasets          = ["%s"]
+						sli               = "%s"
+						target_percentage = 99.95
+						time_period       = 30
+					}`,
+					dataset, dataset, sliAlias),
+				ExpectError: regexp.MustCompile(`"datasets" cannot be specified when "dataset" is specified`),
+			},
+			{
+				Config: fmt.Sprintf(`
+				resource "honeycombio_slo" "test" {
+					name              = "TestAcc SLO Constraint"
+					description       = "integration test SLO constraint"
+					sli               = "%s" 
+					target_percentage = 99.95
+					time_period       = 30
+					}`, sliAlias),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Combination`),
 			},
 		},
 	})

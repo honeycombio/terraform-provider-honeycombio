@@ -103,6 +103,7 @@ func (*sloResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *re
 					setvalidator.SizeAtLeast(1),
 					setvalidator.SizeAtMost(10),
 					setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("dataset")),
+					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("dataset"), path.MatchRelative().AtParent().AtName("datasets")),
 				},
 			},
 			"sli": schema.StringAttribute{
@@ -162,8 +163,8 @@ func (r *sloResource) ImportState(ctx context.Context, req resource.ImportStateR
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.SLOResourceModel{
 		ID:       idValue,
 		Dataset:  dsValue,
-		Datasets: types.SetNull(types.StringType),
-		Tags:     types.MapNull(types.StringType),
+		Datasets: types.SetUnknown(types.StringType),
+		Tags:     types.MapUnknown(types.StringType),
 	})...)
 }
 
@@ -201,38 +202,19 @@ func (r *sloResource) Create(ctx context.Context, req resource.CreateRequest, re
 		state.Dataset = plan.Dataset
 	}
 
-	// Convert the slice of strings to a types.Set
-	if len(slo.DatasetSlugs) > 0 {
-		ds := slo.DatasetSlugs
-		if ds == nil {
-			ds = []string{}
-		}
-		datasetsSet, diags := types.SetValueFrom(ctx, types.StringType, ds)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		state.Datasets = datasetsSet
-	} else {
-		// Create an empty set if there are no dataset slugs
-		state.Datasets = types.SetNull(types.StringType)
+	datasetsSet, diags := helper.DatasetSlugsToSet(ctx, slo.DatasetSlugs)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+	state.Datasets = datasetsSet
 
-	if len(slo.Tags) > 0 {
-		tagMap := make(map[string]string)
-		for _, tag := range slo.Tags {
-			tagMap[tag.Key] = tag.Value
-		}
-		tags, diags := types.MapValueFrom(ctx, types.StringType, tagMap)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		state.Tags = tags
-	} else {
-		// Create an empty map if there are no tags
-		state.Tags = types.MapNull(types.StringType)
+	tags, diags := helper.TagsToMap(ctx, slo.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+	state.Tags = tags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
@@ -281,37 +263,19 @@ func (r *sloResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	state.TargetPercentage = types.Float64Value(helper.PPMToFloat(slo.TargetPerMillion))
 	state.TimePeriod = types.Int64Value(int64(slo.TimePeriodDays))
 
-	// Convert the slice of strings to a types.Set
-	if len(slo.DatasetSlugs) > 0 {
-		ds := slo.DatasetSlugs
-		if ds == nil {
-			ds = []string{}
-		}
-		datasetsSet, diags := types.SetValueFrom(ctx, types.StringType, ds)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		state.Datasets = datasetsSet
-	} else {
-		// Create an empty set if there are no dataset slugs
-		state.Datasets = types.SetNull(types.StringType)
+	datasetsSet, diags := helper.DatasetSlugsToSet(ctx, slo.DatasetSlugs)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+	state.Datasets = datasetsSet
 
-	if len(slo.Tags) > 0 {
-		tagMap := make(map[string]string)
-		for _, tag := range slo.Tags {
-			tagMap[tag.Key] = tag.Value
-		}
-		tags, diags := types.MapValueFrom(ctx, types.StringType, tagMap)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		state.Tags = tags
-	} else {
-		state.Tags = types.MapNull(types.StringType)
+	tags, diags := helper.TagsToMap(ctx, slo.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+	state.Tags = tags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
@@ -353,36 +317,19 @@ func (r *sloResource) Update(ctx context.Context, req resource.UpdateRequest, re
 		state.Dataset = plan.Dataset
 	}
 
-	if len(slo.DatasetSlugs) > 0 {
-		ds := slo.DatasetSlugs
-		if ds == nil {
-			ds = []string{}
-		}
-		datasetsSet, diags := types.SetValueFrom(ctx, types.StringType, ds)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		state.Datasets = datasetsSet
-	} else {
-		// Create an empty set if there are no dataset slugs
-		state.Datasets = types.SetNull(types.StringType)
+	datasetsSet, diags := helper.DatasetSlugsToSet(ctx, slo.DatasetSlugs)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+	state.Datasets = datasetsSet
 
-	if len(slo.Tags) > 0 {
-		tagMap := make(map[string]string)
-		for _, tag := range slo.Tags {
-			tagMap[tag.Key] = tag.Value
-		}
-		tags, diags := types.MapValueFrom(ctx, types.StringType, tagMap)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		state.Tags = tags
-	} else {
-		state.Tags = types.MapNull(types.StringType)
+	tags, diags := helper.TagsToMap(ctx, slo.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
+	state.Tags = tags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
