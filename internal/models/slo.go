@@ -4,6 +4,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+type SLOResourceModel struct {
+	ID               types.String  `tfsdk:"id"`
+	Name             types.String  `tfsdk:"name"`
+	Description      types.String  `tfsdk:"description"`
+	Dataset          types.String  `tfsdk:"dataset"`
+	Datasets         types.Set     `tfsdk:"datasets"`
+	SLI              types.String  `tfsdk:"sli"`
+	TargetPercentage types.Float64 `tfsdk:"target_percentage"`
+	TimePeriod       types.Int64   `tfsdk:"time_period"`
+	Tags             types.Map     `tfsdk:"tags"`
+}
+
 type SLOsDataSourceModel struct {
 	ID           types.String        `tfsdk:"id"`
 	Dataset      types.String        `tfsdk:"dataset"`
