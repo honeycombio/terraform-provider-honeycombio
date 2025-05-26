@@ -50,6 +50,11 @@ resource "honeycombio_trigger" "trigger" {
     type = "percentage"
     offset_minutes = 1440
   }
+
+  tags = {
+    team = "backend"
+    env  = "production"
+  }
 }
 
 

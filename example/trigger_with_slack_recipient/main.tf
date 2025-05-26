@@ -50,4 +50,9 @@ resource "honeycombio_trigger" "trigger" {
   }
 
   frequency = 1800
+
+  tags = {
+    team = "backend"
+    env  = "production"
+  }
 }
