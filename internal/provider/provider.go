@@ -85,6 +85,7 @@ func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.R
 		NewWebhookRecipientResource,
 		NewAPIKeyResource,
 		NewEnvironmentResource,
+		NewSLOResource,
 	}
 }
 
