@@ -114,6 +114,11 @@ resource "honeycombio_trigger" "example" {
       "friday"
     ]
   }
+
+  tags = {
+    team = "backend"
+    env  = "production"
+  }
 }
 ```
 ### Example - Example with Webhook Recipient and Notification Variable
@@ -179,6 +184,11 @@ resource "honeycombio_trigger" "example" {
             "friday"
         ]
     }
+
+  tags = {
+      team = "backend"
+      env  = "production"
+  }
 }
 ```
 
@@ -212,6 +222,11 @@ resource "honeycombio_trigger" "example" {
     baseline_details {
         type            = "percentage"
         offset_minutes  = 1440
+    }
+
+    tags = {
+        team = "backend"
+        env  = "production"
     }
 }
 ```
