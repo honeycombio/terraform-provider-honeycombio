@@ -92,7 +92,6 @@ func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
-		CheckDestroy:             func(*terraform.State) error { return nil }, // Skip standard destroy check
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigSLO_basic(dataset, sliAlias),
@@ -139,7 +138,7 @@ func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
 				Config: testAccConfigSLO_dataset_deprecation(dataset, sliAlias),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "datasets.#", "1"),
-					resource.TestCheckTypeSetElemAttr("honeycombio_slo.test", "datasets.*", dataset),
+					resource.TestCheckTypeSetElemAttr("honeycombio_slo.md_test", "datasets.*", dataset),
 				),
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false,
