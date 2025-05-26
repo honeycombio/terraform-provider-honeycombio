@@ -347,17 +347,23 @@ func (r *sloResource) Delete(ctx context.Context, req resource.DeleteRequest, re
 	dataset := helper.GetDatasetOrAll(state.Dataset)
 
 	var detailedErr client.DetailedError
-	_, err := r.client.SLOs.Get(ctx, dataset.ValueString(), state.ID.ValueString())
-	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {
-		// Resource is already gone, no need to delete
-		return
-	}
-
-	err = r.client.SLOs.Delete(ctx, dataset.ValueString(), state.ID.ValueString())
+	err := r.client.SLOs.Delete(ctx, dataset.ValueString(), state.ID.ValueString())
 	if err != nil {
+		if errors.As(err, &detailedErr) {
+			if detailedErr.IsNotFound() {
+				return // if not found, consider it deleted
+			}
+
+			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
+				"Error deleting SLO",
+				&detailedErr,
+			))
+			return
+		}
+
 		resp.Diagnostics.AddError(
 			"Error deleting SLO",
-			fmt.Sprintf("Could not delete SLO %s: %s", state.ID.ValueString(), err),
+			fmt.Sprintf("Could delete SLO %s: %s", state.ID.ValueString(), err),
 		)
 		return
 	}
