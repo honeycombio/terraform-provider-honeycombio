@@ -76,6 +76,9 @@ type Trigger struct {
 	// Recipients are notified when the trigger fires.
 	Recipients      []NotificationRecipient `json:"recipients,omitempty"`
 	BaselineDetails *TriggerBaselineDetails `json:"baseline_details,omitempty"`
+	// Tags are used to categorize triggers. They can be used to filtering triggers
+	// and are useful for grouping triggers together.
+	Tags []Tag `json:"tags"`
 }
 
 type TriggerBaselineDetails struct {

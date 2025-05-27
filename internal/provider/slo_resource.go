@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/float64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -126,23 +125,7 @@ the column evaluation should consistently return nil, true, or false, as these a
 					int64validator.AtLeast(1),
 				},
 			},
-			"tags": schema.MapAttribute{
-				Description: "A map of tags to assign to the resource.",
-				Optional:    true,
-				ElementType: types.StringType,
-				PlanModifiers: []planmodifier.Map{
-					modifiers.EquivalentTags(),
-				},
-				Validators: []validator.Map{
-					mapvalidator.SizeAtMost(client.MaxTagsPerResource),
-					mapvalidator.KeysAre(
-						stringvalidator.RegexMatches(client.TagKeyValidationRegex, "must only contain lowercase letters, and be 1-32 characters long"),
-					),
-					mapvalidator.ValueStringsAre(
-						stringvalidator.RegexMatches(client.TagValueValidationRegex, "must begin with a lowercase letter, be between 1-32 characters long, and only contain lowercase alphanumeric characters, -, or /"),
-					),
-				},
-			},
+			"tags": tagsSchema(),
 		},
 	}
 }
@@ -382,20 +365,9 @@ func expandSLO(ctx context.Context, plan models.SLOResourceModel) (*client.SLO, 
 		}
 	}
 
-	var tags []client.Tag
-	if !plan.Tags.IsNull() {
-		var tagMap map[string]string
-		diags := plan.Tags.ElementsAs(ctx, &tagMap, false)
-		if diags.HasError() {
-			return nil, fmt.Errorf("error extracting tags: %v", diags)
-		}
-		for k, v := range tagMap {
-			tags = append(tags, client.Tag{Key: k, Value: v})
-		}
-	} else {
-		// if 'tags' is not present in the config, set to empty slice
-		// to clear the tags
-		tags = make([]client.Tag, 0)
+	tags, diags := helper.MapToTags(ctx, plan.Tags)
+	if diags.HasError() {
+		return nil, fmt.Errorf("error extracting tags: %v", diags)
 	}
 
 	slo := &client.SLO{

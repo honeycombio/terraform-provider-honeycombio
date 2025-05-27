@@ -141,6 +141,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					),
 				},
 			},
+			"tags": tagsSchema(),
 		},
 		Blocks: map[string]schema.Block{
 			"threshold": schema.ListNestedBlock{
@@ -263,6 +264,11 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	planTags, diags := helper.MapToTags(ctx, plan.Tags)
+	if diags.HasError() {
+		return
+	}
+
 	newTrigger := &client.Trigger{
 		Name:               plan.Name.ValueString(),
 		Description:        plan.Description.ValueString(),
@@ -273,6 +279,7 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
 		BaselineDetails:    expandBaselineDetails(ctx, plan.BaselineDetails, &resp.Diagnostics),
+		Tags:               planTags,
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -328,6 +335,13 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		// to handle the rest when we read it back
 		state.QueryJson = plan.QueryJson
 	}
+
+	stateTags, diags := helper.TagsToMap(ctx, trigger.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = stateTags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -392,6 +406,13 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 		}
 	}
 
+	tags, diags := helper.TagsToMap(ctx, trigger.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = tags
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -400,6 +421,11 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	planTags, diags := helper.MapToTags(ctx, plan.Tags)
+	if diags.HasError() {
 		return
 	}
 
@@ -414,6 +440,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
 		BaselineDetails:    expandBaselineDetails(ctx, plan.BaselineDetails, &resp.Diagnostics),
+		Tags:               planTags,
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -476,6 +503,13 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		// to handle the rest when we read it back
 		state.QueryJson = plan.QueryJson
 	}
+
+	stateTags, diags := helper.TagsToMap(ctx, trigger.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = stateTags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }

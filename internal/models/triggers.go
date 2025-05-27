@@ -19,6 +19,7 @@ type TriggerResourceModel struct {
 	Recipients         types.Set    `tfsdk:"recipient"`           // NotificationRecipientModel
 	EvaluationSchedule types.List   `tfsdk:"evaluation_schedule"` // TriggerEvaluationScheduleModel
 	BaselineDetails    types.List   `tfsdk:"baseline_details"`
+	Tags               types.Map    `tfsdk:"tags"`
 }
 
 type TriggerBaselineDetailsModel struct {
