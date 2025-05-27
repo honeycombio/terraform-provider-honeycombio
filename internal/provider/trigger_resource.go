@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -142,23 +141,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					),
 				},
 			},
-			"tags": schema.MapAttribute{
-				Description: "A map of tags to assign to the resource.",
-				Optional:    true,
-				ElementType: types.StringType,
-				PlanModifiers: []planmodifier.Map{
-					modifiers.EquivalentTags(),
-				},
-				Validators: []validator.Map{
-					mapvalidator.SizeAtMost(client.MaxTagsPerResource),
-					mapvalidator.KeysAre(
-						stringvalidator.RegexMatches(client.TagKeyValidationRegex, "must only contain lowercase letters, and be 1-32 characters long"),
-					),
-					mapvalidator.ValueStringsAre(
-						stringvalidator.RegexMatches(client.TagValueValidationRegex, "must begin with a lowercase letter, be between 1-32 characters long, and only contain lowercase alphanumeric characters, -, or /"),
-					),
-				},
-			},
+			"tags": tagsSchema(),
 		},
 		Blocks: map[string]schema.Block{
 			"threshold": schema.ListNestedBlock{
