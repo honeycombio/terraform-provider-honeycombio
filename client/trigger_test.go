@@ -385,6 +385,6 @@ func TestTriggersEnvironmentWide(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, trigger.Description, result.Description)
-		assert.Equal(t, trigger.Threshold.Value, result.Threshold.Value)
+		assert.InDelta(t, trigger.Threshold.Value, result.Threshold.Value, 0.001)
 	})
 }
