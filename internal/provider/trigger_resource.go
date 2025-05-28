@@ -78,10 +78,12 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"dataset": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				Description: "The dataset this Trigger is associated with.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+					modifiers.DatasetDeprecation(true),
 				},
 			},
 			"description": schema.StringAttribute{
@@ -307,7 +309,9 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		newTrigger.EvaluationScheduleType = client.TriggerEvaluationScheduleWindow
 	}
 
-	trigger, err := r.client.Triggers.Create(ctx, plan.Dataset.ValueString(), newTrigger)
+	dataset := helper.GetDatasetOrAll(plan.Dataset)
+
+	trigger, err := r.client.Triggers.Create(ctx, dataset.ValueString(), newTrigger)
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Trigger", err) {
 		return
 	}
@@ -353,8 +357,10 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
+	dataset := helper.GetDatasetOrAll(state.Dataset)
+
 	var detailedErr client.DetailedError
-	trigger, err := r.client.Triggers.Get(ctx, state.Dataset.ValueString(), state.ID.ValueString())
+	trigger, err := r.client.Triggers.Get(ctx, dataset.String(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
 			// if not found consider it deleted -- so just remove it from state
@@ -470,12 +476,14 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		updatedTrigger.EvaluationScheduleType = client.TriggerEvaluationScheduleFrequency
 	}
 
-	_, err := r.client.Triggers.Update(ctx, plan.Dataset.ValueString(), updatedTrigger)
+	dataset := helper.GetDatasetOrAll(plan.Dataset)
+
+	_, err := r.client.Triggers.Update(ctx, dataset.String(), updatedTrigger)
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Trigger", err) {
 		return
 	}
 
-	trigger, err := r.client.Triggers.Get(ctx, plan.Dataset.ValueString(), plan.ID.ValueString())
+	trigger, err := r.client.Triggers.Get(ctx, dataset.String(), plan.ID.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Trigger", err) {
 		return
 	}
@@ -521,8 +529,10 @@ func (r *triggerResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
+	dataset := helper.GetDatasetOrAll(state.Dataset)
+
 	var detailedErr client.DetailedError
-	err := r.client.Triggers.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
+	err := r.client.Triggers.Delete(ctx, dataset.String(), state.ID.ValueString())
 	if err != nil {
 		if errors.As(err, &detailedErr) {
 			// if not found consider it deleted -- so don't error
