@@ -277,6 +277,39 @@ func TestAcc_TriggerResource(t *testing.T) {
 			},
 		})
 	})
+
+	t.Run("environment-wide trigger", func(t *testing.T) {
+		ctx := context.Background()
+		c := testAccClient(t)
+
+		if c.IsClassic(ctx) {
+			t.Skip("classic does not support environment-wide triggers")
+		}
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: testAccConfigEnvironmentWideTrigger(name),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "dataset", "__all__"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "description", "Environment-wide trigger"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "1800"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.op", ">"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.value", "1000"),
+					),
+				},
+				{
+					ResourceName:        "honeycombio_trigger.test",
+					ImportStateIdPrefix: "__all__/",
+					ImportState:         true,
+				},
+			},
+		})
+	})
 }
 
 // TestAcc_TriggerResourceUpgradeFromVersion014 is intended to test the migration
@@ -1459,47 +1492,6 @@ resource "honeycombio_trigger" "test" {
     target = "%[2]s"
   }
 }`, dataset, channel)
-}
-
-func testAccConfigTriggerWithTags(dataset, name string, tags map[string]string) string {
-	tagsConfig := ""
-	if len(tags) > 0 {
-		tagsConfig = "tags = {\n"
-		for k, v := range tags {
-			tagsConfig += fmt.Sprintf("    %s = \"%s\"\n", k, v)
-		}
-		tagsConfig += "  }"
-	}
-
-	return fmt.Sprintf(`
-data "honeycombio_query_specification" "test" {
-  calculation {
-    op     = "COUNT"
-  }
-
-  time_range = 1800
-}
-
-resource "honeycombio_query" "test" {
-  dataset    = "%[1]s"
-  query_json = data.honeycombio_query_specification.test.json
-}
-
-resource "honeycombio_trigger" "test" {
-  name    = "%[2]s"
-  dataset = "%[1]s"
-
-  query_id = honeycombio_query.test.id
-
-  threshold {
-    op    = ">"
-    value = 100
-  }
-
-  frequency = 1800
-
-  %[3]s
-}`, dataset, name, tagsConfig)
 }
 
 func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFunc {
