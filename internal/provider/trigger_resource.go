@@ -360,7 +360,7 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	dataset := helper.GetDatasetOrAll(state.Dataset)
 
 	var detailedErr client.DetailedError
-	trigger, err := r.client.Triggers.Get(ctx, dataset.String(), state.ID.ValueString())
+	trigger, err := r.client.Triggers.Get(ctx, dataset.ValueString(), state.ID.ValueString())
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
 			// if not found consider it deleted -- so just remove it from state
@@ -478,7 +478,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	dataset := helper.GetDatasetOrAll(plan.Dataset)
 
-	_, err := r.client.Triggers.Update(ctx, dataset.String(), updatedTrigger)
+	_, err := r.client.Triggers.Update(ctx, dataset.ValueString(), updatedTrigger)
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Trigger", err) {
 		return
 	}
@@ -532,7 +532,7 @@ func (r *triggerResource) Delete(ctx context.Context, req resource.DeleteRequest
 	dataset := helper.GetDatasetOrAll(state.Dataset)
 
 	var detailedErr client.DetailedError
-	err := r.client.Triggers.Delete(ctx, dataset.String(), state.ID.ValueString())
+	err := r.client.Triggers.Delete(ctx, dataset.ValueString(), state.ID.ValueString())
 	if err != nil {
 		if errors.As(err, &detailedErr) {
 			// if not found consider it deleted -- so don't error
