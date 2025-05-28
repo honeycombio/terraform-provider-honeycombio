@@ -231,12 +231,37 @@ resource "honeycombio_trigger" "example" {
 }
 ```
 
+### Example - Example an Environment-wide Trigger
+```hcl
+
+data "honeycombio_query_specification" "example" {
+    calculation {
+        op     = "AVG"
+        column = "duration_ms"
+    }
+}
+
+resource "honeycombio_trigger" "example" {
+    name        = "Requests are slower than usual"
+    description = "Average duration of all requests for the last 10 minutes."
+
+    query_json = data.honeycombio_query_specification.example.json
+
+    frequency = 600 // in seconds, 10 minutes
+
+    threshold {
+        op             = ">="
+        value          = 1000
+    }
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
 
 * `name` - (Required) Name of the trigger.
-* `dataset` - (Required) The dataset this trigger is associated with.
+* `dataset` - (Optional) The dataset this trigger is associated with. If omitted, the lookup will be Environment-wide.
 * `query_id` - (Optional) The ID of the Query that the Trigger will execute. Conflicts with `query_json`.
 * `query_json` - (Optional) The Query Specfication JSON for the Trigger to execute.
 Providing the Query Specification as JSON -- as opposed to a Query ID -- enables additional validation during the validate and plan stages.
