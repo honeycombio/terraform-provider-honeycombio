@@ -277,6 +277,39 @@ func TestAcc_TriggerResource(t *testing.T) {
 			},
 		})
 	})
+
+	t.Run("environment-wide trigger", func(t *testing.T) {
+		ctx := context.Background()
+		c := testAccClient(t)
+
+		if c.IsClassic(ctx) {
+			t.Skip("classic does not support environment-wide triggers")
+		}
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: testAccConfigEnvironmentWideTrigger(name),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "dataset", "__all__"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "description", "Environment-wide trigger"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "1800"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.op", ">"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.value", "1000"),
+					),
+				},
+				{
+					ResourceName:        "honeycombio_trigger.test",
+					ImportStateIdPrefix: "__all__/",
+					ImportState:         true,
+				},
+			},
+		})
+	})
 }
 
 // TestAcc_TriggerResourceUpgradeFromVersion014 is intended to test the migration
@@ -1517,4 +1550,34 @@ func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFun
 
 		return nil
 	}
+}
+
+func testAccConfigEnvironmentWideTrigger(name string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT"
+  }
+
+  time_range = 1800
+}
+
+resource "honeycombio_trigger" "test" {
+  name        = "%s"
+  description = "Environment-wide trigger"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  frequency = 1800
+
+  recipient {
+    type   = "marker"
+    target = "Environment-wide trigger fired"
+  }
+}`, name)
 }

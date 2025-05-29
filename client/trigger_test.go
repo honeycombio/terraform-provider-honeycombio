@@ -305,3 +305,86 @@ func TestTriggersWithBaselineDetails(t *testing.T) {
 	})
 
 }
+
+func TestTriggersEnvironmentWide(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := newTestClient(t)
+
+	if c.IsClassic(ctx) {
+		t.Skip("classic does not support environment-wide triggers")
+	}
+
+	var trigger *client.Trigger
+	var err error
+
+	// delete the trigger after the tests run
+	t.Cleanup(func() {
+		if trigger != nil && trigger.ID != "" {
+			c.Triggers.Delete(ctx, client.EnvironmentWideSlug, trigger.ID)
+		}
+	})
+
+	t.Run("Create - environment-wide", func(t *testing.T) {
+		data := &client.Trigger{
+			Name:        test.RandomStringWithPrefix("test.", 8),
+			Description: "Environment-wide trigger test",
+			Query: &client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{
+						Op: client.CalculationOpCount,
+					},
+				},
+				TimeRange: client.ToPtr(900),
+			},
+			Frequency: 900,
+			Threshold: &client.TriggerThreshold{
+				Op:    client.TriggerThresholdOpGreaterThan,
+				Value: 1000,
+			},
+			Recipients: []client.NotificationRecipient{
+				{
+					Type:   client.RecipientTypeMarker,
+					Target: "Environment-wide trigger fired",
+				},
+			},
+		}
+		trigger, err = c.Triggers.Create(ctx, client.EnvironmentWideSlug, data)
+		require.NoError(t, err)
+		assert.NotNil(t, trigger.ID)
+
+		// copy IDs before asserting equality
+		data.ID = trigger.ID
+		data.QueryID = trigger.QueryID
+		data.AlertType = trigger.AlertType
+		data.Recipients[0].ID = trigger.Recipients[0].ID
+
+		// set the default alert type
+		data.AlertType = client.TriggerAlertTypeOnChange
+		// set the default evaluation window type
+		data.EvaluationScheduleType = client.TriggerEvaluationScheduleFrequency
+		// set the default threshold exceeded limit
+		data.Threshold.ExceededLimit = 1
+
+		assert.Equal(t, data, trigger)
+	})
+
+	t.Run("Get - environment-wide", func(t *testing.T) {
+		getTrigger, err := c.Triggers.Get(ctx, client.EnvironmentWideSlug, trigger.ID)
+
+		require.NoError(t, err)
+		assert.Equal(t, *trigger, *getTrigger)
+	})
+
+	t.Run("Update - environment-wide", func(t *testing.T) {
+		trigger.Description = "Updated environment-wide trigger description"
+		trigger.Threshold.Value = 2000
+
+		result, err := c.Triggers.Update(ctx, client.EnvironmentWideSlug, trigger)
+
+		require.NoError(t, err)
+		assert.Equal(t, trigger.Description, result.Description)
+		assert.InDelta(t, trigger.Threshold.Value, result.Threshold.Value, 0.001)
+	})
+}
