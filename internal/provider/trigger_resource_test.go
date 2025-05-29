@@ -1494,6 +1494,40 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, channel)
 }
 
+func testAccConfigTriggerWithTags(dataset, name string, tags map[string]string) string {
+	tagsConfig := ""
+	if len(tags) > 0 {
+		tagsConfig = "tags = {\n"
+		for k, v := range tags {
+			tagsConfig += fmt.Sprintf("    %s = \"%s\"\n", k, v)
+		}
+		tagsConfig += "  }"
+	}
+
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT"
+  }
+  time_range = 1800
+}
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+  query_id = honeycombio_query.test.id
+  threshold {
+    op    = ">"
+    value = 100
+  }
+  frequency = 1800
+  %[3]s
+}`, dataset, name, tagsConfig)
+}
+
 func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
@@ -1509,4 +1543,34 @@ func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFun
 
 		return nil
 	}
+}
+
+func testAccConfigEnvironmentWideTrigger(name string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT"
+  }
+
+  time_range = 1800
+}
+
+resource "honeycombio_trigger" "test" {
+  name        = "%s"
+  description = "Environment-wide trigger"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  frequency = 1800
+
+  recipient {
+    type   = "marker"
+    target = "Environment-wide trigger fired"
+  }
+}`, name)
 }
