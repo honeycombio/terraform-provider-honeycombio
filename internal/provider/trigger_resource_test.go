@@ -1509,21 +1509,27 @@ data "honeycombio_query_specification" "test" {
   calculation {
     op     = "COUNT"
   }
+
   time_range = 1800
 }
+
 resource "honeycombio_query" "test" {
   dataset    = "%[1]s"
   query_json = data.honeycombio_query_specification.test.json
 }
+
 resource "honeycombio_trigger" "test" {
   name    = "%[2]s"
   dataset = "%[1]s"
+
   query_id = honeycombio_query.test.id
   threshold {
     op    = ">"
     value = 100
   }
+
   frequency = 1800
+
   %[3]s
 }`, dataset, name, tagsConfig)
 }
