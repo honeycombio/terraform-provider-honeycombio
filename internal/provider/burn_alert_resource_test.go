@@ -138,6 +138,8 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasicWebhookRecipient(t *testing.T)
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 	exhaustionMinutes := 240
+	rcptName := test.RandomStringWithPrefix("test.", 12)
+	rcptURL := test.RandomURL()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
@@ -146,17 +148,17 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasicWebhookRecipient(t *testing.T)
 		Steps: []resource.TestStep{
 			// Create - basic
 			{
-				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, "warning"),
+				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, rcptName, rcptURL, "warning"),
 				Check:  testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t, burnAlert, exhaustionMinutes, sloID, "warning"),
 			},
 			// Update - change variable value
 			{
-				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, "info"),
+				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, rcptName, rcptURL, "info"),
 				Check:  testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t, burnAlert, exhaustionMinutes, sloID, "info"),
 			},
 			// Update - remove variables
 			{
-				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, ""),
+				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, rcptName, rcptURL, ""),
 				Check:  testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t, burnAlert, exhaustionMinutes, sloID, ""),
 			},
 			// Import
@@ -226,6 +228,8 @@ func TestAcc_BurnAlertResource_budgetRateBasicWebhookRecipient(t *testing.T) {
 	burnAlert := &client.BurnAlert{}
 	budgetRateWindowMinutes := 60
 	budgetRateDecreasePercent := float64(5)
+	rcptName := test.RandomStringWithPrefix("test.", 12)
+	rcptURL := test.RandomURL()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
@@ -234,17 +238,17 @@ func TestAcc_BurnAlertResource_budgetRateBasicWebhookRecipient(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create - basic
 			{
-				Config: testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "warning"),
+				Config: testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "warning", rcptName, rcptURL),
 				Check:  testAccEnsureSuccessBudgetRateAlertWithWebhookRecip(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, "warning"),
 			},
 			// Update - change variable value
 			{
-				Config: testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "info"),
+				Config: testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "info", rcptName, rcptURL),
 				Check:  testAccEnsureSuccessBudgetRateAlertWithWebhookRecip(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, "info"),
 			},
 			// Update - remove variables
 			{
-				Config: testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, ""),
+				Config: testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID, "", rcptName, rcptURL),
 				Check:  testAccEnsureSuccessBudgetRateAlertWithWebhookRecip(t, burnAlert, budgetRateWindowMinutes, budgetRateDecreasePercent, sloID, ""),
 			},
 			// Import
@@ -1039,7 +1043,7 @@ resource "honeycombio_burn_alert" "test" {
 }`, exhaustionMinutes, sloID, pdseverity, testBADescription)
 }
 
-func testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes int, dataset, sloID, variableValue string) string {
+func testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes int, dataset, sloID, rcptName, rcptURL, variableValue string) string {
 	tmplBody := `<<EOT
 		{
 			"name": " {{ .Name }}",
@@ -1051,23 +1055,23 @@ func testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinute
 	if variableValue == "" {
 		return fmt.Sprintf(`
 resource "honeycombio_webhook_recipient" "test" {
-  name = "test"
-	url  = "http://example.com"
+  name = "%[6]s"
+  url  = "%[7]s"
 
-	header {
-	  name = "Authorization"
-	  value = "Bearer abc123"
-	}
+  header {
+    name = "Authorization"
+    value = "Bearer abc123"
+  }
 
-	variable {
-	  name = "severity"
-      default_value = "critical"
-	}
+  variable {
+    name = "severity"
+    default_value = "critical"
+}
 
-	template {
-	  type   = "exhaustion_time"
-      body = %[5]s
-    }
+  template {
+    type   = "exhaustion_time"
+    body = %[5]s
+  }
 }
 
 resource "honeycombio_burn_alert" "test" {
@@ -1080,13 +1084,13 @@ resource "honeycombio_burn_alert" "test" {
   recipient {
 	id = honeycombio_webhook_recipient.test.id
   }
-}`, exhaustionMinutes, dataset, sloID, testBADescription, tmplBody)
+}`, exhaustionMinutes, dataset, sloID, testBADescription, tmplBody, rcptName, rcptURL)
 	}
 
 	return fmt.Sprintf(`
 resource "honeycombio_webhook_recipient" "test" {
-  name = "test"
-	url  = "http://example.com"
+  name = "%[7]s"
+	url  = "%[8]s"
 
 	header {
 	  name = "Authorization"
@@ -1121,7 +1125,7 @@ resource "honeycombio_burn_alert" "test" {
  		}
  	}
   }
-}`, exhaustionMinutes, dataset, sloID, testBADescription, tmplBody, variableValue)
+}`, exhaustionMinutes, dataset, sloID, testBADescription, tmplBody, variableValue, rcptName, rcptURL)
 }
 
 func testAccConfigBurnAlertExhaustionTime_basicWebhookRecipientDuplicateVar(exhaustionMinutes int, dataset, sloID string) string {
@@ -1313,7 +1317,7 @@ resource "honeycombio_burn_alert" "test" {
 }`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), sloID, pdseverity, testBADescription)
 }
 
-func testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, variableValue string) string {
+func testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, variableValue, rcptName, rcptURL string) string {
 	tmplBody := `<<EOT
 		{
 			"name": " {{ .Name }}",
@@ -1325,8 +1329,8 @@ func testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinu
 	if variableValue == "" {
 		return fmt.Sprintf(`
 resource "honeycombio_webhook_recipient" "test" {
-  name = "test"
-	url  = "http://example.com"
+  name = "%[7]s"
+	url  = "%[8]s"
 
 	header {
 	  name = "Authorization"
@@ -1356,13 +1360,13 @@ resource "honeycombio_burn_alert" "test" {
   recipient {
 	id = honeycombio_webhook_recipient.test.id
   }
-}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription, tmplBody)
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription, tmplBody, rcptName, rcptURL)
 	}
 
 	return fmt.Sprintf(`
 resource "honeycombio_webhook_recipient" "test" {
-  name = "test"
-	url  = "http://example.com"
+  name = "%[8]s"
+	url  = "%[9]s"
 
 	header {
 	  name = "Authorization"
@@ -1399,7 +1403,7 @@ resource "honeycombio_burn_alert" "test" {
 		}
 	}
   }
-}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription, tmplBody, variableValue)
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription, tmplBody, variableValue, rcptName, rcptURL)
 }
 
 func testAccConfigBurnAlertBudgetRate_basicWebhookRecipientDuplicateVar(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID string) string {
@@ -1460,9 +1464,11 @@ resource "honeycombio_burn_alert" "test" {
 }
 
 func testAccConfigBurnAlertBudgetRate_trailingZeros(dataset, sloID string) string {
+	pdKey := test.RandomString(32)
+
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_key  = "%[4]s"
   integration_name = "test.pd-basic"
 }
 
@@ -1482,7 +1488,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "info"
     }
   }
-}`, dataset, sloID, testBADescription)
+}`, dataset, sloID, testBADescription, pdKey)
 }
 
 func testAccConfigBurnAlertBudgetRate_validateAttributesWhenAlertTypeIsBudgetRate(dataset, sloID string) string {

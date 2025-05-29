@@ -80,12 +80,15 @@ func TestAcc_TriggerResource(t *testing.T) {
 	})
 
 	t.Run("trigger resource with custom webhook recipient", func(t *testing.T) {
+		rcptName := test.RandomStringWithPrefix("test.", 12)
+		rcptURL := test.RandomURL()
+
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
-					Config: testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, "info"),
+					Config: testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, rcptName, rcptURL, "info"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
@@ -102,7 +105,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 				},
 				// then update the variable value from info -> critical
 				{
-					Config: testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, "critical"),
+					Config: testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, rcptName, rcptURL, "critical"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
@@ -119,7 +122,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 				},
 				// remove variables
 				{
-					Config: testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, ""),
+					Config: testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, rcptName, rcptURL, ""),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
@@ -1144,7 +1147,7 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, name, baselineDetails, email, pdKey, pdName)
 }
 
-func testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, varValue string) string {
+func testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, rcptName, rcptURL, varValue string) string {
 	tmplBody := `<<EOT
 		{
 			"name": " {{ .Name }}",
@@ -1169,8 +1172,8 @@ resource "honeycombio_query" "test" {
 }
 
 resource "honeycombio_webhook_recipient" "test" {
-  name = "test"
-	url  = "http://example.com"
+  name = "%[4]s"
+	url  = "%[5]s"
 
 	header {
 	  name = "Authorization"
@@ -1206,7 +1209,7 @@ resource "honeycombio_trigger" "test" {
   recipient {
 	id = honeycombio_webhook_recipient.test.id
   }
-}`, dataset, name, tmplBody)
+}`, dataset, name, tmplBody, rcptName, rcptURL)
 	}
 
 	return fmt.Sprintf(`
@@ -1224,8 +1227,8 @@ resource "honeycombio_query" "test" {
 }
 
 resource "honeycombio_webhook_recipient" "test" {
-  name = "test"
-	url  = "http://example.com"
+  name = "%[5]s"
+	url  = "%[6]s"
 
 	header {
 	  name = "Authorization"
@@ -1268,7 +1271,7 @@ resource "honeycombio_trigger" "test" {
 		}
 	}
   }
-}`, dataset, name, varValue, tmplBody)
+}`, dataset, name, varValue, tmplBody, rcptName, rcptURL)
 }
 
 func testAccConfigBasicTriggerTestWithWebhookRecipAndDuplicateVar(dataset, name string) string {
