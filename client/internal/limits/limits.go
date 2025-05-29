@@ -71,7 +71,7 @@ func rateLimitBackoff(mini, maxi time.Duration, r *http.Response) time.Duration 
 	// try the retry-after header
 	if reset == 0 {
 		if v := r.Header.Get(HeaderRetryAfter); v != "" {
-			retryTime, err := time.Parse(time.RFC3339, v)
+			retryTime, err := time.Parse(http.TimeFormat, v)
 			if err == nil {
 				reset = time.Until(retryTime)
 			}

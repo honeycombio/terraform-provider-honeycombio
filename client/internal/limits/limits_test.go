@@ -48,7 +48,7 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 		{
 			name:          "valid retry-after header",
 			headerName:    HeaderRetryAfter,
-			headerValue:   now.Add(2 * time.Minute).UTC().Format(time.RFC3339),
+			headerValue:   now.Add(2 * time.Minute).UTC().Format(http.TimeFormat),
 			expectedValue: 2 * time.Minute,
 		},
 		{
@@ -82,7 +82,7 @@ func TestClient_rateLimitBackoff(t *testing.T) {
 	t.Run("ratelimit header takes precedence", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		w.Header().Add(HeaderRateLimit, "limit=100, remaining=50, reset=60")
-		w.Header().Add(HeaderRetryAfter, now.Add(2*time.Minute).UTC().Format(time.RFC3339))
+		w.Header().Add(HeaderRetryAfter, now.Add(2*time.Minute).UTC().Format(http.TimeFormat))
 		w.WriteHeader(http.StatusTooManyRequests)
 
 		r := rateLimitBackoff(mini, maxi, w.Result())
