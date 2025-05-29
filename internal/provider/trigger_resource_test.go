@@ -1523,6 +1523,7 @@ resource "honeycombio_trigger" "test" {
   dataset = "%[1]s"
 
   query_id = honeycombio_query.test.id
+
   threshold {
     op    = ">"
     value = 100
