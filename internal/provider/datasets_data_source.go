@@ -114,7 +114,7 @@ func (d *datasetsDataSource) Read(ctx context.Context, req datasource.ReadReques
 			return
 		}
 		nameFilter = &filter.DetailFilter{
-			Type:       "name",
+			Field:      "name",
 			ValueRegex: exp,
 		}
 	}

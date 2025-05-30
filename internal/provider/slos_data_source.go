@@ -9,7 +9,6 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/filter"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
@@ -88,19 +87,20 @@ func (d *slosDataSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 
-	var sloFilter *filter.DetailFilter
-	if len(data.DetailFilter) > 0 {
-		sloFilter, err = data.DetailFilter[0].NewFilter()
-		if err != nil {
-			resp.Diagnostics.AddError("Unable to create SLO filter", err.Error())
-			return
-		}
+	// Create a filter group with all filters (implicit AND logic)
+	filterGroup, err := models.NewFilterGroup(data.DetailFilter)
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to create SLO filter group", err.Error())
+		return
 	}
+
 	for _, s := range slos {
-		if !sloFilter.MatchName(s.Name) {
-			continue
+		// Use the full filter matching capability for any field
+		// For backward compatibility, if no filters are defined or if the filters
+		// don't specifically target a field, include the SLO
+		if filterGroup == nil || filterGroup.Match(s) {
+			data.IDs = append(data.IDs, types.StringValue(s.ID))
 		}
-		data.IDs = append(data.IDs, types.StringValue(s.ID))
 	}
 	data.ID = types.StringValue(hashcode.StringValues(data.IDs))
 
