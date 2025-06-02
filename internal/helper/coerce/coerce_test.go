@@ -3,8 +3,9 @@ package coerce_test
 import (
 	"testing"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/coerce"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/coerce"
 )
 
 func Test_valueToType(t *testing.T) {
