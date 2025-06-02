@@ -20,11 +20,13 @@ func detailFilterSchema() schema.ListNestedBlock {
 				},
 				"operator": schema.StringAttribute{
 					Optional:    true,
-					Description: "The comparison operator. Valid values: 'equals', 'not_equals', 'contains', 'starts_with', 'ends_with', 'greater_than', 'less_than'.",
+					Description: "The comparison operator. Valid values: 'equals', '=', 'eq', 'not_equals', '!=', 'ne', 'contains', 'in', 'does-not-contain', 'not-in', 'starts_with', 'does-not-start-with', 'ends_with', 'does-not-end-with', 'greater_than', '>', 'gt', 'greater_than_or_equal', '>=', 'ge', 'less_than', '<', 'lt', 'less_than_or_equal', '<=', 'le', 'does-not-exist'.",
 					Validators: []validator.String{
 						stringvalidator.OneOf(
-							"equals", "not_equals", "contains", "starts_with",
-							"ends_with", "greater_than", "less_than",
+							"equals", "=", "eq", "not_equals", "!=", "ne", "contains", "in", "does-not-contain",
+							"not-in", "starts_with", "does-not-start-with", "ends_with", "does-not-end-with",
+							"greater_than", ">", "gt", "greater_than_or_equal", ">=", "ge", "less_than", "<",
+							"lt", "less_than_or_equal", "<=", "le", "does-not-exist", "does-not-exist",
 						),
 					},
 				},

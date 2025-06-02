@@ -79,6 +79,12 @@ func TestMatch(t *testing.T) {
 			expected: true,
 		},
 		{
+			name:     "No operator - match",
+			field:    "Name",
+			value:    "Test Resource",
+			expected: true,
+		},
+		{
 			name:     "String starts_with - match",
 			field:    "Name",
 			operator: "starts_with",
@@ -146,6 +152,13 @@ func TestMatch(t *testing.T) {
 			value:    "true",
 			expected: true,
 		},
+		{
+			name:     "Bool equals - match",
+			field:    "is_available",
+			operator: "equals",
+			value:    "true",
+			expected: true,
+		},
 
 		// Edge cases
 		{
@@ -181,6 +194,120 @@ func TestMatch(t *testing.T) {
 			operator: "contains",
 			value:    "nested",
 			expected: true,
+		},
+
+		// New operators test cases
+		{
+			name:     "String does-not-start-with - match",
+			field:    "Name",
+			operator: "does-not-start-with",
+			value:    "Wrong",
+			expected: true,
+		},
+		{
+			name:     "String does-not-start-with - no match",
+			field:    "Name",
+			operator: "does-not-start-with",
+			value:    "Test",
+			expected: false,
+		},
+		{
+			name:     "String does-not-end-with - match",
+			field:    "Name",
+			operator: "does-not-end-with",
+			value:    "Wrong",
+			expected: true,
+		},
+		{
+			name:     "String does-not-end-with - no match",
+			field:    "Name",
+			operator: "does-not-end-with",
+			value:    "Resource",
+			expected: false,
+		},
+		{
+			name:     "String does-not-contain - match",
+			field:    "Name",
+			operator: "does-not-contain",
+			value:    "Wrong",
+			expected: true,
+		},
+		{
+			name:     "String does-not-contain - no match",
+			field:    "Name",
+			operator: "does-not-contain",
+			value:    "Resource",
+			expected: false,
+		},
+		{
+			name:     "String not-in - match",
+			field:    "Name",
+			operator: "not-in",
+			value:    "Wrong",
+			expected: true,
+		},
+		{
+			name:     "String not-in - no match",
+			field:    "Name",
+			operator: "not-in",
+			value:    "Resource",
+			expected: false,
+		},
+		{
+			name:     "Integer greater_than_or_equal - match equal",
+			field:    "Count",
+			operator: ">=",
+			value:    "42",
+			expected: true,
+		},
+		{
+			name:     "Integer greater_than_or_equal - match greater",
+			field:    "Count",
+			operator: ">=",
+			value:    "30",
+			expected: true,
+		},
+		{
+			name:     "Integer greater_than_or_equal - no match",
+			field:    "Count",
+			operator: ">=",
+			value:    "50",
+			expected: false,
+		},
+		{
+			name:     "Integer less_than_or_equal - match equal",
+			field:    "Count",
+			operator: "<=",
+			value:    "42",
+			expected: true,
+		},
+		{
+			name:     "Integer less_than_or_equal - match less",
+			field:    "Count",
+			operator: "<=",
+			value:    "50",
+			expected: true,
+		},
+		{
+			name:     "Integer less_than_or_equal - no match",
+			field:    "Count",
+			operator: "<=",
+			value:    "30",
+			expected: false,
+		},
+		{
+			name:     "String does-not-exist - match for empty string",
+			field:    "Name",
+			operator: "does-not-exist",
+			value:    "",
+			expected: false,
+		},
+		{
+			name:     "NonExistentField does-not-exist - no match",
+			field:    "NonExistentField",
+			operator: "does-not-exist",
+			value:    "",
+			expected: false,
 		},
 	}
 

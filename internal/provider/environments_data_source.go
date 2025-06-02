@@ -9,7 +9,6 @@ import (
 
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/filter"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
@@ -89,20 +88,17 @@ func (d *environmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 		envs = append(envs, items...)
 	}
 
-	var envFilter *filter.DetailFilter
-	if len(data.DetailFilter) > 0 {
-		envFilter, err = data.DetailFilter[0].NewFilter()
-		if err != nil {
-			resp.Diagnostics.AddError("Unable to create Environment filter", err.Error())
-			return
-		}
+	// Create a filter group with all filters (implicit AND logic)
+	filterGroup, err := models.NewFilterGroup(data.DetailFilter)
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to create Environment filter group", err.Error())
+		return
 	}
 
 	for _, e := range envs {
-		if !envFilter.MatchName(e.Name) {
-			continue
+		if filterGroup == nil || filterGroup.Match(e) {
+			data.IDs = append(data.IDs, types.StringValue(e.ID))
 		}
-		data.IDs = append(data.IDs, types.StringValue(e.ID))
 	}
 	data.ID = types.StringValue(hashcode.StringValues(data.IDs))
 

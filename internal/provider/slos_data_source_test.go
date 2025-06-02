@@ -156,9 +156,9 @@ data "honeycombio_slos" "numeric_filter" {
 `, dataset, testPrefix),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// resource.TestCheckResourceAttr("data.honeycombio_slos.regex", "ids.#", "2"),
-					// resource.TestCheckResourceAttr("data.honeycombio_slos.exact", "ids.#", "1"),
-					// // Check the multi-filter results (should only match slo1)
-					// resource.TestCheckResourceAttr("data.honeycombio_slos.multi_filter", "ids.#", "1"),
+					resource.TestCheckResourceAttr("data.honeycombio_slos.exact", "ids.#", "1"),
+					// Check the multi-filter results (should only match slo1)
+					resource.TestCheckResourceAttr("data.honeycombio_slos.multi_filter", "ids.#", "1"),
 					// Check filters with different names
 					resource.TestCheckResourceAttr("data.honeycombio_slos.different_names", "ids.#", "2"),
 					// Check numeric filter
@@ -234,60 +234,67 @@ func TestAcc_SLOsDataSource_FilterGroups(t *testing.T) {
 	dataset := testAccDataset()
 	testPrefix := acctest.RandString(8)
 
-	// Create SLOs with various properties for testing
-	sloTestData := []client.SLO{
+	testData := []struct {
+		SLI client.DerivedColumn
+		SLO client.SLO
+	}{
 		{
-			Name:             testPrefix + "_high_slo",
-			SLI:              client.SLIRef{Alias: testPrefix + "_sli_high"},
-			TimePeriodDays:   30,
-			TargetPerMillion: 999000, // High target
-			Description:      "High reliability SLO",
+			SLI: client.DerivedColumn{
+				Alias:      testPrefix + "_sli_high",
+				Expression: "BOOL(1)",
+			},
+			SLO: client.SLO{
+				Name:             testPrefix + "_high_slo",
+				SLI:              client.SLIRef{Alias: testPrefix + "_sli_high"},
+				TimePeriodDays:   30,
+				TargetPerMillion: 999000,
+				Description:      "High reliability SLO",
+			},
 		},
 		{
-			Name:             testPrefix + "_medium_slo",
-			SLI:              client.SLIRef{Alias: testPrefix + "_sli_medium"},
-			TimePeriodDays:   7,
-			TargetPerMillion: 995000, // Medium target
-			Description:      "Medium reliability SLO",
+			SLI: client.DerivedColumn{
+				Alias:      testPrefix + "_medium_slo",
+				Expression: "BOOL(1)",
+			},
+			SLO: client.SLO{
+				Name:             testPrefix + "_medium_slo",
+				SLI:              client.SLIRef{Alias: testPrefix + "_sli_medium"},
+				TimePeriodDays:   7,
+				TargetPerMillion: 995000,
+				Description:      "Medium reliability SLO",
+			},
 		},
 		{
-			Name:             testPrefix + "_low_slo",
-			SLI:              client.SLIRef{Alias: testPrefix + "_sli_low"},
-			TimePeriodDays:   1,
-			TargetPerMillion: 990000, // Low target
-			Description:      "Low reliability SLO",
+			SLI: client.DerivedColumn{
+				Alias:      testPrefix + "_sli_low",
+				Expression: "BOOL(1)",
+			},
+			SLO: client.SLO{
+				Name:             testPrefix + "_low_slo",
+				SLI:              client.SLIRef{Alias: testPrefix + "_sli_low"},
+				TimePeriodDays:   1,
+				TargetPerMillion: 990000,
+				Description:      "Low reliability SLO",
+			},
 		},
 	}
 
-	// Create SLIs first
-	for i, slo := range sloTestData {
-		sli := client.DerivedColumn{
-			Alias:      slo.SLI.Alias,
-			Expression: "BOOL(1)",
-		}
-		createdSLI, err := c.DerivedColumns.Create(ctx, dataset, &sli)
+	for i, tc := range testData {
+		sli, err := c.DerivedColumns.Create(ctx, dataset, &tc.SLI)
+		require.NoError(t, err)
+		slo, err := c.SLOs.Create(ctx, dataset, &tc.SLO)
 		require.NoError(t, err)
 
-		// Store SLI ID for cleanup
-		sloTestData[i].SLI.Alias = createdSLI.ID
+		// update IDs for removal later
+		testData[i].SLI.ID = sli.ID
+		testData[i].SLO.ID = slo.ID
 	}
 
-	// Create SLOs
-	var sloIDs []string
-	for i, slo := range sloTestData {
-		createdSLO, err := c.SLOs.Create(ctx, dataset, &slo)
-		require.NoError(t, err)
-
-		// Store SLO ID for cleanup
-		sloTestData[i].ID = createdSLO.ID
-		sloIDs = append(sloIDs, createdSLO.ID)
-	}
-
-	// Cleanup after test
 	t.Cleanup(func() {
-		for _, slo := range sloTestData {
-			c.SLOs.Delete(ctx, dataset, slo.ID)
-			c.DerivedColumns.Delete(ctx, dataset, slo.SLI.Alias)
+		// remove SLOs at the of the test run
+		for _, tc := range testData {
+			c.SLOs.Delete(ctx, dataset, tc.SLO.ID)
+			c.DerivedColumns.Delete(ctx, dataset, tc.SLI.ID)
 		}
 	})
 

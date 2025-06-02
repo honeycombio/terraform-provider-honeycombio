@@ -100,11 +100,12 @@ func (d *datasetsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	var nameFilter *filter.DetailFilter
+	var filterGroup *filter.FilterGroup
 	if len(data.DetailFilter) > 0 {
-		nameFilter, err = data.DetailFilter[0].NewFilter()
+		var err error
+		filterGroup, err = models.NewFilterGroup(data.DetailFilter)
 		if err != nil {
-			resp.Diagnostics.AddError("Unable to create Dataset filter", err.Error())
+			resp.Diagnostics.AddError("Unable to create Dataset filter group", err.Error())
 			return
 		}
 	} else if !data.StartsWith.IsNull() {
@@ -113,18 +114,21 @@ func (d *datasetsDataSource) Read(ctx context.Context, req datasource.ReadReques
 			resp.Diagnostics.AddError("Unable to create Dataset filter", err.Error())
 			return
 		}
-		nameFilter = &filter.DetailFilter{
+
+		nameFilter := &filter.DetailFilter{
 			Field:      "name",
 			ValueRegex: exp,
+		}
+		filterGroup = &filter.FilterGroup{
+			Filters: []*filter.DetailFilter{nameFilter},
 		}
 	}
 
 	for _, e := range datasets {
-		if !nameFilter.MatchName(e.Name) {
-			continue
+		if filterGroup == nil || filterGroup.Match(e) {
+			data.Names = append(data.Names, types.StringValue(e.Name))
+			data.Slugs = append(data.Slugs, types.StringValue(e.Slug))
 		}
-		data.Names = append(data.Names, types.StringValue(e.Name))
-		data.Slugs = append(data.Slugs, types.StringValue(e.Slug))
 	}
 	data.ID = types.StringValue(hashcode.StringValues(data.Slugs))
 

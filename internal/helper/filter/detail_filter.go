@@ -60,18 +60,30 @@ func getFieldValue(resource interface{}, fieldName string) (interface{}, bool) {
 
 	lowerFieldName := strings.ToLower(fieldName)
 
+	// Create alternate version with underscores removed for camelCase comparison
+	// Eg. "time_period_days" becomes "timeperioddays"
+	noUnderscoreFieldName := strings.ReplaceAll(lowerFieldName, "_", "")
+
 	switch v.Kind() {
 	case reflect.Struct:
 		t := v.Type()
 		for i := range t.NumField() {
-			if strings.ToLower(t.Field(i).Name) == lowerFieldName {
+			fieldType := t.Field(i)
+			fieldNameLower := strings.ToLower(fieldType.Name)
+
+			// Direct match
+			if fieldNameLower == lowerFieldName {
+				return v.Field(i).Interface(), true
+			}
+
+			// Match with underscores removed (camelCase to snake_case conversion)
+			if strings.ReplaceAll(fieldNameLower, "_", "") == noUnderscoreFieldName {
 				return v.Field(i).Interface(), true
 			}
 		}
 		return nil, false
 	case reflect.Map:
 		for _, key := range v.MapKeys() {
-			// Convert key to string for comparison
 			keyStr, ok := key.Interface().(string)
 			if !ok {
 				continue
@@ -106,19 +118,29 @@ func convertToString(value interface{}) string {
 
 // compareValues compares two values using the specified operator
 func compareValues(strValue, operator, filterValue string, regex *regexp.Regexp) bool {
+	if regex != nil {
+		return regex.MatchString(strValue)
+	}
+
 	switch operator {
-	case "equals": // Default to equals if no operator specified
+	case "equals", "=", "eq", "":
 		return strValue == filterValue
-	case "not_equals":
+	case "not_equals", "!=", "ne":
 		return strValue != filterValue
-	case "contains":
+	case "contains", "in":
 		return strings.Contains(strValue, filterValue)
+	case "does-not-contain", "not-in":
+		return !strings.Contains(strValue, filterValue)
 	case "starts_with":
 		resp := strings.HasPrefix(strValue, filterValue)
 		return resp
+	case "does-not-start-with":
+		return !strings.HasPrefix(strValue, filterValue)
 	case "ends_with":
 		return strings.HasSuffix(strValue, filterValue)
-	case "greater_than":
+	case "does-not-end-with":
+		return !strings.HasSuffix(strValue, filterValue)
+	case "greater_than", ">", "gt":
 		// Try to convert both to numbers for comparison
 		val1, err1 := strconv.ParseFloat(strValue, 64)
 		val2, err2 := strconv.ParseFloat(filterValue, 64)
@@ -126,24 +148,36 @@ func compareValues(strValue, operator, filterValue string, regex *regexp.Regexp)
 			return val1 > val2
 		}
 		return false
-	case "less_than":
+	case "greater_than_or_equal", ">=", "ge":
+		val1, err1 := strconv.ParseFloat(strValue, 64)
+		val2, err2 := strconv.ParseFloat(filterValue, 64)
+		if err1 == nil && err2 == nil {
+			return val1 >= val2
+		}
+		return false
+	case "less_than", "<", "lt":
 		val1, err1 := strconv.ParseFloat(strValue, 64)
 		val2, err2 := strconv.ParseFloat(filterValue, 64)
 		if err1 == nil && err2 == nil {
 			return val1 < val2
 		}
 		return false
-	default:
-		if regex != nil {
-			return regex.MatchString(strValue)
+	case "less_than_or_equal", "<=", "le":
+		val1, err1 := strconv.ParseFloat(strValue, 64)
+		val2, err2 := strconv.ParseFloat(filterValue, 64)
+		if err1 == nil && err2 == nil {
+			return val1 <= val2
 		}
+		return false
+	case "does-not-exist":
+		return strValue == ""
+	default:
 		return false
 	}
 }
 
 // MatchName checks if the filter matches a given name.
 func (f *DetailFilter) MatchName(name string) bool {
-	// nil filter fails open
 	if f == nil {
 		return true
 	}

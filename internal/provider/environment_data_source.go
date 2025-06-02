@@ -120,11 +120,12 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 	} else {
 		// we're using the detail filter to find the environment
-		var envFilter *filter.DetailFilter
+		var filterGroup *filter.FilterGroup
 		if len(data.DetailFilter) > 0 {
-			envFilter, err = data.DetailFilter[0].NewFilter()
+			var err error
+			filterGroup, err = models.NewFilterGroup(data.DetailFilter)
 			if err != nil {
-				resp.Diagnostics.AddError("Unable to create Environment filter", err.Error())
+				resp.Diagnostics.AddError("Unable to create Environment filter group", err.Error())
 				return
 			}
 		}
@@ -144,10 +145,9 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 		matched := make([]*v2client.Environment, 0, len(envs))
 		for _, e := range envs {
-			if !envFilter.MatchName(e.Name) {
-				continue
+			if filterGroup == nil || filterGroup.Match(e) {
+				matched = append(matched, e)
 			}
-			matched = append(matched, e)
 		}
 
 		if len(matched) == 0 {
