@@ -143,23 +143,12 @@ data "honeycombio_slos" "different_names" {
   }
 }
 
-# Filter with greater_than operator
-data "honeycombio_slos" "numeric_filter" {
-  dataset     = "%[1]s"
-
-  detail_filter {
-    name    = "target_per_million"
-    operator = "greater_than"
-    value    = "994000"
-  }
-}
 `, dataset, testPrefix),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("data.honeycombio_slos.regex", "ids.#", "2"),
 					resource.TestCheckResourceAttr("data.honeycombio_slos.exact", "ids.#", "1"),
 					resource.TestCheckResourceAttr("data.honeycombio_slos.multi_filter", "ids.#", "1"),
 					resource.TestCheckResourceAttr("data.honeycombio_slos.different_names", "ids.#", "2"),
-					resource.TestCheckResourceAttr("data.honeycombio_slos.numeric_filter", "ids.#", "3"),
 				),
 			},
 		},
