@@ -67,26 +67,35 @@ func formatTagsAsString(tagField interface{}) string {
 
 	var tagPairs []string
 
-	for i := range v.Len() {
-		item := v.Index(i).Interface()
-
-		// Check if it's a string (simple tag)
-		if tagStr, ok := item.(string); ok {
-			tagPairs = append(tagPairs, tagStr)
-			continue
+	switch v.Kind() {
+	// Tags should typically come back as a slice but adding support for maps
+	// just in case.
+	case reflect.Map:
+		for _, key := range v.MapKeys() {
+			keyStr := fmt.Sprintf("%v", key.Interface())
+			valueStr := fmt.Sprintf("%v", v.MapIndex(key).Interface())
+			tagPairs = append(tagPairs, fmt.Sprintf("%s:%s", keyStr, valueStr))
 		}
+	case reflect.Slice, reflect.Array:
+		for i := range v.Len() {
+			item := v.Index(i).Interface()
 
-		// Check if it's a Tag struct with Key and Value fields.
-		// This assumes the struct has fields named "Key" and "Value"
-		itemValue := reflect.ValueOf(item)
-		if itemValue.Kind() == reflect.Struct {
-			keyField := itemValue.FieldByName("Key")
-			valueField := itemValue.FieldByName("Value")
+			// Check if it's a string (simple tag)
+			if tagStr, ok := item.(string); ok {
+				tagPairs = append(tagPairs, tagStr)
+				continue
+			}
 
-			if keyField.IsValid() && valueField.IsValid() {
-				key := fmt.Sprintf("%v", keyField.Interface())
-				value := fmt.Sprintf("%v", valueField.Interface())
-				tagPairs = append(tagPairs, fmt.Sprintf("%s:%s", key, value))
+			itemValue := reflect.ValueOf(item)
+			if itemValue.Kind() == reflect.Struct {
+				keyField := itemValue.FieldByName("Key")
+				valueField := itemValue.FieldByName("Value")
+
+				if keyField.IsValid() && valueField.IsValid() {
+					key := fmt.Sprintf("%v", keyField.Interface())
+					value := fmt.Sprintf("%v", valueField.Interface())
+					tagPairs = append(tagPairs, fmt.Sprintf("%s:%s", key, value))
+				}
 			}
 		}
 	}
