@@ -1543,7 +1543,12 @@ func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFun
 		}
 
 		client := testAccClient(t)
-		_, err := client.Triggers.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+		dataset := resourceState.Primary.Attributes["dataset"]
+		if dataset == "" {
+			// For environment-wide triggers, use "__all__" as the dataset
+			dataset = "__all__"
+		}
+		_, err := client.Triggers.Get(context.Background(), dataset, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created trigger: %w", err)
 		}

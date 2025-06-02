@@ -483,7 +483,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	trigger, err := r.client.Triggers.Get(ctx, dataset.String(), plan.ID.ValueString())
+	trigger, err := r.client.Triggers.Get(ctx, dataset.ValueString(), plan.ID.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Trigger", err) {
 		return
 	}
