@@ -20,7 +20,7 @@ func detailFilterSchema() schema.ListNestedBlock {
 				},
 				"operator": schema.StringAttribute{
 					Optional:    true,
-					Description: "The comparison operator. Valid values: 'equals', '=', 'eq', 'not-equals', '!=', 'ne', 'contains', 'in', 'does-not-contain', 'not-in', 'starts-with', 'does-not-start-with', 'ends-with', 'does-not-end-with', '>', 'gt', '>=', 'ge', '<', 'lt', '<=', 'le', 'does-not-exist'.",
+					Description: "The comparison operator. The default is 'equals'.",
 					Validators: []validator.String{
 						stringvalidator.OneOf(
 							"equals", "=", "eq", "not-equals", "!=", "ne", "contains", "in", "does-not-contain",

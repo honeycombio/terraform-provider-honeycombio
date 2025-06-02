@@ -24,6 +24,12 @@ data "honeycombio_slos" "foo" {
     name        = "name"
     value_regex = "foo_*"
   }
+
+  detail_filter {
+    name     = "tags"
+    operator = "contains"
+    value    = "team:core"
+  }
 }
 ```
 
