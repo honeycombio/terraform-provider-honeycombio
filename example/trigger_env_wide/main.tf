@@ -6,6 +6,11 @@ terraform {
   }
 }
 
+provider "honeycombio" {
+ api_key="GiBk40pefeEt8fk9qITAP2"
+ api_url="http://localhost:8085"
+}
+
 data "honeycombio_query_specification" "query" {
   calculation {
     op     = "AVG"

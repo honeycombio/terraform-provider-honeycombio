@@ -295,7 +295,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
-						resource.TestCheckResourceAttr("honeycombio_trigger.test", "dataset", "__all__"),
+						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "dataset"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "description", "Environment-wide trigger"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "1800"),
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.op", ">"),
