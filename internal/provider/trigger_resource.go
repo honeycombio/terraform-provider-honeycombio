@@ -489,7 +489,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	var state models.TriggerResourceModel
-	state.Dataset = plan.Dataset
+	state.Dataset = dataset
 	state.ID = types.StringValue(trigger.ID)
 	state.Name = types.StringValue(trigger.Name)
 	state.Description = types.StringValue(trigger.Description)
