@@ -150,7 +150,7 @@ data "honeycombio_slos" "numeric_filter" {
   detail_filter {
     name    = "target_per_million"
     operator = "greater_than"
-    value    = "990000"
+    value    = "994000"
   }
 }
 `, dataset, testPrefix),
