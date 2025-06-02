@@ -155,13 +155,10 @@ data "honeycombio_slos" "numeric_filter" {
 }
 `, dataset, testPrefix),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// resource.TestCheckResourceAttr("data.honeycombio_slos.regex", "ids.#", "2"),
+					resource.TestCheckResourceAttr("data.honeycombio_slos.regex", "ids.#", "2"),
 					resource.TestCheckResourceAttr("data.honeycombio_slos.exact", "ids.#", "1"),
-					// Check the multi-filter results (should only match slo1)
 					resource.TestCheckResourceAttr("data.honeycombio_slos.multi_filter", "ids.#", "1"),
-					// Check filters with different names
 					resource.TestCheckResourceAttr("data.honeycombio_slos.different_names", "ids.#", "2"),
-					// Check numeric filter
 					resource.TestCheckResourceAttr("data.honeycombio_slos.numeric_filter", "ids.#", "3"),
 				),
 			},
