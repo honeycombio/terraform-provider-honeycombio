@@ -76,7 +76,7 @@ func formatTagsAsString(tagField interface{}) string {
 			continue
 		}
 
-		// Check if it's a Tag struct with Key and Value fields
+		// Check if it's a Tag struct with Key and Value fields.
 		// This assumes the struct has fields named "Key" and "Value"
 		itemValue := reflect.ValueOf(item)
 		if itemValue.Kind() == reflect.Struct {
@@ -89,6 +89,11 @@ func formatTagsAsString(tagField interface{}) string {
 				tagPairs = append(tagPairs, fmt.Sprintf("%s:%s", key, value))
 			}
 		}
+	}
+
+	// As a fallback, if no tags were found, return the string representation of the field
+	if len(tagPairs) == 0 {
+		return coerce.ValueToString(tagField)
 	}
 
 	return strings.Join(tagPairs, ",")
@@ -104,8 +109,15 @@ func getFieldValue(resource interface{}, fieldName string) (interface{}, bool) {
 
 	lowerFieldName := strings.ToLower(fieldName)
 
-	// Create alternate version with underscores removed for camelCase comparison
-	// Eg. "time_period_days" becomes "timeperioddays"
+	// Create alternate version without underscores.
+	// This is useful for fields that might be named in camelCase or snake_case.
+	// This can occur when resources are read as structs or maps. The struct fields
+	// are typically in camelCase, while the filter field names might be in snake_case.
+	//
+	// For example, "timePeriodDays" becomes "timeperioddays" and the filter might use
+	// "time_period_days" or "timeperioddays". Underscores are removed from the field name
+	// to allow matching both camelCase and snake_case styles.
+	// This allows matching both styles.
 	noUnderscoreFieldName := strings.ReplaceAll(lowerFieldName, "_", "")
 
 	switch v.Kind() {

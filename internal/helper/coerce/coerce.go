@@ -2,6 +2,7 @@ package coerce
 
 import (
 	"fmt"
+
 	"strconv"
 )
 
