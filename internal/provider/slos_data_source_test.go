@@ -253,7 +253,7 @@ func TestAcc_SLOsDataSource_FilterGroups(t *testing.T) {
 		},
 		{
 			SLI: client.DerivedColumn{
-				Alias:      testPrefix + "_medium_slo",
+				Alias:      testPrefix + "_sli_medium",
 				Expression: "BOOL(1)",
 			},
 			SLO: client.SLO{
