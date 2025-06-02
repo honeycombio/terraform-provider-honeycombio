@@ -20,13 +20,12 @@ func detailFilterSchema() schema.ListNestedBlock {
 				},
 				"operator": schema.StringAttribute{
 					Optional:    true,
-					Description: "The comparison operator. Valid values: 'equals', '=', 'eq', 'not_equals', '!=', 'ne', 'contains', 'in', 'does-not-contain', 'not-in', 'starts_with', 'does-not-start-with', 'ends_with', 'does-not-end-with', 'greater_than', '>', 'gt', 'greater_than_or_equal', '>=', 'ge', 'less_than', '<', 'lt', 'less_than_or_equal', '<=', 'le', 'does-not-exist'.",
+					Description: "The comparison operator. Valid values: 'equals', '=', 'eq', 'not-equals', '!=', 'ne', 'contains', 'in', 'does-not-contain', 'not-in', 'starts-with', 'does-not-start-with', 'ends-with', 'does-not-end-with', '>', 'gt', '>=', 'ge', '<', 'lt', '<=', 'le', 'does-not-exist'.",
 					Validators: []validator.String{
 						stringvalidator.OneOf(
-							"equals", "=", "eq", "not_equals", "!=", "ne", "contains", "in", "does-not-contain",
-							"not-in", "starts_with", "does-not-start-with", "ends_with", "does-not-end-with",
-							"greater_than", ">", "gt", "greater_than_or_equal", ">=", "ge", "less_than", "<",
-							"lt", "less_than_or_equal", "<=", "le", "does-not-exist", "does-not-exist",
+							"equals", "=", "eq", "not-equals", "!=", "ne", "contains", "in", "does-not-contain",
+							"not-in", "starts-with", "does-not-start-with", "ends-with", "does-not-end-with",
+							">", "gt", ">=", "ge", "<", "lt", "<=", "le", "does-not-exist", "does-not-exist",
 						),
 					},
 				},

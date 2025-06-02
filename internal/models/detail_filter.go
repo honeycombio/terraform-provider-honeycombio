@@ -15,16 +15,6 @@ type DetailFilterModel struct {
 	ValueRegex types.String `tfsdk:"value_regex"`
 }
 
-// NewFilter creates a new filter from the filter model
-func (m *DetailFilterModel) NewFilter() (*filter.DetailFilter, error) {
-	field := m.Name.ValueString()
-	operator := m.Operator.ValueString()
-	value := m.Value.ValueString()
-	regex := m.ValueRegex.ValueString()
-
-	return filter.NewDetailFilter(field, operator, value, regex)
-}
-
 // NewFilterGroup creates a filter group from multiple filter models
 func NewFilterGroup(detailFilter []DetailFilterModel) (*filter.FilterGroup, error) {
 	if len(detailFilter) == 0 {
@@ -34,7 +24,7 @@ func NewFilterGroup(detailFilter []DetailFilterModel) (*filter.FilterGroup, erro
 	filters := make([]*filter.DetailFilter, 0, len(detailFilter))
 
 	for _, filterModel := range detailFilter {
-		filter, err := filterModel.NewFilter()
+		filter, err := filterModel.newFilter()
 		if err != nil {
 			return nil, fmt.Errorf("error creating filter: %w", err)
 		}
@@ -42,4 +32,14 @@ func NewFilterGroup(detailFilter []DetailFilterModel) (*filter.FilterGroup, erro
 	}
 
 	return filter.NewFilterGroup(filters), nil
+}
+
+// newFilter creates a new filter from the filter model
+func (m *DetailFilterModel) newFilter() (*filter.DetailFilter, error) {
+	field := m.Name.ValueString()
+	operator := m.Operator.ValueString()
+	value := m.Value.ValueString()
+	regex := m.ValueRegex.ValueString()
+
+	return filter.NewDetailFilter(field, operator, value, regex)
 }

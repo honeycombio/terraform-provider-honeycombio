@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/coerce"
 )
 
 // DetailFilter provides filtering capabilities for resources.
@@ -45,9 +47,51 @@ func (f *DetailFilter) Match(resource interface{}) bool {
 		return false
 	}
 
-	strValue := convertToString(fieldValue)
+	strValue := coerce.ValueToString(fieldValue)
+
+	// For tag fields, convert to "key:value" format strings before comparison
+	// eg. "tags" field with value {"env": "prod", "team": "ops"} becomes "env:prod,team:ops"
+	if strings.ToLower(f.Field) == "tags" {
+		strValue = formatTagsAsString(fieldValue)
+	}
 
 	return compareValues(strValue, f.Operator, f.Value, f.ValueRegex)
+}
+
+// formatTagsAsString converts tag fields to a string representation in "key:value" format
+func formatTagsAsString(tagField interface{}) string {
+	v := reflect.ValueOf(tagField)
+	if v.Kind() == reflect.Ptr && !v.IsNil() {
+		v = v.Elem()
+	}
+
+	var tagPairs []string
+
+	for i := range v.Len() {
+		item := v.Index(i).Interface()
+
+		// Check if it's a string (simple tag)
+		if tagStr, ok := item.(string); ok {
+			tagPairs = append(tagPairs, tagStr)
+			continue
+		}
+
+		// Check if it's a Tag struct with Key and Value fields
+		// This assumes the struct has fields named "Key" and "Value"
+		itemValue := reflect.ValueOf(item)
+		if itemValue.Kind() == reflect.Struct {
+			keyField := itemValue.FieldByName("Key")
+			valueField := itemValue.FieldByName("Value")
+
+			if keyField.IsValid() && valueField.IsValid() {
+				key := fmt.Sprintf("%v", keyField.Interface())
+				value := fmt.Sprintf("%v", valueField.Interface())
+				tagPairs = append(tagPairs, fmt.Sprintf("%s:%s", key, value))
+			}
+		}
+	}
+
+	return strings.Join(tagPairs, ",")
 }
 
 // getFieldValue extracts a field value from a resource using reflection
@@ -99,23 +143,6 @@ func getFieldValue(resource interface{}, fieldName string) (interface{}, bool) {
 	}
 }
 
-// convertToString converts any value to its string representation
-func convertToString(value interface{}) string {
-	switch v := value.(type) {
-	case string:
-		return v
-	case int, int32, int64:
-		return fmt.Sprintf("%d", v)
-	case float32, float64:
-		return fmt.Sprintf("%f", v)
-	case bool:
-		return fmt.Sprintf("%t", v)
-	default:
-		// For other complex types (maps, slices, arrays, etc.), convert to string
-		return fmt.Sprintf("%v", v)
-	}
-}
-
 // compareValues compares two values using the specified operator
 func compareValues(strValue, operator, filterValue string, regex *regexp.Regexp) bool {
 	if regex != nil {
@@ -125,22 +152,21 @@ func compareValues(strValue, operator, filterValue string, regex *regexp.Regexp)
 	switch operator {
 	case "equals", "=", "eq", "":
 		return strValue == filterValue
-	case "not_equals", "!=", "ne":
+	case "not-equals", "!=", "ne":
 		return strValue != filterValue
 	case "contains", "in":
 		return strings.Contains(strValue, filterValue)
 	case "does-not-contain", "not-in":
 		return !strings.Contains(strValue, filterValue)
-	case "starts_with":
-		resp := strings.HasPrefix(strValue, filterValue)
-		return resp
+	case "starts-with":
+		return strings.HasPrefix(strValue, filterValue)
 	case "does-not-start-with":
 		return !strings.HasPrefix(strValue, filterValue)
-	case "ends_with":
+	case "ends-with":
 		return strings.HasSuffix(strValue, filterValue)
 	case "does-not-end-with":
 		return !strings.HasSuffix(strValue, filterValue)
-	case "greater_than", ">", "gt":
+	case ">", "gt":
 		// Try to convert both to numbers for comparison
 		val1, err1 := strconv.ParseFloat(strValue, 64)
 		val2, err2 := strconv.ParseFloat(filterValue, 64)
@@ -148,21 +174,21 @@ func compareValues(strValue, operator, filterValue string, regex *regexp.Regexp)
 			return val1 > val2
 		}
 		return false
-	case "greater_than_or_equal", ">=", "ge":
+	case ">=", "ge":
 		val1, err1 := strconv.ParseFloat(strValue, 64)
 		val2, err2 := strconv.ParseFloat(filterValue, 64)
 		if err1 == nil && err2 == nil {
 			return val1 >= val2
 		}
 		return false
-	case "less_than", "<", "lt":
+	case "<", "lt":
 		val1, err1 := strconv.ParseFloat(strValue, 64)
 		val2, err2 := strconv.ParseFloat(filterValue, 64)
 		if err1 == nil && err2 == nil {
 			return val1 < val2
 		}
 		return false
-	case "less_than_or_equal", "<=", "le":
+	case "<=", "le":
 		val1, err1 := strconv.ParseFloat(strValue, 64)
 		val2, err2 := strconv.ParseFloat(filterValue, 64)
 		if err1 == nil && err2 == nil {
@@ -174,21 +200,4 @@ func compareValues(strValue, operator, filterValue string, regex *regexp.Regexp)
 	default:
 		return false
 	}
-}
-
-// MatchName checks if the filter matches a given name.
-func (f *DetailFilter) MatchName(name string) bool {
-	if f == nil {
-		return true
-	}
-
-	if f.Field == "name" {
-		if f.ValueRegex != nil {
-			return f.ValueRegex.MatchString(name)
-		}
-		return f.Value == "" || f.Value == name
-	}
-
-	// Otherwise, this filter doesn't apply to name matching
-	return true
 }

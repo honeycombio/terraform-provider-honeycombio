@@ -28,27 +28,3 @@ func (g *FilterGroup) Match(resource interface{}) bool {
 
 	return true
 }
-
-// MatchName for backward compatibility
-// It returns true if all name filters match or if there are no name filters
-func (g *FilterGroup) MatchName(name string) bool {
-	if g == nil || len(g.Filters) == 0 {
-		return true
-	}
-
-	// Check if there are any name filters
-	nameFilters := 0
-
-	// All name filters must match
-	for _, filter := range g.Filters {
-		if filter.Field == "name" {
-			nameFilters++
-			if !filter.MatchName(name) {
-				return false
-			}
-		}
-	}
-
-	// If no name filters were present, return true
-	return nameFilters != 0
-}

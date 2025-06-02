@@ -2,6 +2,8 @@ package filter
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestResource is a struct for testing field matching
@@ -67,7 +69,7 @@ func TestMatch(t *testing.T) {
 		{
 			name:     "String not_equals - match",
 			field:    "Name",
-			operator: "not_equals",
+			operator: "not-equals",
 			value:    "Different",
 			expected: true,
 		},
@@ -87,14 +89,14 @@ func TestMatch(t *testing.T) {
 		{
 			name:     "String starts_with - match",
 			field:    "Name",
-			operator: "starts_with",
+			operator: "starts-with",
 			value:    "Test",
 			expected: true,
 		},
 		{
 			name:     "String ends_with - match",
 			field:    "Name",
-			operator: "ends_with",
+			operator: "ends-with",
 			value:    "Resource",
 			expected: true,
 		},
@@ -114,16 +116,16 @@ func TestMatch(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "Integer greater_than - match",
+			name:     "Integer greater than - match",
 			field:    "Count",
-			operator: "greater_than",
+			operator: ">",
 			value:    "30",
 			expected: true,
 		},
 		{
-			name:     "Integer less_than - match",
+			name:     "Integer less than - match",
 			field:    "Count",
-			operator: "less_than",
+			operator: "lt",
 			value:    "50",
 			expected: true,
 		},
@@ -137,9 +139,9 @@ func TestMatch(t *testing.T) {
 			expected: true,
 		},
 		{
-			name:     "Float greater_than - match",
+			name:     "Float greater than - match",
 			field:    "Price",
-			operator: "greater_than",
+			operator: ">",
 			value:    "50.5",
 			expected: true,
 		},
@@ -319,76 +321,7 @@ func TestMatch(t *testing.T) {
 			}
 			result := filter.Match(resource)
 
-			if result != tt.expected {
-				t.Errorf("Expected Match to return %v, got %v", tt.expected, result)
-			}
-		})
-	}
-}
-
-func TestMatchName(t *testing.T) {
-	tests := []struct {
-		name           string
-		filterField    string
-		filterOperator string
-		filterValue    string
-		filterRegex    string
-		testName       string
-		expected       bool
-	}{
-		{
-			name:           "Match name with equals",
-			filterField:    "name",
-			filterOperator: "equals",
-			filterValue:    "test-name",
-			testName:       "test-name",
-			expected:       true,
-		},
-		{
-			name:           "No match name with equals",
-			filterField:    "name",
-			filterOperator: "equals",
-			filterValue:    "test-name",
-			testName:       "different-name",
-			expected:       false,
-		},
-		{
-			name:        "Match name with regex",
-			filterField: "name",
-			filterRegex: "test-.*",
-			testName:    "test-123",
-			expected:    true,
-		},
-		{
-			name:           "Different field should always match name",
-			filterField:    "id",
-			filterOperator: "equals",
-			filterValue:    "123",
-			testName:       "any-name",
-			expected:       true,
-		},
-		{
-			name:     "Nil filter should match any name",
-			testName: "any-name",
-			expected: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var filter *DetailFilter
-			if tt.filterField != "" || tt.filterOperator != "" || tt.filterValue != "" || tt.filterRegex != "" {
-				var err error
-				filter, err = NewDetailFilter(tt.filterField, tt.filterOperator, tt.filterValue, tt.filterRegex)
-				if err != nil {
-					t.Fatalf("Failed to create filter: %v", err)
-				}
-			}
-
-			result := filter.MatchName(tt.testName)
-			if result != tt.expected {
-				t.Errorf("Expected MatchName to return %v, got %v", tt.expected, result)
-			}
+			assert.Equal(t, tt.expected, result, "Filter match result mismatch for %s", tt.name)
 		})
 	}
 }

@@ -16,6 +16,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/coerce"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
@@ -275,11 +276,11 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 				values := strings.Split(f.Value.ValueString(), ",")
 				result := make([]interface{}, len(values))
 				for i, value := range values {
-					result[i] = coerceValueToType(value)
+					result[i] = coerce.ValueToType(value)
 				}
 				filter.Value = result
 			} else {
-				filter.Value = coerceValueToType(f.Value.ValueString())
+				filter.Value = coerce.ValueToType(f.Value.ValueString())
 			}
 		}
 
@@ -482,16 +483,4 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
-}
-
-func coerceValueToType(i string) any {
-	if v, err := strconv.ParseInt(i, 10, 64); err == nil {
-		return v
-	} else if v, err := strconv.ParseFloat(i, 64); err == nil {
-		return v
-	} else if v, err := strconv.ParseBool(i); err == nil {
-		return v
-	}
-	// fallthrough to string
-	return i
 }

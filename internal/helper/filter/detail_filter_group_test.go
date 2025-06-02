@@ -2,6 +2,8 @@ package filter
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 // TestResource for testing filter matching
@@ -85,8 +87,8 @@ func TestFilterGroup_Match(t *testing.T) {
 			name: "multiple matching filters",
 			filters: []*DetailFilter{
 				mustCreateFilter(t, "Name", "contains", "Resource", ""),
-				mustCreateFilter(t, "ID", "starts_with", "abc", ""),
-				mustCreateFilter(t, "Count", "greater_than", "30", ""),
+				mustCreateFilter(t, "ID", "starts-with", "abc", ""),
+				mustCreateFilter(t, "Count", ">", "30", ""),
 			},
 			want: true,
 		},
@@ -117,73 +119,9 @@ func TestFilterGroup_Match(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			group := NewFilterGroup(tt.filters)
-			if got := group.Match(resource); got != tt.want {
-				t.Errorf("FilterGroup.Match() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
+			got := group.Match(resource)
 
-func TestFilterGroup_MatchName(t *testing.T) {
-	tests := []struct {
-		name     string
-		filters  []*DetailFilter
-		testName string
-		want     bool
-	}{
-		{
-			name:     "nil filters",
-			filters:  nil,
-			testName: "any name",
-			want:     true,
-		},
-		{
-			name:     "empty filters",
-			filters:  []*DetailFilter{},
-			testName: "any name",
-			want:     true,
-		},
-		{
-			name: "single matching name filter",
-			filters: []*DetailFilter{
-				mustCreateFilter(t, "name", "equals", "test-name", ""),
-			},
-			testName: "test-name",
-			want:     true,
-		},
-		{
-			name: "single non-matching name filter",
-			filters: []*DetailFilter{
-				mustCreateFilter(t, "name", "equals", "test-name", ""),
-			},
-			testName: "different-name",
-			want:     false,
-		},
-		{
-			name: "mixed matching and non-matching name filters",
-			filters: []*DetailFilter{
-				mustCreateFilter(t, "name", "starts_with", "test", ""),
-				mustCreateFilter(t, "name", "equals", "wrong-name", ""), // This won't match
-			},
-			testName: "test-name",
-			want:     false,
-		},
-		{
-			name: "regex name filter",
-			filters: []*DetailFilter{
-				mustCreateFilter(t, "name", "", "", "test-.*"),
-			},
-			testName: "test-123",
-			want:     true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			group := NewFilterGroup(tt.filters)
-			if got := group.MatchName(tt.testName); got != tt.want {
-				t.Errorf("FilterGroup.MatchName() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, got, "FilterGroup.Match() mismatch for test case: %s", tt.name)
 		})
 	}
 }
@@ -191,8 +129,6 @@ func TestFilterGroup_MatchName(t *testing.T) {
 // Helper function to create a filter without having to check errors in each test case
 func mustCreateFilter(t *testing.T, field, operator, value, regex string) *DetailFilter {
 	filter, err := NewDetailFilter(field, operator, value, regex)
-	if err != nil {
-		t.Fatalf("Failed to create filter: %v", err)
-	}
+	assert.NoError(t, err)
 	return filter
 }
