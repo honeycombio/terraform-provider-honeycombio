@@ -154,7 +154,7 @@ Each `visualization_settings` configuration accepts the following arguments:
 - `use_utc_xaxis` - (Optional) Display UTC Time X-Axis or Localtime X-Axis.
 - `hide_markers` - (Optional) Hide [markers](https://docs.honeycomb.io/investigate/query/customize-results/#markers) from appearing on graph.
 - `hide_hovers` - (Optional) Disable Graph tooltips in the results display when hovering over a graph.
-- `overlaid_charts` - (Optional) Combine any visualized AVG, MIN, MAX, and PERCENTILE clauses into a single chart.
+- `prefer_overlaid_charts` - (Optional) Combine any visualized AVG, MIN, MAX, and PERCENTILE clauses into a single chart.
 - `chart` - (Optional) a configuration block to manage the query's charts.
 
 Each `chart` configuration accepts the following arguments:
