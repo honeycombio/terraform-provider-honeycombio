@@ -41,10 +41,4 @@ resource "honeycombio_trigger" "trigger" {
     type   = "marker"
     target = "Trigger - slow requests" # name of the marker
   }
-
-}
-
-
-output "result" {
-  value = resource.honeycombio_trigger.trigger
 }
