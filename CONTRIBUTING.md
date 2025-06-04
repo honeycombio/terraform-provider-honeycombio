@@ -54,7 +54,7 @@ HONEYCOMB_API_KEY=<your API key> HONEYCOMB_DATASET=<dataset> ./scripts/setup-tes
 ```
 
 Finally, **run the full testsuite**!
-There is a `.env` file checked into the root of the repository which can be used to store the relevant environment variables required for the tests:
+There is a `.env.example` template file checked into the root of the repository. Create a local `.env` file based on the template which can be used to store the relevant environment variables required for the tests:
 
 - `HONEYCOMB_API_KEY`: a Configuration Key for a Honeycomb Team
 - `HONEYCOMB_DATASET`: name of the test dataset to run tests against
