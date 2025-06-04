@@ -74,8 +74,8 @@ The following arguments are supported:
 
 -   `name` - (Required) The name of the SLO.
 -   `description` - (Optional) A description of the SLO's intent and context.
--   `dataset` - (Optional) The slug of the dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI is an Environment-wide Derived Column. Conflicts with `datasets`. Will be deprecated in a future release of the provider.
--   `datasets` - (Optional) Array of slugs for the datasets the SLO is evaluated on. Conflicts with `dataset`. Must have a length between 1 and 10.
+-   `dataset` - (Optional) The dataset this SLO is created in. Must be the same dataset as the SLI unless the SLI is an Environment-wide Derived Column. Conflicts with `datasets`. Will be deprecated in a future release of the provider.
+-   `datasets` - (Optional) Array of datasets the SLO is evaluated on. Conflicts with `dataset`. Must have a length between 1 and 10.
 -   `sli` - (Required) The alias of the Derived Column that will be used as the SLI to indicate event success.
     The derived column used as the SLI must be in the same dataset as the SLO. Additionally,
     the column evaluation should consistently return nil, true, or false, as these are the only valid values for an SLI.
