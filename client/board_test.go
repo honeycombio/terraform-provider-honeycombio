@@ -233,6 +233,10 @@ func TestFlexibleBoards(t *testing.T) {
 					},
 				},
 			},
+			Tags: []client.Tag{
+				{Key: "color", Value: "blue"},
+				{Key: "team", Value: "b-team"},
+			},
 		}
 		flexibleBoard, err = c.Boards.Create(ctx, data)
 		require.NoError(t, err)
@@ -244,6 +248,9 @@ func TestFlexibleBoards(t *testing.T) {
 		// ensure the board URL got populated
 		assert.NotEmpty(t, flexibleBoard.Links.BoardURL)
 		data.Links.BoardURL = flexibleBoard.Links.BoardURL
+
+		// ensure the tags were added
+		assert.ElementsMatch(t, flexibleBoard.Tags, data.Tags, "tags do not match")
 
 		assert.Equal(t, data, flexibleBoard)
 	})
