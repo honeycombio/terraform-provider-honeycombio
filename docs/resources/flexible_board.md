@@ -82,6 +82,11 @@ resource "honeycombio_flexible_board" "overview" {
   name        = "Service Overview"
   description = "My flexible baord description"
 
+  tags = {
+    team    = "web"
+    project = "secret"
+  }
+
   panel {
     type = "query"
 

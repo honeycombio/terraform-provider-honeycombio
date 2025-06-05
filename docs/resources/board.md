@@ -32,11 +32,6 @@ resource "honeycombio_board" "board" {
   query {
     query_id = honeycombio_query.query.id
   }
-
-  tags = {
-    team    = "blue"
-    project = "secret"
-  }
 }
 ```
 
