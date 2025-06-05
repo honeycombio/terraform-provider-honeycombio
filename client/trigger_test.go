@@ -61,6 +61,9 @@ func TestTriggers(t *testing.T) {
 					Target: "This marker is created by a trigger",
 				},
 			},
+			Tags: []client.Tag{
+				{Key: "color", Value: "blue"},
+			},
 		}
 		trigger, err = c.Triggers.Create(ctx, dataset, data)
 		require.NoError(t, err)
@@ -80,6 +83,10 @@ func TestTriggers(t *testing.T) {
 		data.EvaluationScheduleType = client.TriggerEvaluationScheduleFrequency
 		// set the default threshold exceeded limit
 		data.Threshold.ExceededLimit = 1
+
+		assert.NotEmpty(t, trigger.Tags)
+		assert.ElementsMatch(t, trigger.Tags, data.Tags, "tags do not match")
+		// trigger.Tags = data.Tags
 
 		assert.Equal(t, data, trigger)
 	})
@@ -112,6 +119,10 @@ func TestTriggers(t *testing.T) {
 				EndTime:    "21:00",
 			},
 		}
+		trigger.Tags = []client.Tag{
+			{Key: "team", Value: "t-team"},
+			{Key: "color", Value: "blue"},
+		}
 		// update the threshold exceeded limit to 3
 		trigger.Threshold.ExceededLimit = 3
 
@@ -120,6 +131,7 @@ func TestTriggers(t *testing.T) {
 		// copy IDs before asserting equality
 		trigger.QueryID = result.QueryID
 		require.NoError(t, err)
+		require.ElementsMatch(t, trigger.Tags, result.Tags, "tags do not match")
 		assert.Equal(t, trigger, result)
 	})
 

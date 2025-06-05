@@ -254,6 +254,7 @@ Outside of the window, the trigger will not be run.
 If no schedule is specified, the trigger will be run at the specified frequency at all times.
 * `baseline_details` - (Optional) A configuration block (described below) allows you to receive notifications when the delta between values in your data, compared to a previous time period, cross thresholds you configure.
 * `recipient` - (Optional) Zero or more configuration blocks (described below) with the recipients to notify when the trigger fires.
+* `tags` - (Optional) Map of up to ten (10) tags to assign to the resource.
 
 One of `query_id` or `query_json` are required.
 
