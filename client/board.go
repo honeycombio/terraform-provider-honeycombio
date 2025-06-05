@@ -67,6 +67,8 @@ type Board struct {
 	Queries []BoardQuery `json:"queries"`
 	// A list of SLO IDs to be added to the board
 	SLOs []string `json:"slos"`
+	// A list of tags to organize the Board, for flexible boards only
+	Tags []Tag `json:"tags"`
 }
 
 // BoardPanel represents a single panel on a board.

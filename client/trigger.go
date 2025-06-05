@@ -159,6 +159,7 @@ func (t *Trigger) MarshalJSON() ([]byte, error) {
 			Recipients:             t.Recipients,
 			EvaluationScheduleType: t.EvaluationScheduleType,
 			EvaluationSchedule:     t.EvaluationSchedule,
+			Tags:                   t.Tags,
 		}
 		return json.Marshal(&struct{ *ATrigger }{ATrigger: a})
 	}
