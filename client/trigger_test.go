@@ -132,7 +132,7 @@ func TestTriggers(t *testing.T) {
 		trigger.QueryID = result.QueryID
 		require.NoError(t, err)
 		require.ElementsMatch(t, trigger.Tags, result.Tags, "tags do not match")
-		assert.Equal(t, trigger, result)
+		assert.Equal(t, trigger, result, "full trigger does not match")
 	})
 
 	t.Run("Delete", func(t *testing.T) {

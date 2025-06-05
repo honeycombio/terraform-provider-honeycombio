@@ -315,6 +315,8 @@ func TestFlexibleBoards(t *testing.T) {
 		board, err := c.Boards.Get(ctx, flexibleBoard.ID)
 		require.NoError(t, err)
 
+		assert.ElementsMatch(t, board.Tags, flexibleBoard.Tags, "tags do not match")
+
 		assert.Equal(t, *board, *flexibleBoard)
 	})
 }
