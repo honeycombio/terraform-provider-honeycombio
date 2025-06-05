@@ -121,7 +121,6 @@ func TestTriggers(t *testing.T) {
 		}
 		trigger.Tags = []client.Tag{
 			{Key: "team", Value: "t-team"},
-			{Key: "color", Value: "blue"},
 		}
 		// update the threshold exceeded limit to 3
 		trigger.Threshold.ExceededLimit = 3
