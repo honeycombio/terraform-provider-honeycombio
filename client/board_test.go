@@ -233,6 +233,54 @@ func TestFlexibleBoards(t *testing.T) {
 					},
 				},
 			},
+		}
+		flexibleBoard, err = c.Boards.Create(ctx, data)
+		require.NoError(t, err)
+		assert.NotNil(t, flexibleBoard.ID)
+
+		// copy ID before asserting equality
+		data.ID = flexibleBoard.ID
+
+		// ensure the board URL got populated
+		assert.NotEmpty(t, flexibleBoard.Links.BoardURL)
+		data.Links.BoardURL = flexibleBoard.Links.BoardURL
+
+		assert.Equal(t, data, flexibleBoard)
+	})
+
+	t.Run("Create flexible board with tags", func(t *testing.T) {
+		data := &client.Board{
+			Name:        test.RandomStringWithPrefix("test.", 8),
+			BoardType:   "flexible",
+			Description: "A board with some tags",
+			Panels: []client.BoardPanel{
+				{
+					PanelType: client.BoardPanelTypeQuery,
+					PanelPosition: client.BoardPanelPosition{
+						X:      0,
+						Y:      0,
+						Height: 3,
+						Width:  4,
+					},
+					QueryPanel: &client.BoardQueryPanel{
+						QueryID:           *query.ID,
+						QueryAnnotationID: queryAnnotation.ID,
+						Style:             client.BoardQueryStyleGraph,
+					},
+				},
+				{
+					PanelType: client.BoardPanelTypeSLO,
+					PanelPosition: client.BoardPanelPosition{
+						X:      6,
+						Y:      0,
+						Height: 3,
+						Width:  4,
+					},
+					SLOPanel: &client.BoardSLOPanel{
+						SLOID: slo.ID,
+					},
+				},
+			},
 			Tags: []client.Tag{
 				{Key: "color", Value: "blue"},
 				{Key: "team", Value: "b-team"},
@@ -250,6 +298,7 @@ func TestFlexibleBoards(t *testing.T) {
 		data.Links.BoardURL = flexibleBoard.Links.BoardURL
 
 		// ensure the tags were added
+		assert.NotEmpty(t, flexibleBoard.Tags)
 		assert.ElementsMatch(t, flexibleBoard.Tags, data.Tags, "tags do not match")
 
 		assert.Equal(t, data, flexibleBoard)
