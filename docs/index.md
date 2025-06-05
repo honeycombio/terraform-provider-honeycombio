@@ -93,7 +93,8 @@ At least one of `api_key`, or the `api_key_id` and `api_key_secret` pair must be
 
 ## A note on "Datasets"
 
-Several resources in this provider accept a `dataset` or `datasets` argument to specify which Honeycomb Dataset the resource belongs to. These resources include but aren't limited to
+Several resources in this provider accept a `dataset` or `datasets` argument to specify which Honeycomb Dataset the resource belongs to.
+These resources include but aren't limited to:
 * queries
 * triggers
 * slos
