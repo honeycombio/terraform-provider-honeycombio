@@ -32,6 +32,11 @@ resource "honeycombio_board" "board" {
   query {
     query_id = honeycombio_query.query.id
   }
+
+  tags = {
+    team    = "blue"
+    project = "secret"
+  }
 }
 ```
 
@@ -106,6 +111,7 @@ The following arguments are supported:
 - `style` - (Optional) Deprecated: All Boards are now displayed as `visual` style. How the board should be displayed in the UI, either `visual` (the default) or `list`.
 - `query` - (Optional) Zero or more configurations blocks (described below) with the queries of the board.
 - `slo` - (Optional) Up to twenty-four (24) configuration blocks (described below) to place SLOs on the board.
+- `tags` - (Optional) Map of up to ten (10) tags to assign to the resource.
 
 Each board configuration may have zero or more `query` blocks, which accept the following arguments:
 

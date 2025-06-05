@@ -11,6 +11,7 @@ type FlexibleBoardResourceModel struct {
 	Description types.String `tfsdk:"description"`
 	URL         types.String `tfsdk:"board_url"`
 	Panels      types.List   `tfsdk:"panel"`
+	Tags        types.Map    `tfsdk:"tags"`
 }
 
 type BoardPanelModel struct {
