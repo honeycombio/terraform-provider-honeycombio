@@ -61,6 +61,9 @@ func TestTriggers(t *testing.T) {
 					Target: "This marker is created by a trigger",
 				},
 			},
+			Tags: []client.Tag{
+				{Key: "color", Value: "blue"},
+			},
 		}
 		trigger, err = c.Triggers.Create(ctx, dataset, data)
 		require.NoError(t, err)
@@ -80,6 +83,10 @@ func TestTriggers(t *testing.T) {
 		data.EvaluationScheduleType = client.TriggerEvaluationScheduleFrequency
 		// set the default threshold exceeded limit
 		data.Threshold.ExceededLimit = 1
+
+		assert.NotEmpty(t, trigger.Tags)
+		assert.ElementsMatch(t, trigger.Tags, data.Tags, "tags do not match")
+		// trigger.Tags = data.Tags
 
 		assert.Equal(t, data, trigger)
 	})
@@ -112,6 +119,9 @@ func TestTriggers(t *testing.T) {
 				EndTime:    "21:00",
 			},
 		}
+		trigger.Tags = []client.Tag{
+			{Key: "team", Value: "t-team"},
+		}
 		// update the threshold exceeded limit to 3
 		trigger.Threshold.ExceededLimit = 3
 
@@ -120,7 +130,8 @@ func TestTriggers(t *testing.T) {
 		// copy IDs before asserting equality
 		trigger.QueryID = result.QueryID
 		require.NoError(t, err)
-		assert.Equal(t, trigger, result)
+		require.ElementsMatch(t, trigger.Tags, result.Tags, "tags do not match")
+		assert.Equal(t, trigger, result, "full trigger does not match")
 	})
 
 	t.Run("Delete", func(t *testing.T) {
@@ -304,4 +315,87 @@ func TestTriggersWithBaselineDetails(t *testing.T) {
 		assert.Equal(t, trigger.BaselineDetails.OffsetMinutes, result.BaselineDetails.OffsetMinutes)
 	})
 
+}
+
+func TestTriggersEnvironmentWide(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := newTestClient(t)
+
+	if c.IsClassic(ctx) {
+		t.Skip("classic does not support environment-wide triggers")
+	}
+
+	var trigger *client.Trigger
+	var err error
+
+	// delete the trigger after the tests run
+	t.Cleanup(func() {
+		if trigger != nil && trigger.ID != "" {
+			c.Triggers.Delete(ctx, client.EnvironmentWideSlug, trigger.ID)
+		}
+	})
+
+	t.Run("Create - environment-wide", func(t *testing.T) {
+		data := &client.Trigger{
+			Name:        test.RandomStringWithPrefix("test.", 8),
+			Description: "Environment-wide trigger test",
+			Query: &client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{
+						Op: client.CalculationOpCount,
+					},
+				},
+				TimeRange: client.ToPtr(900),
+			},
+			Frequency: 900,
+			Threshold: &client.TriggerThreshold{
+				Op:    client.TriggerThresholdOpGreaterThan,
+				Value: 1000,
+			},
+			Recipients: []client.NotificationRecipient{
+				{
+					Type:   client.RecipientTypeMarker,
+					Target: "Environment-wide trigger fired",
+				},
+			},
+		}
+		trigger, err = c.Triggers.Create(ctx, client.EnvironmentWideSlug, data)
+		require.NoError(t, err)
+		assert.NotNil(t, trigger.ID)
+
+		// copy IDs before asserting equality
+		data.ID = trigger.ID
+		data.QueryID = trigger.QueryID
+		data.AlertType = trigger.AlertType
+		data.Recipients[0].ID = trigger.Recipients[0].ID
+
+		// set the default alert type
+		data.AlertType = client.TriggerAlertTypeOnChange
+		// set the default evaluation window type
+		data.EvaluationScheduleType = client.TriggerEvaluationScheduleFrequency
+		// set the default threshold exceeded limit
+		data.Threshold.ExceededLimit = 1
+
+		assert.Equal(t, data, trigger)
+	})
+
+	t.Run("Get - environment-wide", func(t *testing.T) {
+		getTrigger, err := c.Triggers.Get(ctx, client.EnvironmentWideSlug, trigger.ID)
+
+		require.NoError(t, err)
+		assert.Equal(t, *trigger, *getTrigger)
+	})
+
+	t.Run("Update - environment-wide", func(t *testing.T) {
+		trigger.Description = "Updated environment-wide trigger description"
+		trigger.Threshold.Value = 2000
+
+		result, err := c.Triggers.Update(ctx, client.EnvironmentWideSlug, trigger)
+
+		require.NoError(t, err)
+		assert.Equal(t, trigger.Description, result.Description)
+		assert.InDelta(t, trigger.Threshold.Value, result.Threshold.Value, 0.001)
+	})
 }

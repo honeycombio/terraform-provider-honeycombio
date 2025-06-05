@@ -68,11 +68,16 @@ func TestAccHoneycombioFlexibleBoard(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.0.chart.0.use_log_scale", "false"),
 				),
 			},
-			// remove board's panels
+			// remove board's panels, add tags
 			{
 				Config: `
 resource "honeycombio_flexible_board" "test" {
 	name          = "simple flexible board"
+
+	tags = {
+	  team = "blue"
+	  env  = "dev"
+	}
 }
 			  `,
 				Check: resource.ComposeTestCheckFunc(
@@ -80,9 +85,12 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "name", "simple flexible board"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "description", ""),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "0"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.%", "2"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.team", "blue"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.env", "dev"),
 				),
 			},
-			// now add a query panel and ensure the board is updated
+			// now add a query panel, update tags, and ensure the board is updated
 			{
 				Config: fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
@@ -106,6 +114,9 @@ resource "honeycombio_query_annotation" "test" {
 resource "honeycombio_flexible_board" "test" {
   name        = "simple flexible board updated"
   description = "simple flexible board description"
+  tags = {
+	team = "green"
+  } 
   panel {
     type = "query"
     query_panel {
@@ -131,9 +142,12 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "1"),
 					resource.TestCheckResourceAttrPair("honeycombio_flexible_board.test", "panel.0.query_panel.0.query_id", "honeycombio_query.test", "id"),
 					resource.TestCheckResourceAttrPair("honeycombio_flexible_board.test", "panel.0.query_panel.0.query_annotation_id", "honeycombio_query_annotation.test", "id"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.%", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.team", "green"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "tags.env"),
 				),
 			},
-			// now add an SLO panel and remove chart settings from the query panel
+			// now add an SLO panel, remove chart settings from the query panel, remove tags
 			{
 				Config: fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
@@ -205,6 +219,7 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.0.y_coordinate", "0"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.0.height", "4"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.0.width", "3"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.%", "0"),
 				),
 			},
 			// re-order the panels and remove viz settings for the query panel

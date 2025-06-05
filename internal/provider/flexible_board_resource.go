@@ -95,6 +95,7 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"tags": tagsSchema(),
 		},
 		Blocks: map[string]schema.Block{
 			"panel": schema.ListNestedBlock{
@@ -296,12 +297,18 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
+	planTags, diags := helper.MapToTags(ctx, plan.Tags)
+	if diags.HasError() {
+		return
+	}
+
 	panelFromConfig := expandBoardPanels(ctx, plan.Panels, &resp.Diagnostics)
 	createRequest := &client.Board{
 		Name:        plan.Name.ValueString(),
 		Description: plan.Description.ValueString(),
 		BoardType:   client.BoardTypeFlexible,
 		Panels:      removeDefaultNegativeNumbers(panelFromConfig),
+		Tags:        planTags,
 	}
 
 	if resp.Diagnostics.HasError() {
@@ -342,6 +349,13 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 		resp.Diagnostics.Append(diag...)
 		state.Panels = panels
 	}
+
+	tags, diags := helper.TagsToMap(ctx, board.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = tags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -418,8 +432,15 @@ func (r *flexibleBoardResource) Read(ctx context.Context, req resource.ReadReque
 		resp.Diagnostics.Append(diag...)
 		state.Panels = panels
 	}
+	tags, diags := helper.TagsToMap(ctx, board.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = tags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+
 }
 
 func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -430,6 +451,11 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
+	planTags, diags := helper.MapToTags(ctx, plan.Tags)
+	if diags.HasError() {
+		return
+	}
+
 	panelConfig := expandBoardPanels(ctx, plan.Panels, &resp.Diagnostics)
 	updateRequest := &client.Board{
 		ID:          plan.ID.ValueString(),
@@ -437,6 +463,7 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 		Description: plan.Description.ValueString(),
 		BoardType:   client.BoardTypeFlexible,
 		Panels:      removeDefaultNegativeNumbers(panelConfig),
+		Tags:        planTags,
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -483,7 +510,15 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 		state.Panels = panels
 	}
 
+	tags, diags := helper.TagsToMap(ctx, board.Tags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = tags
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+
 }
 
 func (r *flexibleBoardResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
