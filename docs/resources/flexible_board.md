@@ -129,6 +129,7 @@ The following arguments are supported for flexible boards:
 - `name` - (Required) Name of the board.
 - `description` - (Optional) Description of the board. Supports Markdown.
 - `panel` - (Optional) zero or more configurations blocks
+- `tags` - (Optional) Map of up to ten (10) tags to assign to the resource.
 
 Each board configuration may have zero or more `panel` blocks which accept the following arguments:
 
