@@ -283,7 +283,6 @@ func TestFlexibleBoards(t *testing.T) {
 			},
 			Tags: []client.Tag{
 				{Key: "color", Value: "blue"},
-				{Key: "team", Value: "b-team"},
 			},
 		}
 		flexibleBoard, err = c.Boards.Create(ctx, data)
