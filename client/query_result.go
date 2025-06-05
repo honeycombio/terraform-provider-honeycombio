@@ -28,7 +28,7 @@ var _ QueryResults = (*queryResults)(nil)
 
 // QueryResult represents a Honeycomb query result.
 //
-// API docs: https://docs.honeycomb.io/api/query-results/#get-example-response
+// API docs: https://api-docs.honeycomb.io/api/query-data/getqueryresult
 type QueryResult struct {
 	// ID of a query result is only set when the query is returned from the
 	// Query Result API. This value should not be set when creating queries results.
@@ -46,6 +46,10 @@ type QueryResult struct {
 
 type QueryResultRequest struct {
 	ID string `json:"query_id"`
+	// If DisableSeries is true, Limit allows the default query limit of 1000 results to be overridden up to 10,000 results.
+	Limit int `json:"limit,omitempty"`
+	// DisableSeries controls whether timeseries data will be returned in the series response field. Defaults to false.
+	DisableSeries bool `json:"disable_series,omitempty"`
 }
 
 type QueryResultData struct {
