@@ -39,6 +39,20 @@ resource "honeycombio_marker" "hello" {
 
 More advanced examples can be found in the [example directory](https://github.com/honeycombio/terraform-provider-honeycombio/tree/main/example).
 
+## A note on "Datasets"
+
+Several resources in this provider accept a `dataset` or `datasets` argument to specify which Honeycomb Dataset the resource belongs to.
+These resources include but aren't limited to:
+* queries
+* triggers
+* slos
+* markers
+* columns
+* boards
+
+Whenever a resource accepts a `dataset` or `datasets` argument, the argument is expected to be a Dataset **slug**, not a Dataset name or ID.
+Dataset slugs can be found in the URL of the dataset in the Honeycomb UI, or in the `slug` field of the [Dataset API](https://api-docs.honeycomb.io/api/datasets/createdataset#datasets/createdataset/t=response&c=200&path=slug).
+
 ### Configuring the provider for Honeycomb EU
 
 If you are a Honeycomb EU customer, to use the provider you must override the default API host.
@@ -90,16 +104,3 @@ Arguments accepted by this provider include:
 * `debug` - (Optional) Enable to log additional debug information. To view the logs, set `TF_LOG` to at least debug.
 
 At least one of `api_key`, or the `api_key_id` and `api_key_secret` pair must be configured.
-
-## A note on "Datasets"
-
-Several resources in this provider accept a `dataset` or `datasets` argument to specify which Honeycomb Dataset the resource belongs to.
-These resources include but aren't limited to:
-* queries
-* triggers
-* slos
-* markers
-* columns
-* boards
-
-Whenever a resource accepts a `dataset` or `datasets` argument, the argument is expected to be a Dataset **slug**, not a Dataset name or ID. Dataset slugs can be found in the URL of the dataset in the Honeycomb UI, or in the `slug` field of the [Dataset API](https://api-docs.honeycomb.io/api/datasets/createdataset#datasets/createdataset/t=response&c=200&path=slug).
