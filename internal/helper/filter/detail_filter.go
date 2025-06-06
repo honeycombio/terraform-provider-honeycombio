@@ -185,8 +185,7 @@ func compareValues(strValue, operator, filterValue string, regex *regexp.Regexp)
 
 	switch operator {
 	case "equals", "=", "eq", "":
-		resp := strValue == filterValue
-		return resp
+		return strValue == filterValue
 	case "not-equals", "!=", "ne":
 		return strValue != filterValue
 	case "contains", "in":
