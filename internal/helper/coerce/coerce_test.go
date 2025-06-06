@@ -3,6 +3,7 @@ package coerce_test
 import (
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/coerce"
@@ -122,6 +123,11 @@ func Test_valueToString(t *testing.T) {
 			name:     "struct",
 			input:    testStruct{Name: "test", Value: 42},
 			expected: "{test 42}",
+		},
+		{
+			name:     "terraform string value",
+			input:    basetypes.NewStringValue("test.6UROptj5Vt"),
+			expected: "test.6UROptj5Vt",
 		},
 	}
 

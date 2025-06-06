@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/coerce"
 )
 
@@ -98,6 +99,18 @@ func formatTagsAsString(tagField interface{}) string {
 				}
 			}
 		}
+	case reflect.Struct:
+		if mapValue, ok := tagField.(basetypes.MapValue); ok {
+			elements := mapValue.Elements()
+			for k, v := range elements {
+				if strValue, ok := v.(basetypes.StringValue); ok {
+					tagPairs = append(tagPairs, fmt.Sprintf("%s:%s", k, strValue.ValueString()))
+				}
+			}
+			if len(tagPairs) > 0 {
+				return strings.Join(tagPairs, ",")
+			}
+		}
 	}
 
 	// As a fallback, if no tags were found, return the string representation of the field
@@ -172,7 +185,8 @@ func compareValues(strValue, operator, filterValue string, regex *regexp.Regexp)
 
 	switch operator {
 	case "equals", "=", "eq", "":
-		return strValue == filterValue
+		resp := strValue == filterValue
+		return resp
 	case "not-equals", "!=", "ne":
 		return strValue != filterValue
 	case "contains", "in":

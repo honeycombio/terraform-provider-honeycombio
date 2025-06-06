@@ -145,7 +145,9 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 		matched := make([]*v2client.Environment, 0, len(envs))
 		for _, e := range envs {
-			if filterGroup == nil || filterGroup.Match(e) {
+			envResource := environmentToResourceModel(e)
+
+			if filterGroup == nil || filterGroup.Match(envResource) {
 				matched = append(matched, e)
 			}
 		}
@@ -176,4 +178,20 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
+}
+
+// environmentToResourceModel converts a v2client.Environment to a EnvironmentResourceModel
+func environmentToResourceModel(env *v2client.Environment) *models.EnvironmentResourceModel {
+	if env == nil {
+		return nil
+	}
+
+	return &models.EnvironmentResourceModel{
+		ID:              types.StringValue(env.ID),
+		Name:            types.StringValue(env.Name),
+		Slug:            types.StringValue(env.Slug),
+		Description:     types.StringPointerValue(env.Description),
+		Color:           types.StringPointerValue(env.Color),
+		DeleteProtected: types.BoolPointerValue(env.Settings.DeleteProtected),
+	}
 }

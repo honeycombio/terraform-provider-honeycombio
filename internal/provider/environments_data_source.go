@@ -96,7 +96,9 @@ func (d *environmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	for _, e := range envs {
-		if filterGroup == nil || filterGroup.Match(e) {
+		envResource := environmentToResourceModel(e)
+
+		if filterGroup == nil || filterGroup.Match(envResource) {
 			data.IDs = append(data.IDs, types.StringValue(e.ID))
 		}
 	}

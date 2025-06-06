@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"strconv"
+
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 // ValueToType converts a string value to its appropriate type.
@@ -36,8 +38,19 @@ func ValueToString(value interface{}) string {
 		return fmt.Sprintf("%f", v)
 	case bool:
 		return fmt.Sprintf("%t", v)
+	case basetypes.StringValue:
+		// Handle Terraform's StringValue type.
+		// Calling v.String() to get the string representation
+		// returns a string with escaped quotes so we use
+		// ValueString() instead
+		return v.ValueString()
+	case fmt.Stringer:
+		// If the value implements fmt.Stringer, use its String method.
+		// i.e. If the value is a struct or a type that has a String() method
+		return v.String()
 	default:
 		// For other complex types (maps, slices, arrays, etc.), convert to string
+		// TODO: handle more complex types like maps, slices, etc. in a more structured way
 		return fmt.Sprintf("%v", v)
 	}
 }

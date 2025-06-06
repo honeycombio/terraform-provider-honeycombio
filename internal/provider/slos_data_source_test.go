@@ -137,7 +137,7 @@ data "honeycombio_slos" "different_names" {
   }
   
   detail_filter {
-    name    = "time_period_days"
+    name    = "time_period"
     operator = "equals"
     value    = "30"
   }
@@ -312,15 +312,15 @@ data "honeycombio_slos" "numeric_range" {
   dataset = "%[1]s"
 
   detail_filter {
-    name    = "target_per_million"
+    name    = "target_percentage"
     operator = ">"
-    value    = "991000"
+    value    = "99.1"
   }
   
   detail_filter {
-    name    = "target_per_million"
+    name    = "target_percentage"
     operator = "<"
-    value    = "997000"
+    value    = "99.7"
   }
 }
 
@@ -341,7 +341,7 @@ data "honeycombio_slos" "complex_filter" {
   }
   
   detail_filter {
-    name    = "time_period_days"
+    name    = "time_period"
     operator = ">"
     value    = "1"
   }
