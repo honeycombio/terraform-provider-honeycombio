@@ -5,29 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 )
-
-func coerceValueToType(i string) interface{} {
-	// HCL really has three base types: bool, string, and number
-	// The Plugin SDK allows typing a schema field to Int or Float
-
-	// Plugin SDK assumes 64bit so we'll do the same
-	if v, err := strconv.ParseInt(i, 10, 64); err == nil {
-		return v
-	} else if v, err := strconv.ParseFloat(i, 64); err == nil {
-		return v
-	} else if v, err := strconv.ParseBool(i); err == nil {
-		return v
-	}
-	// fallthrough to string
-	return i
-}
 
 // getDatasetOrAll returns the dataset from the resource data.
 // If the dataset is empty, it returns the 'magic' EnvironmentWideSlug `__all__`.

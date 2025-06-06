@@ -24,6 +24,12 @@ data "honeycombio_slos" "foo" {
     name        = "name"
     value_regex = "foo_*"
   }
+
+  detail_filter {
+    name     = "tags"
+    operator = "contains"
+    value    = "team:core"
+  }
 }
 ```
 
@@ -32,15 +38,29 @@ data "honeycombio_slos" "foo" {
 The following arguments are supported:
 
 * `dataset` - (Optional) The dataset to retrieve the SLOs list from. If omitted, the lookup will be Environment-wide.
-* `detail_filter` - (Optional) a block to further filter results as described below. `name` must be set when providing a filter.
+* `detail_filter` - (Optional) a block to further filter results as described below. Multiple `detail_filter` blocks can be provided to filter by multiple fields. Multiple filters are combined with a logical `AND` operation, meaning all conditions must be satisfied for an SLO to be included in the results.
 
 To further filter the SLO results, a `detail_filter` block can be provided which accepts the following arguments:
 
-* `name` - (Required) The name of the detail field to filter by. Currently only `name` is supported.
+* `name` - (Required) The name of the detail field to filter by. This field must match a schema attribute of the `honeycombio_slo` resource (e.g., `name`, `tags`, `description`).
+* `operator` - (Optional) The comparison operator to use for filtering. Defaults to `equals`. Valid operators include:
+  * `equals`, `=`, `eq` - Exact match comparison
+  * `not-equals`, `!=`, `ne` - Inverse exact match comparison
+  * `contains`, `in` - Substring inclusion check
+  * `does-not-contain`, `not-in` - Inverse substring inclusion check
+  * `starts-with` - Prefix matching
+  * `does-not-start-with` - Inverse prefix matching
+  * `ends-with` - Suffix matching
+  * `does-not-end-with` - Inverse suffix matching
+  * `>`, `gt` - Numeric greater than comparison
+  * `>=`, `ge` - Numeric greater than or equal comparison
+  * `<`, `lt` - Numeric less than comparison
+  * `<=`, `le` - Numeric less than or equal comparison
+  * `does-not-exist` - Field absence check
 * `value` - (Optional) The value of the detail field to match on.
 * `value_regex` - (Optional) A regular expression string to apply to the value of the detail field to match on.
 
-~> **Note** one of `value` or `value_regex` is required.
+~> **Note:** Either `value` or `value_regex` must be specified, but not both.
 
 ## Attribute Reference
 

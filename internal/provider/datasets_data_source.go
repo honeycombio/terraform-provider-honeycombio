@@ -2,7 +2,7 @@ package provider
 
 import (
 	"context"
-	"regexp"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -100,34 +100,49 @@ func (d *datasetsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	var nameFilter *filter.DetailFilter
+	var filterGroup *filter.FilterGroup
 	if len(data.DetailFilter) > 0 {
-		nameFilter, err = data.DetailFilter[0].NewFilter()
+		var err error
+		filterGroup, err = filter.NewFilterGroup(data.DetailFilter)
 		if err != nil {
-			resp.Diagnostics.AddError("Unable to create Dataset filter", err.Error())
+			resp.Diagnostics.AddError("Unable to create Dataset filter group", err.Error())
 			return
 		}
 	} else if !data.StartsWith.IsNull() {
-		exp, err := regexp.Compile(data.StartsWith.ValueString() + "*")
-		if err != nil {
-			resp.Diagnostics.AddError("Unable to create Dataset filter", err.Error())
-			return
+		nameFilter := &filter.DetailFilter{
+			Field:    "name",
+			Operator: "starts-with",
+			Value:    data.StartsWith.ValueString(),
 		}
-		nameFilter = &filter.DetailFilter{
-			Type:       "name",
-			ValueRegex: exp,
+		filterGroup = &filter.FilterGroup{
+			Filters: []*filter.DetailFilter{nameFilter},
 		}
 	}
 
 	for _, e := range datasets {
-		if !nameFilter.MatchName(e.Name) {
-			continue
+		datasetResource := datasetToResourceModel(e)
+
+		if filterGroup == nil || filterGroup.Match(datasetResource) {
+			data.Names = append(data.Names, types.StringValue(e.Name))
+			data.Slugs = append(data.Slugs, types.StringValue(e.Slug))
 		}
-		data.Names = append(data.Names, types.StringValue(e.Name))
-		data.Slugs = append(data.Slugs, types.StringValue(e.Slug))
 	}
 	data.ID = types.StringValue(hashcode.StringValues(data.Slugs))
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
+}
+
+// datasetToResourceModel converts a client.Dataset to a DatasetResourceModel
+func datasetToResourceModel(ds client.Dataset) *models.DatasetResourceModel {
+	return &models.DatasetResourceModel{
+		ID:              types.StringValue(ds.Slug),
+		Slug:            types.StringValue(ds.Slug),
+		Name:            types.StringValue(ds.Name),
+		Description:     types.StringValue(ds.Description),
+		ExpandJSONDepth: types.Int32Value(int32(ds.ExpandJSONDepth)),
+		DeleteProtected: types.BoolPointerValue(ds.Settings.DeleteProtected),
+		CreatedAt:       types.StringValue(ds.CreatedAt.Format(time.RFC3339)),
+		LastWrittenAt:   types.StringValue(ds.LastWrittenAt.Format(time.RFC3339)),
+	}
 }

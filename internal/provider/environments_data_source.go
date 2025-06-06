@@ -89,20 +89,19 @@ func (d *environmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 		envs = append(envs, items...)
 	}
 
-	var envFilter *filter.DetailFilter
-	if len(data.DetailFilter) > 0 {
-		envFilter, err = data.DetailFilter[0].NewFilter()
-		if err != nil {
-			resp.Diagnostics.AddError("Unable to create Environment filter", err.Error())
-			return
-		}
+	// Create a filter group with all filters (implicit AND logic)
+	filterGroup, err := filter.NewFilterGroup(data.DetailFilter)
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to create Environment filter group", err.Error())
+		return
 	}
 
 	for _, e := range envs {
-		if !envFilter.MatchName(e.Name) {
-			continue
+		envResource := environmentToResourceModel(e)
+
+		if filterGroup == nil || filterGroup.Match(envResource) {
+			data.IDs = append(data.IDs, types.StringValue(e.ID))
 		}
-		data.IDs = append(data.IDs, types.StringValue(e.ID))
 	}
 	data.ID = types.StringValue(hashcode.StringValues(data.IDs))
 

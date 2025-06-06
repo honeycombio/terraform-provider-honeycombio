@@ -120,11 +120,12 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		}
 	} else {
 		// we're using the detail filter to find the environment
-		var envFilter *filter.DetailFilter
+		var filterGroup *filter.FilterGroup
 		if len(data.DetailFilter) > 0 {
-			envFilter, err = data.DetailFilter[0].NewFilter()
+			var err error
+			filterGroup, err = filter.NewFilterGroup(data.DetailFilter)
 			if err != nil {
-				resp.Diagnostics.AddError("Unable to create Environment filter", err.Error())
+				resp.Diagnostics.AddError("Unable to create Environment filter group", err.Error())
 				return
 			}
 		}
@@ -144,10 +145,11 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 		matched := make([]*v2client.Environment, 0, len(envs))
 		for _, e := range envs {
-			if !envFilter.MatchName(e.Name) {
-				continue
+			envResource := environmentToResourceModel(e)
+
+			if filterGroup == nil || filterGroup.Match(envResource) {
+				matched = append(matched, e)
 			}
-			matched = append(matched, e)
 		}
 
 		if len(matched) == 0 {
@@ -176,4 +178,20 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
+}
+
+// environmentToResourceModel converts a v2client.Environment to a EnvironmentResourceModel
+func environmentToResourceModel(env *v2client.Environment) *models.EnvironmentResourceModel {
+	if env == nil {
+		return nil
+	}
+
+	return &models.EnvironmentResourceModel{
+		ID:              types.StringValue(env.ID),
+		Name:            types.StringValue(env.Name),
+		Slug:            types.StringValue(env.Slug),
+		Description:     types.StringPointerValue(env.Description),
+		Color:           types.StringPointerValue(env.Color),
+		DeleteProtected: types.BoolPointerValue(env.Settings.DeleteProtected),
+	}
 }
