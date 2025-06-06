@@ -13,6 +13,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/filter"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
@@ -99,7 +100,7 @@ func (d *datasetsDataSource) Read(ctx context.Context, req datasource.ReadReques
 		return
 	}
 
-	filterGroup, err := models.NewFilterGroup(data.DetailFilter)
+	filterGroup, err := filter.NewFilterGroup(data.DetailFilter)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to create Dataset filter group", err.Error())
 		return

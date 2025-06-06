@@ -9,6 +9,7 @@ import (
 
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/filter"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
@@ -89,7 +90,7 @@ func (d *environmentsDataSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 
 	// Create a filter group with all filters (implicit AND logic)
-	filterGroup, err := models.NewFilterGroup(data.DetailFilter)
+	filterGroup, err := filter.NewFilterGroup(data.DetailFilter)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to create Environment filter group", err.Error())
 		return

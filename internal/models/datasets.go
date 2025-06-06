@@ -1,6 +1,10 @@
 package models
 
-import "github.com/hashicorp/terraform-plugin-framework/types"
+import (
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/filter"
+)
 
 type DatasetResourceModel struct {
 	ID              types.String `tfsdk:"id"`
@@ -14,9 +18,9 @@ type DatasetResourceModel struct {
 }
 
 type DatasetsDataSourceModel struct {
-	ID           types.String        `tfsdk:"id"`
-	StartsWith   types.String        `tfsdk:"starts_with"`
-	DetailFilter []DetailFilterModel `tfsdk:"detail_filter"`
-	Names        []types.String      `tfsdk:"names"`
-	Slugs        []types.String      `tfsdk:"slugs"`
+	ID           types.String               `tfsdk:"id"`
+	StartsWith   types.String               `tfsdk:"starts_with"`
+	DetailFilter []filter.DetailFilterModel `tfsdk:"detail_filter"`
+	Names        []types.String             `tfsdk:"names"`
+	Slugs        []types.String             `tfsdk:"slugs"`
 }

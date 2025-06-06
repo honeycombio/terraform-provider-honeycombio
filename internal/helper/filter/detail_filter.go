@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/coerce"
 )
 

@@ -123,7 +123,7 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		var filterGroup *filter.FilterGroup
 		if len(data.DetailFilter) > 0 {
 			var err error
-			filterGroup, err = models.NewFilterGroup(data.DetailFilter)
+			filterGroup, err = filter.NewFilterGroup(data.DetailFilter)
 			if err != nil {
 				resp.Diagnostics.AddError("Unable to create Environment filter group", err.Error())
 				return

@@ -2,6 +2,8 @@ package models
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/filter"
 )
 
 type SLOResourceModel struct {
@@ -17,10 +19,10 @@ type SLOResourceModel struct {
 }
 
 type SLOsDataSourceModel struct {
-	ID           types.String        `tfsdk:"id"`
-	Dataset      types.String        `tfsdk:"dataset"`
-	DetailFilter []DetailFilterModel `tfsdk:"detail_filter"`
-	IDs          []types.String      `tfsdk:"ids"`
+	ID           types.String               `tfsdk:"id"`
+	Dataset      types.String               `tfsdk:"dataset"`
+	DetailFilter []filter.DetailFilterModel `tfsdk:"detail_filter"`
+	IDs          []types.String             `tfsdk:"ids"`
 }
 
 type SLODataSourceModel struct {

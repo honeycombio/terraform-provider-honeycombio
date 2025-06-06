@@ -3,6 +3,8 @@ package filter
 import (
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,27 +20,29 @@ type TestFilterResource struct {
 
 func TestNewFilterGroup(t *testing.T) {
 	// Test with empty filters
-	emptyFilters := []*DetailFilter{}
-	group := NewFilterGroup(emptyFilters)
-	if group == nil {
-		t.Fatal("Expected non-nil group for empty filters")
-	}
-	if len(group.Filters) != 0 {
-		t.Errorf("Expected 0 filters, got %d", len(group.Filters))
-	}
+	emptyFilters := []DetailFilterModel{}
+	group, err := NewFilterGroup(emptyFilters)
+	assert.NoError(t, err)
+	assert.NotNil(t, group, "Expected non-nil group for empty filters")
+	assert.Equal(t, 0, len(group.Filters), "Expected 0 filters for empty input")
 
 	// Test with non-empty filters
-	filter1, _ := NewDetailFilter("name", "equals", "test", "")
-	filter2, _ := NewDetailFilter("id", "contains", "abc", "")
-	filters := []*DetailFilter{filter1, filter2}
+	filter1 := DetailFilterModel{
+		Name:     types.StringValue("name"),
+		Operator: types.StringValue("equals"),
+		Value:    types.StringValue("test"),
+	}
+	filter2 := DetailFilterModel{
+		Name:     types.StringValue("id"),
+		Operator: types.StringValue("contains"),
+		Value:    types.StringValue("abc"),
+	}
+	filters := []DetailFilterModel{filter1, filter2}
 
-	group = NewFilterGroup(filters)
-	if group == nil {
-		t.Fatal("Expected non-nil group")
-	}
-	if len(group.Filters) != 2 {
-		t.Errorf("Expected 2 filters, got %d", len(group.Filters))
-	}
+	group, err = NewFilterGroup(filters)
+	assert.NoError(t, err)
+	assert.NotNil(t, group, "Expected non-nil group for non-empty filters")
+	assert.Equal(t, 2, len(group.Filters), "Expected 2 filters for non-empty input")
 }
 
 func TestFilterGroup_Match(t *testing.T) {
@@ -56,7 +60,7 @@ func TestFilterGroup_Match(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		filters []*DetailFilter
+		filters []DetailFilterModel
 		want    bool
 	}{
 		{
@@ -66,26 +70,26 @@ func TestFilterGroup_Match(t *testing.T) {
 		},
 		{
 			name:    "empty filters",
-			filters: []*DetailFilter{},
+			filters: []DetailFilterModel{},
 			want:    true,
 		},
 		{
 			name: "single matching filter",
-			filters: []*DetailFilter{
+			filters: []DetailFilterModel{
 				mustCreateFilter(t, "Name", "equals", "Test Resource", ""),
 			},
 			want: true,
 		},
 		{
 			name: "single non-matching filter",
-			filters: []*DetailFilter{
+			filters: []DetailFilterModel{
 				mustCreateFilter(t, "Name", "equals", "Wrong Name", ""),
 			},
 			want: false,
 		},
 		{
 			name: "multiple matching filters",
-			filters: []*DetailFilter{
+			filters: []DetailFilterModel{
 				mustCreateFilter(t, "Name", "contains", "Resource", ""),
 				mustCreateFilter(t, "ID", "starts-with", "abc", ""),
 				mustCreateFilter(t, "Count", ">", "30", ""),
@@ -94,7 +98,7 @@ func TestFilterGroup_Match(t *testing.T) {
 		},
 		{
 			name: "mixed matching and non-matching filters",
-			filters: []*DetailFilter{
+			filters: []DetailFilterModel{
 				mustCreateFilter(t, "Name", "contains", "Resource", ""),
 				mustCreateFilter(t, "ID", "equals", "wrong-id", ""), // This won't match
 			},
@@ -102,14 +106,14 @@ func TestFilterGroup_Match(t *testing.T) {
 		},
 		{
 			name: "non-existent field filter",
-			filters: []*DetailFilter{
+			filters: []DetailFilterModel{
 				mustCreateFilter(t, "NonExistentField", "equals", "anything", ""),
 			},
 			want: false,
 		},
 		{
 			name: "regex filter",
-			filters: []*DetailFilter{
+			filters: []DetailFilterModel{
 				mustCreateFilter(t, "Name", "", "", "Test.*"),
 			},
 			want: true,
@@ -118,7 +122,8 @@ func TestFilterGroup_Match(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			group := NewFilterGroup(tt.filters)
+			group, err := NewFilterGroup(tt.filters)
+			assert.NoError(t, err)
 			got := group.Match(resource)
 
 			assert.Equal(t, tt.want, got, "FilterGroup.Match() mismatch for test case: %s", tt.name)
@@ -127,8 +132,12 @@ func TestFilterGroup_Match(t *testing.T) {
 }
 
 // Helper function to create a filter without having to check errors in each test case
-func mustCreateFilter(t *testing.T, field, operator, value, regex string) *DetailFilter {
-	filter, err := NewDetailFilter(field, operator, value, regex)
-	assert.NoError(t, err)
-	return filter
+func mustCreateFilter(t *testing.T, field, operator, value, regex string) DetailFilterModel {
+	return DetailFilterModel{
+		Name:       types.StringValue(field),
+		Operator:   types.StringValue(operator),
+		Value:      types.StringValue(value),
+		ValueRegex: types.StringValue(regex),
+	}
+
 }
