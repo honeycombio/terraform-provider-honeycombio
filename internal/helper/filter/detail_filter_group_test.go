@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestResource for testing filter matching
@@ -22,9 +23,9 @@ func TestNewFilterGroup(t *testing.T) {
 	// Test with empty filters
 	emptyFilters := []DetailFilterModel{}
 	group, err := NewFilterGroup(emptyFilters)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, group, "Expected non-nil group for empty filters")
-	assert.Equal(t, 0, len(group.Filters), "Expected 0 filters for empty input")
+	assert.Empty(t, group.Filters, "Expected 0 filters for empty input")
 
 	// Test with non-empty filters
 	filter1 := DetailFilterModel{
@@ -40,9 +41,9 @@ func TestNewFilterGroup(t *testing.T) {
 	filters := []DetailFilterModel{filter1, filter2}
 
 	group, err = NewFilterGroup(filters)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, group, "Expected non-nil group for non-empty filters")
-	assert.Equal(t, 2, len(group.Filters), "Expected 2 filters for non-empty input")
+	assert.Len(t, group.Filters, 2, "Expected 2 filters for non-empty input")
 }
 
 func TestFilterGroup_Match(t *testing.T) {
@@ -123,7 +124,7 @@ func TestFilterGroup_Match(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			group, err := NewFilterGroup(tt.filters)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			got := group.Match(resource)
 
 			assert.Equal(t, tt.want, got, "FilterGroup.Match() mismatch for test case: %s", tt.name)
