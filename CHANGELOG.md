@@ -1,3 +1,35 @@
+# 0.36.0 (Jun 6, 2025)
+
+NOTES: this release contains support for tagging Flexible Boards, however at the time of release the Honeycomb UI is still missing tagging support for Boards.
+This was done to allow users to begin tag all three of the initial resources supporting tags (SLOs, Triggers, Boards).
+
+ENHANCEMENTS:
+
+* feat(r/trigger): add support for tags on triggers (#683)
+* feat(r/trigger): add support for env-wide triggers (#687)
+* chore(client): add limit and disable series to query result request (#695)
+* feat(r/flexible_board): add support for tags on Boards (#694)
+* chore(docs): clarify that dataset and datasets field of slos expect slugs (#693)
+* feat: Enhance `detail_filter` support for multi-value and multi-filter (#689)
+
+BUGFIXES:
+
+* fix(ci): cleanup burn alert and trigger recipient creation (#688)
+* fix(r/flexible_board): incorrect "prefer_overlaid_charts" field name in docs (#690)
+* fix(client): use proper format for Retry-After fallback (#686)
+
+HOUSEKEEPING:
+
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.14.1 to 1.15.0 (#680)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.26.0 to 0.27.0 (#680)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.18.0 to 0.19.0 (#680)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.36.1 to 2.37.0 (#680)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.12.0 to 1.13.0 (#680)
+* chore(r/slo): migrate SLO resource to Plugin Framework (#682)
+* maint(deps): bump golang.org/x/net from 0.40.0 to 0.41.0 (#696)
+* chore: remove existing .env file and create .env.example template (#691)
+* docs: Deprecate board resource in favour of flexible_board (#681)
+
 # 0.35.0 (May 14, 2025)
 
 ENHANCEMENTS:
