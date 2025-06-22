@@ -13,14 +13,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAccHoneycombioSLO_basic(t *testing.T) {
 	dataset, sliAlias := sloAccTestSetup(t)
-	slo := &honeycombio.SLO{}
+	slo := &client.SLO{}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
@@ -117,7 +117,7 @@ resource "honeycombio_slo" "test" {
 // that it is detected and planned for recreation.
 func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 	dataset, sliAlias := sloAccTestSetup(t)
-	slo := &honeycombio.SLO{}
+	slo := &client.SLO{}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
@@ -145,7 +145,7 @@ func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 
 func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
 	dataset, sliAlias := sloAccTestSetup(t)
-	slo := &honeycombio.SLO{}
+	slo := &client.SLO{}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
@@ -177,14 +177,14 @@ func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
 	})
 }
 
-func TestHoneycombSLO_MD(t *testing.T) {
+func TestAccHoneycombSLO_MD(t *testing.T) {
 	c := testAccClient(t)
 	if c.IsClassic(context.Background()) {
 		t.Skip("MD SLOs are not supported in classic")
 	}
 	dataset1, dataset2, mdSLI := mdSLOAccTestSetup(t)
 
-	mdSLO := &honeycombio.SLO{}
+	mdSLO := &client.SLO{}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
@@ -221,7 +221,7 @@ func TestHoneycombSLO_MD(t *testing.T) {
 
 func TestAccHoneycombioSLO_UpgradeFromSDK(t *testing.T) {
 	dataset, sliAlias := sloAccTestSetup(t)
-	slo := &honeycombio.SLO{}
+	slo := &client.SLO{}
 
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -368,15 +368,15 @@ resource "honeycombio_slo" "test" {
 }`, sliAlias, dataset1Slug, dataset2Slug)
 }
 
-func testAccCheckSLOExists(t *testing.T, name string, slo *honeycombio.SLO) resource.TestCheckFunc {
+func testAccCheckSLOExists(t *testing.T, name string, slo *client.SLO) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
 			return fmt.Errorf("\"%s\" not found in state", name)
 		}
 
-		client := testAccClient(t)
-		rslo, err := client.SLOs.Get(context.Background(), honeycombio.EnvironmentWideSlug, resourceState.Primary.ID)
+		c := testAccClient(t)
+		rslo, err := c.SLOs.Get(context.Background(), client.EnvironmentWideSlug, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created SLO: %w", err)
 		}
@@ -394,7 +394,7 @@ func sloAccTestSetup(t *testing.T) (string, string) {
 	c := testAccClient(t)
 	dataset := testAccDataset()
 
-	sli, err := c.DerivedColumns.Create(ctx, dataset, &honeycombio.DerivedColumn{
+	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
 		Alias:      "sli." + acctest.RandString(8),
 		Expression: "BOOL(1)",
 	})
@@ -408,37 +408,37 @@ func sloAccTestSetup(t *testing.T) (string, string) {
 	return dataset, sli.Alias
 }
 
-func mdSLOAccTestSetup(t *testing.T) (honeycombio.Dataset, honeycombio.Dataset, honeycombio.DerivedColumn) {
+func mdSLOAccTestSetup(t *testing.T) (client.Dataset, client.Dataset, client.DerivedColumn) {
 	t.Helper()
 
 	ctx := context.Background()
 	c := testAccClient(t)
 
-	dataset1, err := c.Datasets.Create(ctx, &honeycombio.Dataset{
+	dataset1, err := c.Datasets.Create(ctx, &client.Dataset{
 		Name:        "test." + acctest.RandString(8),
 		Description: "test dataset 1",
 	})
 	require.NoError(t, err)
 
-	dataset2, err := c.Datasets.Create(ctx, &honeycombio.Dataset{
+	dataset2, err := c.Datasets.Create(ctx, &client.Dataset{
 		Name:        "test." + acctest.RandString(8),
 		Description: "test dataset 2",
 	})
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.Datasets.Update(ctx, &honeycombio.Dataset{
+		c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset1.Slug,
-			Settings: honeycombio.DatasetSettings{
+			Settings: client.DatasetSettings{
 				DeleteProtected: helper.ToPtr(false),
 			},
 		})
 		err = c.Datasets.Delete(ctx, dataset1.Slug)
 		require.NoError(t, err)
 
-		c.Datasets.Update(ctx, &honeycombio.Dataset{
+		c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset2.Slug,
-			Settings: honeycombio.DatasetSettings{
+			Settings: client.DatasetSettings{
 				DeleteProtected: helper.ToPtr(false),
 			},
 		})
@@ -446,7 +446,7 @@ func mdSLOAccTestSetup(t *testing.T) (honeycombio.Dataset, honeycombio.Dataset, 
 		require.NoError(t, err)
 	})
 
-	sli, err := c.DerivedColumns.Create(ctx, honeycombio.EnvironmentWideSlug, &honeycombio.DerivedColumn{
+	sli, err := c.DerivedColumns.Create(ctx, client.EnvironmentWideSlug, &client.DerivedColumn{
 		Alias:       test.RandomStringWithPrefix("test.", 10),
 		Description: "test SLI",
 		Expression:  "BOOL(1)",
@@ -454,7 +454,7 @@ func mdSLOAccTestSetup(t *testing.T) (honeycombio.Dataset, honeycombio.Dataset, 
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.DerivedColumns.Delete(ctx, honeycombio.EnvironmentWideSlug, sli.ID)
+		c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, sli.ID)
 	})
 
 	return *dataset1, *dataset2, *sli
