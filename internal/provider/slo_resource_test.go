@@ -75,6 +75,34 @@ resource "honeycombio_slo" "test" {
 					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.%", "0"),
 				),
 			},
+			{ // test tags set to empty map
+				Config: fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO"
+  description       = "updated integration test SLO"
+  dataset           = "%s"
+  sli               = "%s"
+  target_percentage = 99.99
+  time_period       = 30
+
+  tags = {}
+}`, dataset, sliAlias),
+				Check: resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.%", "0"),
+			},
+			{ // test tags set to null
+				Config: fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO"
+  description       = "updated integration test SLO"
+  dataset           = "%s"
+  sli               = "%s"
+  target_percentage = 99.99
+  time_period       = 30
+
+  tags = null
+}`, dataset, sliAlias),
+				Check: resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.%", "0"),
+			},
 			{
 				ResourceName:        "honeycombio_slo.test",
 				ImportStateIdPrefix: fmt.Sprintf("%s/", dataset),
