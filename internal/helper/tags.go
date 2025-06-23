@@ -10,37 +10,26 @@ import (
 )
 
 // TagsToMap converts a slice of client.Tag to a types.Map
-// It returns a populated map if tags exist, or a null map if no tags are present
+// It returns a populated map if tags exist, or an empty map if no tags are present
 func TagsToMap(ctx context.Context, tags []client.Tag) (types.Map, diag.Diagnostics) {
-	if len(tags) > 0 {
-		tagMap := make(map[string]string)
-		for _, tag := range tags {
-			tagMap[tag.Key] = tag.Value
-		}
-		return types.MapValueFrom(ctx, types.StringType, tagMap)
+	tagMap := make(map[string]string, len(tags))
+	for _, tag := range tags {
+		tagMap[tag.Key] = tag.Value
 	}
-	return types.MapNull(types.StringType), nil
+	return types.MapValueFrom(ctx, types.StringType, tagMap)
 }
 
 // MapToTags converts a map attribute of tags to a slice of client.Tag objects.
-// If the map is null, it returns an empty slice to clear any existing tags.
+// If the map is empty, it returns an empty slice to clear any existing tags.
 func MapToTags(ctx context.Context, tagsMap types.Map) ([]client.Tag, diag.Diagnostics) {
-	var tags []client.Tag
+	tagMap := make(map[string]string, len(tagsMap.Elements()))
+	if diags := tagsMap.ElementsAs(ctx, &tagMap, false); diags.HasError() {
+		return nil, diags
+	}
 
-	if !tagsMap.IsNull() {
-		var tagMap map[string]string
-		diags := tagsMap.ElementsAs(ctx, &tagMap, false)
-		if diags.HasError() {
-			return nil, diags
-		}
-
-		for k, v := range tagMap {
-			tags = append(tags, client.Tag{Key: k, Value: v})
-		}
-	} else {
-		// if 'tags' is not present in the config, set to empty slice
-		// to clear the tags
-		tags = make([]client.Tag, 0)
+	tags := make([]client.Tag, 0, len(tagMap))
+	for k, v := range tagMap {
+		tags = append(tags, client.Tag{Key: k, Value: v})
 	}
 
 	return tags, nil
