@@ -1,3 +1,15 @@
+# 0.36.1 (June 24, 2025)
+
+BUGFIXES:
+
+* fix(tags): handle empty tags map (#705)
+* fix(r/flexible_board): avoid panic on read with index check (#706)
+
+HOUSEKEEPING:
+
+* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.13.1 to 1.13.2 (#700)
+* maint(deps): bump github.com/hashicorp/go-retryablehttp from 0.7.7 to 0.7.8 (#703)
+
 # 0.36.0 (Jun 6, 2025)
 
 NOTES: this release contains support for tagging Flexible Boards, however at the time of release the Honeycomb UI is still missing tagging support for Boards.
