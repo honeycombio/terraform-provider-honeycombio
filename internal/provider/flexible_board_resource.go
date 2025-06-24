@@ -411,7 +411,7 @@ func (r *flexibleBoardResource) Read(ctx context.Context, req resource.ReadReque
 		panelsObj := make([]attr.Value, 0, len(board.Panels))
 		for i, panel := range board.Panels {
 			var prevPosition client.BoardPanel
-			if len(panelConfig) != 0 {
+			if len(panelConfig) != 0 && i < len(panelConfig) {
 				prevPosition = panelConfig[i]
 			}
 			panelValue := flattenBoardPanel(ctx, panel, &resp.Diagnostics, prevPosition)
