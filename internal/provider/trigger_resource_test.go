@@ -192,7 +192,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 		})
 	})
 
-	t.Run("trigger with partial baseline_details errors", func(t *testing.T) {
+	t.Run("trigger with baseline_details validates", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
 			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
@@ -200,6 +200,143 @@ func TestAcc_TriggerResource(t *testing.T) {
 				{
 					Config:      testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, true, true),
 					ExpectError: regexp.MustCompile(`The argument "offset_minutes" is required, but no definition was found.`),
+					PlanOnly:    true,
+				},
+				{
+					Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  time_range = 1200
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger with baseline_details errors"
+  dataset = "foobar"
+
+  description = "My nice description"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  baseline_details {
+    type            = "percentage"
+    offset_minutes  = 1440
+  }
+
+  frequency = 1200
+}`,
+					ExpectError: regexp.MustCompile(`must use a threshold operator of '>=' or '<='`),
+					PlanOnly:    true,
+				},
+				{
+					Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  time_range = 1200
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger with baseline_details errors"
+  dataset = "foobar"
+
+  description = "My nice description"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  threshold {
+    op    = ">="
+    value = -838
+  }
+
+  baseline_details {
+    type            = "percentage"
+    offset_minutes  = 1440
+  }
+
+  frequency = 1200
+}`,
+					ExpectError: regexp.MustCompile(`value greater than or equal to 0`),
+					PlanOnly:    true,
+				},
+				{
+					Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  time_range = 1200
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger with baseline_details errors"
+  dataset = "foobar"
+
+  description = "My nice description"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  threshold {
+    op    = "<"
+    value = 100
+  }
+
+  baseline_details {
+    type            = "percentage"
+    offset_minutes  = 1440
+  }
+
+  frequency = 1200
+}`,
+					ExpectError: regexp.MustCompile(`must use a threshold operator of '>=' or '<='`),
+					PlanOnly:    true,
+				},
+				{
+					Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  time_range = 1200
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "Test trigger with baseline_details errors"
+  dataset = "foobar"
+
+  description = "My nice description"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  threshold {
+    op    = "<="
+    value = 100
+  }
+
+  baseline_details {
+    type            = "percentage"
+    offset_minutes  = 1440
+  }
+
+  frequency = 1200
+}`,
+					ExpectError: regexp.MustCompile(`value less than or equal to 0`),
+					PlanOnly:    true,
 				},
 			},
 		})
