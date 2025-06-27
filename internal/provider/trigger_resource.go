@@ -664,6 +664,39 @@ func (r *triggerResource) ValidateConfig(ctx context.Context, req resource.Valid
 			)
 		}
 	}
+
+	// ensure baseline_details conditions are met
+	if !data.BaselineDetails.IsNull() && !data.BaselineDetails.IsUnknown() {
+		threshold := expandTriggerThreshold(ctx, data.Threshold, &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		switch threshold.Op {
+		case client.TriggerThresholdOpGreaterThanOrEqual:
+			if threshold.Value < 0 {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("threshold").AtName("value"),
+					"Trigger validation error",
+					"Triggers with baseline_details and a threshold operator of '>=' must have a value greater than or equal to 0.",
+				)
+			}
+		case client.TriggerThresholdOpLessThanOrEqual:
+			if threshold.Value > 0 {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("threshold").AtName("value"),
+					"Trigger validation error",
+					"Triggers with baseline_details and a threshold operator of '<=' must have a value less than or equal to 0.",
+				)
+			}
+		default:
+			resp.Diagnostics.AddAttributeError(
+				path.Root("threshold").AtName("op"),
+				"Trigger validation error",
+				"Triggers with baseline_details must use a threshold operator of '>=' or '<='.",
+			)
+		}
+	}
 }
 
 func expandTriggerThreshold(
