@@ -317,8 +317,8 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	var state models.TriggerResourceModel
-	state.Dataset = plan.Dataset
 	state.ID = types.StringValue(trigger.ID)
+	state.Dataset = plan.Dataset
 	state.Name = types.StringValue(trigger.Name)
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
@@ -490,6 +490,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	var state models.TriggerResourceModel
 	state.ID = types.StringValue(trigger.ID)
+	state.Dataset = plan.Dataset
 	state.Name = types.StringValue(trigger.Name)
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
