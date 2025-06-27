@@ -93,11 +93,7 @@ In addition to all arguments above, the following attributes are exported:
 
 ## Import
 
-SLOs can be imported using a combination of the dataset name and their ID, e.g.
-
-For multi-dataset SLOs, just pass in their ID.
-
-SLOs can be imported using by using their ID combined with their dataset.
+Single-dataset SLOs can be imported using by using their ID combined with their dataset.
 If the SLO is a multi-dataset (MD) SLO, the dataset is not provided.
 
 ### SLO

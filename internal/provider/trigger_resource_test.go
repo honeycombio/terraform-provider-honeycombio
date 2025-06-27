@@ -439,10 +439,23 @@ resource "honeycombio_trigger" "test" {
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.value", "1000"),
 					),
 				},
+				{ // update the trigger's name
+					Config: testAccConfigEnvironmentWideTrigger(name + "0"),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name+"0"),
+						resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "dataset"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "description", "Environment-wide trigger"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "1800"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.op", ">"),
+						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.value", "1000"),
+					),
+				},
 				{
-					ResourceName:        "honeycombio_trigger.test",
-					ImportStateIdPrefix: "__all__/",
-					ImportState:         true,
+					ResourceName:            "honeycombio_trigger.test",
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateVerifyIgnore: []string{"recipient"},
 				},
 			},
 		})
