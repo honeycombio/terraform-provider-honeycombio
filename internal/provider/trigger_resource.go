@@ -489,7 +489,6 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	var state models.TriggerResourceModel
-	state.Dataset = dataset
 	state.ID = types.StringValue(trigger.ID)
 	state.Name = types.StringValue(trigger.Name)
 	state.Description = types.StringValue(trigger.Description)
@@ -552,17 +551,20 @@ func (r *triggerResource) Delete(ctx context.Context, req resource.DeleteRequest
 }
 
 func (r *triggerResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// import ID is of the format <dataset>/<trigger ID>
 	dataset, id, found := strings.Cut(req.ID, "/")
+
+	// if dataset separator not found, we will assume its the bare id
+	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
+	dsValue := types.StringNull()
+	idValue := id
 	if !found {
-		resp.Diagnostics.AddError(
-			"Invalid Import ID",
-			"The supplied ID must be wrtten as <dataset>/<trigger ID>.",
-		)
-		return
+		idValue = dataset
+	} else {
+		dsValue = types.StringValue(dataset)
 	}
-	req.ID = id
-	resp.State.SetAttribute(ctx, path.Root("dataset"), dataset)
+
+	req.ID = idValue
+	resp.State.SetAttribute(ctx, path.Root("dataset"), dsValue)
 	resp.State.SetAttribute(ctx, path.Root("query_id"), types.StringNull()) // favor query_json on import
 
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)

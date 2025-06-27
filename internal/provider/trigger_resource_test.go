@@ -302,7 +302,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 						resource.TestCheckResourceAttr("honeycombio_trigger.test", "threshold.0.value", "1000"),
 					),
 				},
-				{
+				{ // update the trigger's name
 					Config: testAccConfigEnvironmentWideTrigger(name + "0"),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
@@ -315,9 +315,10 @@ func TestAcc_TriggerResource(t *testing.T) {
 					),
 				},
 				{
-					ResourceName:      "honeycombio_trigger.test",
-					ImportState:       true,
-					ImportStateVerify: true,
+					ResourceName:            "honeycombio_trigger.test",
+					ImportState:             true,
+					ImportStateVerify:       true,
+					ImportStateVerifyIgnore: []string{"recipient"},
 				},
 			},
 		})

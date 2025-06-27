@@ -330,12 +330,22 @@ In addition to all arguments above, the following attributes are exported:
 
 * `id` - ID of the trigger.
 
+
 ## Import
 
-Triggers can be imported using a combination of the dataset name and their ID, e.g.
+Single-dataset Triggers can be imported using by using their ID combined with their dataset.
+If the Trigger is an environment-wide trigger, the dataset is not provided.
+
+### Trigger
 
 ```
-$ terraform import honeycombio_trigger.my_trigger my-dataset/AeZzSoWws9G
+$ terraform import honeycombio_trigger.my_trigger my-dataset/bj9BwOb1uKz
+```
+
+### Environment-wide Trigger
+
+```
+$ terraform import honeycombio_trigger.my_trigger bj9BwOb1uJz
 ```
 
 You can find the ID in the URL bar when visiting the trigger from the UI.
