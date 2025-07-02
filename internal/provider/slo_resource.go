@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -64,6 +64,9 @@ func (*sloResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *re
 			"id": schema.StringAttribute{
 				Description: "The ID of the SLO.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the SLO.",
@@ -96,7 +99,7 @@ func (*sloResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *re
 				Computed:    true,
 				ElementType: types.StringType,
 				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.RequiresReplace(),
+					modifiers.RequiresReplaceIfDatasetChanges(),
 				},
 				Validators: []validator.Set{
 					setvalidator.SizeAtLeast(1),

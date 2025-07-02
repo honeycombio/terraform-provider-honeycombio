@@ -317,6 +317,117 @@ func TestAccHoneycombioSLO_DatasetConstraint(t *testing.T) {
 	})
 }
 
+func TestAccHoneycombioSLO_Update(t *testing.T) {
+	c := testAccClient(t)
+	if c.IsClassic(context.Background()) {
+		t.Skip("Multi-dataset SLOs are not supported in classic")
+	}
+
+	dataset1, dataset2, sliAlias := mdSLOAccTestSetup(t)
+
+	slo := &client.SLO{}
+	var originalID string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO"
+  description       = "test SLO"
+  datasets           = ["%s"]
+  sli               = "%s"
+  target_percentage = 99.95
+  time_period       = 30
+
+  tags = {
+    env  = "test"
+    team = "blue"
+  }
+}`, dataset1.Slug, sliAlias.Alias),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					func(s *terraform.State) error {
+						rs := s.RootModule().Resources["honeycombio_slo.test"]
+						originalID = rs.Primary.ID
+						return nil
+					},
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "name", "TestAcc SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", "test SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "target_percentage", "99.95"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "time_period", "30"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "datasets.#", "1"),
+					resource.TestCheckTypeSetElemAttr("honeycombio_slo.test", "datasets.*", dataset1.Slug),
+				),
+			},
+			{ // Update description - should not change ID
+				Config: fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO"
+  description       = "UPDATED integration test SLO"
+  datasets           = ["%s"]
+  sli               = "%s"
+  target_percentage = 99.95
+  time_period       = 30
+
+  tags = {
+    env  = "test"
+    team = "blue"
+  }
+}`, dataset1.Slug, sliAlias.Alias),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					func(s *terraform.State) error {
+						rs := s.RootModule().Resources["honeycombio_slo.test"]
+						if rs.Primary.ID != originalID {
+							return fmt.Errorf("expected ID to remain %s after description update, but got %s", originalID, rs.Primary.ID)
+						}
+						return nil
+					},
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", "UPDATED integration test SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "name", "TestAcc SLO"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "target_percentage", "99.95"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "time_period", "30"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "datasets.#", "1"),
+					resource.TestCheckTypeSetElemAttr("honeycombio_slo.test", "datasets.*", dataset1.Slug),
+				),
+			},
+			{ // Update datasets - should CHANGE ID (force replacement)
+				Config: fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO Update"
+  description       = "UPDATED test SLO for updates"
+  datasets          = ["%s"]
+  sli               = "%s"
+  target_percentage = 99.99
+  time_period       = 30
+
+  tags = {
+    env  = "production"
+    team = "red"
+    owner = "devops"
+  }
+}`, dataset2.Slug, sliAlias.Alias),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					func(s *terraform.State) error {
+						rs := s.RootModule().Resources["honeycombio_slo.test"]
+						if rs.Primary.ID == originalID {
+							return fmt.Errorf("expected ID to change after datasets update, but it remained %s", originalID)
+						}
+						originalID = rs.Primary.ID
+						return nil
+					},
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "datasets.#", "1"),
+					resource.TestCheckTypeSetElemAttr("honeycombio_slo.test", "datasets.*", dataset2.Slug),
+				),
+			},
+		},
+	})
+}
+
 func testAccConfigSLO_basic(dataset, sliAlias string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_slo" "test" {
