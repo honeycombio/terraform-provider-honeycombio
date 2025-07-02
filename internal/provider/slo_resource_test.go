@@ -325,7 +325,7 @@ func TestAccHoneycombioSLO_Update(t *testing.T) {
 
 	dataset1, dataset2, sliAlias := mdSLOAccTestSetup(t)
 
-	slo := &honeycombio.SLO{}
+	slo := &client.SLO{}
 	var originalID string
 
 	resource.Test(t, resource.TestCase{
