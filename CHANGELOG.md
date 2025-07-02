@@ -1,3 +1,11 @@
+# 0.36.2 (July 2, 2025)
+
+BUGFIXES:
+
+* fix(r/trigger): validate threshold when baseline_details in use (#708)
+* fix(r/trigger): updating env-wide trigger causes apply error (#709)
+* fix(r/slo): SLO update causing resource replacement (#710)
+
 # 0.36.1 (June 24, 2025)
 
 BUGFIXES:
