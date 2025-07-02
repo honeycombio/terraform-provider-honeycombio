@@ -318,6 +318,11 @@ func TestAccHoneycombioSLO_DatasetConstraint(t *testing.T) {
 }
 
 func TestAccHoneycombioSLO_Update(t *testing.T) {
+	c := testAccClient(t)
+	if c.IsClassic(context.Background()) {
+		t.Skip("Multi-dataset SLOs are not supported in classic")
+	}
+
 	dataset1, dataset2, sliAlias := mdSLOAccTestSetup(t)
 
 	slo := &honeycombio.SLO{}
