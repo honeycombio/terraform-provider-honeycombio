@@ -78,7 +78,7 @@ resource "honeycombio_slo" "slo" {
 
 resource "honeycombio_flexible_board" "overview" {
   name        = "Service Overview"
-  description = "My flexible baord description"
+  description = "My flexible board description"
 
   panel {
     type = "query"

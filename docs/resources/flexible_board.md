@@ -80,7 +80,7 @@ resource "honeycombio_slo" "slo" {
 
 resource "honeycombio_flexible_board" "overview" {
   name        = "Service Overview"
-  description = "My flexible baord description"
+  description = "My flexible board description"
 
   tags = {
     team    = "web"
