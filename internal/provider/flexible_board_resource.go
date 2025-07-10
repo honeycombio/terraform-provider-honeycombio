@@ -586,8 +586,8 @@ func expandPanelPosition(
 ) client.BoardPanelPosition {
 	if panelPosition.IsNull() || panelPosition.IsUnknown() {
 		return client.BoardPanelPosition{
-			X: -1,
-			Y: -1,
+			// X: -1,
+			// Y: -1,
 		}
 	}
 
@@ -596,8 +596,8 @@ func expandPanelPosition(
 
 	if len(position) == 0 {
 		return client.BoardPanelPosition{
-			X: -1,
-			Y: -1,
+			// X: -1,
+			// Y: -1,
 		}
 	}
 
@@ -731,7 +731,7 @@ func flattenBoardPanelPosition(
 	// we use negative numbers to indicate that the panel position was never set. We use this to not write to state when panel position is not set.
 	// This is a workaround for the various limitations that terraform v5 protocol presents.
 	// Without this workaround, whenever the API generates a default position, terraform would complain about a schema mismatch between config and applied results.
-	if statePosition.Height == 0 && statePosition.Width == 0 && statePosition.X == -1 && statePosition.Y == -1 {
+	if statePosition.Height == 0 && statePosition.Width == 0 && statePosition.X == 0 && statePosition.Y == 0 {
 		return types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelPositionModelAttrType})
 	}
 	obj, d := types.ObjectValue(models.BoardPanelPositionModelAttrType, map[string]attr.Value{
