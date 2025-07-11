@@ -111,5 +111,11 @@ resource "honeycombio_flexible_board" "overview" {
     slo_panel {
       slo_id = honeycombio_slo.slo.id
     }
+    position {
+      x_coordinate = 6
+      y_coordinate = 0
+      width        = 6
+      height       = 6
+    }
   }
 }

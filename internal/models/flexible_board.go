@@ -16,17 +16,15 @@ type FlexibleBoardResourceModel struct {
 
 type BoardPanelModel struct {
 	PanelType  types.String `tfsdk:"type"`
-	Position   types.List   `tfsdk:"position"`
+	Position   types.Object `tfsdk:"position"`
 	QueryPanel types.List   `tfsdk:"query_panel"`
 	SLOPanel   types.List   `tfsdk:"slo_panel"`
 }
 
 var BoardPanelModelAttrType = map[string]attr.Type{
 	"type": types.StringType,
-	"position": types.ListType{
-		ElemType: types.ObjectType{
-			AttrTypes: BoardPanelPositionModelAttrType,
-		},
+	"position": types.ObjectType{
+		AttrTypes: BoardPanelPositionModelAttrType,
 	},
 	"query_panel": types.ListType{
 		ElemType: types.ObjectType{

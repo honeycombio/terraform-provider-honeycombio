@@ -139,10 +139,10 @@ Each board configuration may have zero or more `panel` blocks which accept the f
 
 Each `position` configuration accepts the following arguments:
 
-- `x_coordinate` - (Optional) The x-axis origin point for placing the panel within the layout.
-- `y_coordinate` - (Optional) The y-axis origin point for placing the panel within the layout.
-- `width` - (Optional) The width of the panel in honeycomb UI columns. Defaults to 6 for queries and 3 for slos. Maximum value is 12.
-- `height` - (Optional) The height of the panel in rows. Defaults to 4.
+- `x_coordinate` - (Optional) The x-axis origin point for placing the panel within the layout. Must be provided with `y_coordinate`.
+- `y_coordinate` - (Optional) The y-axis origin point for placing the panel within the layout. Must be provided with `x_coordinate`.
+- `width` - (Optional) The width of the panel in honeycomb UI columns. Automatically calculated when not provided. Maximum value is 12.
+- `height` - (Optional) The height of the panel in rows. Automatically calculated when not provided.
 
 Each `slo_panel` configuration accepts the following arguments:
 
