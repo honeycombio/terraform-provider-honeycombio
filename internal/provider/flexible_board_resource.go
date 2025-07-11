@@ -119,38 +119,36 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 									Computed:    true,
 									Required:    false,
 									Description: "The X coordinate of the panel.",
-									// Default:     int64default.StaticInt64(0),
-									// Validators: []validator.Int64{
-									// 	int64validator.AtLeast(0),
-									// },
+									Validators: []validator.Int64{
+										int64validator.AtLeast(0),
+									},
 								},
 								"y_coordinate": schema.Int64Attribute{
 									Optional:    true,
 									Computed:    true,
 									Required:    false,
 									Description: "The Y coordinate of the panel.",
-									// Default:     int64default.StaticInt64(0),
-									// Validators: []validator.Int64{
-									// 	int64validator.AtLeast(0),
-									// },
+									Validators: []validator.Int64{
+										int64validator.AtLeast(0),
+									},
 								},
 								"height": schema.Int64Attribute{
 									Optional:    true,
 									Computed:    true,
 									Required:    false,
 									Description: "The height of the panel.",
-									// Validators: []validator.Int64{
-									// 	int64validator.AtLeast(1),
-									// },
+									Validators: []validator.Int64{
+										int64validator.AtLeast(1),
+									},
 								},
 								"width": schema.Int64Attribute{
 									Optional:    true,
 									Computed:    true,
 									Required:    false,
 									Description: "The width of the panel.",
-									// Validators: []validator.Int64{
-									// 	int64validator.AtLeast(1),
-									// },
+									Validators: []validator.Int64{
+										int64validator.AtLeast(1),
+									},
 								},
 							},
 						},
@@ -589,14 +587,6 @@ func expandPanelPosition(
 
 	var position models.BoardPanelPositionModel
 	diags.Append(panelPosition.As(ctx, &position, basetypes.ObjectAsOptions{})...)
-	// diags.Append(panelPosition.ElementsAs(ctx, &position, false)...)
-
-	// if len(position) == 0 {
-	// 	return client.BoardPanelPosition{
-	// 		X: -1,
-	// 		Y: -1,
-	// 	}
-	// }
 
 	return client.BoardPanelPosition{
 		X:      int(position.XCoordinate.ValueInt64()),
@@ -750,13 +740,6 @@ func flattenBoardPanelPosition(
 
 	obj, d := types.ObjectValue(models.BoardPanelPositionModelAttrType, attrs)
 	diags.Append(d...)
-
-	// result, d := types.ListValueFrom(
-	// 	ctx,
-	// 	types.ObjectType{AttrTypes: models.BoardPanelPositionModelAttrType},
-	// 	[]attr.Value{obj},
-	// )
-	// diags.Append(d...)
 
 	return obj
 }
