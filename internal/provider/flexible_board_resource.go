@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
@@ -111,52 +112,46 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 						},
 					},
 					Blocks: map[string]schema.Block{
-						"position": schema.ListNestedBlock{
+						"position": schema.SingleNestedBlock{
 							Description: `Manages the position of the panel on the board.`,
-							Validators: []validator.List{
-								listvalidator.SizeAtMost(1),
-								listvalidator.SizeAtLeast(1),
-							},
-							NestedObject: schema.NestedBlockObject{
-								Attributes: map[string]schema.Attribute{
-									"x_coordinate": schema.Int64Attribute{
-										Optional:    true,
-										Required:    false,
-										Computed:    true,
-										Description: "The X coordinate of the panel.",
-										Default:     int64default.StaticInt64(0),
-										Validators: []validator.Int64{
-											int64validator.AtLeast(0),
-										},
-									},
-									"y_coordinate": schema.Int64Attribute{
-										Optional:    true,
-										Computed:    true,
-										Required:    false,
-										Description: "The Y coordinate of the panel.",
-										Default:     int64default.StaticInt64(0),
-										Validators: []validator.Int64{
-											int64validator.AtLeast(0),
-										},
-									},
-									"height": schema.Int64Attribute{
-										Optional:    true,
-										Computed:    true,
-										Required:    false,
-										Description: "The height of the panel.",
-										Validators: []validator.Int64{
-											int64validator.AtLeast(1),
-										},
-									},
-									"width": schema.Int64Attribute{
-										Optional:    true,
-										Computed:    true,
-										Required:    false,
-										Description: "The width of the panel.",
-										Validators: []validator.Int64{
-											int64validator.AtLeast(1),
-										},
-									},
+							Attributes: map[string]schema.Attribute{
+								"x_coordinate": schema.Int64Attribute{
+									Optional:    true,
+									Required:    false,
+									Computed:    true,
+									Description: "The X coordinate of the panel.",
+									Default:     int64default.StaticInt64(0),
+									// Validators: []validator.Int64{
+									// 	int64validator.AtLeast(0),
+									// },
+								},
+								"y_coordinate": schema.Int64Attribute{
+									Optional:    true,
+									Computed:    true,
+									Required:    false,
+									Description: "The Y coordinate of the panel.",
+									Default:     int64default.StaticInt64(0),
+									// Validators: []validator.Int64{
+									// 	int64validator.AtLeast(0),
+									// },
+								},
+								"height": schema.Int64Attribute{
+									Optional:    true,
+									Computed:    true,
+									Required:    false,
+									Description: "The height of the panel.",
+									// Validators: []validator.Int64{
+									// 	int64validator.AtLeast(1),
+									// },
+								},
+								"width": schema.Int64Attribute{
+									Optional:    true,
+									Computed:    true,
+									Required:    false,
+									Description: "The width of the panel.",
+									// Validators: []validator.Int64{
+									// 	int64validator.AtLeast(1),
+									// },
 								},
 							},
 						},
@@ -581,7 +576,7 @@ func expandBoardPanels(
 // This is a workaround for the limitations of the terraform v5 protocol.
 func expandPanelPosition(
 	ctx context.Context,
-	panelPosition types.List,
+	panelPosition types.Object,
 	diags *diag.Diagnostics,
 ) client.BoardPanelPosition {
 	if panelPosition.IsNull() || panelPosition.IsUnknown() {
@@ -591,21 +586,22 @@ func expandPanelPosition(
 		}
 	}
 
-	var position []models.BoardPanelPositionModel
-	diags.Append(panelPosition.ElementsAs(ctx, &position, false)...)
+	var position models.BoardPanelPositionModel
+	diags.Append(panelPosition.As(ctx, &position, basetypes.ObjectAsOptions{})...)
+	// diags.Append(panelPosition.ElementsAs(ctx, &position, false)...)
 
-	if len(position) == 0 {
-		return client.BoardPanelPosition{
-			X: -1,
-			Y: -1,
-		}
-	}
+	// if len(position) == 0 {
+	// 	return client.BoardPanelPosition{
+	// 		X: -1,
+	// 		Y: -1,
+	// 	}
+	// }
 
 	return client.BoardPanelPosition{
-		X:      int(position[0].XCoordinate.ValueInt64()),
-		Y:      int(position[0].YCoordinate.ValueInt64()),
-		Height: int(position[0].Height.ValueInt64()),
-		Width:  int(position[0].Width.ValueInt64()),
+		X:      int(position.XCoordinate.ValueInt64()),
+		Y:      int(position.YCoordinate.ValueInt64()),
+		Height: int(position.Height.ValueInt64()),
+		Width:  int(position.Width.ValueInt64()),
 	}
 }
 
@@ -723,16 +719,16 @@ func flattenBoardPanel(
 }
 
 func flattenBoardPanelPosition(
-	ctx context.Context,
+	_ context.Context,
 	position client.BoardPanelPosition,
 	diags *diag.Diagnostics,
 	statePosition client.BoardPanelPosition,
-) types.List {
+) types.Object {
 	// we use negative numbers to indicate that the panel position was never set. We use this to not write to state when panel position is not set.
 	// This is a workaround for the various limitations that terraform v5 protocol presents.
 	// Without this workaround, whenever the API generates a default position, terraform would complain about a schema mismatch between config and applied results.
 	if statePosition.Height == 0 && statePosition.Width == 0 && statePosition.X == -1 && statePosition.Y == -1 {
-		return types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelPositionModelAttrType})
+		return types.ObjectNull(models.BoardPanelPositionModelAttrType)
 	}
 	obj, d := types.ObjectValue(models.BoardPanelPositionModelAttrType, map[string]attr.Value{
 		"x_coordinate": types.Int64Value(int64(position.X)),
@@ -742,14 +738,14 @@ func flattenBoardPanelPosition(
 	})
 	diags.Append(d...)
 
-	result, d := types.ListValueFrom(
-		ctx,
-		types.ObjectType{AttrTypes: models.BoardPanelPositionModelAttrType},
-		[]attr.Value{obj},
-	)
-	diags.Append(d...)
+	// result, d := types.ListValueFrom(
+	// 	ctx,
+	// 	types.ObjectType{AttrTypes: models.BoardPanelPositionModelAttrType},
+	// 	[]attr.Value{obj},
+	// )
+	// diags.Append(d...)
 
-	return result
+	return obj
 }
 
 func flattenBoardQueryPanel(
