@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -117,10 +116,10 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 							Attributes: map[string]schema.Attribute{
 								"x_coordinate": schema.Int64Attribute{
 									Optional:    true,
-									Required:    false,
 									Computed:    true,
+									Required:    false,
 									Description: "The X coordinate of the panel.",
-									Default:     int64default.StaticInt64(0),
+									// Default:     int64default.StaticInt64(0),
 									// Validators: []validator.Int64{
 									// 	int64validator.AtLeast(0),
 									// },
@@ -130,7 +129,7 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 									Computed:    true,
 									Required:    false,
 									Description: "The Y coordinate of the panel.",
-									Default:     int64default.StaticInt64(0),
+									// Default:     int64default.StaticInt64(0),
 									// Validators: []validator.Int64{
 									// 	int64validator.AtLeast(0),
 									// },
@@ -581,8 +580,10 @@ func expandPanelPosition(
 ) client.BoardPanelPosition {
 	if panelPosition.IsNull() || panelPosition.IsUnknown() {
 		return client.BoardPanelPosition{
-			X: -1,
-			Y: -1,
+			X:      -1,
+			Y:      -1,
+			Width:  -1,
+			Height: -1,
 		}
 	}
 
@@ -727,15 +728,27 @@ func flattenBoardPanelPosition(
 	// we use negative numbers to indicate that the panel position was never set. We use this to not write to state when panel position is not set.
 	// This is a workaround for the various limitations that terraform v5 protocol presents.
 	// Without this workaround, whenever the API generates a default position, terraform would complain about a schema mismatch between config and applied results.
-	if statePosition.Height == 0 && statePosition.Width == 0 && statePosition.X == -1 && statePosition.Y == -1 {
+	if statePosition.Height == -1 && statePosition.Width == -1 && statePosition.X == -1 && statePosition.Y == -1 {
 		return types.ObjectNull(models.BoardPanelPositionModelAttrType)
 	}
-	obj, d := types.ObjectValue(models.BoardPanelPositionModelAttrType, map[string]attr.Value{
-		"x_coordinate": types.Int64Value(int64(position.X)),
-		"y_coordinate": types.Int64Value(int64(position.Y)),
-		"height":       types.Int64Value(int64(position.Height)),
-		"width":        types.Int64Value(int64(position.Width)),
-	})
+	x := position.X
+	y := position.Y
+	width := position.Width
+	height := position.Height
+
+	attrs := map[string]attr.Value{}
+	if statePosition.X != -1 || statePosition.Y != -1 {
+		attrs["x_coordinate"] = types.Int64Value(int64(x))
+		attrs["y_coordinate"] = types.Int64Value(int64(y))
+	}
+	if statePosition.Width != -1 {
+		attrs["width"] = types.Int64Value(int64(width))
+	}
+	if statePosition.Height != -1 {
+		attrs["height"] = types.Int64Value(int64(height))
+	}
+
+	obj, d := types.ObjectValue(models.BoardPanelPositionModelAttrType, attrs)
 	diags.Append(d...)
 
 	// result, d := types.ListValueFrom(
@@ -879,6 +892,12 @@ func removeDefaultNegativeNumbers(panels []client.BoardPanel) []client.BoardPane
 		if resp[i].PanelPosition.X == -1 && resp[i].PanelPosition.Y == -1 {
 			resp[i].PanelPosition.X = 0
 			resp[i].PanelPosition.Y = 0
+		}
+		if resp[i].PanelPosition.Width == -1 {
+			resp[i].PanelPosition.Width = 0
+		}
+		if resp[i].PanelPosition.Height == -1 {
+			resp[i].PanelPosition.Height = 0
 		}
 	}
 
