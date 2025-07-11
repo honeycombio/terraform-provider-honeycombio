@@ -21,6 +21,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
@@ -150,6 +151,9 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 										int64validator.AtLeast(1),
 									},
 								},
+							},
+							Validators: []validator.Object{
+								validation.RequireBothCoordinates(),
 							},
 						},
 						"slo_panel": schema.ListNestedBlock{

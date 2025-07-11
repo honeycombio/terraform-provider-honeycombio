@@ -235,6 +235,8 @@ resource "honeycombio_flexible_board" "test" {
     position {
       height       = 4
       width        = 3
+	  x_coordinate = 0
+	  y_coordinate = 0
     }
     slo_panel {
       slo_id = "%[2]s"
@@ -250,6 +252,9 @@ resource "honeycombio_flexible_board" "test" {
     }
     position {
       height = 5
+	  width = 6
+	  x_coordinate = 0
+	  y_coordinate = 3
     }
   }
 }
