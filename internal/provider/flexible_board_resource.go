@@ -21,6 +21,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
@@ -100,6 +101,9 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 		Blocks: map[string]schema.Block{
 			"panel": schema.ListNestedBlock{
 				Description: "List of panels to render on the board.",
+				Validators: []validator.List{
+					validation.RequireConsistentPanelPositions(),
+				},
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
