@@ -157,7 +157,7 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "tags.env"),
 				),
 			},
-			// now add an SLO panel, remove chart settings from the query panel, remove tags
+			// now add an SLO panel, remove chart settings from the query panel, remove tags and update from generated positions to provided positions
 			{
 				Config: fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
@@ -191,12 +191,24 @@ resource "honeycombio_flexible_board" "test" {
         use_utc_xaxis = false
       }
     }
+	position {
+      height       = 4
+      width        = 3
+      x_coordinate = 0
+      y_coordinate = 0
+    }
   }
 
   panel {
     type = "slo"
     slo_panel {
       slo_id = "%[2]s"
+    }
+	position {
+      height       = 4
+      width        = 3
+      x_coordinate = 3
+      y_coordinate = 0
     }
   }
 }
@@ -213,6 +225,15 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.#", "1"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.use_utc_xaxis", "false"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.#", "0"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.position.height", "4"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.position.width", "3"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.position.x_coordinate", "0"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.position.y_coordinate", "0"),
+
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.height", "4"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width", "3"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.x_coordinate", "3"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.y_coordinate", "0"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.%", "0"),
 				),
 			},

@@ -123,25 +123,3 @@ type BoardPanelModelV0 struct {
 	QueryPanel types.List   `tfsdk:"query_panel"`
 	SLOPanel   types.List   `tfsdk:"slo_panel"`
 }
-
-// This is the old version of the BoardPanelModel
-// It was used to store the board panel in a list of objects
-// This is no longer used, but is kept here for backwards compatibility
-var BoardPanelModelAttrTypeV0 = map[string]attr.Type{
-	"type": types.StringType,
-	"position": types.ListType{
-		ElemType: types.ObjectType{
-			AttrTypes: BoardPanelPositionModelAttrType,
-		},
-	},
-	"query_panel": types.ListType{
-		ElemType: types.ObjectType{
-			AttrTypes: QueryPanelModelAttrType,
-		},
-	},
-	"slo_panel": types.ListType{
-		ElemType: types.ObjectType{
-			AttrTypes: SLOPanelModelAttrType,
-		},
-	},
-}
