@@ -21,7 +21,6 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
@@ -101,9 +100,6 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 		Blocks: map[string]schema.Block{
 			"panel": schema.ListNestedBlock{
 				Description: "List of panels to render on the board.",
-				Validators: []validator.List{
-					validation.RequireConsistentPanelPositions(),
-				},
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -125,6 +121,7 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 									Description: "The X coordinate of the panel.",
 									Validators: []validator.Int64{
 										int64validator.AtLeast(0),
+										int64validator.AlsoRequires(path.MatchRelative().AtParent().AtName("y_coordinate")),
 									},
 								},
 								"y_coordinate": schema.Int64Attribute{
@@ -134,6 +131,7 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 									Description: "The Y coordinate of the panel.",
 									Validators: []validator.Int64{
 										int64validator.AtLeast(0),
+										int64validator.AlsoRequires(path.MatchRelative().AtParent().AtName("x_coordinate")),
 									},
 								},
 								"height": schema.Int64Attribute{
@@ -152,11 +150,9 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 									Description: "The width of the panel.",
 									Validators: []validator.Int64{
 										int64validator.AtLeast(1),
+										int64validator.AtMost(12),
 									},
 								},
-							},
-							Validators: []validator.Object{
-								validation.RequireBothCoordinates(),
 							},
 						},
 						"slo_panel": schema.ListNestedBlock{
