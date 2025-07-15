@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -27,9 +28,10 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &flexibleBoardResource{}
-	_ resource.ResourceWithConfigure   = &flexibleBoardResource{}
-	_ resource.ResourceWithImportState = &flexibleBoardResource{}
+	_ resource.Resource                 = &flexibleBoardResource{}
+	_ resource.ResourceWithConfigure    = &flexibleBoardResource{}
+	_ resource.ResourceWithImportState  = &flexibleBoardResource{}
+	_ resource.ResourceWithUpgradeState = &flexibleBoardResource{}
 )
 
 type flexibleBoardResource struct {
@@ -61,6 +63,7 @@ func (r *flexibleBoardResource) Configure(_ context.Context, req resource.Config
 func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a flexible Board in a Honeycomb Environment.",
+		Version:     1,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
@@ -287,6 +290,293 @@ func (r *flexibleBoardResource) ImportState(ctx context.Context, req resource.Im
 	}
 
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	// upgrade state as position is not an object and
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema: &schema.Schema{
+				Description: "Manages a flexible Board in a Honeycomb Environment.",
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Computed:    true,
+						Required:    false,
+						Optional:    false,
+						Description: "The ID of the Board.",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"name": schema.StringAttribute{
+						Required:    true,
+						Description: "The name of the Board.",
+						Validators: []validator.String{
+							stringvalidator.LengthBetween(1, 255),
+						},
+					},
+					"description": schema.StringAttribute{
+						Optional:    true,
+						Computed:    true,
+						Description: "The description of the Board. Supports Markdown.",
+						Default:     stringdefault.StaticString(""),
+						Validators: []validator.String{
+							stringvalidator.LengthBetween(1, 1023),
+						},
+					},
+					"board_url": schema.StringAttribute{
+						Computed:    true,
+						Required:    false,
+						Optional:    false,
+						Description: "The URL of the Board in the Honeycomb UI.",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
+					"tags": tagsSchema(),
+				},
+				Blocks: map[string]schema.Block{
+					"panel": schema.ListNestedBlock{
+						Description: "List of panels to render on the board.",
+						NestedObject: schema.NestedBlockObject{
+							Attributes: map[string]schema.Attribute{
+								"type": schema.StringAttribute{
+									Required:    true,
+									Description: `The panel type, either "query" or "slo".`,
+									Validators: []validator.String{
+										stringvalidator.OneOf("query", "slo"),
+									},
+								},
+							},
+							Blocks: map[string]schema.Block{
+								"position": schema.ListNestedBlock{
+									Description: `Manages the position of the panel on the board.`,
+									Validators: []validator.List{
+										listvalidator.SizeAtMost(1),
+										listvalidator.SizeAtLeast(1),
+									},
+									NestedObject: schema.NestedBlockObject{
+										Attributes: map[string]schema.Attribute{
+											"x_coordinate": schema.Int64Attribute{
+												Optional:    true,
+												Required:    false,
+												Computed:    true,
+												Description: "The X coordinate of the panel.",
+												Default:     int64default.StaticInt64(0),
+												Validators: []validator.Int64{
+													int64validator.AtLeast(0),
+												},
+											},
+											"y_coordinate": schema.Int64Attribute{
+												Optional:    true,
+												Computed:    true,
+												Required:    false,
+												Description: "The Y coordinate of the panel.",
+												Default:     int64default.StaticInt64(0),
+												Validators: []validator.Int64{
+													int64validator.AtLeast(0),
+												},
+											},
+											"height": schema.Int64Attribute{
+												Optional:    true,
+												Computed:    true,
+												Required:    false,
+												Description: "The height of the panel.",
+												Validators: []validator.Int64{
+													int64validator.AtLeast(1),
+												},
+											},
+											"width": schema.Int64Attribute{
+												Optional:    true,
+												Computed:    true,
+												Required:    false,
+												Description: "The width of the panel.",
+												Validators: []validator.Int64{
+													int64validator.AtLeast(1),
+												},
+											},
+										},
+									},
+								},
+								"slo_panel": schema.ListNestedBlock{
+									Description: "A Service Level Objective(SLO) panel to be displayed on the Board.",
+									Validators: []validator.List{
+										listvalidator.SizeAtMost(1),
+									},
+									NestedObject: schema.NestedBlockObject{
+										Attributes: map[string]schema.Attribute{
+											"slo_id": schema.StringAttribute{
+												Required:    true,
+												Description: "SLO ID to display in this panel.",
+											},
+										},
+									},
+								},
+								"query_panel": schema.ListNestedBlock{
+									Description: "A query panel to be displayed on the Board.",
+									Validators: []validator.List{
+										listvalidator.SizeAtMost(1),
+									},
+									NestedObject: schema.NestedBlockObject{
+										Attributes: map[string]schema.Attribute{
+											"query_id": schema.StringAttribute{
+												Required:    true,
+												Description: "Query ID to be rendered in the panel.",
+											},
+											"query_annotation_id": schema.StringAttribute{
+												Required:    true,
+												Optional:    false,
+												Description: "Query annotation ID.",
+											},
+											"query_style": schema.StringAttribute{
+												Optional:    true,
+												Computed:    true,
+												Description: "The visual style of the query (e.g., 'graph', 'combo').",
+												Validators: []validator.String{
+													stringvalidator.OneOf("graph", "table", "combo"),
+												},
+												Default: stringdefault.StaticString("graph"),
+											},
+										},
+										Blocks: map[string]schema.Block{
+											"visualization_settings": schema.ListNestedBlock{
+												Validators: []validator.List{
+													listvalidator.SizeAtMost(1),
+												},
+												NestedObject: schema.NestedBlockObject{
+													Attributes: map[string]schema.Attribute{
+														"use_utc_xaxis": schema.BoolAttribute{
+															Optional:    true,
+															Computed:    true,
+															Description: "Display UTC Time X-Axis or Localtime X-Axis.",
+														},
+														"hide_markers": schema.BoolAttribute{
+															Optional:    true,
+															Computed:    true,
+															Description: "Hide markers from appearing on graph.",
+														},
+														"hide_hovers": schema.BoolAttribute{
+															Optional:    true,
+															Computed:    true,
+															Description: "Disable Graph tooltips in the results display when hovering over a graph.",
+														},
+														"prefer_overlaid_charts": schema.BoolAttribute{
+															Optional:    true,
+															Computed:    true,
+															Description: "Combine any visualized AVG, MIN, MAX, and PERCENTILE clauses into a single chart.",
+														},
+														"hide_compare": schema.BoolAttribute{
+															Optional:    true,
+															Computed:    true,
+															Description: "Hide comparison values.",
+														},
+													},
+													Blocks: map[string]schema.Block{
+														"chart": schema.ListNestedBlock{
+															NestedObject: schema.NestedBlockObject{
+																Attributes: map[string]schema.Attribute{
+																	"chart_type": schema.StringAttribute{
+																		Optional:    true,
+																		Computed:    true,
+																		Description: "Type of chart (e.g., 'line', 'bar').",
+																		Validators: []validator.String{
+																			stringvalidator.OneOf("default", "line", "tsbar", "stacked", "stat", "tsbar", "cpie", "cbar"),
+																		},
+																		Default: stringdefault.StaticString("default"),
+																	},
+																	"chart_index": schema.Int64Attribute{
+																		Optional:    true,
+																		Computed:    true,
+																		Description: "Index of the chart this configuration controls.",
+																		Validators: []validator.Int64{
+																			int64validator.AtLeast(0),
+																		},
+																	},
+																	"omit_missing_values": schema.BoolAttribute{
+																		Optional:    true,
+																		Computed:    true,
+																		Description: "Omit missing values from the visualization.",
+																	},
+																	"use_log_scale": schema.BoolAttribute{
+																		Optional:    true,
+																		Computed:    true,
+																		Description: "Use logarithmic scale on Y axis.",
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var state models.FlexibleBoardResourceModel
+				resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+
+				if state.Panels.IsNull() || state.Panels.IsUnknown() {
+					return
+				}
+
+				// convert the old state to the new state
+				var statePanels []models.BoardPanelModelV0
+				resp.Diagnostics.Append(state.Panels.ElementsAs(ctx, &statePanels, false)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+
+				var newStatePanels []models.BoardPanelModel
+				for _, panel := range statePanels {
+					upgradedPanel := models.BoardPanelModel{
+						PanelType:  panel.PanelType,
+						QueryPanel: panel.QueryPanel,
+						SLOPanel:   panel.SLOPanel,
+					}
+
+					if !(panel.Position.IsNull() || panel.Position.IsUnknown()) {
+						var oldStylePositions []models.BoardPanelPositionModel
+						resp.Diagnostics.Append(panel.Position.ElementsAs(ctx, &oldStylePositions, false)...)
+						if resp.Diagnostics.HasError() {
+							return
+						}
+
+						attrs := map[string]attr.Value{}
+						attrs["x_coordinate"] = oldStylePositions[0].XCoordinate
+						attrs["y_coordinate"] = oldStylePositions[0].YCoordinate
+						attrs["height"] = oldStylePositions[0].Height
+						attrs["width"] = oldStylePositions[0].Width
+
+						obj, d := types.ObjectValue(models.BoardPanelPositionModelAttrType, attrs)
+						resp.Diagnostics.Append(d...)
+
+						upgradedPanel.Position = obj
+					} else {
+						upgradedPanel.Position = types.ObjectNull(models.BoardPanelPositionModelAttrType)
+					}
+
+					newStatePanels = append(newStatePanels, upgradedPanel)
+				}
+
+				finalPanels, diags := types.ListValueFrom(ctx,
+					types.ObjectType{AttrTypes: models.BoardPanelModelAttrType},
+					newStatePanels,
+				)
+				resp.Diagnostics.Append(diags...)
+
+				state.Panels = finalPanels
+				resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+			},
+		},
+	}
 }
 
 func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

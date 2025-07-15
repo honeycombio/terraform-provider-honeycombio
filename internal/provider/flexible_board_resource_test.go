@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/stretchr/testify/require"
 )
 
@@ -284,6 +285,59 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.height", "5"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width", "6"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccHoneycombioFlexibleBoard_upgradeFromVersion036_2(t *testing.T) {
+	ctx := context.Background()
+	dataset := testAccDataset()
+	c := testAccClient(t)
+
+	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
+		Alias:      "sli." + acctest.RandString(8),
+		Expression: "BOOL(1)",
+	})
+	require.NoError(t, err)
+	slo, err := c.SLOs.Create(ctx, dataset, &client.SLO{
+		Name:             acctest.RandString(8) + " SLO",
+		TimePeriodDays:   14,
+		TargetPerMillion: 995000,
+		SLI:              client.SLIRef{Alias: sli.Alias},
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		// remove SLOs, and SLIs at end of test run
+		c.SLOs.Delete(ctx, dataset, slo.ID)
+		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+	})
+
+	config := testFlexibleBoardConfig(dataset, slo.ID)
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"honeycombio": {
+						VersionConstraint: "0.36.2",
+						Source:            "honeycombio/honeycombio",
+					},
+				},
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+				Config:                   config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
