@@ -310,6 +310,9 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.type", "query"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.height", "5"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width", "6"),
+					// ensure x and y coordinates are dynamically generated when only height and width are provided
+					resource.TestCheckResourceAttrSet("honeycombio_flexible_board.test", "panel.1.position.x_coordinate"),
+					resource.TestCheckResourceAttrSet("honeycombio_flexible_board.test", "panel.1.position.y_coordinate"),
 				),
 			},
 		},
