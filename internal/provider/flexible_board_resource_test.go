@@ -100,7 +100,7 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.env", "dev"),
 				),
 			},
-			// now add a query panel with no position, update tags, and ensure the board is updated
+			// now add a query panel with no position (auto generated positions), update tags, and ensure the board is updated
 			{
 				Config: fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
@@ -155,6 +155,11 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.%", "1"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.team", "green"),
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "tags.env"),
+					// when position not provided, the position should not be set in state
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.height"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.width"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.x_coordinate"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.y_coordinate"),
 				),
 			},
 			// now add an SLO panel, remove chart settings from the query panel, remove tags and update from generated positions to provided positions

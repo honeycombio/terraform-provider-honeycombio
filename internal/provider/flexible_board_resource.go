@@ -1001,14 +1001,13 @@ func flattenBoardPanel(
 	panelValue := make(map[string]attr.Value)
 	panelValue["type"] = types.StringValue(string(panel.PanelType))
 	panelValue["slo_panel"] = flattenBoardSloPanel(ctx, panel.SLOPanel, diags)
-	panelValue["position"] = flattenBoardPanelPosition(ctx, panel.PanelPosition, diags, statePanel.PanelPosition)
+	panelValue["position"] = flattenBoardPanelPosition(panel.PanelPosition, diags, statePanel.PanelPosition)
 	panelValue["query_panel"] = flattenBoardQueryPanel(ctx, panel.QueryPanel, diags)
 
 	return panelValue
 }
 
 func flattenBoardPanelPosition(
-	_ context.Context,
 	position client.BoardPanelPosition,
 	diags *diag.Diagnostics,
 	statePosition client.BoardPanelPosition,
