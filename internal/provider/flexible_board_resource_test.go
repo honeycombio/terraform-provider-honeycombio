@@ -76,6 +76,7 @@ func TestAccHoneycombioFlexibleBoard(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width", "6"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.x_coordinate", "0"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.y_coordinate", "3"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "layout_generation", "manual"),
 				),
 			},
 			// remove board's panels, add tags
@@ -98,6 +99,7 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.%", "2"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.team", "blue"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.env", "dev"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "layout_generation", "manual"),
 				),
 			},
 			// now add a query panel with no position (auto generated positions), update tags, and ensure the board is updated
@@ -126,7 +128,8 @@ resource "honeycombio_flexible_board" "test" {
   description = "simple flexible board description"
   tags = {
 	team = "green"
-  } 
+  }
+  layout_generation = "auto"
   panel {
     type = "query"
     query_panel {
@@ -160,6 +163,7 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.width"),
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.x_coordinate"),
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.y_coordinate"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "layout_generation", "auto"),
 				),
 			},
 			// now add an SLO panel, remove chart settings from the query panel, remove tags and update from generated positions to provided positions
@@ -240,6 +244,7 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.x_coordinate", "3"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.y_coordinate", "0"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.%", "0"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "layout_generation", "manual"),
 				),
 			},
 			// re-order the panels and remove viz settings for the query panel
@@ -313,6 +318,7 @@ resource "honeycombio_flexible_board" "test" {
 					// ensure x and y coordinates are dynamically generated when only height and width are provided
 					resource.TestCheckResourceAttrSet("honeycombio_flexible_board.test", "panel.1.position.x_coordinate"),
 					resource.TestCheckResourceAttrSet("honeycombio_flexible_board.test", "panel.1.position.y_coordinate"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "layout_generation", "manual"),
 				),
 			},
 		},

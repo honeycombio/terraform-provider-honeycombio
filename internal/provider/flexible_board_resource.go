@@ -99,6 +99,16 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"layout_generation": schema.StringAttribute{
+				Computed:    true,
+				Required:    false,
+				Optional:    true,
+				Default:     stringdefault.StaticString("manual"),
+				Description: "Allows the board layout to be generated based on positions when set to 'manual'. When set to 'auto', the board layout will be auto generated.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 			"tags": tagsSchema(),
 		},
 		Blocks: map[string]schema.Block{
@@ -517,19 +527,19 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var state models.FlexibleBoardResourceModel
-				resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+				var oldState models.FlexibleBoardResourceModelV0
+				resp.Diagnostics.Append(req.State.Get(ctx, &oldState)...)
 				if resp.Diagnostics.HasError() {
 					return
 				}
 
-				if state.Panels.IsNull() || state.Panels.IsUnknown() {
+				if oldState.Panels.IsNull() || oldState.Panels.IsUnknown() {
 					return
 				}
 
 				// convert the old state to the new state
 				var statePanels []models.BoardPanelModelV0
-				resp.Diagnostics.Append(state.Panels.ElementsAs(ctx, &statePanels, false)...)
+				resp.Diagnostics.Append(oldState.Panels.ElementsAs(ctx, &statePanels, false)...)
 				if resp.Diagnostics.HasError() {
 					return
 				}
@@ -572,8 +582,16 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 				)
 				resp.Diagnostics.Append(diags...)
 
-				state.Panels = finalPanels
-				resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+				newState := models.FlexibleBoardResourceModel{
+					ID:               oldState.ID,
+					Name:             oldState.Name,
+					Description:      oldState.Description,
+					URL:              oldState.URL,
+					Panels:           finalPanels,
+					Tags:             oldState.Tags,
+					LayoutGeneration: types.StringValue("manual"),
+				}
+				resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 			},
 		},
 	}
@@ -594,11 +612,12 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 
 	panelFromConfig := expandBoardPanels(ctx, plan.Panels, &resp.Diagnostics)
 	createRequest := &client.Board{
-		Name:        plan.Name.ValueString(),
-		Description: plan.Description.ValueString(),
-		BoardType:   client.BoardTypeFlexible,
-		Panels:      removeDefaultNegativeNumbers(panelFromConfig),
-		Tags:        planTags,
+		Name:             plan.Name.ValueString(),
+		Description:      plan.Description.ValueString(),
+		BoardType:        client.BoardTypeFlexible,
+		Panels:           removeDefaultNegativeNumbers(panelFromConfig),
+		Tags:             planTags,
+		LayoutGeneration: client.LayoutGeneration(plan.LayoutGeneration.ValueString()),
 	}
 
 	if resp.Diagnostics.HasError() {
@@ -615,6 +634,7 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 	state.Name = types.StringValue(board.Name)
 	state.Description = types.StringValue(board.Description)
 	state.URL = types.StringValue(board.Links.BoardURL)
+	state.LayoutGeneration = plan.LayoutGeneration
 
 	if len(board.Panels) == 0 {
 		state.Panels = types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelModelAttrType})
@@ -748,12 +768,13 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 
 	panelConfig := expandBoardPanels(ctx, plan.Panels, &resp.Diagnostics)
 	updateRequest := &client.Board{
-		ID:          plan.ID.ValueString(),
-		Name:        plan.Name.ValueString(),
-		Description: plan.Description.ValueString(),
-		BoardType:   client.BoardTypeFlexible,
-		Panels:      removeDefaultNegativeNumbers(panelConfig),
-		Tags:        planTags,
+		ID:               plan.ID.ValueString(),
+		Name:             plan.Name.ValueString(),
+		Description:      plan.Description.ValueString(),
+		BoardType:        client.BoardTypeFlexible,
+		Panels:           removeDefaultNegativeNumbers(panelConfig),
+		Tags:             planTags,
+		LayoutGeneration: client.LayoutGeneration(plan.LayoutGeneration.ValueString()),
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -769,6 +790,7 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 	state.Name = types.StringValue(board.Name)
 	state.Description = types.StringValue(board.Description)
 	state.URL = types.StringValue(board.Links.BoardURL)
+	state.LayoutGeneration = plan.LayoutGeneration
 
 	if len(board.Panels) == 0 {
 		state.Panels = types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelModelAttrType})

@@ -44,6 +44,10 @@ type Board struct {
 	// Defaults to "classic".
 	BoardType BoardType `json:"type,omitempty"`
 
+	// Layout generation controls how the board layout is generated.
+	// Defaults to "manual".
+	LayoutGeneration LayoutGeneration `json:"layout_generation,omitempty"`
+
 	// Board panels are the individual panels that make up a board. Each panel can
 	// be a query or an SLO panel. The panels are laid out in a grid.
 	Panels []BoardPanel `json:"panels,omitempty"`
@@ -126,6 +130,13 @@ type BoardType string
 const (
 	BoardTypeClassic  BoardType = "classic"
 	BoardTypeFlexible BoardType = "flexible"
+)
+
+type LayoutGeneration string
+
+const (
+	LayoutGenerationManual LayoutGeneration = "manual"
+	LayoutGenerationAuto   LayoutGeneration = "auto"
 )
 
 // BoardStyle determines how a Board should be displayed within the Honeycomb UI.

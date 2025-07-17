@@ -6,12 +6,13 @@ import (
 )
 
 type FlexibleBoardResourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	URL         types.String `tfsdk:"board_url"`
-	Panels      types.List   `tfsdk:"panel"`
-	Tags        types.Map    `tfsdk:"tags"`
+	ID               types.String `tfsdk:"id"`
+	Name             types.String `tfsdk:"name"`
+	Description      types.String `tfsdk:"description"`
+	URL              types.String `tfsdk:"board_url"`
+	Panels           types.List   `tfsdk:"panel"`
+	Tags             types.Map    `tfsdk:"tags"`
+	LayoutGeneration types.String `tfsdk:"layout_generation"`
 }
 
 type BoardPanelModel struct {
@@ -122,4 +123,16 @@ type BoardPanelModelV0 struct {
 	Position   types.List   `tfsdk:"position"`
 	QueryPanel types.List   `tfsdk:"query_panel"`
 	SLOPanel   types.List   `tfsdk:"slo_panel"`
+}
+
+// This is the old version of the FlexibleBoardResourceModel
+// It was used without layout_generation field.
+// This is no longer used, but is kept here for backwards compatibility
+type FlexibleBoardResourceModelV0 struct {
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	URL         types.String `tfsdk:"board_url"`
+	Panels      types.List   `tfsdk:"panel"`
+	Tags        types.Map    `tfsdk:"tags"`
 }
