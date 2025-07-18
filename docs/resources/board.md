@@ -1,10 +1,10 @@
 # Resource: honeycombio_board
 
-Creates a classic board. Classic boards are deprecated, use [honeycombio_flexible_board](./flexible_board.md) resource instead. For more information about boards, check out [Create Custom Boards](https://docs.honeycomb.io/observe/boards).
+Creates a legacy board. Legacy boards are deprecated, use [honeycombio_flexible_board](./flexible_board.md) resource instead. For more information about boards, check out [Create Custom Boards](https://docs.honeycomb.io/observe/boards).
 
 ## Example Usage
 
-### Simple Classic Board
+### Simple Legacy Board
 
 ```hcl
 data "honeycombio_query_specification" "query" {
@@ -35,7 +35,7 @@ resource "honeycombio_board" "board" {
 }
 ```
 
-### Classic Board with a Service Level Objective (SLO) and an annotated query
+### Legacy Board with a Service Level Objective (SLO) and an annotated query
 
 ```hcl
 data "honeycombio_query_specification" "latency_by_userid" {
@@ -116,7 +116,6 @@ Each board configuration may have zero or more `query` blocks, which accept the 
 - `graph_settings` - (Optional) A map of boolean toggles to manages the settings for this query's graph on the board.
   If a value is unspecified, it is assumed to be false.
   Currently supported toggles are:
-
     - `hide_markers`
     - `log_scale`
     - `omit_missing_values`

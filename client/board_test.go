@@ -248,6 +248,55 @@ func TestFlexibleBoards(t *testing.T) {
 		assert.Equal(t, data, flexibleBoard)
 	})
 
+	t.Run("Create flexible board with auto layout generation", func(t *testing.T) {
+		data := &client.Board{
+			Name:             test.RandomStringWithPrefix("test.", 8),
+			BoardType:        "flexible",
+			Description:      "A board with some panels",
+			LayoutGeneration: client.LayoutGenerationAuto,
+			Panels: []client.BoardPanel{
+				{
+					PanelType: client.BoardPanelTypeQuery,
+					QueryPanel: &client.BoardQueryPanel{
+						QueryID:           *query.ID,
+						QueryAnnotationID: queryAnnotation.ID,
+						Style:             client.BoardQueryStyleGraph,
+					},
+				},
+				{
+					PanelType: client.BoardPanelTypeSLO,
+					SLOPanel: &client.BoardSLOPanel{
+						SLOID: slo.ID,
+					},
+				},
+			},
+		}
+		flexibleBoard, err = c.Boards.Create(ctx, data)
+		require.NoError(t, err)
+		assert.NotNil(t, flexibleBoard.ID)
+
+		// copy ID before asserting equality
+		data.ID = flexibleBoard.ID
+
+		// ensure the board URL got populated
+		assert.NotEmpty(t, flexibleBoard.Links.BoardURL)
+		data.Links.BoardURL = flexibleBoard.Links.BoardURL
+
+		for i, panel := range flexibleBoard.Panels {
+			assert.Equal(t, data.Panels[i].PanelType, panel.PanelType)
+			assert.Equal(t, data.Panels[i].QueryPanel, panel.QueryPanel)
+			assert.Equal(t, data.Panels[i].SLOPanel, panel.SLOPanel)
+
+			// since positions are auto generated, we can't assert their exact values
+			// but we can assert that they are not empty
+			assert.NotEmpty(t, panel.PanelPosition)
+			assert.GreaterOrEqual(t, panel.PanelPosition.X, 0)
+			assert.GreaterOrEqual(t, panel.PanelPosition.Y, 0)
+			assert.Positive(t, panel.PanelPosition.Height)
+			assert.Positive(t, panel.PanelPosition.Width)
+		}
+	})
+
 	t.Run("Create flexible board with tags", func(t *testing.T) {
 		data := &client.Board{
 			Name:        test.RandomStringWithPrefix("test.", 8),

@@ -16,17 +16,15 @@ type FlexibleBoardResourceModel struct {
 
 type BoardPanelModel struct {
 	PanelType  types.String `tfsdk:"type"`
-	Position   types.List   `tfsdk:"position"`
+	Position   types.Object `tfsdk:"position"`
 	QueryPanel types.List   `tfsdk:"query_panel"`
 	SLOPanel   types.List   `tfsdk:"slo_panel"`
 }
 
 var BoardPanelModelAttrType = map[string]attr.Type{
 	"type": types.StringType,
-	"position": types.ListType{
-		ElemType: types.ObjectType{
-			AttrTypes: BoardPanelPositionModelAttrType,
-		},
+	"position": types.ObjectType{
+		AttrTypes: BoardPanelPositionModelAttrType,
 	},
 	"query_panel": types.ListType{
 		ElemType: types.ObjectType{
@@ -114,4 +112,14 @@ var ChartSettingsModelAttrType = map[string]attr.Type{
 	"chart_index":         types.Int64Type,
 	"omit_missing_values": types.BoolType,
 	"use_log_scale":       types.BoolType,
+}
+
+// This is the old version of the BoardPanelModel
+// It was used to store the board panel in a list of objects
+// This is no longer used, but is kept here for backwards compatibility
+type FlexibleBoardPanelModelV0 struct {
+	PanelType  types.String `tfsdk:"type"`
+	Position   types.List   `tfsdk:"position"`
+	QueryPanel types.List   `tfsdk:"query_panel"`
+	SLOPanel   types.List   `tfsdk:"slo_panel"`
 }
