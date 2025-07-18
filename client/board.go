@@ -84,6 +84,10 @@ type BoardPanel struct {
 	SLOPanel   *BoardSLOPanel   `json:"slo_panel,omitempty"`
 }
 
+func (b *BoardPanel) IsBlank() bool {
+	return b.PanelPosition.X == 0 && b.PanelPosition.Y == 0 && b.PanelPosition.Height == 0 && b.PanelPosition.Width == 0
+}
+
 type BoardPanelType string
 
 const (

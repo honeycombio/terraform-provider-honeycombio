@@ -6,13 +6,12 @@ import (
 )
 
 type FlexibleBoardResourceModel struct {
-	ID               types.String `tfsdk:"id"`
-	Name             types.String `tfsdk:"name"`
-	Description      types.String `tfsdk:"description"`
-	URL              types.String `tfsdk:"board_url"`
-	Panels           types.List   `tfsdk:"panel"`
-	Tags             types.Map    `tfsdk:"tags"`
-	LayoutGeneration types.String `tfsdk:"layout_generation"`
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	URL         types.String `tfsdk:"board_url"`
+	Panels      types.List   `tfsdk:"panel"`
+	Tags        types.Map    `tfsdk:"tags"`
 }
 
 type BoardPanelModel struct {
@@ -118,21 +117,9 @@ var ChartSettingsModelAttrType = map[string]attr.Type{
 // This is the old version of the BoardPanelModel
 // It was used to store the board panel in a list of objects
 // This is no longer used, but is kept here for backwards compatibility
-type BoardPanelModelV0 struct {
+type FlexibleBoardPanelModelV0 struct {
 	PanelType  types.String `tfsdk:"type"`
 	Position   types.List   `tfsdk:"position"`
 	QueryPanel types.List   `tfsdk:"query_panel"`
 	SLOPanel   types.List   `tfsdk:"slo_panel"`
-}
-
-// This is the old version of the FlexibleBoardResourceModel
-// It was used without layout_generation field.
-// This is no longer used, but is kept here for backwards compatibility
-type FlexibleBoardResourceModelV0 struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	URL         types.String `tfsdk:"board_url"`
-	Panels      types.List   `tfsdk:"panel"`
-	Tags        types.Map    `tfsdk:"tags"`
 }

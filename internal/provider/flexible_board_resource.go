@@ -99,16 +99,6 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"layout_generation": schema.StringAttribute{
-				Computed:    true,
-				Required:    false,
-				Optional:    true,
-				Default:     stringdefault.StaticString("manual"),
-				Description: "Allows the board layout to be generated based on positions when set to 'manual'. When set to 'auto', the board layout will be auto generated.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-			},
 			"tags": tagsSchema(),
 		},
 		Blocks: map[string]schema.Block{
@@ -527,7 +517,7 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var oldState models.FlexibleBoardResourceModelV0
+				var oldState models.FlexibleBoardResourceModel
 				resp.Diagnostics.Append(req.State.Get(ctx, &oldState)...)
 				if resp.Diagnostics.HasError() {
 					return
@@ -538,7 +528,7 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 				}
 
 				// convert the old state to the new state
-				var statePanels []models.BoardPanelModelV0
+				var statePanels []models.FlexibleBoardPanelModelV0
 				resp.Diagnostics.Append(oldState.Panels.ElementsAs(ctx, &statePanels, false)...)
 				if resp.Diagnostics.HasError() {
 					return
@@ -559,16 +549,20 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 							return
 						}
 
-						attrs := map[string]attr.Value{}
-						attrs["x_coordinate"] = oldStylePositions[0].XCoordinate
-						attrs["y_coordinate"] = oldStylePositions[0].YCoordinate
-						attrs["height"] = oldStylePositions[0].Height
-						attrs["width"] = oldStylePositions[0].Width
+						if len(oldStylePositions) == 0 {
+							upgradedPanel.Position = types.ObjectNull(models.BoardPanelPositionModelAttrType)
+						} else {
+							attrs := map[string]attr.Value{}
+							attrs["x_coordinate"] = oldStylePositions[0].XCoordinate
+							attrs["y_coordinate"] = oldStylePositions[0].YCoordinate
+							attrs["height"] = oldStylePositions[0].Height
+							attrs["width"] = oldStylePositions[0].Width
 
-						obj, d := types.ObjectValue(models.BoardPanelPositionModelAttrType, attrs)
-						resp.Diagnostics.Append(d...)
+							obj, d := types.ObjectValue(models.BoardPanelPositionModelAttrType, attrs)
+							resp.Diagnostics.Append(d...)
 
-						upgradedPanel.Position = obj
+							upgradedPanel.Position = obj
+						}
 					} else {
 						upgradedPanel.Position = types.ObjectNull(models.BoardPanelPositionModelAttrType)
 					}
@@ -583,13 +577,12 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 				resp.Diagnostics.Append(diags...)
 
 				newState := models.FlexibleBoardResourceModel{
-					ID:               oldState.ID,
-					Name:             oldState.Name,
-					Description:      oldState.Description,
-					URL:              oldState.URL,
-					Panels:           finalPanels,
-					Tags:             oldState.Tags,
-					LayoutGeneration: types.StringValue("manual"),
+					ID:          oldState.ID,
+					Name:        oldState.Name,
+					Description: oldState.Description,
+					URL:         oldState.URL,
+					Panels:      finalPanels,
+					Tags:        oldState.Tags,
 				}
 				resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 			},
@@ -611,13 +604,14 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 	}
 
 	panelFromConfig := expandBoardPanels(ctx, plan.Panels, &resp.Diagnostics)
+	finalPanels, layoutGeneration := setAPIDefaultsAndDetermineLayoutGeneration(panelFromConfig)
 	createRequest := &client.Board{
 		Name:             plan.Name.ValueString(),
 		Description:      plan.Description.ValueString(),
 		BoardType:        client.BoardTypeFlexible,
-		Panels:           removeDefaultNegativeNumbers(panelFromConfig),
+		Panels:           finalPanels,
 		Tags:             planTags,
-		LayoutGeneration: client.LayoutGeneration(plan.LayoutGeneration.ValueString()),
+		LayoutGeneration: layoutGeneration,
 	}
 
 	if resp.Diagnostics.HasError() {
@@ -634,7 +628,7 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 	state.Name = types.StringValue(board.Name)
 	state.Description = types.StringValue(board.Description)
 	state.URL = types.StringValue(board.Links.BoardURL)
-	state.LayoutGeneration = plan.LayoutGeneration
+	// state.LayoutGeneration = plan.LayoutGeneration
 
 	if len(board.Panels) == 0 {
 		state.Panels = types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelModelAttrType})
@@ -767,14 +761,15 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 	}
 
 	panelConfig := expandBoardPanels(ctx, plan.Panels, &resp.Diagnostics)
+	finalPanels, layoutGeneration := setAPIDefaultsAndDetermineLayoutGeneration(panelConfig)
 	updateRequest := &client.Board{
 		ID:               plan.ID.ValueString(),
 		Name:             plan.Name.ValueString(),
 		Description:      plan.Description.ValueString(),
 		BoardType:        client.BoardTypeFlexible,
-		Panels:           removeDefaultNegativeNumbers(panelConfig),
+		Panels:           finalPanels,
 		Tags:             planTags,
-		LayoutGeneration: client.LayoutGeneration(plan.LayoutGeneration.ValueString()),
+		LayoutGeneration: layoutGeneration,
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -790,7 +785,6 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 	state.Name = types.StringValue(board.Name)
 	state.Description = types.StringValue(board.Description)
 	state.URL = types.StringValue(board.Links.BoardURL)
-	state.LayoutGeneration = plan.LayoutGeneration
 
 	if len(board.Panels) == 0 {
 		state.Panels = types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelModelAttrType})
@@ -1179,16 +1173,19 @@ func flattenBoardSloPanel(
 	return result
 }
 
-// we use negative numbers to indicate that the panel position was never set.
+// setAPIDefaultsAndDetermineLayoutGeneration removes negative numbers. we use negative numbers to indicate that the panel position was never set.
 // This is a workaround for the various limitations that terraform v5 protocol presents.
 // The API will set default panel positions based on panel type. We decided not to write
 // position to state when the panel position is not set.
-func removeDefaultNegativeNumbers(panels []client.BoardPanel) []client.BoardPanel {
+// It returns layout generation "auto" if all panels have no positions.
+func setAPIDefaultsAndDetermineLayoutGeneration(panels []client.BoardPanel) ([]client.BoardPanel, client.LayoutGeneration) {
 	if len(panels) == 0 {
-		return panels
+		return panels, client.LayoutGenerationAuto
 	}
 	resp := make([]client.BoardPanel, len(panels))
 	copy(resp, panels)
+
+	blankCount := 0
 
 	for i := range resp {
 		if resp[i].PanelPosition.X == -1 && resp[i].PanelPosition.Y == -1 {
@@ -1201,7 +1198,15 @@ func removeDefaultNegativeNumbers(panels []client.BoardPanel) []client.BoardPane
 		if resp[i].PanelPosition.Height == -1 {
 			resp[i].PanelPosition.Height = 0
 		}
+
+		if resp[i].IsBlank() {
+			blankCount++
+		}
 	}
 
-	return resp
+	if blankCount == len(resp) {
+		return resp, client.LayoutGenerationAuto
+	}
+
+	return resp, client.LayoutGenerationManual
 }
