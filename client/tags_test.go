@@ -50,14 +50,14 @@ func Test_TagValidation(t *testing.T) {
 		"value too long": {
 			Tag: client.Tag{
 				Key:   "env",
-				Value: test.RandomString(50),
+				Value: test.RandomString(129),
 			},
 			ExpectErr: true,
 		},
 		"mega invalid tag": {
 			Tag: client.Tag{
 				Key:   "@SA!" + test.RandomString(50),
-				Value: "!-395/" + test.RandomString(50),
+				Value: "!-395/" + test.RandomString(156),
 			},
 			ExpectErr: true,
 		},

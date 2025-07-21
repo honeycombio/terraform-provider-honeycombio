@@ -41,7 +41,7 @@ func tagsSchema() schema.MapAttribute {
 			mapvalidator.ValueStringsAre(
 				stringvalidator.RegexMatches(
 					client.TagValueValidationRegex,
-					"must begin with a lowercase letter, be between 1-32 characters long, and only contain lowercase alphanumeric characters, -, or /",
+					"must begin with a lowercase letter, be between 1-128 characters long, and only contain lowercase alphanumeric characters, -, or /",
 				),
 			),
 		},
