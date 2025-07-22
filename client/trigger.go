@@ -45,6 +45,9 @@ var _ Triggers = (*triggers)(nil)
 type Trigger struct {
 	ID string `json:"id,omitempty"`
 
+	// DatasetSlug is the slug of the dataset this trigger belongs to. For environment-wide
+	// triggers, this will be [EnvironmentWideSlug].
+	DatasetSlug string `json:"dataset_slug,omitempty"`
 	// Name of the trigger. This field is required.
 	Name string `json:"name"`
 	// Description is displayed on the triggers page.
