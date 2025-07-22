@@ -148,7 +148,6 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 									Description: "The height of the panel.",
 									Validators: []validator.Int64{
 										int64validator.AtLeast(1),
-										int64validator.AtMost(12),
 									},
 								},
 								"width": schema.Int64Attribute{
