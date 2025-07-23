@@ -2,7 +2,7 @@
 
 ENHANCEMENTS:
 
-* feat(r/trigger): Accommodate the "dataset_slug" field in triggers (#720)
+* feat(client): Accommodate the "dataset_slug" field in triggers (#720)
 
 BUGFIXES:
 
