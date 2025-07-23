@@ -69,6 +69,7 @@ func TestTriggers(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, trigger.ID)
 
+		data.DatasetSlug = trigger.DatasetSlug
 		// copy IDs before asserting equality
 		data.ID = trigger.ID
 		data.QueryID = trigger.QueryID
@@ -270,6 +271,7 @@ func TestTriggersWithBaselineDetails(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, trigger.ID)
 
+		data.DatasetSlug = trigger.DatasetSlug
 		// copy IDs before asserting equality
 		data.ID = trigger.ID
 		data.QueryID = trigger.QueryID
@@ -314,7 +316,6 @@ func TestTriggersWithBaselineDetails(t *testing.T) {
 		assert.Equal(t, trigger.BaselineDetails.Type, result.BaselineDetails.Type)
 		assert.Equal(t, trigger.BaselineDetails.OffsetMinutes, result.BaselineDetails.OffsetMinutes)
 	})
-
 }
 
 func TestTriggersEnvironmentWide(t *testing.T) {
@@ -365,6 +366,7 @@ func TestTriggersEnvironmentWide(t *testing.T) {
 		require.NoError(t, err)
 		assert.NotNil(t, trigger.ID)
 
+		data.DatasetSlug = trigger.DatasetSlug
 		// copy IDs before asserting equality
 		data.ID = trigger.ID
 		data.QueryID = trigger.QueryID
