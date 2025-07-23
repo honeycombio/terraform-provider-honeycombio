@@ -1,3 +1,13 @@
+# 0.37.1 (July 23, 2025)
+
+ENHANCEMENTS:
+
+* feat(client): Accommodate the "dataset_slug" field in triggers (#720)
+
+BUGFIXES:
+
+* fix(r/flexible_board): Remove height limit (#721)
+
 # 0.37.0 (July 21, 2025)
 
 ENHANCEMENTS:
