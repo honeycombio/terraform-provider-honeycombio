@@ -215,6 +215,7 @@ func TestFlexibleBoards(t *testing.T) {
 						Width:  4,
 					},
 					QueryPanel: &client.BoardQueryPanel{
+						Dataset:           dataset,
 						QueryID:           *query.ID,
 						QueryAnnotationID: queryAnnotation.ID,
 						Style:             client.BoardQueryStyleGraph,
@@ -258,6 +259,7 @@ func TestFlexibleBoards(t *testing.T) {
 				{
 					PanelType: client.BoardPanelTypeQuery,
 					QueryPanel: &client.BoardQueryPanel{
+						Dataset:           dataset,
 						QueryID:           *query.ID,
 						QueryAnnotationID: queryAnnotation.ID,
 						Style:             client.BoardQueryStyleGraph,
@@ -312,6 +314,7 @@ func TestFlexibleBoards(t *testing.T) {
 						Width:  4,
 					},
 					QueryPanel: &client.BoardQueryPanel{
+						Dataset:           dataset,
 						QueryID:           *query.ID,
 						QueryAnnotationID: queryAnnotation.ID,
 						Style:             client.BoardQueryStyleGraph,
