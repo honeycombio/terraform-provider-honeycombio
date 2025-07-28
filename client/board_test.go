@@ -245,6 +245,14 @@ func TestFlexibleBoards(t *testing.T) {
 		assert.NotEmpty(t, flexibleBoard.Links.BoardURL)
 		data.Links.BoardURL = flexibleBoard.Links.BoardURL
 
+		// copy dataset name into query panel for comparison
+		for i, panel := range flexibleBoard.Panels {
+			if panel.PanelType == client.BoardPanelTypeQuery {
+				assert.Equal(t, dataset, panel.QueryPanel.Dataset)
+				data.Panels[i].QueryPanel.Dataset = dataset
+			}
+		}
+
 		assert.Equal(t, data, flexibleBoard)
 	})
 
@@ -281,6 +289,14 @@ func TestFlexibleBoards(t *testing.T) {
 		// ensure the board URL got populated
 		assert.NotEmpty(t, flexibleBoard.Links.BoardURL)
 		data.Links.BoardURL = flexibleBoard.Links.BoardURL
+
+		// copy dataset name into query panel for comparison
+		for i, panel := range flexibleBoard.Panels {
+			if panel.PanelType == client.BoardPanelTypeQuery {
+				assert.Equal(t, dataset, panel.QueryPanel.Dataset)
+				data.Panels[i].QueryPanel.Dataset = dataset
+			}
+		}
 
 		for i, panel := range flexibleBoard.Panels {
 			assert.Equal(t, data.Panels[i].PanelType, panel.PanelType)
@@ -344,6 +360,14 @@ func TestFlexibleBoards(t *testing.T) {
 		// ensure the board URL got populated
 		assert.NotEmpty(t, flexibleBoard.Links.BoardURL)
 		data.Links.BoardURL = flexibleBoard.Links.BoardURL
+
+		// copy dataset name into query panel for comparison
+		for i, panel := range flexibleBoard.Panels {
+			if panel.PanelType == client.BoardPanelTypeQuery {
+				assert.Equal(t, dataset, panel.QueryPanel.Dataset)
+				data.Panels[i].QueryPanel.Dataset = dataset
+			}
+		}
 
 		// ensure the tags were added
 		assert.NotEmpty(t, flexibleBoard.Tags)

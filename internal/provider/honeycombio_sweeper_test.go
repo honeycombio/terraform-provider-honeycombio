@@ -27,6 +27,7 @@ func TestMain(m *testing.M) {
 }
 
 func init() {
+	resource.AddTestSweepers("boards", getBoardSweeper("boards"))
 	resource.AddTestSweepers("datasets", getDatasetSweeper("datasets"))
 	resource.AddTestSweepers("environments", getEnvironmentSweeper("environments"))
 	resource.AddTestSweepers("recipients", getRecipientSweeper("recipients"))
@@ -149,6 +150,35 @@ func getRecipientSweeper(name string) *resource.Sweeper {
 					err = c.Recipients.Delete(ctx, r.ID)
 					if err != nil {
 						log.Printf("[ERROR] could not delete %s recipient %s: %s", r.Type, r.ID, err)
+					}
+				}
+			}
+
+			return nil
+		},
+	}
+}
+
+func getBoardSweeper(name string) *resource.Sweeper {
+	return &resource.Sweeper{
+		Name: name,
+		F: func(_ string) error {
+			ctx := context.Background()
+			c, err := client.NewClient()
+			if err != nil {
+				return fmt.Errorf("could not initialize client: %w", err)
+			}
+			boards, err := c.Boards.List(ctx)
+			if err != nil {
+				return fmt.Errorf("could not list boards: %w", err)
+			}
+
+			for _, b := range boards {
+				if strings.HasPrefix(b.Name, SweeperTargetPrefix) {
+					log.Printf("[DEBUG] deleting board %s (%s)", b.Name, b.ID)
+					err = c.Boards.Delete(ctx, b.ID)
+					if err != nil {
+						log.Printf("[ERROR] could not delete board %s: %s", b.ID, err)
 					}
 				}
 			}
