@@ -103,6 +103,7 @@ type BoardPanelPosition struct {
 }
 
 type BoardQueryPanel struct {
+	Dataset               string                           `json:"dataset,omitempty"`
 	QueryID               string                           `json:"query_id,omitempty"`
 	QueryAnnotationID     string                           `json:"query_annotation_id,omitempty"`
 	VisualizationSettings *BoardQueryVisualizationSettings `json:"visualization_settings,omitempty"`
