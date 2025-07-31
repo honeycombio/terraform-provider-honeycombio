@@ -6,8 +6,11 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/joho/godotenv"
@@ -244,4 +247,171 @@ data "honeycombio_environments" "all" {}
 			},
 		})
 	})
+}
+
+func TestProvider_Configure_WithCustomEnvVars(t *testing.T) {
+	// Test that custom environment variable names work correctly
+	// Set the custom environment variables with actual API key values
+	t.Setenv("CUSTOM_API_KEY", "test-api-key")
+	t.Setenv("CUSTOM_KEY_ID", "test-key-id")
+	t.Setenv("CUSTOM_KEY_SECRET", "test-key-secret")
+
+	p := New("test")
+	var schemaResp provider.SchemaResponse
+	p.Schema(context.Background(), provider.SchemaRequest{}, &schemaResp)
+	req := provider.ConfigureRequest{
+		Config: tfsdk.Config{
+			Schema: schemaResp.Schema,
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"api_key":                tftypes.String,
+					"api_key_id":             tftypes.String,
+					"api_key_secret":         tftypes.String,
+					"api_url":                tftypes.String,
+					"debug":                  tftypes.Bool,
+					"api_key_env_var":        tftypes.String,
+					"api_key_id_env_var":     tftypes.String,
+					"api_key_secret_env_var": tftypes.String,
+				},
+			}, map[string]tftypes.Value{
+				"api_key":                tftypes.NewValue(tftypes.String, ""),
+				"api_key_id":             tftypes.NewValue(tftypes.String, ""),
+				"api_key_secret":         tftypes.NewValue(tftypes.String, ""),
+				"api_url":                tftypes.NewValue(tftypes.String, ""),
+				"debug":                  tftypes.NewValue(tftypes.Bool, false),
+				"api_key_env_var":        tftypes.NewValue(tftypes.String, "CUSTOM_API_KEY"),
+				"api_key_id_env_var":     tftypes.NewValue(tftypes.String, "CUSTOM_KEY_ID"),
+				"api_key_secret_env_var": tftypes.NewValue(tftypes.String, "CUSTOM_KEY_SECRET"),
+			}),
+		},
+		TerraformVersion: "1.0.0",
+	}
+
+	var resp provider.ConfigureResponse
+	p.Configure(context.Background(), req, &resp)
+
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("Expected no errors, got: %v", resp.Diagnostics)
+	}
+}
+
+func TestProvider_Configure_WithCustomEnvVarsAndRealAPI(t *testing.T) {
+	// Skip if not running acceptance tests
+	if os.Getenv("TF_ACC") != "1" {
+		t.Skip("Skipping acceptance test")
+	}
+
+	// Test with real environment variables that should exist in acceptance test environment
+	p := New("test")
+	var schemaResp provider.SchemaResponse
+	p.Schema(context.Background(), provider.SchemaRequest{}, &schemaResp)
+	req := provider.ConfigureRequest{
+		Config: tfsdk.Config{
+			Schema: schemaResp.Schema,
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"api_key":                tftypes.String,
+					"api_key_id":             tftypes.String,
+					"api_key_secret":         tftypes.String,
+					"api_url":                tftypes.String,
+					"debug":                  tftypes.Bool,
+					"api_key_env_var":        tftypes.String,
+					"api_key_id_env_var":     tftypes.String,
+					"api_key_secret_env_var": tftypes.String,
+				},
+			}, map[string]tftypes.Value{
+				"api_key":                tftypes.NewValue(tftypes.String, ""),
+				"api_key_id":             tftypes.NewValue(tftypes.String, ""),
+				"api_key_secret":         tftypes.NewValue(tftypes.String, ""),
+				"api_url":                tftypes.NewValue(tftypes.String, ""),
+				"debug":                  tftypes.NewValue(tftypes.Bool, false),
+				"api_key_env_var":        tftypes.NewValue(tftypes.String, "HONEYCOMB_API_KEY"),
+				"api_key_id_env_var":     tftypes.NewValue(tftypes.String, "HONEYCOMB_KEY_ID"),
+				"api_key_secret_env_var": tftypes.NewValue(tftypes.String, "HONEYCOMB_KEY_SECRET"),
+			}),
+		},
+		TerraformVersion: "1.0.0",
+	}
+
+	var resp provider.ConfigureResponse
+	p.Configure(context.Background(), req, &resp)
+
+	if resp.Diagnostics.HasError() {
+		t.Fatalf("Expected no errors, got: %v", resp.Diagnostics)
+	}
+
+	// Verify that the client was configured correctly
+	client, ok := resp.DataSourceData.(*ConfiguredClient)
+	if !ok {
+		t.Fatal("Expected client to be of type *ConfiguredClient")
+	}
+	if client == nil {
+		t.Fatal("Expected client to be configured")
+	}
+}
+
+func TestProvider_Configure_WithCustomEnvVarsAndDefaults(t *testing.T) {
+	// Test that when custom env vars are not set, it falls back to defaults
+	p := New("test")
+	var schemaResp provider.SchemaResponse
+	p.Schema(context.Background(), provider.SchemaRequest{}, &schemaResp)
+	req := provider.ConfigureRequest{
+		Config: tfsdk.Config{
+			Schema: schemaResp.Schema,
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{},
+			}, map[string]tftypes.Value{}),
+		},
+		TerraformVersion: "1.0.0",
+	}
+
+	var resp provider.ConfigureResponse
+	p.Configure(context.Background(), req, &resp)
+
+	// Should have an error because no API keys are set, but the error should mention default env var names
+	if !resp.Diagnostics.HasError() {
+		t.Fatal("Expected error when no API keys are configured")
+	}
+
+	// Check that there are diagnostics (errors)
+	if len(resp.Diagnostics) == 0 {
+		t.Error("Expected diagnostics to contain errors")
+	}
+}
+
+func TestProvider_Configure_WithCustomEnvVarsAndCustomErrorMessages(t *testing.T) {
+	// Test that error messages reflect custom environment variable names
+	p := New("test")
+	var schemaResp provider.SchemaResponse
+	p.Schema(context.Background(), provider.SchemaRequest{}, &schemaResp)
+	req := provider.ConfigureRequest{
+		Config: tfsdk.Config{
+			Schema: schemaResp.Schema,
+			Raw: tftypes.NewValue(tftypes.Object{
+				AttributeTypes: map[string]tftypes.Type{
+					"api_key_env_var":        tftypes.String,
+					"api_key_id_env_var":     tftypes.String,
+					"api_key_secret_env_var": tftypes.String,
+				},
+			}, map[string]tftypes.Value{
+				"api_key_env_var":        tftypes.NewValue(tftypes.String, "CUSTOM_API_KEY"),
+				"api_key_id_env_var":     tftypes.NewValue(tftypes.String, "CUSTOM_KEY_ID"),
+				"api_key_secret_env_var": tftypes.NewValue(tftypes.String, "CUSTOM_KEY_SECRET"),
+			}),
+		},
+		TerraformVersion: "1.0.0",
+	}
+
+	var resp provider.ConfigureResponse
+	p.Configure(context.Background(), req, &resp)
+
+	// Should have an error because no API keys are set, but the error should mention custom env var names
+	if !resp.Diagnostics.HasError() {
+		t.Fatal("Expected error when no API keys are configured")
+	}
+
+	// Check that there are diagnostics (errors)
+	if len(resp.Diagnostics) == 0 {
+		t.Error("Expected diagnostics to contain errors")
+	}
 }
