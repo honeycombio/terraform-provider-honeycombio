@@ -49,6 +49,8 @@ The key can be set with the `api_key` argument or via the `HONEYCOMB_API_KEY` or
 
 `HONEYCOMB_API_KEY` environment variable will take priority over the `HONEYCOMBIO_APIKEY` environment variable.
 
+~> **Note** To follow [Honeycomb's API Key Best Practices](https://docs.honeycomb.io/get-started/best-practices/api-keys/), you can use the `api_key_env_var` provider configuration option to specify custom environment variable names for different purposes (e.g., production vs testing vs build processes). See the [multi-project configuration example](example/multi_project_configuration/) for details.
+
 ### v2 APIs
 
 v2 APIs require a Mangement Key.
