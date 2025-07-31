@@ -36,6 +36,10 @@ type HoneycombioProviderModel struct {
 	KeySecret types.String `tfsdk:"api_key_secret"`
 	APIUrl    types.String `tfsdk:"api_url"`
 	Debug     types.Bool   `tfsdk:"debug"`
+	// New fields for arbitrary environment variable support
+	APIKeyEnvVar    types.String `tfsdk:"api_key_env_var"`
+	KeyIDEnvVar     types.String `tfsdk:"api_key_id_env_var"`
+	KeySecretEnvVar types.String `tfsdk:"api_key_secret_env_var"`
 }
 
 func New(version string) provider.Provider {
@@ -68,6 +72,18 @@ func (p *HoneycombioProvider) Schema(_ context.Context, _ provider.SchemaRequest
 			},
 			"debug": schema.BoolAttribute{
 				MarkdownDescription: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
+				Optional:            true,
+			},
+			"api_key_env_var": schema.StringAttribute{
+				MarkdownDescription: "The name of the environment variable containing the Honeycomb API key. If not set, defaults to `HONEYCOMB_API_KEY`.",
+				Optional:            true,
+			},
+			"api_key_id_env_var": schema.StringAttribute{
+				MarkdownDescription: "The name of the environment variable containing the Honeycomb API key ID. If not set, defaults to `HONEYCOMB_KEY_ID`.",
+				Optional:            true,
+			},
+			"api_key_secret_env_var": schema.StringAttribute{
+				MarkdownDescription: "The name of the environment variable containing the Honeycomb API key secret. If not set, defaults to `HONEYCOMB_KEY_SECRET`.",
 				Optional:            true,
 			},
 		},
@@ -117,41 +133,70 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 	}
 
 	if config.APIKey.IsUnknown() {
+		envVarMsg := "HONEYCOMB_API_KEY"
+		if !config.APIKeyEnvVar.IsNull() {
+			envVarMsg = config.APIKeyEnvVar.ValueString()
+		}
 		resp.Diagnostics.AddAttributeError(
 			path.Root("api_key"),
 			"Unknown Honeycomb API Key",
 			"The provider cannot create the Honeycomb client as there is an unknown configuration value for the Honeycomb API Key. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the HONEYCOMB_API_KEY environment variable.",
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the "+envVarMsg+" environment variable.",
 		)
 	}
 	if config.KeyID.IsUnknown() {
+		envVarMsg := "HONEYCOMB_KEY_ID"
+		if !config.KeyIDEnvVar.IsNull() {
+			envVarMsg = config.KeyIDEnvVar.ValueString()
+		}
 		resp.Diagnostics.AddAttributeError(
 			path.Root("api_key_id"),
 			"Unknown Honeycomb API Key ID",
 			"The provider cannot create the Honeycomb client as there is an unknown configuration value for the Honeycomb API Key ID. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the HONEYCOMB_KEY_ID environment variable.",
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the "+envVarMsg+" environment variable.",
 		)
 	}
 	if config.KeySecret.IsUnknown() {
+		envVarMsg := "HONEYCOMB_KEY_SECRET"
+		if !config.KeySecretEnvVar.IsNull() {
+			envVarMsg = config.KeySecretEnvVar.ValueString()
+		}
 		resp.Diagnostics.AddAttributeError(
 			path.Root("api_key_secret"),
 			"Unknown Honeycomb API Key Secret",
 			"The provider cannot create the Honeycomb client as there is an unknown configuration value for the Honeycomb API Key Secret. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the HONEYCOMB_KEY_SECRET environment variable.",
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the "+envVarMsg+" environment variable.",
 		)
 	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	apiKey := os.Getenv(client.DefaultAPIKeyEnv)
-	if apiKey == "" {
-		// fall through to legacy env var
+	// Determine which environment variables to use for API keys
+	apiKeyEnvVar := client.DefaultAPIKeyEnv
+	if !config.APIKeyEnvVar.IsNull() {
+		apiKeyEnvVar = config.APIKeyEnvVar.ValueString()
+	}
+
+	keyIDEnvVar := v2client.DefaultAPIKeyIDEnv
+	if !config.KeyIDEnvVar.IsNull() {
+		keyIDEnvVar = config.KeyIDEnvVar.ValueString()
+	}
+
+	keySecretEnvVar := v2client.DefaultAPIKeySecretEnv
+	if !config.KeySecretEnvVar.IsNull() {
+		keySecretEnvVar = config.KeySecretEnvVar.ValueString()
+	}
+
+	// Get API keys from environment variables
+	apiKey := os.Getenv(apiKeyEnvVar)
+	if apiKey == "" && apiKeyEnvVar == client.DefaultAPIKeyEnv {
+		// fall through to legacy env var only if using default env var
 		//nolint:staticcheck
 		apiKey = os.Getenv(client.LegacyAPIKeyEnv)
 	}
-	keyID := os.Getenv(v2client.DefaultAPIKeyIDEnv)
-	keySecret := os.Getenv(v2client.DefaultAPIKeySecretEnv)
+	keyID := os.Getenv(keyIDEnvVar)
+	keySecret := os.Getenv(keySecretEnvVar)
 
 	if !config.APIKey.IsNull() {
 		apiKey = config.APIKey.ValueString()
@@ -170,21 +215,29 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 	if keyID != "" && keySecret != "" {
 		initv2Client = true
 	} else if (keyID != "" && keySecret == "") || (keyID == "" && keySecret != "") {
+		envVarMsg := fmt.Sprintf("HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET")
+		if keyIDEnvVar != v2client.DefaultAPIKeyIDEnv || keySecretEnvVar != v2client.DefaultAPIKeySecretEnv {
+			envVarMsg = fmt.Sprintf("%s and %s", keyIDEnvVar, keySecretEnvVar)
+		}
 		resp.Diagnostics.AddError(
 			"Unable to initialize Honeycomb provider",
 			"The provider requires both a Honeycomb API Key ID and Secret. "+
-				"Set them both in the configuration or via the HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET"+
-				"environment variables. "+
+				"Set them both in the configuration or via the "+envVarMsg+
+				" environment variables. "+
 				"If you believe both are already set, ensure the values are not empty.",
 		)
 		return
 	}
 
 	if !initv1Client && !initv2Client {
+		envVarMsg := "HONEYCOMB_API_KEY for v1 APIs, or HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET for v2 APIs"
+		if apiKeyEnvVar != client.DefaultAPIKeyEnv || keyIDEnvVar != v2client.DefaultAPIKeyIDEnv || keySecretEnvVar != v2client.DefaultAPIKeySecretEnv {
+			envVarMsg = fmt.Sprintf("%s for v1 APIs, or %s and %s for v2 APIs", apiKeyEnvVar, keyIDEnvVar, keySecretEnvVar)
+		}
 		resp.Diagnostics.AddError(
 			"Unable to initialize Honeycomb provider",
 			"The provider requires at least one of a Honeycomb API Key, or the Honeycomb API Key ID and Secret pair. "+
-				"Set either HONEYCOMB_API_KEY for v1 APIs, or HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET for v2 APIs. "+
+				"Set either "+envVarMsg+". "+
 				"If you believe either is already set, ensure the values are not empty.",
 		)
 	}
