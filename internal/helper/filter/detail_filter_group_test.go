@@ -133,7 +133,7 @@ func TestFilterGroup_Match(t *testing.T) {
 }
 
 // Helper function to create a filter without having to check errors in each test case
-func mustCreateFilter(t *testing.T, field, operator, value, regex string) DetailFilterModel {
+func mustCreateFilter(_ *testing.T, field, operator, value, regex string) DetailFilterModel {
 	return DetailFilterModel{
 		Name:       types.StringValue(field),
 		Operator:   types.StringValue(operator),

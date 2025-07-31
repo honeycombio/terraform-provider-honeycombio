@@ -215,7 +215,7 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 	if keyID != "" && keySecret != "" {
 		initv2Client = true
 	} else if (keyID != "" && keySecret == "") || (keyID == "" && keySecret != "") {
-		envVarMsg := fmt.Sprintf("HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET")
+		envVarMsg := "HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET"
 		if keyIDEnvVar != v2client.DefaultAPIKeyIDEnv || keySecretEnvVar != v2client.DefaultAPIKeySecretEnv {
 			envVarMsg = fmt.Sprintf("%s and %s", keyIDEnvVar, keySecretEnvVar)
 		}
@@ -296,20 +296,18 @@ type ConfiguredClient struct {
 
 func (c *ConfiguredClient) V1Client() (*client.Client, error) {
 	if c.v1client == nil {
-		return nil, errors.New("No v1 API client configured for this provider. " +
+		return nil, errors.New("no v1 API client configured for this provider. " +
 			"Set the `api_key` attribute in the provider's configuration, " +
-			"or set the HONEYCOMB_API_KEY environment variable.",
-		)
+			"or set the HONEYCOMB_API_KEY environment variable")
 	}
 	return c.v1client, nil
 }
 
 func (c *ConfiguredClient) V2Client() (*v2client.Client, error) {
 	if c.v2client == nil {
-		return nil, errors.New("No v2 API client configured for this provider. " +
+		return nil, errors.New("no v2 API client configured for this provider. " +
 			"Set the Key ID and Secret pair in the provider's configuration, " +
-			"or via the HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET environment variables.",
-		)
+			"or via the HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET environment variables")
 	}
 	return c.v2client, nil
 }

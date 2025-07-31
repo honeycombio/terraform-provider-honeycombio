@@ -38,14 +38,14 @@ func TestBurnAlerts(t *testing.T) {
 
 	// remove SLO and SLI at the end of the test run
 	t.Cleanup(func() {
-		c.SLOs.Delete(ctx, dataset, slo.ID)
-		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+		_ = c.SLOs.Delete(ctx, dataset, slo.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 
 		// remove test alert email from recipients
 		rcpts, _ := c.Recipients.List(ctx)
 		for _, r := range rcpts {
 			if r.Type == client.RecipientTypeEmail && r.Details.EmailAddress == testAlertEmail {
-				c.Recipients.Delete(ctx, r.ID)
+				_ = c.Recipients.Delete(ctx, r.ID)
 				break
 			}
 		}
@@ -244,7 +244,7 @@ func TestBurnAlerts_BurnAlertAlertTypes(t *testing.T) {
 		actualAlertTypes := client.BurnAlertAlertTypes()
 
 		assert.NotEmpty(t, actualAlertTypes)
-		assert.Equal(t, len(expectedAlertTypes), len(actualAlertTypes))
+		assert.Len(t, actualAlertTypes, len(expectedAlertTypes))
 		assert.ElementsMatch(t, expectedAlertTypes, actualAlertTypes)
 	})
 }

@@ -51,11 +51,23 @@ func newQueryAnnotation() *schema.Resource {
 }
 
 func buildQueryAnnotation(d *schema.ResourceData) *honeycombio.QueryAnnotation {
+	name, ok := d.Get("name").(string)
+	if !ok {
+		panic("name must be a string")
+	}
+	description, ok := d.Get("description").(string)
+	if !ok {
+		panic("description must be a string")
+	}
+	queryID, ok := d.Get("query_id").(string)
+	if !ok {
+		panic("query_id must be a string")
+	}
 	return &honeycombio.QueryAnnotation{
 		ID:          d.Id(),
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		QueryID:     d.Get("query_id").(string),
+		Name:        name,
+		Description: description,
+		QueryID:     queryID,
 	}
 }
 
@@ -97,7 +109,10 @@ func resourceQueryAnnotationDestroy(ctx context.Context, d *schema.ResourceData,
 	if err != nil {
 		return diagFromErr(err)
 	}
-	dataset := d.Get("dataset").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
 
 	err = client.QueryAnnotations.Delete(ctx, dataset, d.Id())
 	if err != nil {
@@ -126,8 +141,8 @@ func resourceQueryAnnotationRead(ctx context.Context, d *schema.ResourceData, me
 		return diag.FromErr(err)
 	}
 
-	d.Set("name", queryAnnotation.Name)
-	d.Set("description", queryAnnotation.Description)
-	d.Set("query_id", queryAnnotation.QueryID)
+	_ = d.Set("name", queryAnnotation.Name)
+	_ = d.Set("description", queryAnnotation.Description)
+	_ = d.Set("query_id", queryAnnotation.QueryID)
 	return nil
 }

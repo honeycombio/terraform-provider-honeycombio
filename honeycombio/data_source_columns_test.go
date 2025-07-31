@@ -33,7 +33,7 @@ func TestAccDataSourceHoneycombioColumns_basic(t *testing.T) {
 	}
 	t.Cleanup(func() {
 		for _, col := range testColumns {
-			c.Columns.Delete(ctx, dataset, col.ID)
+			_ = c.Columns.Delete(ctx, dataset, col.ID)
 		}
 	})
 
@@ -91,10 +91,17 @@ func testCheckAllOutputContains(contains string) resource.TestCheckFunc {
 			return fmt.Errorf("Not found: %s", name)
 		}
 
-		output := rs.Value.([]interface{})
+		output, ok := rs.Value.([]interface{})
+		if !ok {
+			return fmt.Errorf("output value is not a list")
+		}
 
 		for _, value := range output {
-			if value.(string) == contains {
+			valueStr, ok := value.(string)
+			if !ok {
+				return fmt.Errorf("output value is not a string")
+			}
+			if valueStr == contains {
 				return nil
 			}
 		}

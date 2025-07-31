@@ -56,10 +56,22 @@ func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 
 	dataset := getDatasetOrAll(d)
 
+	message, ok := d.Get("message").(string)
+	if !ok {
+		return diag.Errorf("message must be a string")
+	}
+	typeStr, ok := d.Get("type").(string)
+	if !ok {
+		return diag.Errorf("type must be a string")
+	}
+	url, ok := d.Get("url").(string)
+	if !ok {
+		return diag.Errorf("url must be a string")
+	}
 	data := &honeycombio.Marker{
-		Message: d.Get("message").(string),
-		Type:    d.Get("type").(string),
-		URL:     d.Get("url").(string),
+		Message: message,
+		Type:    typeStr,
+		URL:     url,
 	}
 	marker, err := client.Markers.Create(ctx, dataset, data)
 	if err != nil {
@@ -92,8 +104,8 @@ func resourceMarkerRead(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 
 	d.SetId(marker.ID)
-	d.Set("message", marker.Message)
-	d.Set("type", marker.Type)
-	d.Set("url", marker.URL)
+	_ = d.Set("message", marker.Message)
+	_ = d.Set("type", marker.Type)
+	_ = d.Set("url", marker.URL)
 	return nil
 }

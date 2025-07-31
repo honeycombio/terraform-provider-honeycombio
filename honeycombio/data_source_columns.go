@@ -44,7 +44,10 @@ func dataSourceHoneycombioColumnsRead(ctx context.Context, d *schema.ResourceDat
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
 
 	columns, err := client.Columns.List(ctx, dataset)
 	if err != nil {
@@ -53,7 +56,10 @@ func dataSourceHoneycombioColumnsRead(ctx context.Context, d *schema.ResourceDat
 
 	var startsWith string
 	if value, ok := d.GetOk("starts_with"); ok {
-		startsWith = value.(string)
+		startsWith, ok = value.(string)
+		if !ok {
+			return diag.Errorf("starts_with must be a string")
+		}
 	}
 
 	names := make([]string, 0, len(columns))
@@ -63,7 +69,7 @@ func dataSourceHoneycombioColumnsRead(ctx context.Context, d *schema.ResourceDat
 		}
 		names = append(names, column.KeyName)
 	}
-	d.Set("names", names)
+	_ = d.Set("names", names)
 
 	d.SetId(strconv.Itoa(hashcode.String(strings.Join(names, ","))))
 	return nil

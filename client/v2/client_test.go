@@ -122,7 +122,7 @@ func TestClient_AuthInfo(t *testing.T) {
 		var de hnyclient.DetailedError
 		require.ErrorAs(t, err, &de)
 		assert.Equal(t, http.StatusUnauthorized, de.Status)
-		assert.Equal(t, "", de.Message)
+		assert.Empty(t, de.Message)
 		assert.Equal(t, "invalid API key", de.Title)
 		assert.Equal(t, "unauthenticated/invalid-key", de.Type)
 		if assert.Len(t, de.Details, 1) {
@@ -161,13 +161,13 @@ func newTestEnvironment(ctx context.Context, t *testing.T, c *Client) *Environme
 
 	t.Cleanup(func() {
 		// disable deletion protection and delete the Environment
-		c.Environments.Update(context.Background(), &Environment{
+		_, _ = c.Environments.Update(context.Background(), &Environment{
 			ID: env.ID,
 			Settings: &EnvironmentSettings{
 				DeleteProtected: helper.ToPtr(false),
 			},
 		})
-		c.Environments.Delete(ctx, env.ID)
+		_ = c.Environments.Delete(ctx, env.ID)
 	})
 
 	return env

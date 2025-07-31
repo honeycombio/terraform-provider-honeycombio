@@ -66,9 +66,17 @@ func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, me
 
 	dataset := getDatasetOrAll(d)
 
+	typeStr, ok := d.Get("type").(string)
+	if !ok {
+		return diag.Errorf("type must be a string")
+	}
+	color, ok := d.Get("color").(string)
+	if !ok {
+		return diag.Errorf("color must be a string")
+	}
 	data := &honeycombio.MarkerSetting{
-		Type:  d.Get("type").(string),
-		Color: d.Get("color").(string),
+		Type:  typeStr,
+		Color: color,
 	}
 	markerSetting, err := client.MarkerSettings.Create(ctx, dataset, data)
 	if err != nil {
@@ -76,8 +84,8 @@ func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	d.SetId(markerSetting.ID)
-	d.Set("type", markerSetting.Type)
-	d.Set("color", markerSetting.Color)
+	_ = d.Set("type", markerSetting.Type)
+	_ = d.Set("color", markerSetting.Color)
 	return resourceMarkerSettingRead(ctx, d, meta)
 }
 
@@ -103,10 +111,10 @@ func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	d.SetId(markerSetting.ID)
-	d.Set("type", markerSetting.Type)
-	d.Set("color", markerSetting.Color)
-	d.Set("created_at", markerSetting.CreatedAt.UTC().Format(time.RFC3339))
-	d.Set("updated_at", markerSetting.UpdatedAt.UTC().Format(time.RFC3339))
+	_ = d.Set("type", markerSetting.Type)
+	_ = d.Set("color", markerSetting.Color)
+	_ = d.Set("created_at", markerSetting.CreatedAt.UTC().Format(time.RFC3339))
+	_ = d.Set("updated_at", markerSetting.UpdatedAt.UTC().Format(time.RFC3339))
 	return nil
 }
 
@@ -117,8 +125,14 @@ func resourceMarkerSettingUpdate(ctx context.Context, d *schema.ResourceData, me
 	}
 
 	dataset := getDatasetOrAll(d)
-	markerType := d.Get("type").(string)
-	color := d.Get("color").(string)
+	markerType, ok := d.Get("type").(string)
+	if !ok {
+		return diag.Errorf("type must be a string")
+	}
+	color, ok := d.Get("color").(string)
+	if !ok {
+		return diag.Errorf("color must be a string")
+	}
 
 	data := &honeycombio.MarkerSetting{
 		Type:  markerType,

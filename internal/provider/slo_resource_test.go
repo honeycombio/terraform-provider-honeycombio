@@ -479,7 +479,7 @@ resource "honeycombio_slo" "test" {
 }`, sliAlias, dataset1Slug, dataset2Slug)
 }
 
-func testAccCheckSLOExists(t *testing.T, name string, slo *client.SLO) resource.TestCheckFunc {
+func testAccCheckSLOExists(t *testing.T, name string, slo *client.SLO) resource.TestCheckFunc { //nolint:unparam
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -513,7 +513,7 @@ func sloAccTestSetup(t *testing.T) (string, string) {
 
 	t.Cleanup(func() {
 		// remove SLI DC at end of test run
-		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
 	return dataset, sli.Alias
@@ -538,23 +538,21 @@ func mdSLOAccTestSetup(t *testing.T) (client.Dataset, client.Dataset, client.Der
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.Datasets.Update(ctx, &client.Dataset{
+		_, _ = c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset1.Slug,
 			Settings: client.DatasetSettings{
 				DeleteProtected: helper.ToPtr(false),
 			},
 		})
-		err = c.Datasets.Delete(ctx, dataset1.Slug)
-		require.NoError(t, err)
+		_ = c.Datasets.Delete(ctx, dataset1.Slug)
 
-		c.Datasets.Update(ctx, &client.Dataset{
+		_, _ = c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset2.Slug,
 			Settings: client.DatasetSettings{
 				DeleteProtected: helper.ToPtr(false),
 			},
 		})
-		err = c.Datasets.Delete(ctx, dataset2.Slug)
-		require.NoError(t, err)
+		_ = c.Datasets.Delete(ctx, dataset2.Slug)
 	})
 
 	sli, err := c.DerivedColumns.Create(ctx, client.EnvironmentWideSlug, &client.DerivedColumn{
@@ -565,7 +563,7 @@ func mdSLOAccTestSetup(t *testing.T) (client.Dataset, client.Dataset, client.Der
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, sli.ID)
+		_ = c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, sli.ID)
 	})
 
 	return *dataset1, *dataset2, *sli

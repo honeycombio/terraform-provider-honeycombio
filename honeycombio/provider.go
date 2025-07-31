@@ -81,19 +81,29 @@ func Provider(version string) *schema.Provider {
 			apiKey = os.Getenv(honeycombio.LegacyAPIKeyEnv)
 		}
 		if v, ok := d.GetOk("api_key"); ok {
-			apiKey = v.(string)
+			apiKey, ok = v.(string)
+			if !ok {
+				return nil, diag.Errorf("api_key must be a string")
+			}
 		}
 		debug := log.IsDebugOrHigher()
 		if v, ok := d.GetOk("debug"); ok {
-			debug = v.(bool)
+			debug, ok = v.(bool)
+			if !ok {
+				return nil, diag.Errorf("debug must be a boolean")
+			}
 		}
 
 		// if the API key is set, use it to create the client
 		// we now rely on the Framework version of the provider to validate the configuration
 		if apiKey != "" {
+			apiURL, ok := d.Get("api_url").(string)
+			if !ok {
+				return nil, diag.Errorf("api_url must be a string")
+			}
 			config := &honeycombio.Config{
 				APIKey:    apiKey,
-				APIUrl:    d.Get("api_url").(string),
+				APIUrl:    apiURL,
 				UserAgent: provider.UserAgent("terraform-provider-honeycombio", version),
 				Debug:     debug,
 			}
@@ -113,9 +123,9 @@ func Provider(version string) *schema.Provider {
 func getConfiguredClient(meta any) (*honeycombio.Client, error) {
 	client, ok := meta.(*honeycombio.Client)
 	if !ok || client == nil {
-		return nil, errors.New("No v1 API client configured for this provider. " +
+		return nil, errors.New("no v1 API client configured for this provider. " +
 			"Set the `api_key` attribute in the provider's configuration, " +
-			"or set the HONEYCOMB_API_KEY environment variable.")
+			"or set the HONEYCOMB_API_KEY environment variable")
 	}
 	return client, nil
 }

@@ -50,7 +50,7 @@ func getDatasetSweeper(name string) *resource.Sweeper {
 			for _, ds := range datasets {
 				if strings.HasPrefix(ds.Name, SweeperTargetPrefix) {
 					log.Printf("[DEBUG] deleting dataset %s (%s)", ds.Name, ds.Slug)
-					c.Datasets.Update(ctx, &client.Dataset{
+					_, _ = c.Datasets.Update(ctx, &client.Dataset{
 						Slug: ds.Slug,
 						Settings: client.DatasetSettings{
 							DeleteProtected: client.ToPtr(false),
@@ -94,7 +94,7 @@ func getEnvironmentSweeper(name string) *resource.Sweeper {
 			for _, e := range envs {
 				if strings.HasPrefix(e.Name, SweeperTargetPrefix) {
 					log.Printf("[DEBUG] deleting environment %s (%s)", e.Name, e.ID)
-					c.Environments.Update(ctx, &v2client.Environment{
+					_, _ = c.Environments.Update(ctx, &v2client.Environment{
 						ID: e.ID,
 						Settings: &v2client.EnvironmentSettings{
 							DeleteProtected: client.ToPtr(false),

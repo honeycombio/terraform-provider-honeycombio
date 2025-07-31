@@ -68,7 +68,7 @@ func (e *environments) Create(ctx context.Context, env *Environment) (*Environme
 	if err != nil {
 		return nil, err
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	if r.StatusCode != http.StatusCreated {
 		return nil, hnyclient.ErrorFromResponse(r)
@@ -90,7 +90,7 @@ func (e *environments) Get(ctx context.Context, id string) (*Environment, error)
 	if err != nil {
 		return nil, err
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	if r.StatusCode != http.StatusOK {
 		return nil, hnyclient.ErrorFromResponse(r)
@@ -112,7 +112,7 @@ func (e *environments) Update(ctx context.Context, env *Environment) (*Environme
 	if err != nil {
 		return nil, err
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	if r.StatusCode != http.StatusOK {
 		return nil, hnyclient.ErrorFromResponse(r)
@@ -134,7 +134,7 @@ func (e *environments) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 
 	if r.StatusCode != http.StatusNoContent {
 		return hnyclient.ErrorFromResponse(r)

@@ -79,10 +79,10 @@ func resourceDerivedColumnImport(ctx context.Context, d *schema.ResourceData, i 
 	if !found {
 		alias = dataset
 	} else {
-		d.Set("dataset", dataset)
+		_ = d.Set("dataset", dataset)
 	}
 
-	d.Set("alias", alias)
+	_ = d.Set("alias", alias)
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -101,7 +101,7 @@ func resourceDerivedColumnCreate(ctx context.Context, d *schema.ResourceData, me
 		return diagFromErr(err)
 	}
 
-	d.Set("alias", derivedColumn.Alias)
+	_ = d.Set("alias", derivedColumn.Alias)
 	return resourceDerivedColumnRead(ctx, d, meta)
 }
 
@@ -114,7 +114,11 @@ func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta
 	dataset := getDatasetOrAll(d)
 
 	var detailedErr honeycombio.DetailedError
-	derivedColumn, err := client.DerivedColumns.GetByAlias(ctx, dataset, d.Get("alias").(string))
+	alias, ok := d.Get("alias").(string)
+	if !ok {
+		return diag.Errorf("alias must be a string")
+	}
+	derivedColumn, err := client.DerivedColumns.GetByAlias(ctx, dataset, alias)
 	if errors.As(err, &detailedErr) {
 		if detailedErr.IsNotFound() {
 			d.SetId("")
@@ -127,9 +131,9 @@ func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta
 	}
 
 	d.SetId(derivedColumn.ID)
-	d.Set("alias", derivedColumn.Alias)
-	d.Set("expression", derivedColumn.Expression)
-	d.Set("description", derivedColumn.Description)
+	_ = d.Set("alias", derivedColumn.Alias)
+	_ = d.Set("expression", derivedColumn.Expression)
+	_ = d.Set("description", derivedColumn.Description)
 	return nil
 }
 
@@ -147,7 +151,7 @@ func resourceDerivedColumnUpdate(ctx context.Context, d *schema.ResourceData, me
 		return diagFromErr(err)
 	}
 
-	d.Set("alias", derivedColumn.Alias)
+	_ = d.Set("alias", derivedColumn.Alias)
 	return resourceDerivedColumnRead(ctx, d, meta)
 }
 
@@ -167,10 +171,22 @@ func resourceDerivedColumnDelete(ctx context.Context, d *schema.ResourceData, me
 }
 
 func readDerivedColumn(d *schema.ResourceData) *honeycombio.DerivedColumn {
+	alias, ok := d.Get("alias").(string)
+	if !ok {
+		panic("alias must be a string")
+	}
+	expression, ok := d.Get("expression").(string)
+	if !ok {
+		panic("expression must be a string")
+	}
+	description, ok := d.Get("description").(string)
+	if !ok {
+		panic("description must be a string")
+	}
 	return &honeycombio.DerivedColumn{
 		ID:          d.Id(),
-		Alias:       d.Get("alias").(string),
-		Expression:  d.Get("expression").(string),
-		Description: d.Get("description").(string),
+		Alias:       alias,
+		Expression:  expression,
+		Description: description,
 	}
 }

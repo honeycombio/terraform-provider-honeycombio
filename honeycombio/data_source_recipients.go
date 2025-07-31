@@ -86,7 +86,11 @@ func dataSourceHoneycombioRecipientsRead(ctx context.Context, d *schema.Resource
 	var matchType honeycombio.RecipientType
 	var rcptFilter *recipientFilter
 	if v, ok := d.GetOk("type"); ok {
-		matchType = honeycombio.RecipientType(v.(string))
+		typeStr, ok := v.(string)
+		if !ok {
+			return diag.Errorf("type must be a string")
+		}
+		matchType = honeycombio.RecipientType(typeStr)
 		if matchType != "" {
 			// type has been provided, create a type-only filter which may be 'upgraded'
 			// to a `detail_filter`
@@ -94,7 +98,11 @@ func dataSourceHoneycombioRecipientsRead(ctx context.Context, d *schema.Resource
 		}
 	}
 	if v, ok := d.GetOk("detail_filter"); ok {
-		rcptFilter = expandRecipientFilter(v.([]interface{}))
+		vList, ok := v.([]interface{})
+		if !ok {
+			return diag.Errorf("detail_filter must be a list")
+		}
+		rcptFilter = expandRecipientFilter(vList)
 	}
 
 	var rcptIDs []string
@@ -105,7 +113,7 @@ func dataSourceHoneycombioRecipientsRead(ctx context.Context, d *schema.Resource
 	}
 
 	d.SetId(strconv.Itoa(hashcode.String(strings.Join(rcptIDs, ","))))
-	d.Set("ids", rcptIDs)
+	_ = d.Set("ids", rcptIDs)
 
 	return nil
 }

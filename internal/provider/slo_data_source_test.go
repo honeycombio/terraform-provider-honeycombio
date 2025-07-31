@@ -40,8 +40,8 @@ func TestAcc_SLODataSource(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.SLOs.Delete(ctx, dataset, slo.ID)
-		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+		_ = c.SLOs.Delete(ctx, dataset, slo.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
 	resource.Test(t, resource.TestCase{
@@ -113,24 +113,24 @@ func TestAcc_MDSLODataSource(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.SLOs.Delete(ctx, client.EnvironmentWideSlug, slo.ID)
-		c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, sli.ID)
+		_ = c.SLOs.Delete(ctx, client.EnvironmentWideSlug, slo.ID)
+		_ = c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, sli.ID)
 
-		c.Datasets.Update(ctx, &client.Dataset{
+		_, _ = c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset1.Slug,
 			Settings: client.DatasetSettings{
 				DeleteProtected: helper.ToPtr(false),
 			},
 		})
-		err = c.Datasets.Delete(ctx, dataset1.Slug)
+		_ = c.Datasets.Delete(ctx, dataset1.Slug)
 
-		c.Datasets.Update(ctx, &client.Dataset{
+		_, _ = c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset2.Slug,
 			Settings: client.DatasetSettings{
 				DeleteProtected: helper.ToPtr(false),
 			},
 		})
-		err = c.Datasets.Delete(ctx, dataset2.Slug)
+		_ = c.Datasets.Delete(ctx, dataset2.Slug)
 	})
 
 	resource.Test(t, resource.TestCase{

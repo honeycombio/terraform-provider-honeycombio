@@ -98,13 +98,13 @@ func TestClient_Environments_Pagination(t *testing.T) {
 	}
 	t.Cleanup(func() {
 		for _, e := range testEnvs {
-			c.Environments.Update(ctx, &Environment{
+			_, _ = c.Environments.Update(ctx, &Environment{
 				ID: e.ID,
 				Settings: &EnvironmentSettings{
 					DeleteProtected: helper.ToPtr(false),
 				},
 			})
-			c.Environments.Delete(ctx, e.ID)
+			_ = c.Environments.Delete(ctx, e.ID)
 		}
 	})
 

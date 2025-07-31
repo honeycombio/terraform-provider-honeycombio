@@ -16,7 +16,6 @@ import (
 )
 
 func TestAcc_DatasetResource(t *testing.T) {
-
 	t.Run("happy path", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		resource.Test(t, resource.TestCase{
@@ -122,13 +121,13 @@ resource "honeycombio_dataset" "test" {
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			// disable deletion protection and delete the Dataset
-			c.Datasets.Update(ctx, &client.Dataset{
+			_, _ = c.Datasets.Update(ctx, &client.Dataset{
 				Slug: ds.Slug,
 				Settings: client.DatasetSettings{
 					DeleteProtected: helper.ToPtr(false),
 				},
 			})
-			c.Datasets.Delete(ctx, ds.Slug)
+			_ = c.Datasets.Delete(ctx, ds.Slug)
 		})
 
 		resource.Test(t, resource.TestCase{
@@ -209,7 +208,7 @@ resource "honeycombio_dataset" "test" {
 }`, name, description, jsonDepth, protected)
 }
 
-func testAccEnsureDatasetExists(t *testing.T, name string) resource.TestCheckFunc {
+func testAccEnsureDatasetExists(t *testing.T, name string) resource.TestCheckFunc { //nolint:unparam
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[name]
 		if !ok {

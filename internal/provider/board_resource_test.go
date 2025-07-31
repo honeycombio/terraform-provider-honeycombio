@@ -216,10 +216,10 @@ func TestAccBoard_withSLOs(t *testing.T) {
 
 	t.Cleanup(func() {
 		// remove SLOs, and SLIs at end of test run
-		c.SLOs.Delete(ctx, dataset, slo1.ID)
-		c.SLOs.Delete(ctx, dataset, slo2.ID)
-		c.DerivedColumns.Delete(ctx, dataset, sli1.ID)
-		c.DerivedColumns.Delete(ctx, dataset, sli2.ID)
+		_ = c.SLOs.Delete(ctx, dataset, slo1.ID)
+		_ = c.SLOs.Delete(ctx, dataset, slo2.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli1.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli2.ID)
 	})
 
 	resource.Test(t, resource.TestCase{

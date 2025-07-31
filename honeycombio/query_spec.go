@@ -18,7 +18,11 @@ type querySpecValidateDiagFunc func(q *honeycombio.QuerySpec) diag.Diagnostics
 func validateQueryJSON(validators ...querySpecValidateDiagFunc) schema.SchemaValidateDiagFunc {
 	return func(i interface{}, path cty.Path) diag.Diagnostics {
 		var q honeycombio.QuerySpec
-		dec := json.NewDecoder(bytes.NewReader([]byte(i.(string))))
+		queryStr, ok := i.(string)
+		if !ok {
+			return diag.Errorf("query_json must be a string")
+		}
+		dec := json.NewDecoder(bytes.NewReader([]byte(queryStr)))
 		dec.DisallowUnknownFields()
 		if err := dec.Decode(&q); err != nil {
 			return diag.Errorf("value of query_json is not a valid query specification")

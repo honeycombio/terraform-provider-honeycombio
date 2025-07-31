@@ -97,13 +97,13 @@ func TestDatasets(t *testing.T) {
 		})
 		require.NoError(t, err)
 		t.Cleanup(func() {
-			c.Datasets.Update(ctx, &client.Dataset{
+			_, _ = c.Datasets.Update(ctx, &client.Dataset{
 				Slug: ds.Slug,
 				Settings: client.DatasetSettings{
 					DeleteProtected: helper.ToPtr(false),
 				},
 			})
-			c.Datasets.Delete(ctx, ds.Slug)
+			_ = c.Datasets.Delete(ctx, ds.Slug)
 		})
 
 		_, err = c.Datasets.Create(ctx, &client.Dataset{

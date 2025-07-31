@@ -58,7 +58,10 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
 
 	var detailedErr honeycombio.DetailedError
 	dd, err := client.DatasetDefinitions.Get(ctx, dataset)
@@ -73,7 +76,10 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 		return diag.FromErr(err)
 	}
 
-	name := d.Get("name").(string)
+	name, ok := d.Get("name").(string)
+	if !ok {
+		return diag.Errorf("name must be a string")
+	}
 	column := extractDatasetDefinitionColumnByName(dd, name)
 	if column == nil {
 		// Definition used to be set but was removed without TF knowning about it,
@@ -83,9 +89,9 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 	}
 
 	d.SetId(strconv.Itoa(hashcode.String(fmt.Sprintf("%s-%s", dataset, name))))
-	d.Set("name", name)
-	d.Set("column", column.Name)
-	d.Set("column_type", column.ColumnType)
+	_ = d.Set("name", name)
+	_ = d.Set("column", column.Name)
+	_ = d.Set("column_type", column.ColumnType)
 
 	return nil
 }
@@ -96,9 +102,18 @@ func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
-	name := d.Get("name").(string)
-	value := d.Get("column").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
+	name, ok := d.Get("name").(string)
+	if !ok {
+		return diag.Errorf("name must be a string")
+	}
+	value, ok := d.Get("column").(string)
+	if !ok {
+		return diag.Errorf("column must be a string")
+	}
 
 	dd := expandDatasetDefinition(name, value)
 	_, err = client.DatasetDefinitions.Update(ctx, dataset, dd)
@@ -115,8 +130,14 @@ func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
-	name := d.Get("name").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
+	name, ok := d.Get("name").(string)
+	if !ok {
+		return diag.Errorf("name must be a string")
+	}
 
 	// 'deleting' a definition is really resetting it
 	dd := expandDatasetDefinition(name, "")

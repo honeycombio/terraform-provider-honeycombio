@@ -82,8 +82,14 @@ func dataSourceHoneycombioColumnRead(ctx context.Context, d *schema.ResourceData
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
-	matchName := d.Get("name").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
+	matchName, ok := d.Get("name").(string)
+	if !ok {
+		return diag.Errorf("name must be a string")
+	}
 
 	column, err := client.Columns.GetByKeyName(ctx, dataset, matchName)
 	if err != nil {
@@ -91,13 +97,13 @@ func dataSourceHoneycombioColumnRead(ctx context.Context, d *schema.ResourceData
 	}
 
 	d.SetId(column.ID)
-	d.Set("name", column.KeyName)
-	d.Set("hidden", column.Hidden)
-	d.Set("type", column.Type)
-	d.Set("description", column.Description)
-	d.Set("last_written_at", column.LastWrittenAt.UTC().Format(time.RFC3339))
-	d.Set("created_at", column.CreatedAt.UTC().Format(time.RFC3339))
-	d.Set("updated_at", column.UpdatedAt.UTC().Format(time.RFC3339))
+	_ = d.Set("name", column.KeyName)
+	_ = d.Set("hidden", column.Hidden)
+	_ = d.Set("type", column.Type)
+	_ = d.Set("description", column.Description)
+	_ = d.Set("last_written_at", column.LastWrittenAt.UTC().Format(time.RFC3339))
+	_ = d.Set("created_at", column.CreatedAt.UTC().Format(time.RFC3339))
+	_ = d.Set("updated_at", column.UpdatedAt.UTC().Format(time.RFC3339))
 
 	return nil
 }

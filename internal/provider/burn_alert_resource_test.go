@@ -514,7 +514,7 @@ func TestAcc_BurnAlertResource_HandlesRecipientChangedOutsideOfTerraform(t *test
 	})
 	require.NoError(t, err, "failed to create test recipient")
 	t.Cleanup(func() {
-		c.Recipients.Delete(ctx, rcpt.ID)
+		_ = c.Recipients.Delete(ctx, rcpt.ID)
 	})
 
 	resource.Test(t, resource.TestCase{
@@ -745,7 +745,7 @@ func testAccEnsureSuccessBudgetRateAlertWithWebhookRecip(t *testing.T, burnAlert
 	)
 }
 
-func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.BurnAlert) resource.TestCheckFunc {
+func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.BurnAlert) resource.TestCheckFunc { //nolint:unparam
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -917,8 +917,8 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		// remove SLO, SLI DC at end of test run
-		c.SLOs.Delete(ctx, dataset, slo.ID)
-		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+		_ = c.SLOs.Delete(ctx, dataset, slo.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
 	return dataset, slo.ID
@@ -936,13 +936,13 @@ func getNewDatasetAndSLO(t *testing.T) (string, string) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.Datasets.Update(ctx, &client.Dataset{
+		_, _ = c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset.Slug,
 			Settings: client.DatasetSettings{
 				DeleteProtected: helper.ToPtr(false),
 			},
 		})
-		c.Datasets.Delete(ctx, dataset.Slug)
+		_ = c.Datasets.Delete(ctx, dataset.Slug)
 	})
 	sli, err := c.DerivedColumns.Create(ctx, dataset.Slug, &client.DerivedColumn{
 		Alias:      "sli." + acctest.RandString(8),
@@ -960,8 +960,8 @@ func getNewDatasetAndSLO(t *testing.T) (string, string) {
 	require.NoError(t, err)
 	t.Cleanup(func() {
 		// remove SLO, SLI DC at end of test run
-		c.SLOs.Delete(ctx, dataset.Slug, slo.ID)
-		c.DerivedColumns.Delete(ctx, dataset.Slug, sli.ID)
+		_ = c.SLOs.Delete(ctx, dataset.Slug, slo.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset.Slug, sli.ID)
 	})
 
 	return dataset.Slug, slo.ID

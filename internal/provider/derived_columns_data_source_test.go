@@ -43,7 +43,7 @@ func TestAcc_DerivedColumnsDataSource(t *testing.T) {
 		t.Cleanup(func() {
 			// remove DCs at the of the test run
 			for _, col := range testColumns {
-				c.DerivedColumns.Delete(ctx, dataset, col.ID)
+				_ = c.DerivedColumns.Delete(ctx, dataset, col.ID)
 			}
 		})
 
@@ -94,7 +94,7 @@ data "honeycombio_derived_columns" "test" {
 		t.Cleanup(func() {
 			// remove DCs at the of the test run
 			for _, col := range testColumns {
-				c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, col.ID)
+				_ = c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, col.ID)
 			}
 		})
 

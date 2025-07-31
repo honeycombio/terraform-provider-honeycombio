@@ -39,15 +39,27 @@ func dataSourceHoneycombioSlackRecipientRead(ctx context.Context, d *schema.Reso
 	if err != nil {
 		return diagFromErr(err)
 	}
-	dataset := d.Get("dataset").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
 
 	triggers, err := client.Triggers.List(ctx, dataset)
 	if err != nil {
 		return diagFromErr(err)
 	}
 
-	searchType := honeycombio.RecipientType(d.Get("type").(string))
-	searchTarget := d.Get("target").(string)
+	typeStr, ok := d.Get("type").(string)
+	if !ok {
+		return diag.Errorf("type must be a string")
+	}
+	searchType := honeycombio.RecipientType(typeStr)
+
+	targetStr, ok := d.Get("target").(string)
+	if !ok {
+		return diag.Errorf("target must be a string")
+	}
+	searchTarget := targetStr
 
 	for _, t := range triggers {
 		for _, r := range t.Recipients {

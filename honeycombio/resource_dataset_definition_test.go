@@ -94,7 +94,7 @@ resource "honeycombio_dataset_definition" "error" {
 				PreConfig: func() {
 					ctx := context.Background()
 					client := testAccClient(t)
-					client.DatasetDefinitions.Update(ctx, dataset, &honeycombio.DatasetDefinition{
+					_, _ = client.DatasetDefinitions.Update(ctx, dataset, &honeycombio.DatasetDefinition{
 						Error: &honeycombio.DefinitionColumn{Name: ""},
 					})
 				},

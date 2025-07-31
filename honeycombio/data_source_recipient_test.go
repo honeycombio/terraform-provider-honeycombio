@@ -83,7 +83,7 @@ func TestAccDataSourceHoneycombioRecipient_basic(t *testing.T) {
 	t.Cleanup(func() {
 		// remove Recipients at the of the test run
 		for _, r := range testRecipients {
-			c.Recipients.Delete(ctx, r.ID)
+			_ = c.Recipients.Delete(ctx, r.ID)
 		}
 	})
 

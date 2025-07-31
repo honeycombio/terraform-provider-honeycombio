@@ -27,7 +27,7 @@ func TestClassicBoards(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		c.Columns.Delete(ctx, dataset, column.ID)
+		_ = c.Columns.Delete(ctx, dataset, column.ID)
 	})
 
 	query, err := c.Queries.Create(ctx, dataset, &client.QuerySpec{
@@ -54,8 +54,8 @@ func TestClassicBoards(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		c.SLOs.Delete(ctx, dataset, slo.ID)
-		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+		_ = c.SLOs.Delete(ctx, dataset, slo.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
 	t.Run("Create", func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestClassicBoards(t *testing.T) {
 		data.ID = b.ID
 
 		// ensure the board URL got populated
-		assert.NotEqual(t, "", b.Links.BoardURL)
+		assert.NotEmpty(t, b.Links.BoardURL)
 		data.Links.BoardURL = b.Links.BoardURL
 
 		assert.Equal(t, data, b)
@@ -159,7 +159,7 @@ func TestFlexibleBoards(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		c.Columns.Delete(ctx, dataset, column.ID)
+		_ = c.Columns.Delete(ctx, dataset, column.ID)
 	})
 
 	query, err := c.Queries.Create(ctx, dataset, &client.QuerySpec{
@@ -196,8 +196,8 @@ func TestFlexibleBoards(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		c.SLOs.Delete(ctx, dataset, slo.ID)
-		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+		_ = c.SLOs.Delete(ctx, dataset, slo.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
 	t.Run("Create flexible board", func(t *testing.T) {

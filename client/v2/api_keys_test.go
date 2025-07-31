@@ -96,7 +96,7 @@ func TestClient_APIKeys_Pagination(t *testing.T) {
 	}
 	t.Cleanup(func() {
 		for _, k := range testKeys {
-			c.APIKeys.Delete(ctx, k.ID)
+			_ = c.APIKeys.Delete(ctx, k.ID)
 		}
 	})
 

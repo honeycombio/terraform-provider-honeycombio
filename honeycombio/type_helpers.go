@@ -15,7 +15,11 @@ import (
 // getDatasetOrAll returns the dataset from the resource data.
 // If the dataset is empty, it returns the 'magic' EnvironmentWideSlug `__all__`.
 func getDatasetOrAll(d *schema.ResourceData) string {
-	dataset := d.Get("dataset").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		// This is a helper function, so we'll return the default if type assertion fails
+		return honeycombio.EnvironmentWideSlug
+	}
 	if dataset == "" {
 		dataset = honeycombio.EnvironmentWideSlug
 	}
@@ -30,19 +34,55 @@ func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*hone
 
 	switch r.Type {
 	case honeycombio.RecipientTypeEmail:
-		r.Details.EmailAddress = d.Get("address").(string)
+		address, ok := d.Get("address").(string)
+		if !ok {
+			return nil, fmt.Errorf("address must be a string")
+		}
+		r.Details.EmailAddress = address
 	case honeycombio.RecipientTypePagerDuty:
-		r.Details.PDIntegrationKey = d.Get("integration_key").(string)
-		r.Details.PDIntegrationName = d.Get("integration_name").(string)
+		integrationKey, ok := d.Get("integration_key").(string)
+		if !ok {
+			return nil, fmt.Errorf("integration_key must be a string")
+		}
+		integrationName, ok := d.Get("integration_name").(string)
+		if !ok {
+			return nil, fmt.Errorf("integration_name must be a string")
+		}
+		r.Details.PDIntegrationKey = integrationKey
+		r.Details.PDIntegrationName = integrationName
 	case honeycombio.RecipientTypeSlack:
-		r.Details.SlackChannel = d.Get("channel").(string)
+		channel, ok := d.Get("channel").(string)
+		if !ok {
+			return nil, fmt.Errorf("channel must be a string")
+		}
+		r.Details.SlackChannel = channel
 	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow: //nolint:staticcheck
-		r.Details.WebhookName = d.Get("name").(string)
-		r.Details.WebhookURL = d.Get("url").(string)
+		name, ok := d.Get("name").(string)
+		if !ok {
+			return nil, fmt.Errorf("name must be a string")
+		}
+		url, ok := d.Get("url").(string)
+		if !ok {
+			return nil, fmt.Errorf("url must be a string")
+		}
+		r.Details.WebhookName = name
+		r.Details.WebhookURL = url
 	case honeycombio.RecipientTypeWebhook:
-		r.Details.WebhookName = d.Get("name").(string)
-		r.Details.WebhookSecret = d.Get("secret").(string)
-		r.Details.WebhookURL = d.Get("url").(string)
+		webhookName, ok := d.Get("name").(string)
+		if !ok {
+			return nil, fmt.Errorf("name must be a string")
+		}
+		secret, ok := d.Get("secret").(string)
+		if !ok {
+			return nil, fmt.Errorf("secret must be a string")
+		}
+		url, ok := d.Get("url").(string)
+		if !ok {
+			return nil, fmt.Errorf("url must be a string")
+		}
+		r.Details.WebhookName = webhookName
+		r.Details.WebhookSecret = secret
+		r.Details.WebhookURL = url
 	default:
 		return r, fmt.Errorf("unsupported recipient type %v", r.Type)
 	}
@@ -91,19 +131,19 @@ func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}
 	d.SetId(r.ID)
 	switch t {
 	case honeycombio.RecipientTypeEmail:
-		d.Set("address", r.Details.EmailAddress)
+		_ = d.Set("address", r.Details.EmailAddress)
 	case honeycombio.RecipientTypePagerDuty:
-		d.Set("integration_key", r.Details.PDIntegrationKey)
-		d.Set("integration_name", r.Details.PDIntegrationName)
+		_ = d.Set("integration_key", r.Details.PDIntegrationKey)
+		_ = d.Set("integration_name", r.Details.PDIntegrationName)
 	case honeycombio.RecipientTypeSlack:
-		d.Set("channel", r.Details.SlackChannel)
+		_ = d.Set("channel", r.Details.SlackChannel)
 	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow: //nolint:staticcheck
-		d.Set("name", r.Details.WebhookName)
-		d.Set("url", r.Details.WebhookURL)
+		_ = d.Set("name", r.Details.WebhookName)
+		_ = d.Set("url", r.Details.WebhookURL)
 	case honeycombio.RecipientTypeWebhook:
-		d.Set("name", r.Details.WebhookName)
-		d.Set("secret", r.Details.WebhookSecret)
-		d.Set("url", r.Details.WebhookURL)
+		_ = d.Set("name", r.Details.WebhookName)
+		_ = d.Set("secret", r.Details.WebhookSecret)
+		_ = d.Set("url", r.Details.WebhookURL)
 	default:
 		return diag.FromErr(fmt.Errorf("unsupported recipient type %v", t))
 	}
@@ -148,8 +188,14 @@ func expandRecipientFilter(f []interface{}) *recipientFilter {
 	var value *string
 	var valRegexp *regexp.Regexp
 
-	filter := f[0].(map[string]interface{})
-	name := filter["name"].(string)
+	filter, ok := f[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	name, ok := filter["name"].(string)
+	if !ok {
+		return nil
+	}
 	if v, ok := filter["value"].(string); ok && v != "" {
 		value = honeycombio.ToPtr(v)
 	}

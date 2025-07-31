@@ -28,7 +28,12 @@ func newEmailRecipient() *schema.Resource {
 				Required:    true,
 				Description: "The email address to send the notification to",
 				ValidateFunc: func(v interface{}, key string) (warns []string, errs []error) {
-					if _, err := mail.ParseAddress(v.(string)); err != nil {
+					addr, ok := v.(string)
+					if !ok {
+						errs = append(errs, fmt.Errorf("address must be a string"))
+						return
+					}
+					if _, err := mail.ParseAddress(addr); err != nil {
 						errs = append(errs, fmt.Errorf("unable to parse address \"%v\"", v))
 					}
 					return

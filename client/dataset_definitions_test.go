@@ -43,7 +43,7 @@ func TestDatasetDefinitions(t *testing.T) {
 		{KeyName: "severity", Type: client.ToPtr(client.ColumnTypeString)},
 	} {
 		// ignore errors, we don't care if the column already exists
-		c.Columns.Create(ctx, dataset, &col)
+		_, _ = c.Columns.Create(ctx, dataset, &col)
 	}
 
 	// create some new columns to assign as definitions -- we will clean these up at the end of the test run
@@ -57,13 +57,13 @@ func TestDatasetDefinitions(t *testing.T) {
 
 	// reset all defs and remove test helpers at end of test run
 	t.Cleanup(func() {
-		c.DatasetDefinitions.ResetAll(ctx, dataset)
-		c.Columns.Delete(ctx, dataset, testCol.ID)
-		c.DerivedColumns.Delete(ctx, dataset, testDC.ID)
+		_ = c.DatasetDefinitions.ResetAll(ctx, dataset)
+		_ = c.Columns.Delete(ctx, dataset, testCol.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, testDC.ID)
 	})
 
 	t.Run("Reset and Assert Default state", func(t *testing.T) {
-		err := c.DatasetDefinitions.ResetAll(ctx, dataset)
+		err = c.DatasetDefinitions.ResetAll(ctx, dataset)
 		require.NoError(t, err)
 
 		result, err := c.DatasetDefinitions.Get(ctx, dataset)

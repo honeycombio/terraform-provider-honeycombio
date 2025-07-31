@@ -283,7 +283,7 @@ func TestErrors_JSONAPI(t *testing.T) {
 			}
 
 			buf := bytes.NewBuffer(nil)
-			jsonapi.MarshalErrors(buf, testCase.body.Errors)
+			_ = jsonapi.MarshalErrors(buf, testCase.body.Errors)
 			resp.Body = bytes.NewBuffer(buf.Bytes())
 
 			actualOutput := client.ErrorFromResponse(resp.Result())

@@ -32,13 +32,13 @@ func TestAcc_DatasetsDatasource(t *testing.T) {
 	t.Cleanup(func() {
 		for _, d := range testDatasets {
 			// disable deletion protection and delete the Dataset
-			c.Datasets.Update(ctx, &client.Dataset{
+			_, _ = c.Datasets.Update(ctx, &client.Dataset{
 				Slug: d.Slug,
 				Settings: client.DatasetSettings{
 					DeleteProtected: helper.ToPtr(false),
 				},
 			})
-			c.Datasets.Delete(ctx, d.Slug)
+			_ = c.Datasets.Delete(ctx, d.Slug)
 		}
 	})
 

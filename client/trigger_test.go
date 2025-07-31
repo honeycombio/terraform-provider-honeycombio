@@ -233,7 +233,7 @@ func TestTriggersWithBaselineDetails(t *testing.T) {
 
 	// delete the trigger after the tests run
 	t.Cleanup(func() {
-		c.Triggers.Delete(ctx, dataset, trigger.ID)
+		_ = c.Triggers.Delete(ctx, dataset, trigger.ID)
 	})
 
 	t.Run("Create - with baseline_details", func(t *testing.T) {
@@ -334,7 +334,7 @@ func TestTriggersEnvironmentWide(t *testing.T) {
 	// delete the trigger after the tests run
 	t.Cleanup(func() {
 		if trigger != nil && trigger.ID != "" {
-			c.Triggers.Delete(ctx, client.EnvironmentWideSlug, trigger.ID)
+			_ = c.Triggers.Delete(ctx, client.EnvironmentWideSlug, trigger.ID)
 		}
 	})
 

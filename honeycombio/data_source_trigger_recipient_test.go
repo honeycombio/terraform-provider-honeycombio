@@ -40,7 +40,7 @@ func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		c.Triggers.Delete(ctx, dataset, trigger.ID)
+		_ = c.Triggers.Delete(ctx, dataset, trigger.ID)
 	})
 
 	resource.Test(t, resource.TestCase{

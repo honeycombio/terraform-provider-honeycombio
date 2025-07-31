@@ -24,7 +24,7 @@ func TestAcc_QueryResource(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		c.Columns.Delete(ctx, dataset, col.ID)
+		_ = c.Columns.Delete(ctx, dataset, col.ID)
 	})
 
 	resource.Test(t, resource.TestCase{
@@ -111,7 +111,7 @@ func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		c.Columns.Delete(ctx, dataset, col.ID)
+		_ = c.Columns.Delete(ctx, dataset, col.ID)
 	})
 	config := testAccConfigBasicQueryTest(dataset, col.KeyName, 1)
 
@@ -237,7 +237,7 @@ resource "honeycombio_query" "test" {
 }`, dataset, column, value)
 }
 
-func testAccEnsureQueryExists(t *testing.T, name string) resource.TestCheckFunc {
+func testAccEnsureQueryExists(t *testing.T, name string) resource.TestCheckFunc { //nolint:unparam
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {

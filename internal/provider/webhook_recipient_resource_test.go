@@ -793,7 +793,7 @@ resource "honeycombio_webhook_recipient" "test" {
 	})
 }
 
-func testAccEnsureRecipientExists(t *testing.T, name string) resource.TestCheckFunc {
+func testAccEnsureRecipientExists(t *testing.T, name string) resource.TestCheckFunc { //nolint:unparam
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[name]
 		if !ok {

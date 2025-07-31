@@ -143,15 +143,27 @@ func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceD
 	if err != nil {
 		return diagFromErr(err)
 	}
-	matchType := honeycombio.RecipientType(d.Get("type").(string))
+	typeStr, ok := d.Get("type").(string)
+	if !ok {
+		return diag.Errorf("type must be a string")
+	}
+	matchType := honeycombio.RecipientType(typeStr)
 
 	rcptFilter := &recipientFilter{Type: matchType}
 	if v, ok := d.GetOk("target"); ok {
 		// deprecated argument to be removed in future
-		rcptFilter = &recipientFilter{Value: honeycombio.ToPtr(v.(string))}
+		targetStr, ok := v.(string)
+		if !ok {
+			return diag.Errorf("target must be a string")
+		}
+		rcptFilter = &recipientFilter{Value: honeycombio.ToPtr(targetStr)}
 	}
 	if v, ok := d.GetOk("detail_filter"); ok {
-		rcptFilter = expandRecipientFilter(v.([]interface{}))
+		vList, ok := v.([]interface{})
+		if !ok {
+			return diag.Errorf("detail_filter must be a list")
+		}
+		rcptFilter = expandRecipientFilter(vList)
 	}
 
 	var filteredRcpts []honeycombio.Recipient
@@ -172,19 +184,19 @@ func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceD
 	// type-specific generated attributes
 	switch matchType {
 	case honeycombio.RecipientTypeEmail:
-		d.Set("address", rcpt.Details.EmailAddress)
+		_ = d.Set("address", rcpt.Details.EmailAddress)
 	case honeycombio.RecipientTypeSlack:
-		d.Set("channel", rcpt.Details.SlackChannel)
+		_ = d.Set("channel", rcpt.Details.SlackChannel)
 	case honeycombio.RecipientTypeMSTeams, honeycombio.RecipientTypeMSTeamsWorkflow: //nolint:staticcheck
-		d.Set("name", rcpt.Details.WebhookName)
-		d.Set("url", rcpt.Details.WebhookURL)
+		_ = d.Set("name", rcpt.Details.WebhookName)
+		_ = d.Set("url", rcpt.Details.WebhookURL)
 	case honeycombio.RecipientTypeWebhook:
-		d.Set("name", rcpt.Details.WebhookName)
-		d.Set("secret", rcpt.Details.WebhookSecret)
-		d.Set("url", rcpt.Details.WebhookURL)
+		_ = d.Set("name", rcpt.Details.WebhookName)
+		_ = d.Set("secret", rcpt.Details.WebhookSecret)
+		_ = d.Set("url", rcpt.Details.WebhookURL)
 	case honeycombio.RecipientTypePagerDuty:
-		d.Set("integration_key", rcpt.Details.PDIntegrationKey)
-		d.Set("integration_name", rcpt.Details.PDIntegrationName)
+		_ = d.Set("integration_key", rcpt.Details.PDIntegrationKey)
+		_ = d.Set("integration_name", rcpt.Details.PDIntegrationName)
 	}
 
 	return nil

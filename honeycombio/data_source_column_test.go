@@ -26,7 +26,7 @@ func TestAccDataSourceHoneycombioColumn_basic(t *testing.T) {
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
-		c.Columns.Delete(ctx, dataset, col.ID)
+		_ = c.Columns.Delete(ctx, dataset, col.ID)
 	})
 
 	resource.Test(t, resource.TestCase{

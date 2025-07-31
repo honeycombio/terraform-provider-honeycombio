@@ -132,9 +132,9 @@ func createRandomTestColumns(
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.Columns.Delete(ctx, dataset, floatCol.ID)
-		c.Columns.Delete(ctx, dataset, col1.ID)
-		c.Columns.Delete(ctx, dataset, col2.ID)
+		_ = c.Columns.Delete(ctx, dataset, floatCol.ID)
+		_ = c.Columns.Delete(ctx, dataset, col1.ID)
+		_ = c.Columns.Delete(ctx, dataset, col2.ID)
 	})
 
 	return floatCol, col1, col2

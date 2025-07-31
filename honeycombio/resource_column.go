@@ -92,8 +92,8 @@ func resourceColumnImport(ctx context.Context, d *schema.ResourceData, i interfa
 		return nil, errors.New("invalid import ID, supplied ID must be written as <dataset>/<column name>")
 	}
 
-	d.Set("name", name)
-	d.Set("dataset", dataset)
+	_ = d.Set("name", name)
+	_ = d.Set("dataset", dataset)
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -103,7 +103,10 @@ func resourceColumnCreate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
 
 	column, err := client.Columns.Create(ctx, dataset, expandColumn(d))
 	if err != nil {
@@ -120,12 +123,22 @@ func resourceColumnRead(ctx context.Context, d *schema.ResourceData, meta interf
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
 	// if name is not set, try to get key_name.
 	// The schema requires one or the other to be set
-	columnName := d.Get("name").(string)
+	columnName, ok := d.Get("name").(string)
+	if !ok {
+		return diag.Errorf("name must be a string")
+	}
 	if columnName == "" {
-		columnName = d.Get("key_name").(string)
+		keyName, ok := d.Get("key_name").(string)
+		if !ok {
+			return diag.Errorf("key_name must be a string")
+		}
+		columnName = keyName
 	}
 
 	// we read by name here to facilitate importing by name instead of ID
@@ -143,14 +156,14 @@ func resourceColumnRead(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 
 	d.SetId(column.ID)
-	d.Set("name", column.KeyName)
-	d.Set("key_name", column.KeyName)
-	d.Set("hidden", column.Hidden)
-	d.Set("description", column.Description)
-	d.Set("type", column.Type)
-	d.Set("created_at", column.CreatedAt.UTC().Format(time.RFC3339))
-	d.Set("updated_at", column.CreatedAt.UTC().Format(time.RFC3339))
-	d.Set("last_written_at", column.CreatedAt.UTC().Format(time.RFC3339))
+	_ = d.Set("name", column.KeyName)
+	_ = d.Set("key_name", column.KeyName)
+	_ = d.Set("hidden", column.Hidden)
+	_ = d.Set("description", column.Description)
+	_ = d.Set("type", column.Type)
+	_ = d.Set("created_at", column.CreatedAt.UTC().Format(time.RFC3339))
+	_ = d.Set("updated_at", column.CreatedAt.UTC().Format(time.RFC3339))
+	_ = d.Set("last_written_at", column.CreatedAt.UTC().Format(time.RFC3339))
 	return nil
 }
 
@@ -160,7 +173,10 @@ func resourceColumnUpdate(ctx context.Context, d *schema.ResourceData, meta inte
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
 
 	column, err := client.Columns.Update(ctx, dataset, expandColumn(d))
 	if err != nil {
@@ -177,7 +193,10 @@ func resourceColumnDelete(ctx context.Context, d *schema.ResourceData, meta inte
 		return diagFromErr(err)
 	}
 
-	dataset := d.Get("dataset").(string)
+	dataset, ok := d.Get("dataset").(string)
+	if !ok {
+		return diag.Errorf("dataset must be a string")
+	}
 
 	err = client.Columns.Delete(ctx, dataset, d.Id())
 	if err != nil {
@@ -189,16 +208,37 @@ func resourceColumnDelete(ctx context.Context, d *schema.ResourceData, meta inte
 func expandColumn(d *schema.ResourceData) *honeycombio.Column {
 	// if name is not set, try to get key_name.
 	// The schema requires one or the other to be set
-	columnName := d.Get("name").(string)
+	columnName, ok := d.Get("name").(string)
+	if !ok {
+		// This is a helper function, so we'll panic if the type assertion fails
+		panic("name must be a string")
+	}
 	if columnName == "" {
-		columnName = d.Get("key_name").(string)
+		keyName, ok := d.Get("key_name").(string)
+		if !ok {
+			// This is a helper function, so we'll panic if the type assertion fails
+			panic("key_name must be a string")
+		}
+		columnName = keyName
 	}
 
+	hidden, ok := d.Get("hidden").(bool)
+	if !ok {
+		panic("hidden must be a boolean")
+	}
+	description, ok := d.Get("description").(string)
+	if !ok {
+		panic("description must be a string")
+	}
+	typeStr, ok := d.Get("type").(string)
+	if !ok {
+		panic("type must be a string")
+	}
 	return &honeycombio.Column{
 		ID:          d.Id(),
 		KeyName:     columnName,
-		Hidden:      honeycombio.ToPtr(d.Get("hidden").(bool)),
-		Description: d.Get("description").(string),
-		Type:        honeycombio.ToPtr(honeycombio.ColumnType(d.Get("type").(string))),
+		Hidden:      honeycombio.ToPtr(hidden),
+		Description: description,
+		Type:        honeycombio.ToPtr(honeycombio.ColumnType(typeStr)),
 	}
 }

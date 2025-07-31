@@ -32,7 +32,7 @@ func TestSLOs(t *testing.T) {
 	require.NoError(t, err, "unable to create SLI")
 	t.Cleanup(func() {
 		// remove SLI DC at end of test run
-		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
 	t.Run("Create", func(t *testing.T) {
@@ -174,10 +174,10 @@ func Test_MDSLOs(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.SLOs.Delete(ctx, client.EnvironmentWideSlug, slo.ID)
-		c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, mdSLI.ID)
+		_ = c.SLOs.Delete(ctx, client.EnvironmentWideSlug, slo.ID)
+		_ = c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, mdSLI.ID)
 
-		c.Datasets.Update(ctx, &client.Dataset{
+		_, _ = c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset1.Slug,
 			Settings: client.DatasetSettings{
 				DeleteProtected: helper.ToPtr(false),
@@ -185,7 +185,7 @@ func Test_MDSLOs(t *testing.T) {
 		})
 		err = c.Datasets.Delete(ctx, dataset1.Slug)
 
-		c.Datasets.Update(ctx, &client.Dataset{
+		_, _ = c.Datasets.Update(ctx, &client.Dataset{
 			Slug: dataset2.Slug,
 			Settings: client.DatasetSettings{
 				DeleteProtected: helper.ToPtr(false),

@@ -534,7 +534,7 @@ func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
 	t.Cleanup(func() {
 		// remove recipients at the of the test run
 		for _, col := range testRecipients {
-			c.DerivedColumns.Delete(ctx, dataset, col.ID)
+			_ = c.DerivedColumns.Delete(ctx, dataset, col.ID)
 		}
 	})
 
@@ -913,7 +913,7 @@ func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing
 	})
 	require.NoError(t, err, "failed to create test recipient")
 	t.Cleanup(func() {
-		c.Recipients.Delete(ctx, rcpt.ID)
+		_ = c.Recipients.Delete(ctx, rcpt.ID)
 	})
 
 	resource.Test(t, resource.TestCase{
@@ -1265,16 +1265,14 @@ func testAccConfigBasicTriggerWithBaselineDetailsTest(dataset string, name strin
 
 	baselineDetails := ""
 	if includeBaselineDetails {
-		baselineDetails =
-			`baseline_details {
+		baselineDetails = `baseline_details {
 		type           = "value"
 		offset_minutes = 1440
 }`
 	}
 
 	if includePartialBaselineDetails {
-		baselineDetails =
-			`baseline_details {
+		baselineDetails = `baseline_details {
 	type           = "value"
 }`
 	}
@@ -1685,7 +1683,7 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, name, tagsConfig)
 }
 
-func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFunc {
+func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFunc { //nolint:unparam
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
 		if !ok {

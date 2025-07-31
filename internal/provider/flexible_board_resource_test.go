@@ -33,8 +33,8 @@ func TestAccHoneycombioFlexibleBoard(t *testing.T) {
 
 	t.Cleanup(func() {
 		// remove SLOs, and SLIs at end of test run
-		c.SLOs.Delete(ctx, dataset, slo.ID)
-		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+		_ = c.SLOs.Delete(ctx, dataset, slo.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
 	resource.Test(t, resource.TestCase{
@@ -342,8 +342,8 @@ func TestAccHoneycombioFlexibleBoard_upgradeFromVersion036_2(t *testing.T) {
 
 	t.Cleanup(func() {
 		// remove SLOs, and SLIs at end of test run
-		c.SLOs.Delete(ctx, dataset, slo.ID)
-		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+		_ = c.SLOs.Delete(ctx, dataset, slo.ID)
+		_ = c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
 	config := testFlexibleBoardConfig(dataset, slo.ID)

@@ -76,8 +76,8 @@ func TestAcc_SLOsDataSource(t *testing.T) {
 	t.Cleanup(func() {
 		// remove SLOs at the of the test run
 		for _, tc := range testData {
-			c.SLOs.Delete(ctx, dataset, tc.SLO.ID)
-			c.DerivedColumns.Delete(ctx, dataset, tc.SLI.ID)
+			_ = c.SLOs.Delete(ctx, dataset, tc.SLO.ID)
+			_ = c.DerivedColumns.Delete(ctx, dataset, tc.SLI.ID)
 		}
 	})
 
@@ -279,8 +279,8 @@ func TestAcc_SLOsDataSource_FilterGroups(t *testing.T) {
 	t.Cleanup(func() {
 		// remove SLOs at the of the test run
 		for _, tc := range testData {
-			c.SLOs.Delete(ctx, dataset, tc.SLO.ID)
-			c.DerivedColumns.Delete(ctx, dataset, tc.SLI.ID)
+			_ = c.SLOs.Delete(ctx, dataset, tc.SLO.ID)
+			_ = c.DerivedColumns.Delete(ctx, dataset, tc.SLI.ID)
 		}
 	})
 
@@ -438,8 +438,8 @@ func TestAcc_SLOsDataSource_TagFiltering(t *testing.T) {
 	t.Cleanup(func() {
 		// remove SLOs at the of the test run
 		for _, tc := range testData {
-			c.SLOs.Delete(ctx, dataset, tc.SLO.ID)
-			c.DerivedColumns.Delete(ctx, dataset, tc.SLI.ID)
+			_ = c.SLOs.Delete(ctx, dataset, tc.SLO.ID)
+			_ = c.DerivedColumns.Delete(ctx, dataset, tc.SLI.ID)
 		}
 	})
 

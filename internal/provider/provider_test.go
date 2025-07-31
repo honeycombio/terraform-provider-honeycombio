@@ -95,13 +95,13 @@ func testAccEnvironment(ctx context.Context, t *testing.T, c *v2client.Client) *
 
 	t.Cleanup(func() {
 		// disable deletion protection and delete the Environment
-		c.Environments.Update(context.Background(), &v2client.Environment{
+		_, _ = c.Environments.Update(context.Background(), &v2client.Environment{
 			ID: env.ID,
 			Settings: &v2client.EnvironmentSettings{
 				DeleteProtected: helper.ToPtr(false),
 			},
 		})
-		c.Environments.Delete(ctx, env.ID)
+		_ = c.Environments.Delete(ctx, env.ID)
 	})
 
 	return env

@@ -60,7 +60,11 @@ func dataSourceHoneycombioQueryResultRead(ctx context.Context, d *schema.Resourc
 	}
 	dataset := getDatasetOrAll(d)
 
-	err = json.Unmarshal([]byte(d.Get("query_json").(string)), &querySpec)
+	queryJSON, ok := d.Get("query_json").(string)
+	if !ok {
+		return diag.Errorf("query_json must be a string")
+	}
+	err = json.Unmarshal([]byte(queryJSON), &querySpec)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -92,15 +96,15 @@ func dataSourceHoneycombioQueryResultRead(ctx context.Context, d *schema.Resourc
 	}
 
 	d.SetId(queryResult.ID)
-	queryJSON, err := query.Encode()
+	encodedQueryJSON, err := query.Encode()
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.Set("query_json", queryJSON)
-	d.Set("query_id", *query.ID)
-	d.Set("query_url", queryResult.Links.Url)
-	d.Set("graph_image_url", queryResult.Links.GraphUrl)
-	d.Set("results", results)
+	_ = d.Set("query_json", encodedQueryJSON)
+	_ = d.Set("query_id", *query.ID)
+	_ = d.Set("query_url", queryResult.Links.Url)
+	_ = d.Set("graph_image_url", queryResult.Links.GraphUrl)
+	_ = d.Set("results", results)
 
 	return nil
 }

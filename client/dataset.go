@@ -84,7 +84,9 @@ func (s datasets) Create(ctx context.Context, d *Dataset) (*Dataset, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
 	switch resp.StatusCode {
 	case http.StatusOK: // the API doesn't consider this an error, but we do
