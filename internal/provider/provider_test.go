@@ -245,3 +245,27 @@ data "honeycombio_environments" "all" {}
 		})
 	})
 }
+
+// TestAcc_FeatureFlags verifies that features are correctly parsed
+// and available in the configured client.
+func TestAcc_FeatureFlags(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		PreCheck:                 testAccPreCheck(t),
+		Steps: []resource.TestStep{
+			{
+				Config: `
+provider "honeycombio" {
+  features {
+    column {
+      import_on_conflict = true
+    }
+  }
+}
+
+data "honeycombio_auth_metadata" "current" {}
+`,
+			},
+		},
+	})
+}

@@ -44,3 +44,60 @@ resource "honeycombio_column" "test" {
 		},
 	})
 }
+
+func TestAccHoneycombioColumn_importOnConflict(t *testing.T) {
+	dataset := testAccDataset()
+	keyName := test.RandomStringWithPrefix("test.", 10)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		IDRefreshName:            "honeycombio_column.test",
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "honeycombio_column" "test" {
+  name        = "%s"
+  type        = "float"
+  hidden      = false
+  description = "Duration of the trace"
+
+  dataset = "%s"
+}`, keyName, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_column.test", "name", keyName),
+					resource.TestCheckResourceAttr("honeycombio_column.test", "type", "float"),
+					resource.TestCheckResourceAttr("honeycombio_column.test", "hidden", "false"),
+					resource.TestCheckResourceAttr("honeycombio_column.test", "description", "Duration of the trace"),
+				),
+			},
+			// Test that the column can be "imported" again with import_on_conflict enabled
+			// This simulates creating a new resource with the same name, but with conflict resolution enabled
+			{
+				Config: fmt.Sprintf(`
+provider "honeycombio" {
+  features {
+    column {
+      import_on_conflict = true
+    }
+  }
+}
+
+resource "honeycombio_column" "test_conflict" {
+  name        = "%s"
+  type        = "float"
+  hidden      = true
+  description = "Updated description with import_on_conflict"
+
+  dataset = "%s"
+}`, keyName, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_column.test_conflict", "name", keyName),
+					resource.TestCheckResourceAttr("honeycombio_column.test_conflict", "type", "float"),
+					resource.TestCheckResourceAttr("honeycombio_column.test_conflict", "hidden", "true"),
+					resource.TestCheckResourceAttr("honeycombio_column.test_conflict", "description", "Updated description with import_on_conflict"),
+				),
+			},
+		},
+	})
+}

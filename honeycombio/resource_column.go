@@ -98,19 +98,33 @@ func resourceColumnImport(ctx context.Context, d *schema.ResourceData, i interfa
 }
 
 func resourceColumnCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	client, err := getConfiguredClient(meta)
+	configuredClient, err := getSDKConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
 	}
 
+	client := configuredClient.Client
+	features := configuredClient.Features
 	dataset := d.Get("dataset").(string)
+	column := expandColumn(d)
 
-	column, err := client.Columns.Create(ctx, dataset, expandColumn(d))
+	// If the feature is enabled, attempt to import existing column
+	// before creating a new one. The column will be updated in that case.
+	if features != nil && features.Column.ImportOnConflict {
+		existing, err := client.Columns.GetByKeyName(ctx, dataset, column.KeyName)
+		if err == nil {
+			d.SetId(existing.ID)
+			return resourceColumnUpdate(ctx, d, meta)
+		}
+	}
+
+	// Create the column (either feature is disabled or column doesn't exist)
+	createdColumn, err := client.Columns.Create(ctx, dataset, column)
 	if err != nil {
 		return diagFromErr(err)
 	}
 
-	d.SetId(column.ID)
+	d.SetId(createdColumn.ID)
 	return resourceColumnRead(ctx, d, meta)
 }
 

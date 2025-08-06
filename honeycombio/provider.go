@@ -9,8 +9,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/features"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/log"
 )
+
+// SDKConfiguredClient wraps the v1 client with features for SDK-based resources
+type SDKConfiguredClient struct {
+	Client   *honeycombio.Client
+	Features *features.Features
+}
 
 func init() {
 	// set global description kind to markdown, as described in:
@@ -49,6 +56,7 @@ func Provider(version string) *schema.Provider {
 				Optional:    true,
 				Description: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
 			},
+			"features": features.GetSDKFeaturesSchema(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"honeycombio_column":            dataSourceHoneycombioColumn(),
@@ -88,6 +96,8 @@ func Provider(version string) *schema.Provider {
 			debug = v.(bool)
 		}
 
+		providerFeatures := features.ParseSDKResourceData(d)
+
 		// if the API key is set, use it to create the client
 		// we now rely on the Framework version of the provider to validate the configuration
 		if apiKey != "" {
@@ -101,7 +111,11 @@ func Provider(version string) *schema.Provider {
 			if err != nil {
 				return nil, diag.FromErr(err)
 			}
-			return c, nil
+
+			return &SDKConfiguredClient{
+				Client:   c,
+				Features: providerFeatures,
+			}, nil
 		}
 
 		return nil, nil
@@ -111,6 +125,12 @@ func Provider(version string) *schema.Provider {
 }
 
 func getConfiguredClient(meta any) (*honeycombio.Client, error) {
+	// Try the new wrapped client first
+	if wrappedClient, ok := meta.(*SDKConfiguredClient); ok && wrappedClient != nil {
+		return wrappedClient.Client, nil
+	}
+
+	// Fall back to direct client for backward compatibility
 	client, ok := meta.(*honeycombio.Client)
 	if !ok || client == nil {
 		return nil, errors.New("No v1 API client configured for this provider. " +
@@ -118,4 +138,15 @@ func getConfiguredClient(meta any) (*honeycombio.Client, error) {
 			"or set the HONEYCOMB_API_KEY environment variable.")
 	}
 	return client, nil
+}
+
+// getSDKConfiguredClient returns the wrapped client with features
+func getSDKConfiguredClient(meta any) (*SDKConfiguredClient, error) {
+	wrappedClient, ok := meta.(*SDKConfiguredClient)
+	if !ok || wrappedClient == nil {
+		return nil, errors.New("No configured client available for this provider. " +
+			"Set the `api_key` attribute in the provider's configuration, " +
+			"or set the HONEYCOMB_API_KEY environment variable.")
+	}
+	return wrappedClient, nil
 }

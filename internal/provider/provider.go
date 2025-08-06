@@ -15,6 +15,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/features"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/log"
 )
@@ -31,11 +32,12 @@ type HoneycombioProvider struct {
 
 // HoneycombioProviderModel describes the provider data model.
 type HoneycombioProviderModel struct {
-	APIKey    types.String `tfsdk:"api_key"`
-	KeyID     types.String `tfsdk:"api_key_id"`
-	KeySecret types.String `tfsdk:"api_key_secret"`
-	APIUrl    types.String `tfsdk:"api_url"`
-	Debug     types.Bool   `tfsdk:"debug"`
+	APIKey    types.String     `tfsdk:"api_key"`
+	KeyID     types.String     `tfsdk:"api_key_id"`
+	KeySecret types.String     `tfsdk:"api_key_secret"`
+	APIUrl    types.String     `tfsdk:"api_url"`
+	Debug     types.Bool       `tfsdk:"debug"`
+	Features  []features.Model `tfsdk:"features"`
 }
 
 func New(version string) provider.Provider {
@@ -70,6 +72,9 @@ func (p *HoneycombioProvider) Schema(_ context.Context, _ provider.SchemaRequest
 				MarkdownDescription: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
 				Optional:            true,
 			},
+		},
+		Blocks: map[string]schema.Block{
+			"features": features.GetFeaturesBlock(),
 		},
 	}
 }
@@ -202,8 +207,17 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 		req.TerraformVersion,
 		p.version,
 	)
+	var parsedFeatures *features.Features
+	if len(config.Features) > 0 {
+		parsedFeatures = features.Parse(config.Features[0])
+	} else {
+		defaultFeatures := features.DefaultFeatures()
+		parsedFeatures = &defaultFeatures
+	}
 
-	cc := &ConfiguredClient{}
+	cc := &ConfiguredClient{
+		Features: parsedFeatures,
+	}
 	if initv1Client {
 		client, err := client.NewClientWithConfig(&client.Config{
 			APIKey:    apiKey,
@@ -239,6 +253,7 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 type ConfiguredClient struct {
 	v1client *client.Client
 	v2client *v2client.Client
+	Features *features.Features
 }
 
 func (c *ConfiguredClient) V1Client() (*client.Client, error) {
