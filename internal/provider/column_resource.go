@@ -95,9 +95,11 @@ func (*columnResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 			"description": schema.StringAttribute{
 				Description: "The Column's description.",
 				Optional:    true,
+				Computed:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 255),
 				},
+				Default: stringdefault.StaticString(""),
 			},
 			"type": schema.StringAttribute{
 				Description: "The Column's type. Valid values are `string`, `integer`, `float`, `boolean`.",
