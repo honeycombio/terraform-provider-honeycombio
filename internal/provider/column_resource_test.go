@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
@@ -88,8 +89,11 @@ resource "honeycombio_column" "test" {
 			{
 				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 				Config:                   config,
-				PlanOnly:                 true,
-				ExpectNonEmptyPlan:       false,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
 			},
 		},
 	})
