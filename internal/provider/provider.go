@@ -79,6 +79,7 @@ func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.R
 		NewBoardResource,
 		NewFlexibleBoardResource,
 		NewBurnAlertResource,
+		NewColumnResource,
 		NewDatasetResource,
 		NewTriggerResource,
 		NewQueryResource,

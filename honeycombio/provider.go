@@ -59,7 +59,6 @@ func Provider(version string) *schema.Provider {
 			"honeycombio_recipients":        dataSourceHoneycombioRecipients(),
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"honeycombio_column":                     newColumn(),
 			"honeycombio_dataset_definition":         newDatasetDefinition(),
 			"honeycombio_derived_column":             newDerivedColumn(),
 			"honeycombio_marker":                     newMarker(),
