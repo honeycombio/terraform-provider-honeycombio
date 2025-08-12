@@ -57,20 +57,20 @@ func (r *columnResource) Configure(_ context.Context, req resource.ConfigureRequ
 
 func (*columnResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Honeycomb Column resource",
+		Description: "Honeycomb Column resource",
 
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				MarkdownDescription: "The ID of the Column.",
-				Computed:            true,
+				Description: "The ID of the Column.",
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
-				MarkdownDescription: "The name of the Column.",
-				Optional:            true,
-				Computed:            true,
+				Description: "The name of the Column.",
+				Optional:    true,
+				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 					stringplanmodifier.UseStateForUnknown(),
@@ -80,45 +80,45 @@ func (*columnResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				},
 			},
 			"dataset": schema.StringAttribute{
-				MarkdownDescription: "The dataset this Column belongs to.",
-				Required:            true,
+				Description: "The dataset this Column belongs to.",
+				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"hidden": schema.BoolAttribute{
-				MarkdownDescription: "Whether the Column is hidden or not.",
-				Optional:            true,
-				Computed:            true,
-				Default:             booldefault.StaticBool(false),
+				Description: "Whether the Column is hidden or not.",
+				Optional:    true,
+				Computed:    true,
+				Default:     booldefault.StaticBool(false),
 			},
 			"description": schema.StringAttribute{
-				MarkdownDescription: "The Column's description.",
-				Optional:            true,
+				Description: "The Column's description.",
+				Optional:    true,
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 255),
 				},
 			},
 			"type": schema.StringAttribute{
-				MarkdownDescription: "The Column's type. Valid values are `string`, `integer`, `float`, `boolean`.",
-				Optional:            true,
-				Computed:            true,
-				Default:             stringdefault.StaticString("string"),
+				Description: "The Column's type. Valid values are `string`, `integer`, `float`, `boolean`.",
+				Optional:    true,
+				Computed:    true,
+				Default:     stringdefault.StaticString("string"),
 				Validators: []validator.String{
 					stringvalidator.OneOf(helper.AsStringSlice(client.ColumnTypes())...),
 				},
 			},
 			"created_at": schema.StringAttribute{
-				MarkdownDescription: "The time the Column was created.",
-				Computed:            true,
+				Description: "The time the Column was created.",
+				Computed:    true,
 			},
 			"updated_at": schema.StringAttribute{
-				MarkdownDescription: "The time the Column was last updated.",
-				Computed:            true,
+				Description: "The time the Column was last updated.",
+				Computed:    true,
 			},
 			"last_written_at": schema.StringAttribute{
-				MarkdownDescription: "The time the Column was last written to.",
-				Computed:            true,
+				Description: "The time the Column was last written to.",
+				Computed:    true,
 			},
 		},
 	}
