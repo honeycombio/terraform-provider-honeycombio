@@ -69,11 +69,9 @@ func (*columnResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 			},
 			"name": schema.StringAttribute{
 				Description: "The name of the Column.",
-				Optional:    true,
-				Computed:    true,
+				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
-					stringplanmodifier.UseStateForUnknown(),
 				},
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 255),
