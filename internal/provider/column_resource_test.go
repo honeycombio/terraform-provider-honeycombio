@@ -57,6 +57,7 @@ resource "honeycombio_column" "test" {
   hidden      = true
   description = "My nice column"
 }`, name, dataset),
+					RefreshState: false, // skip refresh here prevent racey updates
 				},
 				{
 					// updating columns can be racey so we wait a bit to ensure the update has propagated
@@ -67,7 +68,7 @@ resource "honeycombio_column" "test" {
 						require.Eventually(t, func() bool {
 							column, err := client.Columns.GetByKeyName(context.Background(), dataset, name)
 							return err == nil && column.Description == "My nice column"
-						}, 10*time.Second, 100*time.Millisecond, "Column update did not complete in time")
+						}, 15*time.Second, 100*time.Millisecond, "Column update did not complete in time")
 					},
 					Config: fmt.Sprintf(`
 resource "honeycombio_column" "test" {
