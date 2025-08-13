@@ -61,6 +61,14 @@ func (e *DetailedError) IsNotFound() bool {
 	return e.Status == http.StatusNotFound
 }
 
+// IsConflict returns true if the error is an HTTP 409
+func (e *DetailedError) IsConflict() bool {
+	if e == nil {
+		return false
+	}
+	return e.Status == http.StatusConflict
+}
+
 // Error returns a pretty-printed representation of the error
 func (e DetailedError) Error() string {
 	if len(e.Details) > 0 {

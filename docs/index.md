@@ -23,6 +23,10 @@ terraform {
 provider "honeycombio" {
   # You can set the API key with the environment variable HONEYCOMB_API_KEY,
   # or the HONEYCOMB_KEY_ID+HONEYCOMB_KEY_SECRET environment variable pair
+
+  # The features block allows customization of the behavior of the Honeycomb Provider.
+  # More information can be found below.
+  features {}
 }
 
 variable "dataset" {
@@ -102,5 +106,37 @@ Arguments accepted by this provider include:
 * `api_key_secret` - (Optional) The secret portion of the Honeycomb Management API key to use. It can also be set via the `HONEYCOMB_KEY_SECRET` environment variable.
 * `api_url` - (Optional) Override the URL of the Honeycomb.io API. It can also be set using `HONEYCOMB_API_ENDPOINT`. Defaults to `https://api.honeycomb.io`.
 * `debug` - (Optional) Enable to log additional debug information. To view the logs, set `TF_LOG` to at least debug.
+* `features` - (Optional) The features block allows customization of the behavior of the Honeycomb Provider. Full details documented below.
 
 At least one of `api_key`, or the `api_key_id` and `api_key_secret` pair must be configured.
+
+## Features Block
+
+The Honeycomb Provider allows the behavior of certain resources to be modified using the features block.
+
+This allows different users to select the behavior they require for their use case while preserving default, "Terraform-y" behavior.
+
+### Example Usage
+
+If you wish to use the default behaviors of the Honeycomb provider, then nothing needs to be done to your configuration at all.
+
+Each of the blocks defined below can be optionally specified to configure the behaviour as needed - this example shows all the possible behaviors which can be configured:
+
+```hcl
+provider "honeycombio" {
+  features {
+    column {
+      import_on_conflict = true
+    }
+  }
+}
+```
+
+### Arguments Reference
+
+The `features` block supports the following:
+
+* `column` - (Optional) A `column` block as defined below.
+---
+The `column` block supports the following:
+* `import_on_conflict` - (Optional) This changes the creation behavior of the column resource to import an existing column if it already exists, rather than erroring out. Defaults to `false`.

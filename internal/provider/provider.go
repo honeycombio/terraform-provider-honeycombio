@@ -15,6 +15,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/features"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/log"
 )
@@ -31,11 +32,12 @@ type HoneycombioProvider struct {
 
 // HoneycombioProviderModel describes the provider data model.
 type HoneycombioProviderModel struct {
-	APIKey    types.String `tfsdk:"api_key"`
-	KeyID     types.String `tfsdk:"api_key_id"`
-	KeySecret types.String `tfsdk:"api_key_secret"`
-	APIUrl    types.String `tfsdk:"api_url"`
-	Debug     types.Bool   `tfsdk:"debug"`
+	APIKey    types.String     `tfsdk:"api_key"`
+	KeyID     types.String     `tfsdk:"api_key_id"`
+	KeySecret types.String     `tfsdk:"api_key_secret"`
+	APIUrl    types.String     `tfsdk:"api_url"`
+	Debug     types.Bool       `tfsdk:"debug"`
+	Features  []features.Model `tfsdk:"features"`
 }
 
 func New(version string) provider.Provider {
@@ -70,6 +72,9 @@ func (p *HoneycombioProvider) Schema(_ context.Context, _ provider.SchemaRequest
 				MarkdownDescription: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
 				Optional:            true,
 			},
+		},
+		Blocks: map[string]schema.Block{
+			"features": features.GetFeaturesBlock(),
 		},
 	}
 }
@@ -194,6 +199,14 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 		return
 	}
 
+	parsedFeatures := features.DefaultFeatures()
+	if len(config.Features) > 0 {
+		parsedFeatures = features.Parse(config.Features)
+	}
+	cc := &ConfiguredClient{
+		features: parsedFeatures,
+	}
+
 	debug := log.IsDebugOrHigher()
 	if !config.Debug.IsNull() {
 		debug = config.Debug.ValueBool()
@@ -204,7 +217,6 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 		p.version,
 	)
 
-	cc := &ConfiguredClient{}
 	if initv1Client {
 		client, err := client.NewClientWithConfig(&client.Config{
 			APIKey:    apiKey,
@@ -240,6 +252,7 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 type ConfiguredClient struct {
 	v1client *client.Client
 	v2client *v2client.Client
+	features *features.Features
 }
 
 func (c *ConfiguredClient) V1Client() (*client.Client, error) {
@@ -260,6 +273,15 @@ func (c *ConfiguredClient) V2Client() (*v2client.Client, error) {
 		)
 	}
 	return c.v2client, nil
+}
+
+func (c *ConfiguredClient) Features() (*features.Features, error) {
+	if c.features == nil {
+		return nil, errors.New("Unable to initialize provider features. " +
+			"This is a bug in the provider, which should be reported in the provider's own issue tracker.",
+		)
+	}
+	return c.features, nil
 }
 
 func getClientFromDatasourceRequest(req *datasource.ConfigureRequest) *ConfiguredClient {

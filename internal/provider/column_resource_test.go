@@ -3,16 +3,24 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
 )
 
 func TestAcc_ColumnResource(t *testing.T) {
+	ctx := context.Background()
+
 	t.Run("happy path", func(t *testing.T) {
 		dataset := testAccDataset()
 		name := test.RandomStringWithPrefix("test.", 10)
@@ -74,6 +82,67 @@ resource "honeycombio_column" "test" {
 					ImportStateId:     fmt.Sprintf("%s/%s", dataset, name),
 					ImportState:       true,
 					ImportStateVerify: true,
+				},
+			},
+		})
+	})
+
+	t.Run("feature: import_on_conflict", func(t *testing.T) {
+		c := testAccClient(t)
+		dataset := testAccDataset()
+
+		// make a column so we can 'create' it and test the import_on_conflict behavior
+		column, err := c.Columns.Create(ctx, dataset, &client.Column{
+			KeyName: test.RandomStringWithPrefix("test.", 10),
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			c.Columns.Delete(ctx, dataset, column.KeyName)
+		})
+
+		// column creation can be a bit racey, so we'll wait for it to be available
+		assert.Eventually(t, func() bool {
+			_, err := c.Columns.GetByKeyName(ctx, dataset, column.KeyName)
+			return err == nil
+		}, 5*time.Second, 200*time.Millisecond)
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			Steps: []resource.TestStep{
+				{ // explicitly set import_on_conflict to false to ensure it fails
+					Config: fmt.Sprintf(`
+provider "honeycombio" {
+  features {
+    column {
+      import_on_conflict = false
+    }
+  }
+}
+
+resource "honeycombio_column" "test" {
+  name        = "%s"
+  dataset     = "%s"
+}`, column.KeyName, dataset),
+					ExpectError: regexp.MustCompile(`(?i)column already exists`),
+				},
+				{ // set import_on_conflict to true to ensure it imports the existing column
+					Config: fmt.Sprintf(`
+provider "honeycombio" {
+  features {
+    column {
+      import_on_conflict = true
+    }
+  }
+}
+
+resource "honeycombio_column" "test" {
+  name        = "%s"
+  dataset     = "%s"
+}`, column.KeyName, dataset),
+					Check: resource.ComposeTestCheckFunc(
+						testAccEnsureColumnExists(t, "honeycombio_column.test", column.KeyName),
+					),
 				},
 			},
 		})

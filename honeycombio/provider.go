@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/features"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/log"
 )
 
@@ -49,6 +50,7 @@ func Provider(version string) *schema.Provider {
 				Optional:    true,
 				Description: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
 			},
+			"features": features.GetPluginSDKFeaturesSchema(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"honeycombio_column":            dataSourceHoneycombioColumn(),
