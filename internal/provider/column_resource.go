@@ -18,6 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/features"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
@@ -30,7 +31,8 @@ var (
 )
 
 type columnResource struct {
-	client *client.Client
+	client  *client.Client
+	feature features.FeaturesColumn
 }
 
 func NewColumnResource() resource.Resource {
@@ -53,6 +55,13 @@ func (r *columnResource) Configure(_ context.Context, req resource.ConfigureRequ
 		return
 	}
 	r.client = c
+
+	features, err := w.Features()
+	if err != nil || features == nil {
+		resp.Diagnostics.AddError("Unable to get features", err.Error())
+		return
+	}
+	r.feature = features.Column
 }
 
 func (*columnResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -131,8 +140,38 @@ func (r *columnResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
+	var detailedError client.DetailedError
 	column, err := r.client.Columns.Create(ctx, plan.Dataset.ValueString(), r.expandColumn(plan))
-	if err != nil {
+	if errors.As(err, &detailedError) {
+		if detailedError.IsConflict() && r.feature.ImportOnConflict {
+			// If the column already exists and import_on_conflict is true,
+			// we should import the existing column instead of creating a new one.
+			resp.Diagnostics.AddWarning("Importing existing Column on Create",
+				"Column \""+plan.Name.ValueString()+"\" already exists, importing and updating the existing column as "+
+					"'import_on_conflict' is enabled.")
+			column, err = r.client.Columns.GetByKeyName(ctx, plan.Dataset.ValueString(), plan.Name.ValueString())
+			if err != nil {
+				resp.Diagnostics.AddError("Error importing existing Column", err.Error())
+				return
+			}
+
+			// Update the plan with the imported column's ID
+			plan.ID = types.StringValue(column.ID)
+
+			// Update the column with the plan's values
+			column, err = r.client.Columns.Update(ctx, plan.Dataset.ValueString(), r.expandColumn(plan))
+			if err != nil {
+				resp.Diagnostics.AddError("Error updating imported Column", err.Error())
+				return
+			}
+		} else {
+			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
+				"Error creating Column",
+				&detailedError,
+			))
+			return
+		}
+	} else if err != nil {
 		resp.Diagnostics.AddError("Error creating Column", err.Error())
 		return
 	}
