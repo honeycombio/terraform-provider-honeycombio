@@ -5,7 +5,8 @@ This can be used to create, update, and delete columns in a dataset.
 
 ~> **Warning** Deleting a column is a destructive and irreversible operation which also removes the data in the column.
 
--> Version 0.38 and later of the Honeycomb Provider include a Feature Toggle which allows the column to be imported automatically if there is a conflict during create instead of throwing an error.
+-> Version 0.38 and later of the Honeycomb Provider include a Feature Toggle which allows the column to be imported and updated automatically if there is a conflict during create instead of throwing an error.
+  This is potentially dangerous if the type changes on the update -- switching from `string` to `boolean` and causing dataloss, for example -- and should be used with caution.
 
 ## Example Usage
 

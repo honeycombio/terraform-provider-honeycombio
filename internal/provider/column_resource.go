@@ -146,16 +146,29 @@ func (r *columnResource) Create(ctx context.Context, req resource.CreateRequest,
 		if detailedError.IsConflict() && r.feature.ImportOnConflict {
 			// If the column already exists and import_on_conflict is true,
 			// we should import the existing column instead of creating a new one.
+			resp.Diagnostics.AddWarning("Importing existing Column on Create",
+				"Column \""+plan.Name.ValueString()+"\" already exists, importing and updating the existing column as "+
+					"'import_on_conflict' is enabled.")
 			column, err = r.client.Columns.GetByKeyName(ctx, plan.Dataset.ValueString(), plan.Name.ValueString())
 			if err != nil {
 				resp.Diagnostics.AddError("Error importing existing Column", err.Error())
 				return
 			}
-			resp.Diagnostics.AddWarning("Importing existing Column on Create",
-				"Column already exists, importing the existing column instead of creating a new one.",
-			)
+
+			// Update the plan with the imported column's ID
+			plan.ID = types.StringValue(column.ID)
+
+			// Update the column with the plan's values
+			column, err = r.client.Columns.Update(ctx, plan.Dataset.ValueString(), r.expandColumn(plan))
+			if err != nil {
+				resp.Diagnostics.AddError("Error updating imported Column", err.Error())
+				return
+			}
 		} else {
-			resp.Diagnostics.AddError("Error creating Column", err.Error())
+			resp.Diagnostics.Append(helper.NewDetailedErrorDiagnostic(
+				"Error creating Column",
+				&detailedError,
+			))
 			return
 		}
 	} else if err != nil {

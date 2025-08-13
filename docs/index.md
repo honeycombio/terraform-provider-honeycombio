@@ -139,4 +139,5 @@ The `features` block supports the following:
 * `column` - (Optional) A `column` block as defined below.
 ---
 The `column` block supports the following:
-* `import_on_conflict` - (Optional) This changes the creation behavior of the column resource to import an existing column if it already exists, rather than erroring out. Defaults to `false`.
+* `import_on_conflict` - (Optional) This changes the creation behavior of the column resource to import and update an existing column if it already exists, rather than erroring out. Defaults to `false`.
+    This is potentially dangerous if the type changes on the update -- switching from `string` to `boolean` and causing dataloss, for example -- and should be used with caution.
