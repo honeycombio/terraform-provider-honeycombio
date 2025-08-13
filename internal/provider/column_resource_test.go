@@ -142,6 +142,15 @@ resource "honeycombio_column" "test" {
 }`, column.KeyName, dataset),
 					Check: resource.ComposeTestCheckFunc(
 						testAccEnsureColumnExists(t, "honeycombio_column.test", column.KeyName),
+						resource.TestCheckResourceAttrSet("honeycombio_column.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_column.test", "name", column.KeyName),
+						resource.TestCheckResourceAttr("honeycombio_column.test", "dataset", dataset),
+						resource.TestCheckResourceAttr("honeycombio_column.test", "type", "string"), // default type is string
+						resource.TestCheckResourceAttr("honeycombio_column.test", "hidden", "false"),
+						resource.TestCheckResourceAttr("honeycombio_column.test", "description", ""),
+						resource.TestCheckResourceAttrSet("honeycombio_column.test", "created_at"),
+						resource.TestCheckResourceAttrSet("honeycombio_column.test", "updated_at"),
+						resource.TestCheckResourceAttrSet("honeycombio_column.test", "last_written_at"),
 					),
 				},
 			},
