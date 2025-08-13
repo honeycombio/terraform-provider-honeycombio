@@ -46,6 +46,28 @@ resource "honeycombio_column" "test" {
 					),
 				},
 				{
+					Config: fmt.Sprintf(`
+resource "honeycombio_column" "test" {
+  name        = "%s"
+  dataset     = "%s"
+  type        = "float"
+  hidden      = true
+  description = "My nice column"
+}`, name, dataset),
+					Check: resource.ComposeTestCheckFunc(
+						testAccEnsureColumnExists(t, "honeycombio_column.test", name),
+						resource.TestCheckResourceAttrSet("honeycombio_column.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_column.test", "name", name),
+						resource.TestCheckResourceAttr("honeycombio_column.test", "dataset", dataset),
+						resource.TestCheckResourceAttr("honeycombio_column.test", "type", "float"),
+						resource.TestCheckResourceAttr("honeycombio_column.test", "hidden", "true"),
+						resource.TestCheckResourceAttr("honeycombio_column.test", "description", "My nice column"),
+						resource.TestCheckResourceAttrSet("honeycombio_column.test", "created_at"),
+						resource.TestCheckResourceAttrSet("honeycombio_column.test", "updated_at"),
+						resource.TestCheckResourceAttrSet("honeycombio_column.test", "last_written_at"),
+					),
+				},
+				{
 					ResourceName:      "honeycombio_column.test",
 					ImportStateId:     fmt.Sprintf("%s/%s", dataset, name),
 					ImportState:       true,
