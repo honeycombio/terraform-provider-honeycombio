@@ -46,7 +46,7 @@ resource "honeycombio_dataset_definition" "name" {
   dataset = "%[1]s"
 
   name   = "name"
-  column = honeycombio_column.column_1.key_name
+  column = honeycombio_column.column_1.name
 }
 
 resource "honeycombio_dataset_definition" "duration_ms" {
@@ -60,14 +60,14 @@ resource "honeycombio_dataset_definition" "route" {
   dataset = "%[1]s"
 
   name   = "route"
-  column = honeycombio_column.column_2.key_name
+  column = honeycombio_column.column_2.name
 }
 
 resource "honeycombio_dataset_definition" "error" {
   dataset = "%[1]s"
 
   name   = "error"
-  column = honeycombio_column.column_3.key_name
+  column = honeycombio_column.column_3.name
 }
 `, dataset, col1Name, col2Name, col3Name)
 
