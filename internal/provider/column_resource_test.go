@@ -88,6 +88,8 @@ resource "honeycombio_column" "test" {
 	})
 
 	t.Run("feature: import_on_conflict", func(t *testing.T) {
+		t.Parallel() // we don't want this test to block others as it sleeps for a while
+
 		c := testAccClient(t)
 		dataset := testAccDataset()
 
@@ -99,6 +101,9 @@ resource "honeycombio_column" "test" {
 		t.Cleanup(func() {
 			c.Columns.Delete(ctx, dataset, column.KeyName)
 		})
+
+		// give the backend a chance to catch up
+		time.Sleep(31 * time.Second)
 
 		// column creation can be a bit racey, so we'll wait for it to be available
 		assert.Eventually(t, func() bool {
