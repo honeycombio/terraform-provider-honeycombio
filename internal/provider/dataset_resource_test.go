@@ -211,6 +211,15 @@ resource "honeycombio_dataset" "test" {
 						resource.TestCheckResourceAttrSet("honeycombio_dataset.test", "last_written_at"),
 					),
 				},
+				{ // disable delete protection to allow cleanup
+					Config: fmt.Sprintf(`
+resource "honeycombio_dataset" "test" {
+  name             = "%s"
+  description      = "my dataset is imported"
+  expand_json_depth = 5
+  delete_protected = false
+}`, ds.Name),
+				},
 			},
 		})
 	})

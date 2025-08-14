@@ -193,6 +193,9 @@ func (r *datasetResource) Create(ctx context.Context, req resource.CreateRequest
 				Slug:            ds.Slug,
 				Description:     plan.Description.ValueString(),
 				ExpandJSONDepth: int(plan.ExpandJSONDepth.ValueInt32()),
+				Settings: client.DatasetSettings{
+					DeleteProtected: plan.DeleteProtected.ValueBoolPointer(),
+				},
 			})
 			if err != nil {
 				resp.Diagnostics.AddError("Error updating imported Dataset", err.Error())
