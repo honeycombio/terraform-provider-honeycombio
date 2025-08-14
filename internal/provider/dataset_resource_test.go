@@ -202,7 +202,7 @@ resource "honeycombio_dataset" "test" {
 }`, ds.Name),
 					Check: resource.ComposeAggregateTestCheckFunc(
 						resource.TestCheckResourceAttrSet("honeycombio_dataset.test", "id"),
-						resource.TestCheckResourceAttrSet("honeycombio_dataset.test", "slug"),
+						resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", ds.Slug),
 						resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", ds.Name),
 						resource.TestCheckResourceAttr("honeycombio_dataset.test", "description", "my dataset is imported"), // updated description
 						resource.TestCheckResourceAttr("honeycombio_dataset.test", "expand_json_depth", "5"),                // updated JSON depth
