@@ -27,6 +27,17 @@ func GetFeaturesBlock() schema.Block {
 						},
 					},
 				},
+				"dataset": schema.ListNestedBlock{
+					MarkdownDescription: "Dataset resource features.",
+					NestedObject: schema.NestedBlockObject{
+						Attributes: map[string]schema.Attribute{
+							"import_on_conflict": schema.BoolAttribute{
+								MarkdownDescription: "This changes the creation behavior of the dataset resource to import an existing dataset if it already exists, rather than erroring out.",
+								Optional:            true,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -52,6 +63,21 @@ func GetPluginSDKFeaturesSchema() *pluginsdk.Schema {
 								Type:        pluginsdk.TypeBool,
 								Optional:    true,
 								Description: "This changes the creation behavior of the column resource to import an existing column if it already exists, rather than erroring out.",
+							},
+						},
+					},
+				},
+				"dataset": {
+					Type:        pluginsdk.TypeList,
+					Optional:    true,
+					MaxItems:    1,
+					Description: "Dataset resource features.",
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
+							"import_on_conflict": {
+								Type:        pluginsdk.TypeBool,
+								Optional:    true,
+								Description: "This changes the creation behavior of the dataset resource to import an existing dataset if it already exists, rather than erroring out.",
 							},
 						},
 					},

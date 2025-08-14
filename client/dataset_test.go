@@ -53,6 +53,17 @@ func TestDatasets(t *testing.T) {
 		require.NoError(t, err)
 		assert.Contains(t, dds, *dataset)
 
+		// read back the dataset by Name and compare
+		dataset, err = c.Datasets.GetByName(ctx, ds.Name)
+		require.NoError(t, err)
+		assert.Equal(t, ds.Name, dataset.Name)
+		assert.Equal(t, ds.Slug, dataset.Slug)
+		assert.Equal(t, ds.Description, dataset.Description)
+		assert.Equal(t, ds.ExpandJSONDepth, dataset.ExpandJSONDepth)
+		if assert.NotNil(t, dataset.Settings) {
+			assert.True(t, *dataset.Settings.DeleteProtected)
+		}
+
 		// update the dataset's description and expand_json_depth
 		newDescription := test.RandomString(70)
 		dataset, err = c.Datasets.Update(ctx, &client.Dataset{

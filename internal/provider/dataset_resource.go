@@ -19,6 +19,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/features"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/modifiers"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
@@ -33,7 +34,8 @@ var (
 )
 
 type datasetResource struct {
-	client *client.Client
+	client  *client.Client
+	feature features.FeaturesDataset
 }
 
 func NewDatasetResource() resource.Resource {
@@ -56,6 +58,13 @@ func (r *datasetResource) Configure(_ context.Context, req resource.ConfigureReq
 		return
 	}
 	r.client = c
+
+	features, err := w.Features()
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to get features", err.Error())
+		return
+	}
+	r.feature = features.Dataset
 }
 
 func (*datasetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -165,8 +174,34 @@ func (r *datasetResource) Create(ctx context.Context, req resource.CreateRequest
 		ExpandJSONDepth: int(plan.ExpandJSONDepth.ValueInt32()),
 	})
 	if errors.Is(err, client.ErrDatasetExists) {
-		resp.Diagnostics.AddError("Error Creating Honeycomb Dataset", "Dataset \""+plan.Name.ValueString()+"\" already exists")
-		return
+		if r.feature.ImportOnConflict {
+			// if the dataset already exists and import_on_conflict is true,
+			// we should import the existing dataset instead of creating a new one.
+			resp.Diagnostics.AddWarning("Importing existing Dataset on Create",
+				"Dataset \""+plan.Name.ValueString()+"\" already exists, importing and updating the existing dataset as "+
+					"'import_on_conflict' is enabled.")
+
+			// read the existing dataset back
+			ds, err = r.client.Datasets.GetByName(ctx, plan.Name.ValueString())
+			if err != nil {
+				resp.Diagnostics.AddError("Error importing existing Dataset", err.Error())
+				return
+			}
+
+			// update the dataset with the plan's values
+			ds, err = r.client.Datasets.Update(ctx, &client.Dataset{
+				Slug:            ds.Slug,
+				Description:     plan.Description.ValueString(),
+				ExpandJSONDepth: int(plan.ExpandJSONDepth.ValueInt32()),
+			})
+			if err != nil {
+				resp.Diagnostics.AddError("Error updating imported Dataset", err.Error())
+				return
+			}
+		} else {
+			resp.Diagnostics.AddError("Error Creating Honeycomb Dataset", "Dataset \""+plan.Name.ValueString()+"\" already exists")
+			return
+		}
 	} else if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Dataset", err) {
 		return
 	}

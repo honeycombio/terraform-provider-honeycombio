@@ -57,7 +57,7 @@ func (r *columnResource) Configure(_ context.Context, req resource.ConfigureRequ
 	r.client = c
 
 	features, err := w.Features()
-	if err != nil || features == nil {
+	if err != nil {
 		resp.Diagnostics.AddError("Unable to get features", err.Error())
 		return
 	}

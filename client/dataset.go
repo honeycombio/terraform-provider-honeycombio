@@ -19,6 +19,9 @@ type Datasets interface {
 	// Get a dataset by its slug.
 	Get(ctx context.Context, slug string) (*Dataset, error)
 
+	// Get a dataset by its name.
+	GetByName(ctx context.Context, name string) (*Dataset, error)
+
 	// Creates a new dataset.
 	//
 	// Will return ErrDatasetExists if a dataset with that name already exists
@@ -73,6 +76,19 @@ func (s datasets) Get(ctx context.Context, slug string) (*Dataset, error) {
 	var dataset Dataset
 	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/datasets/%s", urlEncodeDataset(slug)), nil, &dataset)
 	return &dataset, err
+}
+
+func (s datasets) GetByName(ctx context.Context, name string) (*Dataset, error) {
+	datasets, err := s.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, ds := range datasets {
+		if ds.Name == name {
+			return &ds, nil
+		}
+	}
+	return nil, fmt.Errorf("no dataset with name %q found", name)
 }
 
 func (s datasets) Create(ctx context.Context, d *Dataset) (*Dataset, error) {
