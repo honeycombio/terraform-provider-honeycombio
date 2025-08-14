@@ -88,7 +88,10 @@ func (s datasets) GetByName(ctx context.Context, name string) (*Dataset, error) 
 			return &ds, nil
 		}
 	}
-	return nil, fmt.Errorf("no dataset with name %q found", name)
+	return nil, DetailedError{
+		Status:  http.StatusNotFound,
+		Message: "Dataset Not Found.",
+	}
 }
 
 func (s datasets) Create(ctx context.Context, d *Dataset) (*Dataset, error) {
