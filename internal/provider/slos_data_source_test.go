@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -14,7 +13,7 @@ import (
 )
 
 func TestAcc_SLOsDataSource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 	dataset := testAccDataset()
 	testPrefix := acctest.RandString(8)
@@ -215,7 +214,7 @@ data "honeycombio_slos" "combined_operators" {
 
 // Test specifically for filter groups
 func TestAcc_SLOsDataSource_FilterGroups(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 	dataset := testAccDataset()
 	testPrefix := acctest.RandString(8)
@@ -364,7 +363,7 @@ data "honeycombio_slos" "complex_filter" {
 
 // Test for SLO filtering by tags
 func TestAcc_SLOsDataSource_TagFiltering(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 	dataset := testAccDataset()
 	testPrefix := acctest.RandString(8)

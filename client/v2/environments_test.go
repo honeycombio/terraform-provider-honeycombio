@@ -1,7 +1,6 @@
 package v2
 
 import (
-	"context"
 	"math"
 	"net/http"
 	"testing"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestClient_Environments(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := newTestClient(t)
 
 	t.Run("happy path", func(t *testing.T) {
@@ -83,7 +82,7 @@ func TestClient_Environments(t *testing.T) {
 }
 
 func TestClient_Environments_Pagination(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := newTestClient(t)
 
 	// create a bunch of environments

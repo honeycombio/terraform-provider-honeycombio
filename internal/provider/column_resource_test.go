@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -19,7 +18,7 @@ import (
 )
 
 func TestAcc_ColumnResource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("happy path", func(t *testing.T) {
 		dataset := testAccDataset()
@@ -214,7 +213,7 @@ func testAccEnsureColumnExists(t *testing.T, resource, name string) resource.Tes
 		}
 
 		client := testAccClient(t)
-		_, err := client.Columns.GetByKeyName(context.Background(), resourceState.Primary.Attributes["dataset"], name)
+		_, err := client.Columns.GetByKeyName(t.Context(), resourceState.Primary.Attributes["dataset"], name)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created column: %w", err)
 		}

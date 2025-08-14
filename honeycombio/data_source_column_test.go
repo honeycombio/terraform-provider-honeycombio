@@ -1,7 +1,6 @@
 package honeycombio
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestAccDataSourceHoneycombioColumn_basic(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 	dataset := testAccDataset()
 

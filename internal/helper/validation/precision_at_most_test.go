@@ -1,7 +1,6 @@
 package validation_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -63,7 +62,7 @@ func TestValidation_PrecisionAtMost(t *testing.T) {
 				ConfigValue:    test.value,
 			}
 			response := validator.Float64Response{}
-			validation.Float64PrecisionAtMost(test.maxPrecision).ValidateFloat64(context.Background(), request, &response)
+			validation.Float64PrecisionAtMost(test.maxPrecision).ValidateFloat64(t.Context(), request, &response)
 
 			assert.Equal(t,
 				test.expectError,

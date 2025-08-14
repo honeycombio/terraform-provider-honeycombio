@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestAcc_QueryResource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	dataset := testAccDataset()
 	c := testAccClient(t)
 	col, err := c.Columns.Create(ctx, dataset, &client.Column{
@@ -102,7 +101,7 @@ EOT
 func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
 	t.Skip("mysteriously broken and under investigation")
 
-	ctx := context.Background()
+	ctx := t.Context()
 	dataset := testAccDataset()
 	c := testAccClient(t)
 	col, err := c.Columns.Create(ctx, dataset, &client.Column{
@@ -185,7 +184,7 @@ EOT
 }
 
 func TestAcc_QueryAllToUnset(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	if c.IsClassic(ctx) {
@@ -245,7 +244,7 @@ func testAccEnsureQueryExists(t *testing.T, name string) resource.TestCheckFunc 
 		}
 
 		client := testAccClient(t)
-		_, err := client.Queries.Get(context.Background(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
+		_, err := client.Queries.Get(t.Context(), resourceState.Primary.Attributes["dataset"], resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created query: %w", err)
 		}

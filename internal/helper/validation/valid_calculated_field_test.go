@@ -1,7 +1,6 @@
 package validation_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -54,7 +53,7 @@ func Test_IsValidCalculatedFieldValidator(t *testing.T) {
 			response := validator.StringResponse{}
 
 			validation.IsValidCalculatedField().
-				ValidateString(context.Background(), request, &response)
+				ValidateString(t.Context(), request, &response)
 
 			assert.Equal(t,
 				tc.expectError,

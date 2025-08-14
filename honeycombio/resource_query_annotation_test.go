@@ -1,7 +1,6 @@
 package honeycombio
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -43,7 +42,7 @@ func TestAccHoneycombioQueryAnnotation_update(t *testing.T) {
 }
 
 func TestAccHoneycombioQueryAnnotation_AllToUnset(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	if c.IsClassic(ctx) {
@@ -122,7 +121,7 @@ func testAccCheckQueryAnnotationExists(t *testing.T, dataset, name string) resou
 		}
 
 		client := testAccClient(t)
-		_, err := client.QueryAnnotations.Get(context.Background(), dataset, resourceState.Primary.ID)
+		_, err := client.QueryAnnotations.Get(t.Context(), dataset, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not find created query: %w", err)
 		}

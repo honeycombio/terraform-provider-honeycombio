@@ -2,7 +2,6 @@ package client_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -19,7 +18,7 @@ func TestClient_ParseDetailedError(t *testing.T) {
 	t.Parallel()
 
 	var de client.DetailedError
-	ctx := context.Background()
+	ctx := t.Context()
 	c := newTestClient(t)
 
 	t.Run("Post with no body should fail with 400 unparseable", func(t *testing.T) {

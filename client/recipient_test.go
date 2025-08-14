@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -15,7 +14,7 @@ import (
 func TestRecipientsEmail(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var rcpt *client.Recipient
 	var err error
@@ -83,7 +82,7 @@ func TestRecipientsEmail(t *testing.T) {
 func TestRecipientsCustomWebhook(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	c := newTestClient(t)
 
 	body := `{"hello": "world"}`
@@ -142,7 +141,7 @@ func TestRecipientsCustomWebhook(t *testing.T) {
 func TestRecipientsWebhooksandMSTeams(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	c := newTestClient(t)
 
 	testCases := []struct {

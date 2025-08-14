@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -10,7 +9,7 @@ import (
 )
 
 func TestAcc_EnvironmentDataSource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccV2Client(t)
 	env := testAccEnvironment(ctx, t, c)
 

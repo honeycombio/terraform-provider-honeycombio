@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"context"
 	"slices"
 	"testing"
 	"time"
@@ -17,7 +16,7 @@ import (
 func TestSLOs(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var slo *client.SLO
 	var err error
@@ -140,7 +139,7 @@ func TestSLOs(t *testing.T) {
 func Test_MDSLOs(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	var err error
 
 	c := newTestClient(t)

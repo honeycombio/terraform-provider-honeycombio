@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -485,7 +484,7 @@ func TestAcc_BurnAlertResource_recreateOnNotFound(t *testing.T) {
 					testAccEnsureSuccessExhaustionTimeAlert(t, burnAlert, exhaustionMinutes, "info", sloID),
 					func(_ *terraform.State) error {
 						// the final 'check' deletes the Burn Alert directly via the API leaving it behind in the state
-						err := testAccClient(t).BurnAlerts.Delete(context.Background(), dataset, burnAlert.ID)
+						err := testAccClient(t).BurnAlerts.Delete(t.Context(), dataset, burnAlert.ID)
 						if err != nil {
 							return fmt.Errorf("failed to delete Burn Alert: %w", err)
 						}
@@ -501,7 +500,7 @@ func TestAcc_BurnAlertResource_recreateOnNotFound(t *testing.T) {
 
 func TestAcc_BurnAlertResource_HandlesRecipientChangedOutsideOfTerraform(t *testing.T) {
 	c := testAccClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	dataset, sloID := burnAlertAccTestSetup(t)
 
 	// setup a slack recipient to be used in the burn alert, and modified outside of terraform
@@ -557,7 +556,7 @@ func TestAcc_BurnAlertResource_HandlesDynamicRecipientBlock(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_HandlesDescriptionSetToEmptyString(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
@@ -753,7 +752,7 @@ func testAccEnsureBurnAlertExists(t *testing.T, name string, burnAlert *client.B
 		}
 
 		c := testAccClient(t)
-		alert, err := c.BurnAlerts.Get(context.Background(), client.EnvironmentWideSlug, resourceState.Primary.ID)
+		alert, err := c.BurnAlerts.Get(t.Context(), client.EnvironmentWideSlug, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created Burn Alert: %w", err)
 		}
@@ -831,7 +830,7 @@ func testAccEnsureBurnAlertDestroyed(t *testing.T) resource.TestCheckFunc {
 			}
 
 			c := testAccClient(t)
-			_, err := c.BurnAlerts.Get(context.Background(), client.EnvironmentWideSlug, resourceState.Primary.ID)
+			_, err := c.BurnAlerts.Get(t.Context(), client.EnvironmentWideSlug, resourceState.Primary.ID)
 			if err == nil {
 				return fmt.Errorf("burn alert %s was not deleted on destroy", resourceState.Primary.ID)
 			}
@@ -845,7 +844,7 @@ func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
 	_, sloID := burnAlertAccTestSetup(t)
 	c := testAccClient(t)
 
-	if c.IsClassic(context.Background()) {
+	if c.IsClassic(t.Context()) {
 		t.Skip("MD SLOs are not supported in classic")
 	}
 
@@ -898,7 +897,7 @@ func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
 func burnAlertAccTestSetup(t *testing.T) (string, string) {
 	t.Helper()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	dataset := testAccDataset() // Ensure this returns a valid, known dataset value
 	c := testAccClient(t)
 
@@ -927,7 +926,7 @@ func burnAlertAccTestSetup(t *testing.T) (string, string) {
 func getNewDatasetAndSLO(t *testing.T) (string, string) {
 	t.Helper()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	dataset, err := c.Datasets.Create(ctx, &client.Dataset{

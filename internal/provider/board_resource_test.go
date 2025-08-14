@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -184,7 +183,7 @@ resource "honeycombio_board" "test" {
 }
 
 func TestAccBoard_withSLOs(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	dataset := testAccDataset()
 	c := testAccClient(t)
 
@@ -427,7 +426,7 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 		}
 
 		client := testAccClient(t)
-		_, err := client.Boards.Get(context.Background(), resourceState.Primary.ID)
+		_, err := client.Boards.Get(t.Context(), resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not find created board: %w", err)
 		}

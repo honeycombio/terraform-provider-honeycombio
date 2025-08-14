@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -14,7 +13,7 @@ import (
 )
 
 func TestAcc_DatsetDataSource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	ds, err := c.Datasets.Create(ctx, &client.Dataset{

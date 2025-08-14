@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"context"
 	"os"
 	"testing"
 
@@ -64,7 +63,7 @@ func TestClient_IsClassic(t *testing.T) {
 	// load environment values from a .env, if available
 	_ = godotenv.Load("../.env")
 
-	ctx := context.Background()
+	ctx := t.Context()
 	apiKey, ok := os.LookupEnv(client.DefaultAPIKeyEnv)
 	if !ok {
 		t.Fatal("expected environment variable " + client.DefaultAPIKeyEnv)

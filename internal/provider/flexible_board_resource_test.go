@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -14,7 +13,7 @@ import (
 )
 
 func TestAccHoneycombioFlexibleBoard(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	dataset := testAccDataset()
 	c := testAccClient(t)
 
@@ -323,7 +322,7 @@ resource "honeycombio_flexible_board" "test" {
 // This is needed because the position field was changed from a list to a single object causing a schema drift.
 // This test ensures the conversion works as expected.
 func TestAccHoneycombioFlexibleBoard_upgradeFromVersion036_2(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	dataset := testAccDataset()
 	c := testAccClient(t)
 

@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,7 +13,7 @@ import (
 func TestColumns(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	c := newTestClient(t)
 	dataset := testDataset(t)
@@ -113,7 +112,7 @@ func createRandomTestColumns(
 ) (*client.Column, *client.Column, *client.Column) {
 	t.Helper()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	floatCol, err := c.Columns.Create(ctx, dataset, &client.Column{
 		KeyName: test.RandomStringWithPrefix("test.", 8),

@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -119,7 +118,7 @@ func testAccEnsureEnvironmentExists(t *testing.T, name string) resource.TestChec
 		}
 
 		client := testAccV2Client(t)
-		_, err := client.Environments.Get(context.Background(), rs.Primary.ID)
+		_, err := client.Environments.Get(t.Context(), rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created Environment: %s", err)
 		}

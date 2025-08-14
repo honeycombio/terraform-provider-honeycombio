@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,7 +13,7 @@ func TestAuthMetadata(t *testing.T) {
 	c := newTestClient(t)
 
 	t.Run("List", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		metadata, err := c.Auth.List(ctx)
 		require.NoError(t, err)
 

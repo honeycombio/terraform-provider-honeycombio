@@ -1,7 +1,6 @@
 package honeycombio
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -13,7 +12,7 @@ import (
 )
 
 func TestAccDataSourceHoneycombioRecipients_basic(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	testRecipients := []honeycombio.Recipient{

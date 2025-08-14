@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -801,7 +800,7 @@ func testAccEnsureRecipientExists(t *testing.T, name string) resource.TestCheckF
 		}
 
 		client := testAccClient(t)
-		_, err := client.Recipients.Get(context.Background(), rs.Primary.ID)
+		_, err := client.Recipients.Get(t.Context(), rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created recipient: %s", err)
 		}
@@ -822,7 +821,7 @@ func testAccEnsureRecipientDestroyed(t *testing.T) resource.TestCheckFunc {
 			}
 
 			client := testAccClient(t)
-			_, err := client.Recipients.Get(context.Background(), resourceState.Primary.ID)
+			_, err := client.Recipients.Get(t.Context(), resourceState.Primary.ID)
 			if err == nil {
 				return fmt.Errorf("recipient %s was not deleted on destroy", resourceState.Primary.ID)
 			}

@@ -1,7 +1,6 @@
 package honeycombio
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"testing"
@@ -92,7 +91,7 @@ resource "honeycombio_dataset_definition" "error" {
 			{
 				// remove the 'error' definition and ensure reading the definitions still works
 				PreConfig: func() {
-					ctx := context.Background()
+					ctx := t.Context()
 					client := testAccClient(t)
 					client.DatasetDefinitions.Update(ctx, dataset, &honeycombio.DatasetDefinition{
 						Error: &honeycombio.DefinitionColumn{Name: ""},
@@ -110,7 +109,7 @@ resource "honeycombio_dataset_definition" "error" {
 			// ensure that after destroying ('deleting') the above definitions
 			// they have been reset to their default values
 			client := testAccClient(t)
-			dd, err := client.DatasetDefinitions.Get(context.Background(), dataset)
+			dd, err := client.DatasetDefinitions.Get(t.Context(), dataset)
 			if err != nil {
 				return fmt.Errorf("could not lookup dataset definitions: %w", err)
 			}

@@ -1,7 +1,6 @@
 package honeycombio
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -117,7 +116,7 @@ EOF
 }
 
 func TestAccHoneycombioDerivedColumn_AllToUnset(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	if c.IsClassic(ctx) {

@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -15,7 +14,7 @@ import (
 )
 
 func TestAcc_SLODataSource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 	dataset := testAccDataset()
 
@@ -73,7 +72,7 @@ data "honeycombio_slo" "test" {
 }
 
 func TestAcc_MDSLODataSource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	if c.IsClassic(ctx) {

@@ -1,7 +1,6 @@
 package v2
 
 import (
-	"context"
 	"fmt"
 	"math"
 	"testing"
@@ -16,7 +15,7 @@ import (
 )
 
 func TestClient_APIKeys(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := newTestClient(t)
 	env := newTestEnvironment(ctx, t, c)
 
@@ -76,7 +75,7 @@ func TestClient_APIKeys(t *testing.T) {
 }
 
 func TestClient_APIKeys_Pagination(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := newTestClient(t)
 	env := newTestEnvironment(ctx, t, c)
 

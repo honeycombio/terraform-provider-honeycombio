@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -13,7 +12,7 @@ import (
 )
 
 func TestAcc_DerivedColumnDataSource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	t.Run("dataset-specific lookup", func(t *testing.T) {

@@ -1,7 +1,6 @@
 package validation_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -14,7 +13,7 @@ import (
 
 func Test_IsURLWithHTTPorHTTPS(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	type testCase struct {
 		val         types.String

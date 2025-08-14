@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -113,7 +112,7 @@ resource "honeycombio_dataset" "test" {
 	})
 
 	t.Run("fails to create a dataset with duplicate name", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		c := testAccClient(t)
 
 		ds, err := c.Datasets.Create(ctx, &client.Dataset{
@@ -144,7 +143,7 @@ resource "honeycombio_dataset" "test" {
 	})
 
 	t.Run("feature: import_on_conflict", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		c := testAccClient(t)
 
 		ds, err := c.Datasets.Create(ctx, &client.Dataset{
@@ -298,7 +297,7 @@ func testAccEnsureDatasetExists(t *testing.T, name string) resource.TestCheckFun
 		}
 
 		client := testAccClient(t)
-		_, err := client.Datasets.Get(context.Background(), rs.Primary.ID)
+		_, err := client.Datasets.Get(t.Context(), rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created Dataset: %s", err)
 		}

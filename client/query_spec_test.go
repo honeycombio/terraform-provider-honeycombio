@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,7 +13,7 @@ import (
 func TestQuerySpec(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	c := newTestClient(t)
 	dataset := testDataset(t)

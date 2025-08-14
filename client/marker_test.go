@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"context"
 	"fmt"
 	"slices"
 	"testing"
@@ -17,7 +16,7 @@ import (
 func TestMarkers(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var m *client.Marker
 	var err error

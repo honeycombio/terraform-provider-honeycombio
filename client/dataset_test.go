@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"context"
 	"net/http"
 	"testing"
 	"time"
@@ -17,7 +16,7 @@ import (
 func TestDatasets(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	c := newTestClient(t)
 
 	t.Run("happy path", func(t *testing.T) {

@@ -1,7 +1,6 @@
 package honeycombio
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -38,7 +37,7 @@ resource "honeycombio_marker_setting" "test" {
 }
 
 func TestAccHoneycombioMarkerSetting_AllToUnset(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	if c.IsClassic(ctx) {
@@ -80,7 +79,7 @@ func testAccCheckMarkerSettingExists(t *testing.T, name, dataset string) resourc
 		}
 
 		c := testAccClient(t)
-		m, err := c.MarkerSettings.Get(context.Background(), dataset, resourceState.Primary.ID)
+		m, err := c.MarkerSettings.Get(t.Context(), dataset, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not retrieve marker settings: %w", err)
 		}

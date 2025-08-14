@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -10,7 +9,7 @@ import (
 )
 
 func TestAcc_APIKeyResource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccV2Client(t)
 	env := testAccEnvironment(ctx, t, c)
 
@@ -102,7 +101,7 @@ func testAccEnsureAPIKeyExists(t *testing.T, name string) resource.TestCheckFunc
 		}
 
 		client := testAccV2Client(t)
-		_, err := client.APIKeys.Get(context.Background(), rs.Primary.ID)
+		_, err := client.APIKeys.Get(t.Context(), rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created API key: %s", err)
 		}

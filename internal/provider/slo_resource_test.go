@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"regexp"
 	"testing"
@@ -129,7 +128,7 @@ func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
 					func(_ *terraform.State) error {
 						// the final 'check' deletes the SLO directly via the API leaving it behind in the state
-						err := testAccClient(t).SLOs.Delete(context.Background(), dataset, slo.ID)
+						err := testAccClient(t).SLOs.Delete(t.Context(), dataset, slo.ID)
 						if err != nil {
 							return fmt.Errorf("failed to delete SLO: %w", err)
 						}
@@ -179,7 +178,7 @@ func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
 
 func TestAccHoneycombSLO_MD(t *testing.T) {
 	c := testAccClient(t)
-	if c.IsClassic(context.Background()) {
+	if c.IsClassic(t.Context()) {
 		t.Skip("MD SLOs are not supported in classic")
 	}
 	dataset1, dataset2, mdSLI := mdSLOAccTestSetup(t)
@@ -319,7 +318,7 @@ func TestAccHoneycombioSLO_DatasetConstraint(t *testing.T) {
 
 func TestAccHoneycombioSLO_Update(t *testing.T) {
 	c := testAccClient(t)
-	if c.IsClassic(context.Background()) {
+	if c.IsClassic(t.Context()) {
 		t.Skip("Multi-dataset SLOs are not supported in classic")
 	}
 
@@ -487,7 +486,7 @@ func testAccCheckSLOExists(t *testing.T, name string, slo *client.SLO) resource.
 		}
 
 		c := testAccClient(t)
-		rslo, err := c.SLOs.Get(context.Background(), client.EnvironmentWideSlug, resourceState.Primary.ID)
+		rslo, err := c.SLOs.Get(t.Context(), client.EnvironmentWideSlug, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created SLO: %w", err)
 		}
@@ -501,7 +500,7 @@ func testAccCheckSLOExists(t *testing.T, name string, slo *client.SLO) resource.
 func sloAccTestSetup(t *testing.T) (string, string) {
 	t.Helper()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 	dataset := testAccDataset()
 
@@ -522,7 +521,7 @@ func sloAccTestSetup(t *testing.T) (string, string) {
 func mdSLOAccTestSetup(t *testing.T) (client.Dataset, client.Dataset, client.DerivedColumn) {
 	t.Helper()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	dataset1, err := c.Datasets.Create(ctx, &client.Dataset{

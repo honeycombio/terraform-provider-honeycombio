@@ -1,7 +1,6 @@
 package validation_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -44,7 +43,7 @@ func Test_IsValidRegexValidator(t *testing.T) {
 				ConfigValue:    test.val,
 			}
 			response := validator.StringResponse{}
-			validation.IsValidRegExp().ValidateString(context.Background(), request, &response)
+			validation.IsValidRegExp().ValidateString(t.Context(), request, &response)
 
 			assert.Equal(t,
 				test.expectError,

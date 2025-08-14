@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,7 +13,7 @@ import (
 func TestClassicBoards(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var b *client.Board
 	var err error
@@ -147,7 +146,7 @@ func TestClassicBoards(t *testing.T) {
 func TestFlexibleBoards(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	var flexibleBoard *client.Board
 	var err error
 

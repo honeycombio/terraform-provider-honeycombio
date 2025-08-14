@@ -90,7 +90,7 @@ func TestClient_Config(t *testing.T) {
 func TestClient_AuthInfo(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	t.Run("happy path", func(t *testing.T) {
 		c := newTestClient(t)

@@ -1,7 +1,6 @@
 package validation_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -247,7 +246,7 @@ func Test_RequireConsistentPanelPositionsValidator(t *testing.T) {
 			}
 			response := validator.ListResponse{}
 
-			validation.RequireConsistentPanelPositions().ValidateList(context.Background(), request, &response)
+			validation.RequireConsistentPanelPositions().ValidateList(t.Context(), request, &response)
 
 			assert.Equal(t,
 				tc.expectError,

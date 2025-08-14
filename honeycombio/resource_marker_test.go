@@ -1,7 +1,6 @@
 package honeycombio
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -39,7 +38,7 @@ resource "honeycombio_marker" "test" {
 }
 
 func TestAccHoneycombioMarker_AllToUnset(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 
 	if c.IsClassic(ctx) {
@@ -81,7 +80,7 @@ func testAccCheckMarkerExists(t *testing.T, name, dataset string) resource.TestC
 		}
 
 		c := testAccClient(t)
-		_, err := c.Markers.Get(context.Background(), dataset, resourceState.Primary.ID)
+		_, err := c.Markers.Get(t.Context(), dataset, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("could not retrieve marker: %w", err)
 		}

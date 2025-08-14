@@ -1,7 +1,6 @@
 package validation_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -53,7 +52,7 @@ func Test_BetweenValidator(t *testing.T) {
 				ConfigValue:    test.val,
 			}
 			response := validator.Int64Response{}
-			validation.Int64DivisibleBy(test.divisor).ValidateInt64(context.Background(), request, &response)
+			validation.Int64DivisibleBy(test.divisor).ValidateInt64(t.Context(), request, &response)
 
 			assert.Equal(t,
 				test.expectError,

@@ -1,7 +1,6 @@
 package client_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -15,7 +14,7 @@ import (
 func TestTriggers(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var trigger *client.Trigger
 	var err error
@@ -222,7 +221,7 @@ func TestMatchesTriggerSubset(t *testing.T) {
 func TestTriggersWithBaselineDetails(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 
 	var trigger *client.Trigger
 	var err error
@@ -321,7 +320,7 @@ func TestTriggersWithBaselineDetails(t *testing.T) {
 func TestTriggersEnvironmentWide(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
+	ctx := t.Context()
 	c := newTestClient(t)
 
 	if c.IsClassic(ctx) {

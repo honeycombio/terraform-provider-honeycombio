@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"testing"
 
@@ -11,7 +10,7 @@ import (
 )
 
 func TestAcc_EnvironmentsDatasource(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccV2Client(t)
 	const numEnvs = 15
 

@@ -1,7 +1,6 @@
 package provider
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -416,7 +415,7 @@ resource "honeycombio_trigger" "test" {
 	})
 
 	t.Run("environment-wide trigger", func(t *testing.T) {
-		ctx := context.Background()
+		ctx := t.Context()
 		c := testAccClient(t)
 
 		if c.IsClassic(ctx) {
@@ -505,7 +504,7 @@ func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
 }
 
 func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	c := testAccClient(t)
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
@@ -900,7 +899,7 @@ resource "honeycombio_trigger" "test" {
 
 func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing.T) {
 	c := testAccClient(t)
-	ctx := context.Background()
+	ctx := t.Context()
 	dataset := testAccDataset()
 
 	// setup a slack recipient to be used in the trigger, and modified outside of terraform
@@ -1698,7 +1697,7 @@ func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFun
 			// For environment-wide triggers, use "__all__" as the dataset
 			dataset = "__all__"
 		}
-		_, err := client.Triggers.Get(context.Background(), dataset, resourceState.Primary.ID)
+		_, err := client.Triggers.Get(t.Context(), dataset, resourceState.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("failed to fetch created trigger: %w", err)
 		}
