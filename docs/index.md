@@ -128,6 +128,9 @@ provider "honeycombio" {
     column {
       import_on_conflict = true
     }
+    dataset {
+      import_on_conflict = true
+    }
   }
 }
 ```
@@ -137,7 +140,11 @@ provider "honeycombio" {
 The `features` block supports the following:
 
 * `column` - (Optional) A `column` block as defined below.
+* `dataset` - (Optional) A `dataset` block as defined blow.
 ---
 The `column` block supports the following:
 * `import_on_conflict` - (Optional) This changes the creation behavior of the column resource to import and update an existing column if it already exists, rather than erroring out. Defaults to `false`.
     This is potentially dangerous if the type changes on the update -- switching from `string` to `boolean` and causing dataloss, for example -- and should be used with caution.
+---
+The `dataset` block supports the following:
+* `import_on_conflict` - (Optional) This changes the creation behavior of the dataset resource to import and update an existing dataset if it already exists, rather than erroring out. Defaults to `false`.

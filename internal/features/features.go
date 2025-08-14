@@ -4,7 +4,8 @@ import "github.com/hashicorp/terraform-plugin-framework/types"
 
 // Features represents provider-level features.
 type Features struct {
-	Column FeaturesColumn
+	Column  FeaturesColumn
+	Dataset FeaturesDataset
 }
 
 // FeaturesColumn represents column-specific features.
@@ -19,8 +20,20 @@ type FeaturesColumnModel struct {
 	ImportOnConflict types.Bool `tfsdk:"import_on_conflict"`
 }
 
+// FeaturesDataset represents dataset-specific features.
+type FeaturesDataset struct {
+	// ImportOnConflict controls whether to import an existing dataset if a create
+	// operation results in an HTTP 200 instead of an HTTP 201.
+	ImportOnConflict bool
+}
+
+type FeaturesDatasetModel struct {
+	ImportOnConflict types.Bool `tfsdk:"import_on_conflict"`
+}
+
 type Model struct {
-	Column []FeaturesColumnModel `tfsdk:"column"`
+	Column  []FeaturesColumnModel  `tfsdk:"column"`
+	Dataset []FeaturesDatasetModel `tfsdk:"dataset"`
 }
 
 // Parse converts a Terraform model to internal Features representation for
@@ -32,10 +45,19 @@ func Parse(m []Model) *Features {
 	}
 	features := m[0]
 
+	// parse column features
 	if len(features.Column) > 0 {
 		columnFeatures := features.Column[0]
 		if !columnFeatures.ImportOnConflict.IsNull() && !columnFeatures.ImportOnConflict.IsUnknown() {
 			result.Column.ImportOnConflict = columnFeatures.ImportOnConflict.ValueBool()
+		}
+	}
+
+	// parse dataset features
+	if len(features.Dataset) > 0 {
+		datasetFeatures := features.Dataset[0]
+		if !datasetFeatures.ImportOnConflict.IsNull() && !datasetFeatures.ImportOnConflict.IsUnknown() {
+			result.Dataset.ImportOnConflict = datasetFeatures.ImportOnConflict.ValueBool()
 		}
 	}
 

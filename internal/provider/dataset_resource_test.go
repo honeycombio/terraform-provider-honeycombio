@@ -142,6 +142,87 @@ resource "honeycombio_dataset" "test" {
 			},
 		})
 	})
+
+	t.Run("feature: import_on_conflict", func(t *testing.T) {
+		ctx := context.Background()
+		c := testAccClient(t)
+
+		ds, err := c.Datasets.Create(ctx, &client.Dataset{
+			Name:            test.RandomStringWithPrefix("test.", 20),
+			Description:     "my dataset is nice",
+			ExpandJSONDepth: 3,
+		})
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			// disable deletion protection and delete the Dataset
+			c.Datasets.Update(ctx, &client.Dataset{
+				Slug: ds.Slug,
+				Settings: client.DatasetSettings{
+					DeleteProtected: helper.ToPtr(false),
+				},
+			})
+			c.Datasets.Delete(ctx, ds.Slug)
+		})
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			Steps: []resource.TestStep{
+				{ // explicitly set import_on_conflict to false to ensure it fails
+					Config: fmt.Sprintf(`
+provider "honeycombio" {
+  features {
+    dataset {
+      import_on_conflict = false
+    }
+  }
+}
+
+resource "honeycombio_dataset" "test" {
+  name              = "%s"
+  description       = "my dataset is nice"
+  expand_json_depth = 3
+}`, ds.Name),
+					ExpectError: regexp.MustCompile(`Dataset "` + ds.Name + `" already exists`),
+				},
+				{ // set import_on_conflict to true to ensure it imports and updates the existing dataset
+					Config: fmt.Sprintf(`
+provider "honeycombio" {
+  features {
+    dataset {
+      import_on_conflict = true
+    }
+  }
+}
+
+resource "honeycombio_dataset" "test" {
+  name              = "%s"
+  description       = "my dataset is imported"
+  expand_json_depth = 5
+}`, ds.Name),
+					Check: resource.ComposeAggregateTestCheckFunc(
+						resource.TestCheckResourceAttrSet("honeycombio_dataset.test", "id"),
+						resource.TestCheckResourceAttr("honeycombio_dataset.test", "slug", ds.Slug),
+						resource.TestCheckResourceAttr("honeycombio_dataset.test", "name", ds.Name),
+						resource.TestCheckResourceAttr("honeycombio_dataset.test", "description", "my dataset is imported"), // updated description
+						resource.TestCheckResourceAttr("honeycombio_dataset.test", "expand_json_depth", "5"),                // updated JSON depth
+						resource.TestCheckResourceAttr("honeycombio_dataset.test", "delete_protected", "true"),
+						resource.TestCheckResourceAttrSet("honeycombio_dataset.test", "created_at"),
+						resource.TestCheckResourceAttrSet("honeycombio_dataset.test", "last_written_at"),
+					),
+				},
+				{ // disable delete protection to allow cleanup
+					Config: fmt.Sprintf(`
+resource "honeycombio_dataset" "test" {
+  name             = "%s"
+  description      = "my dataset is imported"
+  expand_json_depth = 5
+  delete_protected = false
+}`, ds.Name),
+				},
+			},
+		})
+	})
 }
 
 // TestAcc_DatasetResource_UpgradeFromVersion026 tests the migration case from the
