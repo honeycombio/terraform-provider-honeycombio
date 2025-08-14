@@ -125,7 +125,7 @@ func TestDatasets(t *testing.T) {
 
 	t.Run("returns a 404 when getting a non-existent dataset", func(t *testing.T) {
 		var de client.DetailedError
-		_, err := c.Datasets.Get(ctx, test.RandomStringWithPrefix("test.", 30))
+		_, err := c.Datasets.GetByName(ctx, test.RandomStringWithPrefix("test.", 30))
 		require.ErrorAs(t, err, &de)
 		assert.True(t, de.IsNotFound())
 	})
