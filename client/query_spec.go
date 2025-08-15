@@ -128,8 +128,8 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	if !reflect.DeepEqual(qs.Breakdowns, other.Breakdowns) &&
 		// an empty Breakdowns is equivalent to a nil Breakdowns, so we need to check that
 		// as DeepEqual will not consider them equal
-		!(qs.Breakdowns == nil && len(other.Breakdowns) == 0 ||
-			len(qs.Breakdowns) == 0 && other.Breakdowns == nil) {
+		((qs.Breakdowns != nil || len(other.Breakdowns) != 0) &&
+			(len(qs.Breakdowns) != 0 || other.Breakdowns != nil)) {
 		return false
 	}
 

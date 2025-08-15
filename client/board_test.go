@@ -84,7 +84,7 @@ func TestClassicBoards(t *testing.T) {
 		data.ID = b.ID
 
 		// ensure the board URL got populated
-		assert.NotEqual(t, "", b.Links.BoardURL)
+		assert.NotEmpty(t, b.Links.BoardURL)
 		data.Links.BoardURL = b.Links.BoardURL
 
 		assert.Equal(t, data, b)

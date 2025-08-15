@@ -114,6 +114,7 @@ func Provider(version string) *schema.Provider {
 func getConfiguredClient(meta any) (*honeycombio.Client, error) {
 	client, ok := meta.(*honeycombio.Client)
 	if !ok || client == nil {
+		//nolint:staticcheck
 		return nil, errors.New("No v1 API client configured for this provider. " +
 			"Set the `api_key` attribute in the provider's configuration, " +
 			"or set the HONEYCOMB_API_KEY environment variable.")
