@@ -1,6 +1,6 @@
 module github.com/honeycombio/terraform-provider-honeycombio
 
-go 1.23.8
+go 1.24.6
 
 require (
 	github.com/dunglas/httpsfv v1.1.0
