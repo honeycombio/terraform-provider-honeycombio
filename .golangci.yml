@@ -17,6 +17,9 @@ issues:
 linters-settings:
     goimports:
         local-prefixes: github.com/honeycombio/terraform-provider-honeycombio
+    usetesting:
+        context-background: false
+        context-todo: true
 
 linters:
     disable-all: true
