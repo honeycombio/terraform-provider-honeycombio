@@ -1,3 +1,9 @@
+# 0.38.1 (Aug 15, 2025)
+
+BUGFIXES:
+
+* fix(docs): fix 'features block' formatting (#738)
+
 # 0.38.0 (Aug 15, 2025)
 
 NOTES:
