@@ -52,7 +52,7 @@ func dataSourceHoneycombioQueryResult() *schema.Resource {
 	}
 }
 
-func dataSourceHoneycombioQueryResultRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceHoneycombioQueryResultRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	var querySpec honeycombio.QuerySpec
 	client, err := getConfiguredClient(meta)
 	if err != nil {

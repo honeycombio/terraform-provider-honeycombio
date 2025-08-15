@@ -52,8 +52,14 @@ issues:
   max-same-issues: 0
 formatters:
   enable:
+    - gofmt
     - goimports
   settings:
+    gofmt:
+      simplify: true
+      rewrite-rules:
+        - pattern: interface{}
+          replacement: any
     goimports:
       local-prefixes:
         - github.com/honeycombio/terraform-provider-honeycombio

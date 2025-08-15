@@ -74,7 +74,7 @@ func Provider(version string) *schema.Provider {
 		},
 	}
 
-	provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (any, diag.Diagnostics) {
 		apiKey := os.Getenv(honeycombio.DefaultAPIKeyEnv)
 		if apiKey == "" {
 			// fall through to legacy env var

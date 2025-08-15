@@ -59,7 +59,7 @@ func buildQueryAnnotation(d *schema.ResourceData) *honeycombio.QueryAnnotation {
 	}
 }
 
-func resourceQueryAnnotationCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceQueryAnnotationCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -76,7 +76,7 @@ func resourceQueryAnnotationCreate(ctx context.Context, d *schema.ResourceData, 
 	return resourceQueryAnnotationRead(ctx, d, meta)
 }
 
-func resourceQueryAnnotationUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceQueryAnnotationUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -92,7 +92,7 @@ func resourceQueryAnnotationUpdate(ctx context.Context, d *schema.ResourceData, 
 	return resourceQueryAnnotationRead(ctx, d, meta)
 }
 
-func resourceQueryAnnotationDestroy(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceQueryAnnotationDestroy(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -106,7 +106,7 @@ func resourceQueryAnnotationDestroy(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-func resourceQueryAnnotationRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceQueryAnnotationRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)

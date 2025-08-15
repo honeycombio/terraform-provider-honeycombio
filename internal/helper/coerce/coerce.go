@@ -9,7 +9,7 @@ import (
 )
 
 // ValueToType converts a string value to its appropriate type.
-func ValueToType(i string) interface{} {
+func ValueToType(i string) any {
 	// HCL really has three base types: bool, string, and number
 	// The Plugin SDK allows typing a schema field to Int or Float
 
@@ -28,7 +28,7 @@ func ValueToType(i string) interface{} {
 // ValueToString converts a value of any type to its string representation.
 // It handles basic types like string, int, float, and bool.
 // For other types (like maps, slices, etc.), it uses fmt.Sprintf to convert to string.
-func ValueToString(value interface{}) string {
+func ValueToString(value any) string {
 	switch v := value.(type) {
 	case string:
 		return v
