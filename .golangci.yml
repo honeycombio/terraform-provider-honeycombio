@@ -43,10 +43,6 @@ linters:
         text: type assertion must be checked
       - path: honeycombio/*
         text: right hand must be only type assertion
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
@@ -63,9 +59,3 @@ formatters:
     goimports:
       local-prefixes:
         - github.com/honeycombio/terraform-provider-honeycombio
-  exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
