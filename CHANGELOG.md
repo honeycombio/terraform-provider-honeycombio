@@ -1,3 +1,27 @@
+# 0.38.0 (Aug 15, 2025)
+
+NOTES:
+
+* This release introduces provider-level Feature Toggles which were heavily influenced by the Azure Provider.
+  The first two toggles allow users to opt-in to the previous "import on conflict" behavior of both `r/column` and `r/dataset`.
+* This release removes the long-deprecated `key_name` attribute from `r/column`.
+
+ENHANCEMENTS:
+
+* fix(client): add missing Dataset field to QueryPanel (#724)
+* feat(features): add features support with column import override (#731)
+* feat(r/dataset): add import_on_conflict feature (#732)
+
+HOUSEKEEPING:
+
+* chore(r/column): migrate to Plugin Framework (#730)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.15.0 to 1.15.1 (#727)
+* maint(deps): bump golang.org/x/net from 0.42.0 to 0.43.0 (#728)
+* maint(deps): bump actions/checkout from 4 to 5 (#729)
+* maint(deps): bump goreleaser/goreleaser-action from 6.3.0 to 6.4.0 (#734)
+* chore(build): bump Go to 1.24 (#735)
+* chore(docs,dataset): add note about feature toggle to r/dataset docs (#736)
+
 # 0.37.1 (July 23, 2025)
 
 ENHANCEMENTS:
