@@ -33,10 +33,11 @@ linters:
       - legacy
       - std-error-handling
     rules:
-      - linters:
+      - path: (.+)_test\.go
+        linters:
           - errcheck
           - unparam
-        path: (.+)_test\.go
+        # disabling these for the SDKv2-based code as it's idomatic and things are being migrated to the Framework
       - path: honeycombio/*
         text: Error return value of `d.Set` is not checked
       - path: honeycombio/*
