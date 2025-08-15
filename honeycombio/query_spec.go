@@ -16,7 +16,7 @@ type querySpecValidateDiagFunc func(q *honeycombio.QuerySpec) diag.Diagnostics
 // validateQueryJSON checks that the input can be deserialized as a QuerySpec
 // and optionally runs a list of custom validation functions.
 func validateQueryJSON(validators ...querySpecValidateDiagFunc) schema.SchemaValidateDiagFunc {
-	return func(i interface{}, path cty.Path) diag.Diagnostics {
+	return func(i any, path cty.Path) diag.Diagnostics {
 		var q honeycombio.QuerySpec
 		dec := json.NewDecoder(bytes.NewReader([]byte(i.(string))))
 		dec.DisallowUnknownFields()

@@ -49,7 +49,7 @@ func expandRecipient(t honeycombio.RecipientType, d *schema.ResourceData) (*hone
 	return r, nil
 }
 
-func createRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
+func createRecipient(ctx context.Context, d *schema.ResourceData, meta any, t honeycombio.RecipientType) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -69,7 +69,7 @@ func createRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 	return readRecipient(ctx, d, meta, t)
 }
 
-func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
+func readRecipient(ctx context.Context, d *schema.ResourceData, meta any, t honeycombio.RecipientType) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -111,7 +111,7 @@ func readRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}
 	return nil
 }
 
-func updateRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}, t honeycombio.RecipientType) diag.Diagnostics {
+func updateRecipient(ctx context.Context, d *schema.ResourceData, meta any, t honeycombio.RecipientType) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -131,7 +131,7 @@ func updateRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 	return readRecipient(ctx, d, meta, t)
 }
 
-func deleteRecipient(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func deleteRecipient(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -144,11 +144,11 @@ func deleteRecipient(ctx context.Context, d *schema.ResourceData, meta interface
 	return nil
 }
 
-func expandRecipientFilter(f []interface{}) *recipientFilter {
+func expandRecipientFilter(f []any) *recipientFilter {
 	var value *string
 	var valRegexp *regexp.Regexp
 
-	filter := f[0].(map[string]interface{})
+	filter := f[0].(map[string]any)
 	name := filter["name"].(string)
 	if v, ok := filter["value"].(string); ok && v != "" {
 		value = honeycombio.ToPtr(v)

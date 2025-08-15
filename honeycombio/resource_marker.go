@@ -48,7 +48,7 @@ func newMarker() *schema.Resource {
 	}
 }
 
-func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -70,7 +70,7 @@ func resourceMarkerCreate(ctx context.Context, d *schema.ResourceData, meta inte
 	return resourceMarkerRead(ctx, d, meta)
 }
 
-func resourceMarkerRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMarkerRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)

@@ -37,18 +37,18 @@ func newMSTeamsWorkflowRecipient() *schema.Resource {
 	}
 }
 
-func resourceMSTeamsWorkflowRecipientCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMSTeamsWorkflowRecipientCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return createRecipient(ctx, d, meta, honeycombio.RecipientTypeMSTeamsWorkflow)
 }
 
-func resourceMSTeamsWorkflowRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMSTeamsWorkflowRecipientRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return readRecipient(ctx, d, meta, honeycombio.RecipientTypeMSTeamsWorkflow)
 }
 
-func resourceMSTeamsWorkflowRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMSTeamsWorkflowRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return updateRecipient(ctx, d, meta, honeycombio.RecipientTypeMSTeamsWorkflow)
 }
 
-func resourceMSTeamsWorkflowRecipientDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMSTeamsWorkflowRecipientDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return deleteRecipient(ctx, d, meta)
 }

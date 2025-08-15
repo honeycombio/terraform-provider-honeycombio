@@ -39,7 +39,7 @@ func NewDetailFilter(field, operator, value, regex string) (*DetailFilter, error
 }
 
 // Match determines if a resource matches the filter criteria
-func (f *DetailFilter) Match(resource interface{}) bool {
+func (f *DetailFilter) Match(resource any) bool {
 	if f == nil {
 		return true
 	}
@@ -61,7 +61,7 @@ func (f *DetailFilter) Match(resource interface{}) bool {
 }
 
 // formatTagsAsString converts tag fields to a string representation in "key:value" format
-func formatTagsAsString(tagField interface{}) string {
+func formatTagsAsString(tagField any) string {
 	v := reflect.ValueOf(tagField)
 	if v.Kind() == reflect.Ptr && !v.IsNil() {
 		v = v.Elem()
@@ -124,7 +124,7 @@ func formatTagsAsString(tagField interface{}) string {
 
 // getFieldValue extracts a field value from a resource using reflection
 // Field name matching is always case-insensitive
-func getFieldValue(resource interface{}, fieldName string) (interface{}, bool) {
+func getFieldValue(resource any, fieldName string) (any, bool) {
 	v := reflect.ValueOf(resource)
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()

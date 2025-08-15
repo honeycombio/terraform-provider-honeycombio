@@ -274,7 +274,7 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 				// if the filter operation is 'in' or 'not-in' we expect the value
 				// to be a CSV string so we build it into a slice
 				values := strings.Split(f.Value.ValueString(), ",")
-				result := make([]interface{}, len(values))
+				result := make([]any, len(values))
 				for i, value := range values {
 					result[i] = coerce.ValueToType(value)
 				}

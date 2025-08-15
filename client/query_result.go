@@ -54,11 +54,11 @@ type QueryResultRequest struct {
 
 type QueryResultData struct {
 	Series []struct {
-		Time time.Time              `json:"time"`
-		Data map[string]interface{} `json:"data"`
+		Time time.Time      `json:"time"`
+		Data map[string]any `json:"data"`
 	} `json:"series"`
 	Results []struct {
-		Data map[string]interface{} `json:"data"`
+		Data map[string]any `json:"data"`
 	} `json:"results"`
 }
 

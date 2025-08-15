@@ -541,7 +541,7 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 						SLOPanel:   panel.SLOPanel,
 					}
 
-					if !(panel.Position.IsNull() || panel.Position.IsUnknown()) {
+					if !panel.Position.IsNull() && !panel.Position.IsUnknown() {
 						var oldStylePositions []models.BoardPanelPositionModel
 						resp.Diagnostics.Append(panel.Position.ElementsAs(ctx, &oldStylePositions, false)...)
 						if resp.Diagnostics.HasError() {

@@ -49,7 +49,7 @@ func (m *DetailFilterModel) newFilter() (*DetailFilter, error) {
 
 // Match determines if all filters in the group match the resource
 // TODO: Implement OR logic if needed in the future
-func (g *FilterGroup) Match(resource interface{}) bool {
+func (g *FilterGroup) Match(resource any) bool {
 	if g == nil || len(g.Filters) == 0 {
 		return true
 	}

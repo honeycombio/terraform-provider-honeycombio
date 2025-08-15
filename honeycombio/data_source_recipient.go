@@ -133,7 +133,7 @@ If you want to match multiple recipients, use the 'honeycombio_recipients' data 
 	}
 }
 
-func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -151,7 +151,7 @@ func dataSourceHoneycombioRecipientRead(ctx context.Context, d *schema.ResourceD
 		rcptFilter = &recipientFilter{Value: honeycombio.ToPtr(v.(string))}
 	}
 	if v, ok := d.GetOk("detail_filter"); ok {
-		rcptFilter = expandRecipientFilter(v.([]interface{}))
+		rcptFilter = expandRecipientFilter(v.([]any))
 	}
 
 	var filteredRcpts []honeycombio.Recipient

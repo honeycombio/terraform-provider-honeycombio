@@ -40,7 +40,7 @@ func newDerivedColumn() *schema.Resource {
 				Description: "The formula of the derived column. See [Derived Column Syntax](https://docs.honeycomb.io/reference/derived-column-formula/syntax/).",
 				ValidateFunc: validation.All(
 					validation.StringLenBetween(1, 4095),
-					func(i interface{}, k string) ([]string, []error) {
+					func(i any, k string) ([]string, []error) {
 						v, ok := i.(string)
 						if !ok {
 							return nil, []error{fmt.Errorf("expected type of %s to be string", k)}
@@ -71,7 +71,7 @@ func newDerivedColumn() *schema.Resource {
 	}
 }
 
-func resourceDerivedColumnImport(ctx context.Context, d *schema.ResourceData, i interface{}) ([]*schema.ResourceData, error) {
+func resourceDerivedColumnImport(ctx context.Context, d *schema.ResourceData, i any) ([]*schema.ResourceData, error) {
 	dataset, alias, found := strings.Cut(d.Id(), "/")
 
 	// if dataset separator not found, we will assume its the bare alias
@@ -87,7 +87,7 @@ func resourceDerivedColumnImport(ctx context.Context, d *schema.ResourceData, i 
 	return []*schema.ResourceData{d}, nil
 }
 
-func resourceDerivedColumnCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDerivedColumnCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -105,7 +105,7 @@ func resourceDerivedColumnCreate(ctx context.Context, d *schema.ResourceData, me
 	return resourceDerivedColumnRead(ctx, d, meta)
 }
 
-func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -133,7 +133,7 @@ func resourceDerivedColumnRead(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func resourceDerivedColumnUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDerivedColumnUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -151,7 +151,7 @@ func resourceDerivedColumnUpdate(ctx context.Context, d *schema.ResourceData, me
 	return resourceDerivedColumnRead(ctx, d, meta)
 }
 
-func resourceDerivedColumnDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDerivedColumnDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)

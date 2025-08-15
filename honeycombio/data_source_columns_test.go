@@ -91,7 +91,7 @@ func testCheckAllOutputContains(contains string) resource.TestCheckFunc {
 			return fmt.Errorf("Not found: %s", name)
 		}
 
-		output := rs.Value.([]interface{})
+		output := rs.Value.([]any)
 
 		for _, value := range output {
 			if value.(string) == contains {

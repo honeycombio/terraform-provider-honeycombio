@@ -15,7 +15,7 @@ type TestResource struct {
 	IsAvailable bool
 	Tags        map[string]string
 	Scores      []int
-	Properties  map[string]interface{}
+	Properties  map[string]any
 }
 
 func TestMatch(t *testing.T) {
@@ -31,7 +31,7 @@ func TestMatch(t *testing.T) {
 			"region":      "us-west",
 		},
 		Scores: []int{85, 90, 95},
-		Properties: map[string]interface{}{
+		Properties: map[string]any{
 			"nested": map[string]string{
 				"key":        "value",
 				"nested_key": "nested_value",

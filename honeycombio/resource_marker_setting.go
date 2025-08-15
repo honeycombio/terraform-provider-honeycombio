@@ -58,7 +58,7 @@ func newMarkerSetting() *schema.Resource {
 	}
 }
 
-func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -81,7 +81,7 @@ func resourceMarkerSettingCreate(ctx context.Context, d *schema.ResourceData, me
 	return resourceMarkerSettingRead(ctx, d, meta)
 }
 
-func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -110,7 +110,7 @@ func resourceMarkerSettingRead(ctx context.Context, d *schema.ResourceData, meta
 	return nil
 }
 
-func resourceMarkerSettingUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMarkerSettingUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -133,7 +133,7 @@ func resourceMarkerSettingUpdate(ctx context.Context, d *schema.ResourceData, me
 	return resourceMarkerSettingRead(ctx, d, meta)
 }
 
-func resourceMarkerSettingDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMarkerSettingDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)

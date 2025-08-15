@@ -13,7 +13,7 @@ func Test_valueToType(t *testing.T) {
 	tests := []struct {
 		name     string
 		input    string
-		expected interface{}
+		expected any
 	}{
 		{
 			name:     "boolean true",
@@ -66,7 +66,7 @@ func Test_valueToString(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		input    interface{}
+		input    any
 		expected string
 	}{
 		{

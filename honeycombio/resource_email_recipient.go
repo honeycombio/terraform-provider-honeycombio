@@ -27,7 +27,7 @@ func newEmailRecipient() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The email address to send the notification to",
-				ValidateFunc: func(v interface{}, key string) (warns []string, errs []error) {
+				ValidateFunc: func(v any, key string) (warns []string, errs []error) {
 					if _, err := mail.ParseAddress(v.(string)); err != nil {
 						errs = append(errs, fmt.Errorf("unable to parse address \"%v\"", v))
 					}
@@ -38,18 +38,18 @@ func newEmailRecipient() *schema.Resource {
 	}
 }
 
-func resourceEmailRecipientCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEmailRecipientCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return createRecipient(ctx, d, meta, honeycombio.RecipientTypeEmail)
 }
 
-func resourceEmailRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEmailRecipientRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return readRecipient(ctx, d, meta, honeycombio.RecipientTypeEmail)
 }
 
-func resourceEmailRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEmailRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return updateRecipient(ctx, d, meta, honeycombio.RecipientTypeEmail)
 }
 
-func resourceEmailRecipientDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceEmailRecipientDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return deleteRecipient(ctx, d, meta)
 }

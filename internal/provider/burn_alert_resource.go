@@ -148,7 +148,7 @@ func validateAttributesWhenAlertTypeIsExhaustionTime(data models.BurnAlertResour
 		}
 
 		// When the alert_type is exhaustion_time, budget_rate_decrease_percent must not be configured
-		if !(data.BudgetRateDecreasePercent.IsNull() || data.BudgetRateDecreasePercent.IsUnknown()) {
+		if !data.BudgetRateDecreasePercent.IsNull() && !data.BudgetRateDecreasePercent.IsUnknown() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("budget_rate_decrease_percent"),
 				"Conflicting configuration arguments",
@@ -157,7 +157,7 @@ func validateAttributesWhenAlertTypeIsExhaustionTime(data models.BurnAlertResour
 		}
 
 		// When the alert_type is exhaustion_time, budget_rate_window_minutes must not be configured
-		if !(data.BudgetRateWindowMinutes.IsNull() || data.BudgetRateWindowMinutes.IsUnknown()) {
+		if !data.BudgetRateWindowMinutes.IsNull() && !data.BudgetRateWindowMinutes.IsUnknown() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("budget_rate_window_minutes"),
 				"Conflicting configuration arguments",
@@ -189,7 +189,7 @@ func validateAttributesWhenAlertTypeIsBudgetRate(data models.BurnAlertResourceMo
 		}
 
 		// When the alert_type is budget_rate, exhaustion_minutes must not be configured
-		if !(data.ExhaustionMinutes.IsNull() || data.ExhaustionMinutes.IsUnknown()) {
+		if !data.ExhaustionMinutes.IsNull() && !data.ExhaustionMinutes.IsUnknown() {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("exhaustion_minutes"),
 				"Conflicting configuration arguments",

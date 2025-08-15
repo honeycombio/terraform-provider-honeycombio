@@ -38,18 +38,18 @@ func newPDRecipient() *schema.Resource {
 	}
 }
 
-func resourcePDRecipientCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePDRecipientCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return createRecipient(ctx, d, meta, honeycombio.RecipientTypePagerDuty)
 }
 
-func resourcePDRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePDRecipientRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return readRecipient(ctx, d, meta, honeycombio.RecipientTypePagerDuty)
 }
 
-func resourcePDRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePDRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return updateRecipient(ctx, d, meta, honeycombio.RecipientTypePagerDuty)
 }
 
-func resourcePDRecipientDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourcePDRecipientDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return deleteRecipient(ctx, d, meta)
 }

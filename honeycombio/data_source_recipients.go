@@ -72,7 +72,7 @@ func dataSourceHoneycombioRecipients() *schema.Resource {
 	}
 }
 
-func dataSourceHoneycombioRecipientsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceHoneycombioRecipientsRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -94,7 +94,7 @@ func dataSourceHoneycombioRecipientsRead(ctx context.Context, d *schema.Resource
 		}
 	}
 	if v, ok := d.GetOk("detail_filter"); ok {
-		rcptFilter = expandRecipientFilter(v.([]interface{}))
+		rcptFilter = expandRecipientFilter(v.([]any))
 	}
 
 	var rcptIDs []string
