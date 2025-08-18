@@ -257,6 +257,7 @@ type ConfiguredClient struct {
 
 func (c *ConfiguredClient) V1Client() (*client.Client, error) {
 	if c.v1client == nil {
+		//nolint:staticcheck
 		return nil, errors.New("No v1 API client configured for this provider. " +
 			"Set the `api_key` attribute in the provider's configuration, " +
 			"or set the HONEYCOMB_API_KEY environment variable.",
@@ -267,6 +268,7 @@ func (c *ConfiguredClient) V1Client() (*client.Client, error) {
 
 func (c *ConfiguredClient) V2Client() (*v2client.Client, error) {
 	if c.v2client == nil {
+		//nolint:staticcheck
 		return nil, errors.New("No v2 API client configured for this provider. " +
 			"Set the Key ID and Secret pair in the provider's configuration, " +
 			"or via the HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET environment variables.",
@@ -277,6 +279,7 @@ func (c *ConfiguredClient) V2Client() (*v2client.Client, error) {
 
 func (c *ConfiguredClient) Features() (*features.Features, error) {
 	if c.features == nil {
+		//nolint:staticcheck
 		return nil, errors.New("Unable to initialize provider features. " +
 			"This is a bug in the provider, which should be reported in the provider's own issue tracker.",
 		)

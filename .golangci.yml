@@ -1,50 +1,62 @@
-issues:
-    max-issues-per-linter: 0
-    max-same-issues: 0
-    exclude-rules:
-        - path: '(.+)_test\.go'
-          linters:
-              - errcheck
-              - unparam
-          # disabling these for the SDKv2-based code as it's idomatic and things are being migrated to the Framework
-        - path: honeycombio/*
-          text: "Error return value of `d.Set` is not checked"
-        - path: honeycombio/*
-          text: "type assertion must be checked"
-        - path: honeycombio/*
-          text: "right hand must be only type assertion"
-
-linters-settings:
-    goimports:
-        local-prefixes: github.com/honeycombio/terraform-provider-honeycombio
-    usetesting:
-        context-background: false
-        context-todo: true
-
-linters:
-    disable-all: true
-    enable:
-        - durationcheck
-        - errcheck
-        - copyloopvar
-        - forcetypeassert
-        - goimports
-        - gosimple
-        - ineffassign
-        - makezero
-        - misspell
-        - nilerr
-        - predeclared
-        - staticcheck
-        - testifylint
-        - unconvert
-        - usetesting
-        - unparam
-        - unused
-        - govet
-
+version: "2"
 run:
-    # Prevent false positive timeouts in CI
-    timeout: 5m
-    tests: true
-    allow-parallel-runners: true
+  tests: true
+  allow-parallel-runners: true
+linters:
+  default: none
+  enable:
+    - copyloopvar
+    - durationcheck
+    - errcheck
+    - forcetypeassert
+    - govet
+    - ineffassign
+    - makezero
+    - misspell
+    - nilerr
+    - predeclared
+    - staticcheck
+    - testifylint
+    - unconvert
+    - unparam
+    - unused
+    - usetesting
+  settings:
+    usetesting:
+      context-background: false
+      context-todo: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - path: (.+)_test\.go
+        linters:
+          - errcheck
+          - unparam
+        # disabling these for the SDKv2-based code as it's idomatic and things are being migrated to the Framework
+      - path: honeycombio/*
+        text: Error return value of `d.Set` is not checked
+      - path: honeycombio/*
+        text: type assertion must be checked
+      - path: honeycombio/*
+        text: right hand must be only type assertion
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    gofmt:
+      simplify: true
+      rewrite-rules:
+        - pattern: interface{}
+          replacement: any
+    goimports:
+      local-prefixes:
+        - github.com/honeycombio/terraform-provider-honeycombio

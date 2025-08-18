@@ -38,7 +38,7 @@ func dataSourceHoneycombioColumns() *schema.Resource {
 	}
 }
 
-func dataSourceHoneycombioColumnsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func dataSourceHoneycombioColumnsRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)

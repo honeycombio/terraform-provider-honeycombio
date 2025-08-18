@@ -206,7 +206,7 @@ func (c *Client) Do(ctx context.Context, method, path string, requestBody, respo
 	}
 	defer resp.Body.Close()
 
-	if !(resp.StatusCode >= 200 && resp.StatusCode <= 299) {
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		return ErrorFromResponse(resp)
 	}
 	if responseBody != nil {
@@ -243,5 +243,5 @@ func (c *Client) newRequest(ctx context.Context, method, path string, body any) 
 // urlEncodeDataset sanitizes the dataset name for when it is used as part of
 // the URL.
 func urlEncodeDataset(dataset string) string {
-	return strings.Replace(dataset, "/", "-", -1)
+	return strings.ReplaceAll(dataset, "/", "-")
 }

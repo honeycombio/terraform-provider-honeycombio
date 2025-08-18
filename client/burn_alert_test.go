@@ -244,7 +244,7 @@ func TestBurnAlerts_BurnAlertAlertTypes(t *testing.T) {
 		actualAlertTypes := client.BurnAlertAlertTypes()
 
 		assert.NotEmpty(t, actualAlertTypes)
-		assert.Equal(t, len(expectedAlertTypes), len(actualAlertTypes))
+		assert.Len(t, actualAlertTypes, len(expectedAlertTypes))
 		assert.ElementsMatch(t, expectedAlertTypes, actualAlertTypes)
 	})
 }

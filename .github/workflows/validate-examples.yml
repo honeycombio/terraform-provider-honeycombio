@@ -1,33 +1,36 @@
 name: Validate Examples
 
+permissions:
+  contents: read
+
 on:
-    workflow_dispatch:
-    push:
+  workflow_dispatch:
+  push:
 
 jobs:
-    validate:
-        runs-on: ubuntu-latest
-        name: Validate examples
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v5
+  validate:
+    runs-on: ubuntu-latest
+    name: Validate examples
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
 
-            - name: Setup Go
-              uses: actions/setup-go@v5
-              with:
-                  go-version-file: "go.mod"
-                  cache: true
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+          cache: true
 
-            - name: Build
-              run: go build -o /tmp/providers/terraform-provider-honeycombio
+      - name: Build
+        run: go build -o /tmp/providers/terraform-provider-honeycombio
 
-            - name: Setup Terraform
-              uses: hashicorp/setup-terraform@v3
-              with:
-                  terraform_wrapper: false
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
 
-            - name: Validate examples
-              env:
-                  TF_IN_AUTOMATION: 1
-              run: |
-                  TF_CLI_CONFIG_FILE="$GITHUB_WORKSPACE/.terraformrc.local" ./scripts/validate-examples example
+      - name: Validate examples
+        env:
+          TF_IN_AUTOMATION: 1
+        run: |
+          TF_CLI_CONFIG_FILE="$GITHUB_WORKSPACE/.terraformrc.local" ./scripts/validate-examples example

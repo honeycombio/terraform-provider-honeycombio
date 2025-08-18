@@ -128,8 +128,8 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	if !reflect.DeepEqual(qs.Breakdowns, other.Breakdowns) &&
 		// an empty Breakdowns is equivalent to a nil Breakdowns, so we need to check that
 		// as DeepEqual will not consider them equal
-		!(qs.Breakdowns == nil && len(other.Breakdowns) == 0 ||
-			len(qs.Breakdowns) == 0 && other.Breakdowns == nil) {
+		((qs.Breakdowns != nil || len(other.Breakdowns) != 0) &&
+			(len(qs.Breakdowns) != 0 || other.Breakdowns != nil)) {
 		return false
 	}
 
@@ -245,7 +245,7 @@ type FilterSpec struct {
 	//  - 'exists' and 'does-not-exist': value should be nil
 	//  - 'in' and 'not-in': value should be a []string
 	//  - all other ops: value could be a string, int, bool or float
-	Value interface{} `json:"value,omitempty"`
+	Value any `json:"value,omitempty"`
 }
 
 // FilterOp represents the operator of a filter.
@@ -334,7 +334,7 @@ type HavingSpec struct {
 	CalculateOp *CalculationOp `json:"calculate_op,omitempty"`
 	Column      *string        `json:"column,omitempty"`
 	Op          *HavingOp      `json:"op,omitempty"`
-	Value       interface{}    `json:"value,omitempty"`
+	Value       any            `json:"value,omitempty"`
 }
 
 // HavingOp represents the operator of a having clause

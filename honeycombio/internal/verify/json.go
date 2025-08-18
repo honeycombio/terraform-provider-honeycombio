@@ -23,7 +23,7 @@ func SuppressEquivJSONDiffs(_, j1, j2 string, d *schema.ResourceData) bool {
 }
 
 func JSONBytesEqual(b1, b2 []byte) bool {
-	var o1, o2 interface{}
+	var o1, o2 any
 
 	if err := json.Unmarshal(b1, &o1); err != nil {
 		return false

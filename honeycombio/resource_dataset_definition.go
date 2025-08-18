@@ -52,7 +52,7 @@ func newDatasetDefinition() *schema.Resource {
 	}
 }
 
-func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -90,7 +90,7 @@ func resourceDatasetDefinitionRead(ctx context.Context, d *schema.ResourceData, 
 	return nil
 }
 
-func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)
@@ -109,7 +109,7 @@ func resourceDatasetDefinitionUpdate(ctx context.Context, d *schema.ResourceData
 	return resourceDatasetDefinitionRead(ctx, d, meta)
 }
 
-func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceDatasetDefinitionDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	client, err := getConfiguredClient(meta)
 	if err != nil {
 		return diagFromErr(err)

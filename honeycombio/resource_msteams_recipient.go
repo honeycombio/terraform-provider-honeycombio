@@ -41,7 +41,7 @@ func newMSTeamsRecipient() *schema.Resource {
 	}
 }
 
-func resourceMSTeamsRecipientCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMSTeamsRecipientCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return diag.Diagnostics{diag.Diagnostic{
 		Severity: diag.Error,
 		Summary:  "Creating new MSTeams recipients is no longer possible.",
@@ -51,16 +51,16 @@ func resourceMSTeamsRecipientCreate(ctx context.Context, d *schema.ResourceData,
 	}}
 }
 
-func resourceMSTeamsRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMSTeamsRecipientRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	//nolint:staticcheck
 	return readRecipient(ctx, d, meta, honeycombio.RecipientTypeMSTeams)
 }
 
-func resourceMSTeamsRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMSTeamsRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	//nolint:staticcheck
 	return updateRecipient(ctx, d, meta, honeycombio.RecipientTypeMSTeams)
 }
 
-func resourceMSTeamsRecipientDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceMSTeamsRecipientDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return deleteRecipient(ctx, d, meta)
 }

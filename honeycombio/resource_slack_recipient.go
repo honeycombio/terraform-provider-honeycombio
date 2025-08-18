@@ -35,18 +35,18 @@ func newSlackRecipient() *schema.Resource {
 	}
 }
 
-func resourceSlackRecipientCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSlackRecipientCreate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return createRecipient(ctx, d, meta, honeycombio.RecipientTypeSlack)
 }
 
-func resourceSlackRecipientRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSlackRecipientRead(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return readRecipient(ctx, d, meta, honeycombio.RecipientTypeSlack)
 }
 
-func resourceSlackRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSlackRecipientUpdate(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return updateRecipient(ctx, d, meta, honeycombio.RecipientTypeSlack)
 }
 
-func resourceSlackRecipientDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceSlackRecipientDelete(ctx context.Context, d *schema.ResourceData, meta any) diag.Diagnostics {
 	return deleteRecipient(ctx, d, meta)
 }
