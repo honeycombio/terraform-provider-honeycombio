@@ -45,6 +45,7 @@ type QueryAnnotation struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	QueryID     string `json:"query_id"`
+	Source      string `json:"source"`
 
 	CreatedAt *time.Time `json:"created-at,omitempty"`
 	UpdatedAt *time.Time `json:"updated-at,omitempty"`
