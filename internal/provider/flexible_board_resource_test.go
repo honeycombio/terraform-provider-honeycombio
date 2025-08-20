@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
@@ -79,7 +80,15 @@ func TestAccHoneycombioFlexibleBoard(t *testing.T) {
 
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.type", "text"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.text_panel.#", "1"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.text_panel.0.content", "This is a text panel"),
+					resource.TestCheckResourceAttrWith("honeycombio_flexible_board.test", "panel.2.text_panel.0.content", func(value string) error {
+						if !strings.Contains(value, "# Text Panel Title") {
+							return fmt.Errorf("expected content to contain '# Text Panel Title', got: %s", value)
+						}
+						if !strings.Contains(value, "multiline") {
+							return fmt.Errorf("expected content to contain 'multiline', got: %s", value)
+						}
+						return nil
+					}),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.position.height", "3"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.position.width", "4"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.position.x_coordinate", "0"),
@@ -154,7 +163,14 @@ resource "honeycombio_flexible_board" "test" {
   panel {
     type = "text"
     text_panel {
-      content = "This is a text panel with no positions."
+      content = <<EOF
+# Dynamic Text Panel
+
+This is a **multiline** text panel with:
+- No fixed positions
+- Auto-generated coordinates
+- Flexible layout support
+EOF
     }
   }
 }
@@ -176,7 +192,15 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.y_coordinate"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.type", "text"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.text_panel.#", "1"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.text_panel.0.content", "This is a text panel with no positions."),
+					resource.TestCheckResourceAttrWith("honeycombio_flexible_board.test", "panel.1.text_panel.0.content", func(value string) error {
+						if !strings.Contains(value, "# Dynamic Text Panel") {
+							return fmt.Errorf("expected content to contain '# Dynamic Text Panel', got: %s", value)
+						}
+						if !strings.Contains(value, "Auto-generated coordinates") {
+							return fmt.Errorf("expected content to contain 'Auto-generated coordinates', got: %s", value)
+						}
+						return nil
+					}),
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.height"),
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width"),
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.x_coordinate"),
@@ -305,7 +329,17 @@ resource "honeycombio_flexible_board" "test" {
       width  = 4
     }
     text_panel {
-      content = "This is a text panel with no positions."
+      content = <<EOF
+# Positioned Text Panel
+
+This is a **multiline** text panel with:
+- Fixed position and size
+- Rich markdown formatting
+- Multiple content sections
+
+## Additional Info
+Content positioned at specific coordinates.
+EOF
     }
   }
 
@@ -347,7 +381,15 @@ resource "honeycombio_flexible_board" "test" {
 
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.type", "text"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.text_panel.#", "1"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.text_panel.0.content", "This is a text panel with no positions."),
+					resource.TestCheckResourceAttrWith("honeycombio_flexible_board.test", "panel.1.text_panel.0.content", func(value string) error {
+						if !strings.Contains(value, "# Positioned Text Panel") {
+							return fmt.Errorf("expected content to contain '# Positioned Text Panel', got: %s", value)
+						}
+						if !strings.Contains(value, "Fixed position and size") {
+							return fmt.Errorf("expected content to contain 'Fixed position and size', got: %s", value)
+						}
+						return nil
+					}),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.height", "3"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width", "4"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.x_coordinate", "0"),
@@ -472,7 +514,17 @@ resource "honeycombio_flexible_board" "test" {
   panel {
     type = "text"
     text_panel {
-      content = "This is a text panel"
+      content = <<EOF
+# Text Panel Title
+
+This is a **multiline** text panel with:
+- Support for markdown
+- Multiple lines of content
+- Rich formatting options
+
+## Section 2
+Additional content can be added here.
+EOF
     }
     position {
       height       = 3

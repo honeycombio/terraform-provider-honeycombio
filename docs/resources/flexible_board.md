@@ -116,7 +116,17 @@ resource "honeycombio_flexible_board" "overview" {
   panel {
     type = "text"
     text_panel {
-      content = "#This is fancy text content"
+      content = <<EOF
+# This is fancy text content
+
+This text panel supports:
+- **Markdown formatting**
+- Multiple lines of content
+- Rich text features
+
+## Additional Section
+More content can be added here with proper spacing.
+EOF
     }
   }
 }
