@@ -553,6 +553,7 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 						PanelType:  panel.PanelType,
 						QueryPanel: panel.QueryPanel,
 						SLOPanel:   panel.SLOPanel,
+						TextPanel:  types.ListNull(types.ObjectType{AttrTypes: models.TextPanelModelAttrType}),
 					}
 
 					if !panel.Position.IsNull() && !panel.Position.IsUnknown() {

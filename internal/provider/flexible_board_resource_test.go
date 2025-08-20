@@ -385,7 +385,7 @@ func TestAccHoneycombioFlexibleBoard_upgradeFromVersion036_2(t *testing.T) {
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
-	config := testFlexibleBoardConfig(dataset, slo.ID)
+	config := testFlexibleBoardConfigNoTextPanel(dataset, slo.ID)
 
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
@@ -479,6 +479,63 @@ resource "honeycombio_flexible_board" "test" {
       width        = 4
       x_coordinate = 0
       y_coordinate = 7
+    }
+  }
+}
+	`, dataset, sloID)
+}
+
+func testFlexibleBoardConfigNoTextPanel(dataset, sloID string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+resource "honeycombio_query_annotation" "test" {
+  dataset     = "%[1]s"
+  name        = "My annotated query"
+  description = "My lovely description"
+  query_id    = honeycombio_query.test.id
+}
+resource "honeycombio_flexible_board" "test" {
+  name        = "Test flexible board from terraform-provider-honeycombio"
+  description = "Test flexible board description"
+  panel {
+    type = "slo"
+    slo_panel {
+      slo_id = "%[2]s"
+    }
+    position {
+      height       = 4
+      width        = 3
+      x_coordinate = 0
+      y_coordinate = 0
+    }
+  }
+  panel {
+    type = "query"
+    query_panel {
+      query_id            = honeycombio_query.test.id
+      query_annotation_id = honeycombio_query_annotation.test.id
+      query_style         = "combo"
+      visualization_settings {
+        use_utc_xaxis = true
+        chart {
+          chart_index         = 0
+          omit_missing_values = true
+        }
+      }
+    }
+    position {
+      height       = 6
+      width        = 6
+      x_coordinate = 0
+      y_coordinate = 3
     }
   }
 }
