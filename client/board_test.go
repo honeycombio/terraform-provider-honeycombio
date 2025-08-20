@@ -232,6 +232,18 @@ func TestFlexibleBoards(t *testing.T) {
 						SLOID: slo.ID,
 					},
 				},
+				{
+					PanelType: client.BoardPanelTypeText,
+					PanelPosition: client.BoardPanelPosition{
+						X:      0,
+						Y:      3,
+						Height: 3,
+						Width:  4,
+					},
+					TextPanel: &client.BoardTextPanel{
+						Content: "This is a text panel",
+					},
+				},
 			},
 		}
 		flexibleBoard, err = c.Boards.Create(ctx, data)
@@ -275,6 +287,12 @@ func TestFlexibleBoards(t *testing.T) {
 					PanelType: client.BoardPanelTypeSLO,
 					SLOPanel: &client.BoardSLOPanel{
 						SLOID: slo.ID,
+					},
+				},
+				{
+					PanelType: client.BoardPanelTypeText,
+					TextPanel: &client.BoardTextPanel{
+						Content: "This is a text panel",
 					},
 				},
 			},
@@ -343,6 +361,18 @@ func TestFlexibleBoards(t *testing.T) {
 					},
 					SLOPanel: &client.BoardSLOPanel{
 						SLOID: slo.ID,
+					},
+				},
+				{
+					PanelType: client.BoardPanelTypeText,
+					PanelPosition: client.BoardPanelPosition{
+						X:      0,
+						Y:      3,
+						Height: 3,
+						Width:  4,
+					},
+					TextPanel: &client.BoardTextPanel{
+						Content: "This is a text panel",
 					},
 				},
 			},

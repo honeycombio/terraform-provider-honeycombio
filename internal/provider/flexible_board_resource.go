@@ -111,9 +111,9 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
 							Required:    true,
-							Description: `The panel type, either "query" or "slo".`,
+							Description: `The panel type, either "query", "slo", or "text".`,
 							Validators: []validator.String{
-								stringvalidator.OneOf("query", "slo"),
+								stringvalidator.OneOf("query", "slo", "text"),
 							},
 						},
 					},
@@ -271,6 +271,20 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 												},
 											},
 										},
+									},
+								},
+							},
+						},
+						"text_panel": schema.ListNestedBlock{
+							Description: "A text panel to be displayed on the Board.",
+							Validators: []validator.List{
+								listvalidator.SizeAtMost(1),
+							},
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"content": schema.StringAttribute{
+										Required:    true,
+										Description: "The content of the text panel. Supports Markdown.",
 									},
 								},
 							},
@@ -627,7 +641,6 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 	state.Name = types.StringValue(board.Name)
 	state.Description = types.StringValue(board.Description)
 	state.URL = types.StringValue(board.Links.BoardURL)
-	// state.LayoutGeneration = plan.LayoutGeneration
 
 	if len(board.Panels) == 0 {
 		state.Panels = types.ListNull(types.ObjectType{AttrTypes: models.BoardPanelModelAttrType})
@@ -875,6 +888,7 @@ func expandBoardPanels(
 			PanelPosition: expandPanelPosition(ctx, panel.Position, diags),
 			SLOPanel:      expandBoardSLOPanel(ctx, panel.SLOPanel, diags),
 			QueryPanel:    expandBoardQueryPanel(ctx, panel.QueryPanel, diags),
+			TextPanel:     expandBoardTextPanel(ctx, panel.TextPanel, diags),
 		})
 	}
 
@@ -1007,6 +1021,28 @@ func expandBoardQueryVizCharts(
 	return result
 }
 
+func expandBoardTextPanel(
+	ctx context.Context,
+	textPanel types.List,
+	diags *diag.Diagnostics,
+) *client.BoardTextPanel {
+
+	if textPanel.IsNull() || textPanel.IsUnknown() {
+		return nil
+	}
+
+	var textPanels []models.TextPanelModel
+	diags.Append(textPanel.ElementsAs(ctx, &textPanels, false)...)
+
+	if len(textPanels) == 0 {
+		return nil
+	}
+
+	return &client.BoardTextPanel{
+		Content: textPanels[0].Content.ValueString(),
+	}
+}
+
 func flattenBoardPanel(
 	ctx context.Context,
 	panel client.BoardPanel,
@@ -1018,6 +1054,7 @@ func flattenBoardPanel(
 	panelValue["slo_panel"] = flattenBoardSloPanel(ctx, panel.SLOPanel, diags)
 	panelValue["position"] = flattenBoardPanelPosition(panel.PanelPosition, diags, statePanel.PanelPosition)
 	panelValue["query_panel"] = flattenBoardQueryPanel(ctx, panel.QueryPanel, diags)
+	panelValue["text_panel"] = flattenBoardTextPanel(ctx, panel.TextPanel, diags)
 
 	return panelValue
 }
@@ -1165,6 +1202,31 @@ func flattenBoardSloPanel(
 	result, d := types.ListValueFrom(
 		ctx,
 		types.ObjectType{AttrTypes: models.SLOPanelModelAttrType},
+		[]attr.Value{obj},
+	)
+	diags.Append(d...)
+
+	return result
+}
+
+func flattenBoardTextPanel(
+	ctx context.Context,
+	textPanel *client.BoardTextPanel,
+	diags *diag.Diagnostics,
+) types.List {
+
+	if textPanel == nil {
+		return types.ListNull(types.ObjectType{AttrTypes: models.TextPanelModelAttrType})
+	}
+
+	obj, d := types.ObjectValue(models.TextPanelModelAttrType, map[string]attr.Value{
+		"content": types.StringValue(textPanel.Content),
+	})
+	diags.Append(d...)
+
+	result, d := types.ListValueFrom(
+		ctx,
+		types.ObjectType{AttrTypes: models.TextPanelModelAttrType},
 		[]attr.Value{obj},
 	)
 	diags.Append(d...)

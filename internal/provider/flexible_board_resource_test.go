@@ -47,7 +47,7 @@ func TestAccHoneycombioFlexibleBoard(t *testing.T) {
 					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "name", "Test flexible board from terraform-provider-honeycombio"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "description", "Test flexible board description"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "2"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "3"),
 
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.type", "slo"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.#", "0"),
@@ -76,6 +76,14 @@ func TestAccHoneycombioFlexibleBoard(t *testing.T) {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width", "6"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.x_coordinate", "0"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.y_coordinate", "3"),
+
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.type", "text"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.text_panel.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.text_panel.0.content", "This is a text panel"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.position.height", "3"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.position.width", "4"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.position.x_coordinate", "0"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.position.y_coordinate", "7"),
 				),
 			},
 			// remove board's panels, add tags
@@ -125,7 +133,7 @@ resource "honeycombio_flexible_board" "test" {
   name        = "simple flexible board updated"
   description = "simple flexible board description"
   tags = {
-	team = "green"
+    team = "green"
   }
   panel {
     type = "query"
@@ -143,13 +151,19 @@ resource "honeycombio_flexible_board" "test" {
       }
     }
   }
+  panel {
+    type = "text"
+    text_panel {
+      content = "This is a text panel with no positions."
+    }
+  }
 }
 						  `, dataset),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "name", "simple flexible board updated"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "description", "simple flexible board description"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "2"),
 					resource.TestCheckResourceAttrPair("honeycombio_flexible_board.test", "panel.0.query_panel.0.query_id", "honeycombio_query.test", "id"),
 					resource.TestCheckResourceAttrPair("honeycombio_flexible_board.test", "panel.0.query_panel.0.query_annotation_id", "honeycombio_query_annotation.test", "id"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "tags.%", "1"),
@@ -160,9 +174,16 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.width"),
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.x_coordinate"),
 					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.y_coordinate"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.type", "text"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.text_panel.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.text_panel.0.content", "This is a text panel with no positions."),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.height"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.x_coordinate"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.y_coordinate"),
 				),
 			},
-			// now add an SLO panel, remove chart settings from the query panel, remove tags and update from generated positions to provided positions
+			// now add an SLO panel, remove text panel, remove chart settings from the query panel, remove tags and update from generated positions to provided positions
 			{
 				Config: fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
@@ -277,6 +298,16 @@ resource "honeycombio_flexible_board" "test" {
       slo_id = "%[2]s"
     }
   }
+  panel {
+    type = "text"
+	position {
+      height = 3
+      width  = 4
+    }
+    text_panel {
+      content = "This is a text panel with no positions."
+    }
+  }
 
   panel {
     type = "query"
@@ -296,23 +327,31 @@ resource "honeycombio_flexible_board" "test" {
 					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "name", "simple flexible board updated"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "description", "simple flexible board description"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "2"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "3"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.type", "slo"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.slo_panel.#", "1"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.slo_panel.0.slo_id", slo.ID),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.position.height", "4"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.position.width", "3"),
-					resource.TestCheckResourceAttrPair("honeycombio_flexible_board.test", "panel.1.query_panel.0.query_id", "honeycombio_query.test", "id"),
-					resource.TestCheckResourceAttrPair("honeycombio_flexible_board.test", "panel.1.query_panel.0.query_annotation_id", "honeycombio_query_annotation.test", "id"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.#", "1"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.query_style", "table"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.query_panel.0.visualization_settings.#", "0"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.type", "query"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.height", "5"),
-					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width", "6"),
+					resource.TestCheckResourceAttrPair("honeycombio_flexible_board.test", "panel.2.query_panel.0.query_id", "honeycombio_query.test", "id"),
+					resource.TestCheckResourceAttrPair("honeycombio_flexible_board.test", "panel.2.query_panel.0.query_annotation_id", "honeycombio_query_annotation.test", "id"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.query_panel.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.query_panel.0.query_style", "table"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.query_panel.0.visualization_settings.#", "0"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.type", "query"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.position.height", "5"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.position.width", "6"),
 					// ensure x and y coordinates are dynamically generated when only height and width are provided
-					resource.TestCheckResourceAttrSet("honeycombio_flexible_board.test", "panel.1.position.x_coordinate"),
-					resource.TestCheckResourceAttrSet("honeycombio_flexible_board.test", "panel.1.position.y_coordinate"),
+					resource.TestCheckResourceAttrSet("honeycombio_flexible_board.test", "panel.2.position.x_coordinate"),
+					resource.TestCheckResourceAttrSet("honeycombio_flexible_board.test", "panel.2.position.y_coordinate"),
+
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.type", "text"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.text_panel.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.text_panel.0.content", "This is a text panel with no positions."),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.height", "3"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width", "4"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.x_coordinate", "0"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.y_coordinate", "0"),
 				),
 			},
 		},
@@ -428,6 +467,18 @@ resource "honeycombio_flexible_board" "test" {
       width        = 6
       x_coordinate = 0
       y_coordinate = 3
+    }
+  }
+  panel {
+    type = "text"
+    text_panel {
+      content = "This is a text panel"
+    }
+    position {
+      height       = 3
+      width        = 4
+      x_coordinate = 0
+      y_coordinate = 7
     }
   }
 }
