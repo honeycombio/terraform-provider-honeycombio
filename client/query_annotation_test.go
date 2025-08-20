@@ -42,7 +42,7 @@ func TestQueryAnnotations(t *testing.T) {
 
 		require.NoError(t, err)
 		data.ID = queryAnnotation.ID
-		data.Source = "query"
+		data.Source = queryAnnotation.Source
 		assert.Equal(t, data, queryAnnotation)
 	})
 
@@ -72,7 +72,7 @@ func TestQueryAnnotations(t *testing.T) {
 
 		require.NoError(t, err)
 		data.ID = queryAnnotation.ID
-		data.Source = "query"
+		data.Source = queryAnnotation.Source
 		assert.Equal(t, data, queryAnnotation)
 	})
 

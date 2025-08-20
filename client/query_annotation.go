@@ -36,16 +36,23 @@ type queryAnnotations struct {
 // Compile-time proof of interface implementation by type queryAnnotations.
 var _ QueryAnnotations = (*queryAnnotations)(nil)
 
+type QueryAnnotationSource string
+
+const (
+	QueryAnnotationSourceQuery QueryAnnotationSource = "query"
+	QueryAnnotationSourceBoard QueryAnnotationSource = "board"
+)
+
 // QueryAnnotation represents a Honeycomb query annotation.
 //
 // API docs: https://docs.honeycomb.io/api/query-annotations/#fields-on-a-query-annotation
 type QueryAnnotation struct {
 	ID string `json:"id,omitempty"`
 
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	QueryID     string `json:"query_id"`
-	Source      string `json:"source"`
+	Name        string                `json:"name"`
+	Description string                `json:"description"`
+	QueryID     string                `json:"query_id"`
+	Source      QueryAnnotationSource `json:"source"`
 
 	CreatedAt *time.Time `json:"created-at,omitempty"`
 	UpdatedAt *time.Time `json:"updated-at,omitempty"`
