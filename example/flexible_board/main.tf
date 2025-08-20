@@ -118,4 +118,17 @@ resource "honeycombio_flexible_board" "overview" {
       height       = 6
     }
   }
+
+  panel {
+    type = "text"
+    text_panel {
+      content = "#My formatted content with markdown"
+    }
+    position {
+      x_coordinate = 0
+      y_coordinate = 6
+      width        = 6
+      height       = 6
+    }
+  }
 }

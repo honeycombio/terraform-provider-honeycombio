@@ -19,6 +19,7 @@ type BoardPanelModel struct {
 	Position   types.Object `tfsdk:"position"`
 	QueryPanel types.List   `tfsdk:"query_panel"`
 	SLOPanel   types.List   `tfsdk:"slo_panel"`
+	TextPanel  types.List   `tfsdk:"text_panel"`
 }
 
 var BoardPanelModelAttrType = map[string]attr.Type{
@@ -34,6 +35,11 @@ var BoardPanelModelAttrType = map[string]attr.Type{
 	"slo_panel": types.ListType{
 		ElemType: types.ObjectType{
 			AttrTypes: SLOPanelModelAttrType,
+		},
+	},
+	"text_panel": types.ListType{
+		ElemType: types.ObjectType{
+			AttrTypes: TextPanelModelAttrType,
 		},
 	},
 }
@@ -76,6 +82,14 @@ type SLOPanelModel struct {
 
 var SLOPanelModelAttrType = map[string]attr.Type{
 	"slo_id": types.StringType,
+}
+
+type TextPanelModel struct {
+	Content types.String `tfsdk:"content"`
+}
+
+var TextPanelModelAttrType = map[string]attr.Type{
+	"content": types.StringType,
 }
 
 type VisualizationSettingsModel struct {

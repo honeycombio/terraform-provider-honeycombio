@@ -112,6 +112,23 @@ resource "honeycombio_flexible_board" "overview" {
       slo_id = honeycombio_slo.slo.id
     }
   }
+
+  panel {
+    type = "text"
+    text_panel {
+      content = <<EOF
+# This is fancy text content
+
+This text panel supports:
+- **Markdown formatting**
+- Multiple lines of content
+- Rich text features
+
+## Additional Section
+More content can be added here with proper spacing.
+EOF
+    }
+  }
 }
 ```
 
@@ -129,6 +146,7 @@ Each board configuration may have zero or more `panel` blocks which accept the f
 - `position` - (Optional) Single configuration block to determine position of the panel.
 - `slo_panel` - (Optional) This is only required for `type` slo panels. Single configuration block that contains board slo information.
 - `query_panel` - (Optional) This is only required for `type` query panels. Single configuration block that contains board query information.
+- `text_panel` - (Optional) This is only required for `type` text panels. Single configuration block that contains board text content.
 
 Each `position` configuration accepts the following arguments:
 
@@ -147,6 +165,10 @@ Each `query_panel` configuration accepts the following arguments:
 - `query_style` - (Optional) How the query should be displayed within the board, either `graph` (the default), `table` or `combo`.
 - `query_annotation_id` - (Required) The ID of the Query Annotation to associate with this query.
 - `visualization_settings` - (Optional) A configuration block to manage the query visualization and charts.
+
+Each `text_panel` configuration accepts the following arguments:
+
+- `content` - (Required) The text content for this panel, with support for basic markdown formatting.
 
 Each `visualization_settings` configuration accepts the following arguments:
 

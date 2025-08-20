@@ -82,6 +82,7 @@ type BoardPanel struct {
 
 	QueryPanel *BoardQueryPanel `json:"query_panel,omitempty"`
 	SLOPanel   *BoardSLOPanel   `json:"slo_panel,omitempty"`
+	TextPanel  *BoardTextPanel  `json:"text_panel,omitempty"`
 }
 
 func (b *BoardPanel) IsBlank() bool {
@@ -93,6 +94,7 @@ type BoardPanelType string
 const (
 	BoardPanelTypeQuery BoardPanelType = "query"
 	BoardPanelTypeSLO   BoardPanelType = "slo"
+	BoardPanelTypeText  BoardPanelType = "text"
 )
 
 type BoardPanelPosition struct {
@@ -128,6 +130,10 @@ type ChartSettings struct {
 
 type BoardSLOPanel struct {
 	SLOID string `json:"slo_id,omitempty"`
+}
+
+type BoardTextPanel struct {
+	Content string `json:"content,omitempty"`
 }
 
 type BoardType string
