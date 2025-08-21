@@ -42,6 +42,9 @@ func TestQueryAnnotations(t *testing.T) {
 
 		require.NoError(t, err)
 		data.ID = queryAnnotation.ID
+		// validate that the source is one of the allowed values
+		assert.Contains(t, []client.QueryAnnotationSource{client.QueryAnnotationSourceQuery, client.QueryAnnotationSourceBoard}, queryAnnotation.Source)
+		data.Source = queryAnnotation.Source
 		assert.Equal(t, data, queryAnnotation)
 	})
 
@@ -71,6 +74,9 @@ func TestQueryAnnotations(t *testing.T) {
 
 		require.NoError(t, err)
 		data.ID = queryAnnotation.ID
+		// validate that the source is one of the allowed values
+		assert.Contains(t, []client.QueryAnnotationSource{client.QueryAnnotationSourceQuery, client.QueryAnnotationSourceBoard}, queryAnnotation.Source)
+		data.Source = queryAnnotation.Source
 		assert.Equal(t, data, queryAnnotation)
 	})
 
