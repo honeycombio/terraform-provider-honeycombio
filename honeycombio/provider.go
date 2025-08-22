@@ -65,7 +65,6 @@ func Provider(version string) *schema.Provider {
 			"honeycombio_derived_column":             newDerivedColumn(),
 			"honeycombio_marker":                     newMarker(),
 			"honeycombio_marker_setting":             newMarkerSetting(),
-			"honeycombio_query_annotation":           newQueryAnnotation(),
 			"honeycombio_email_recipient":            newEmailRecipient(),
 			"honeycombio_pagerduty_recipient":        newPDRecipient(),
 			"honeycombio_msteams_recipient":          newMSTeamsRecipient(), // deprecated
