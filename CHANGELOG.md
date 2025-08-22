@@ -1,3 +1,16 @@
+# 0.39.0 (Aug 22, 2025)
+
+ENHANCEMENTS:
+
+* feat(r/flexibleboard): Add support for text panels (#743)
+* fix(client): add missing source field to query annotations (#742)
+
+HOUSEKEEPING:
+
+* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.13.2 to 1.13.3 (#741)
+* chore(build): upgrade golangci-lint and tidy (#740)
+* chore(r/query_annotation): migrate to Plugin Framework (#744)
+
 # 0.38.1 (Aug 15, 2025)
 
 BUGFIXES:
