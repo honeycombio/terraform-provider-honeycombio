@@ -43,7 +43,7 @@ resource "honeycombio_query_annotation" "test" {
 }`
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 testAccPreCheck(t),
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
@@ -77,7 +77,7 @@ func TestAcc_HoneycombioQueryAnnotation_AllToUnset(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { testAccPreCheck(t) },
+		PreCheck:                 testAccPreCheck(t),
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
@@ -146,7 +146,7 @@ resource "honeycombio_query_annotation" "test" {
 }`, dataset, dataset, name)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() { testAccPreCheck(t) },
+		PreCheck: testAccPreCheck(t),
 		Steps: []resource.TestStep{
 			{
 				ExternalProviders: map[string]resource.ExternalProvider{
