@@ -57,6 +57,8 @@ func (*queryAnnotationResource) Schema(_ context.Context, _ resource.SchemaReque
 			"id": schema.StringAttribute{
 				Description: "The unique identifier for this Query Annotation.",
 				Computed:    true,
+				Required:    false,
+				Optional:    false,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -191,12 +193,7 @@ func (r *queryAnnotationResource) Delete(ctx context.Context, req resource.Delet
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	dataset := state.Dataset.ValueString()
-	if dataset == "" {
-		dataset = client.EnvironmentWideSlug
-	}
-
-	err := r.client.QueryAnnotations.Delete(ctx, dataset, state.ID.ValueString())
+	dataset := helper.GetDatasetOrAll(state.Dataset)
+	err := r.client.QueryAnnotations.Delete(ctx, dataset.ValueString(), state.ID.ValueString())
 	helper.AddDiagnosticOnError(&resp.Diagnostics, "Deleting Honeycomb Query Annotation", err)
 }
