@@ -93,7 +93,7 @@ func (*queryAnnotationResource) Schema(_ context.Context, _ resource.SchemaReque
 				Computed:    true,
 				Default:     stringdefault.StaticString(""),
 				Validators: []validator.String{
-					stringvalidator.LengthBetween(0, 1023),
+					stringvalidator.LengthAtMost(1023),
 				},
 			},
 		},
