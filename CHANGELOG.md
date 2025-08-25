@@ -1,3 +1,13 @@
+# 0.39.1 (Aug 25, 2025)
+
+BUGFIXES:
+
+* fix(r/query_annotation): handle empty description (#747)
+
+HOUSEKEEPING:
+
+* maint(deps): bump github.com/stretchr/testify from 1.10.0 to 1.11.0 (#746)
+
 # 0.39.0 (Aug 22, 2025)
 
 ENHANCEMENTS:
