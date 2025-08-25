@@ -31,15 +31,15 @@ data "honeycombio_query_specification" "test" {
 }
 
 resource "honeycombio_query" "test" {
-  dataset = "%s"
+  dataset    = "%s"
   query_json = data.honeycombio_query_specification.test.json
 }
 
 resource "honeycombio_query_annotation" "test" {
-  dataset = "%s"
-  query_id = honeycombio_query.test.id
-  name = "%s"
-  description = "Test query annotation description"
+  query_id    = honeycombio_query.test.id
+  dataset     = "%s"
+  name        = "%s"
+  description = "%s"
 }`
 
 	resource.Test(t, resource.TestCase{
@@ -47,7 +47,7 @@ resource "honeycombio_query_annotation" "test" {
 		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
 		Steps: []resource.TestStep{
 			{
-				Config: fmt.Sprintf(config, dataset, dataset, firstName),
+				Config: fmt.Sprintf(config, dataset, dataset, firstName, "Test query annotation description"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckQueryAnnotationExists(t, dataset, "honeycombio_query_annotation.test"),
 					resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "name", firstName),
@@ -56,15 +56,89 @@ resource "honeycombio_query_annotation" "test" {
 				),
 			},
 			{
-				Config: fmt.Sprintf(config, dataset, dataset, secondName),
+				Config: fmt.Sprintf(config, dataset, dataset, secondName, "new description"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckQueryAnnotationExists(t, dataset, "honeycombio_query_annotation.test"),
 					resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "name", secondName),
-					resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "description", "Test query annotation description"),
+					resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "description", "new description"),
 					resource.TestCheckResourceAttrPair("honeycombio_query_annotation.test", "query_id", "honeycombio_query.test", "id"),
 				),
 			},
 		},
+	})
+
+	t.Run("empty description works", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  filter {
+    column = "duration_ms"
+    op     = ">"
+    value  = 10
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_query_annotation" "test" {
+  query_id    = honeycombio_query.test.id
+  dataset     = "%s"
+  name        = "%s"
+}`, dataset, dataset, firstName),
+					Check: resource.ComposeTestCheckFunc(
+						testAccCheckQueryAnnotationExists(t, dataset, "honeycombio_query_annotation.test"),
+						resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "name", firstName),
+						resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "description", ""),
+						resource.TestCheckResourceAttrPair("honeycombio_query_annotation.test", "query_id", "honeycombio_query.test", "id"),
+					),
+				},
+				{ // update to non-empty description
+					Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  filter {
+    column = "duration_ms"
+    op     = ">"
+    value  = 10
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_query_annotation" "test" {
+  query_id    = honeycombio_query.test.id
+  dataset     = "%s"
+  name        = "%s"
+  description = "my updated description"
+}`, dataset, dataset, firstName),
+					Check: resource.ComposeTestCheckFunc(
+						testAccCheckQueryAnnotationExists(t, dataset, "honeycombio_query_annotation.test"),
+						resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "name", firstName),
+						resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "description", "my updated description"),
+						resource.TestCheckResourceAttrPair("honeycombio_query_annotation.test", "query_id", "honeycombio_query.test", "id"),
+					),
+				},
+			},
+		})
 	})
 }
 
