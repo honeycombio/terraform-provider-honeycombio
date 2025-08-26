@@ -106,6 +106,7 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Description: "List of panels to render on the board.",
 				Validators: []validator.List{
 					validation.RequireConsistentPanelPositions(),
+					validation.RequirePanelTypeConsistency(),
 				},
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
