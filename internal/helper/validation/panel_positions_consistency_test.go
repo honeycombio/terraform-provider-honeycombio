@@ -16,40 +16,14 @@ import (
 func Test_RequireConsistentPanelPositionsValidator(t *testing.T) {
 	t.Parallel()
 
-	positionAttrTypes := map[string]attr.Type{
-		"x_coordinate": types.Int64Type,
-		"y_coordinate": types.Int64Type,
-		"height":       types.Int64Type,
-		"width":        types.Int64Type,
-	}
-
-	panelAttrTypes := map[string]attr.Type{
-		"type": types.StringType,
-		"position": types.ObjectType{
-			AttrTypes: positionAttrTypes,
-		},
-		"query_panel": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: map[string]attr.Type{
-					"query_id":            types.StringType,
-					"query_annotation_id": types.StringType,
-				},
-			},
-		},
-		"slo_panel": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: map[string]attr.Type{
-					"slo_id": types.StringType,
-				},
-			},
-		},
-	}
-
-	panelListType := types.ListType{
-		ElemType: types.ObjectType{
-			AttrTypes: panelAttrTypes,
-		},
-	}
+	// Use shared test attribute types
+	testTypes := NewPanelTestAttributeTypes()
+	positionAttrTypes := testTypes.Position
+	queryPanelAttrTypes := testTypes.QueryPanel
+	sloPanelAttrTypes := testTypes.SLOPanel
+	textPanelAttrTypes := testTypes.TextPanel
+	panelAttrTypes := testTypes.Panel
+	panelListType := testTypes.PanelList
 
 	tests := []struct {
 		name        string
@@ -79,17 +53,9 @@ func Test_RequireConsistentPanelPositionsValidator(t *testing.T) {
 						"height":       types.Int64Null(),
 						"width":        types.Int64Null(),
 					}),
-					"query_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"query_id":            types.StringType,
-							"query_annotation_id": types.StringType,
-						},
-					}),
-					"slo_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"slo_id": types.StringType,
-						},
-					}),
+					"query_panel": types.ListNull(types.ObjectType{AttrTypes: queryPanelAttrTypes}),
+					"slo_panel":   types.ListNull(types.ObjectType{AttrTypes: sloPanelAttrTypes}),
+					"text_panel":  types.ListNull(types.ObjectType{AttrTypes: textPanelAttrTypes}),
 				}),
 			}),
 		},
@@ -97,19 +63,11 @@ func Test_RequireConsistentPanelPositionsValidator(t *testing.T) {
 			name: "single panel without position",
 			value: types.ListValueMust(panelListType.ElemType, []attr.Value{
 				types.ObjectValueMust(panelAttrTypes, map[string]attr.Value{
-					"type":     types.StringValue("query"),
-					"position": types.ObjectNull(positionAttrTypes),
-					"query_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"query_id":            types.StringType,
-							"query_annotation_id": types.StringType,
-						},
-					}),
-					"slo_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"slo_id": types.StringType,
-						},
-					}),
+					"type":        types.StringValue("query"),
+					"position":    types.ObjectNull(positionAttrTypes),
+					"query_panel": types.ListNull(types.ObjectType{AttrTypes: queryPanelAttrTypes}),
+					"slo_panel":   types.ListNull(types.ObjectType{AttrTypes: sloPanelAttrTypes}),
+					"text_panel":  types.ListNull(types.ObjectType{AttrTypes: textPanelAttrTypes}),
 				}),
 			}),
 		},
@@ -124,17 +82,9 @@ func Test_RequireConsistentPanelPositionsValidator(t *testing.T) {
 						"height":       types.Int64Null(),
 						"width":        types.Int64Null(),
 					}),
-					"query_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"query_id":            types.StringType,
-							"query_annotation_id": types.StringType,
-						},
-					}),
-					"slo_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"slo_id": types.StringType,
-						},
-					}),
+					"query_panel": types.ListNull(types.ObjectType{AttrTypes: queryPanelAttrTypes}),
+					"slo_panel":   types.ListNull(types.ObjectType{AttrTypes: sloPanelAttrTypes}),
+					"text_panel":  types.ListNull(types.ObjectType{AttrTypes: textPanelAttrTypes}),
 				}),
 				types.ObjectValueMust(panelAttrTypes, map[string]attr.Value{
 					"type": types.StringValue("slo"),
@@ -144,17 +94,9 @@ func Test_RequireConsistentPanelPositionsValidator(t *testing.T) {
 						"height":       types.Int64Null(),
 						"width":        types.Int64Null(),
 					}),
-					"query_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"query_id":            types.StringType,
-							"query_annotation_id": types.StringType,
-						},
-					}),
-					"slo_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"slo_id": types.StringType,
-						},
-					}),
+					"query_panel": types.ListNull(types.ObjectType{AttrTypes: queryPanelAttrTypes}),
+					"slo_panel":   types.ListNull(types.ObjectType{AttrTypes: sloPanelAttrTypes}),
+					"text_panel":  types.ListNull(types.ObjectType{AttrTypes: textPanelAttrTypes}),
 				}),
 			}),
 		},
@@ -162,34 +104,18 @@ func Test_RequireConsistentPanelPositionsValidator(t *testing.T) {
 			name: "no panels have positions",
 			value: types.ListValueMust(panelListType.ElemType, []attr.Value{
 				types.ObjectValueMust(panelAttrTypes, map[string]attr.Value{
-					"type":     types.StringValue("query"),
-					"position": types.ObjectNull(positionAttrTypes),
-					"query_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"query_id":            types.StringType,
-							"query_annotation_id": types.StringType,
-						},
-					}),
-					"slo_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"slo_id": types.StringType,
-						},
-					}),
+					"type":        types.StringValue("query"),
+					"position":    types.ObjectNull(positionAttrTypes),
+					"query_panel": types.ListNull(types.ObjectType{AttrTypes: queryPanelAttrTypes}),
+					"slo_panel":   types.ListNull(types.ObjectType{AttrTypes: sloPanelAttrTypes}),
+					"text_panel":  types.ListNull(types.ObjectType{AttrTypes: textPanelAttrTypes}),
 				}),
 				types.ObjectValueMust(panelAttrTypes, map[string]attr.Value{
-					"type":     types.StringValue("slo"),
-					"position": types.ObjectNull(positionAttrTypes),
-					"query_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"query_id":            types.StringType,
-							"query_annotation_id": types.StringType,
-						},
-					}),
-					"slo_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"slo_id": types.StringType,
-						},
-					}),
+					"type":        types.StringValue("slo"),
+					"position":    types.ObjectNull(positionAttrTypes),
+					"query_panel": types.ListNull(types.ObjectType{AttrTypes: queryPanelAttrTypes}),
+					"slo_panel":   types.ListNull(types.ObjectType{AttrTypes: sloPanelAttrTypes}),
+					"text_panel":  types.ListNull(types.ObjectType{AttrTypes: textPanelAttrTypes}),
 				}),
 			}),
 		},
@@ -204,32 +130,16 @@ func Test_RequireConsistentPanelPositionsValidator(t *testing.T) {
 						"height":       types.Int64Null(),
 						"width":        types.Int64Null(),
 					}),
-					"query_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"query_id":            types.StringType,
-							"query_annotation_id": types.StringType,
-						},
-					}),
-					"slo_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"slo_id": types.StringType,
-						},
-					}),
+					"query_panel": types.ListNull(types.ObjectType{AttrTypes: queryPanelAttrTypes}),
+					"slo_panel":   types.ListNull(types.ObjectType{AttrTypes: sloPanelAttrTypes}),
+					"text_panel":  types.ListNull(types.ObjectType{AttrTypes: textPanelAttrTypes}),
 				}),
 				types.ObjectValueMust(panelAttrTypes, map[string]attr.Value{
-					"type":     types.StringValue("slo"),
-					"position": types.ObjectNull(positionAttrTypes),
-					"query_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"query_id":            types.StringType,
-							"query_annotation_id": types.StringType,
-						},
-					}),
-					"slo_panel": types.ListNull(types.ObjectType{
-						AttrTypes: map[string]attr.Type{
-							"slo_id": types.StringType,
-						},
-					}),
+					"type":        types.StringValue("slo"),
+					"position":    types.ObjectNull(positionAttrTypes),
+					"query_panel": types.ListNull(types.ObjectType{AttrTypes: queryPanelAttrTypes}),
+					"slo_panel":   types.ListNull(types.ObjectType{AttrTypes: sloPanelAttrTypes}),
+					"text_panel":  types.ListNull(types.ObjectType{AttrTypes: textPanelAttrTypes}),
 				}),
 			}),
 			expectError: true,
