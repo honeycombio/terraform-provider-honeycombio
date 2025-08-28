@@ -89,6 +89,11 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 				Optional:   true,
 				Validators: []validator.Int64{int64validator.AtLeast(0)},
 			},
+			"compare_time_offset_seconds": schema.Int64Attribute{
+				Description: "The time offset for comparison queries, in seconds. " +
+					"Used to compare current time range data with data from a previous time period.",
+				Optional: true,
+			},
 			"json": schema.StringAttribute{
 				Description: "The generated query specification in JSON format.",
 				Computed:    true,
@@ -440,6 +445,9 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 	}
 	if !data.Granularity.IsNull() {
 		querySpec.Granularity = client.ToPtr(int(data.Granularity.ValueInt64()))
+	}
+	if !data.CompareTimeOffsetSeconds.IsNull() {
+		querySpec.CompareTimeOffsetSeconds = client.ToPtr(int(data.CompareTimeOffsetSeconds.ValueInt64()))
 	}
 
 	if querySpec.TimeRange != nil && querySpec.StartTime != nil && querySpec.EndTime != nil {

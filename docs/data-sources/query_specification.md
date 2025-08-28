@@ -42,6 +42,8 @@ data "honeycombio_query_specification" "example" {
   breakdowns = ["app.tenant"]
     
   time_range = 28800 // in seconds, 8 hours
+  
+  compare_time_offset_seconds = 86400 // in seconds, compare with data from 1 day ago
 }
 
 output "json_query" {
@@ -65,6 +67,7 @@ The following arguments are supported:
 * `start_time` - (Optional) The absolute start time of the query in Unix Time (= seconds since epoch).
 * `end_time` - (Optional) The absolute end time of the query in Unix Time (= seconds since epoch).
 * `granularity` - (Optional) The time resolution of the query’s graph, in seconds. Valid values must be in between the query’s time range /10 at maximum, and /1000 at minimum.
+* `compare_time_offset_seconds` - (Optional) The time offset for comparison queries, in seconds. Used to compare current time range data with data from a previous time period.
 
 ~> **NOTE** It is not allowed to specify all three of `time_range`, `start_time` and `end_time`. For more details about specifying time windows, check [Query specification: A caveat on time](https://docs.honeycomb.io/api/query-specification/#a-caveat-on-time).
 
