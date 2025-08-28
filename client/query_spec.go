@@ -61,6 +61,9 @@ type QuerySpec struct {
 	// The time resolution of the query’s graph, in seconds. Valid values are
 	// the query’s time range /10 at maximum, and /1000 at minimum.
 	Granularity *int `json:"granularity,omitempty"`
+	// The time offset for comparison queries, in seconds. Used to compare current
+	// time range data with data from a previous time period.
+	CompareTimeOffsetSeconds *int `json:"compare_time_offset_seconds,omitempty"`
 }
 
 // Encode returns the JSON string representation of the QuerySpec.
@@ -148,6 +151,9 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	}
 	// Granularity may be exported out of the Query Builder as '0' when not provided
 	if PtrValueOrDefault(qs.Granularity, 0) != PtrValueOrDefault(other.Granularity, 0) {
+		return false
+	}
+	if !reflect.DeepEqual(qs.CompareTimeOffsetSeconds, other.CompareTimeOffsetSeconds) {
 		return false
 	}
 

@@ -107,7 +107,8 @@ func TestAcc_QuerySpecificationDataSource_basic(t *testing.T) {
   "limit": 250,
   "time_range": 7200,
   "start_time": 1577836800,
-  "granularity": 30
+  "granularity": 30,
+  "compare_time_offset_seconds": 3600
 }`)
 	require.NoError(t, err)
 	resource.Test(t, resource.TestCase{
@@ -181,10 +182,11 @@ data "honeycombio_query_specification" "test" {
         value        = 1000
     }
 
-    limit       = 250
-    time_range  = 7200
-    start_time  = 1577836800
-    granularity = 30
+    limit                       = 250
+    time_range                  = 7200
+    start_time                  = 1577836800
+    granularity                 = 30
+    compare_time_offset_seconds = 3600
 }
 
 output "query_json" {

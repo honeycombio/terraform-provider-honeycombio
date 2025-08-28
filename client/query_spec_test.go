@@ -79,9 +79,10 @@ func TestQuerySpec(t *testing.T) {
 				Value:       1000.0,
 			},
 		},
-		Limit:       client.ToPtr(100),
-		TimeRange:   client.ToPtr(3600), // 1 hour
-		Granularity: client.ToPtr(60),   // 1 minute
+		Limit:                    client.ToPtr(100),
+		TimeRange:                client.ToPtr(3600),  // 1 hour
+		Granularity:              client.ToPtr(60),    // 1 minute
+		CompareTimeOffsetSeconds: client.ToPtr(86400), // 1 day
 	}
 
 	_, err := c.Queries.Create(ctx, dataset, &query)
@@ -367,6 +368,26 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 				Breakdowns: []string{"column_1"},
 			},
 			client.QuerySpec{},
+			false,
+		},
+		{
+			"Equivalent CompareTimeOffsetSeconds",
+			client.QuerySpec{
+				CompareTimeOffsetSeconds: client.ToPtr((86400)),
+			},
+			client.QuerySpec{
+				CompareTimeOffsetSeconds: client.ToPtr((86400)),
+			},
+			true,
+		},
+		{
+			"Not equivalent CompareTimeOffsetSeconds",
+			client.QuerySpec{
+				CompareTimeOffsetSeconds: client.ToPtr((7200)),
+			},
+			client.QuerySpec{
+				CompareTimeOffsetSeconds: client.ToPtr((3600)),
+			},
 			false,
 		},
 	}
