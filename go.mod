@@ -15,7 +15,7 @@ require (
 	github.com/hashicorp/terraform-plugin-testing v1.13.3
 	github.com/honeycombio/honeycomb-derived-column-validator v0.0.1
 	github.com/joho/godotenv v1.5.1
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 )
 
 require (
