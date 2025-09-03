@@ -538,10 +538,15 @@ func (d *querySpecDataSource) ValidateConfig(ctx context.Context, req datasource
 		}
 
 		if !slices.Contains(timeOverTimeOptions, data.CompareTimeOffset.ValueInt64()) {
+			// Convert int to string for the error message
+			timeOverTimeStrings := make([]string, len(timeOverTimeOptions))
+			for i, val := range timeOverTimeOptions {
+				timeOverTimeStrings[i] = strconv.FormatInt(val, 10)
+			}
 			resp.Diagnostics.AddAttributeError(
 				path.Root("compare_time_offset"),
 				"compare_time_offset is an invalid value.",
-				"",
+				"Valid values are: "+strings.Join(timeOverTimeStrings, ", "),
 			)
 		}
 	}

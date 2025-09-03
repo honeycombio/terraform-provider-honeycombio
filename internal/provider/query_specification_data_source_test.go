@@ -634,7 +634,7 @@ func TestAcc_QuerySpecificationDataSource_TimeRange_CompareTimeOffsetInvalid(t *
 		Steps: []resource.TestStep{
 			{
 				Config: `
-data "honeycombio_query_specification" "test" {
+data "honeycombio_query_specification" "less_than_time_range" {
   calculation {
     op = "COUNT"
   }
@@ -650,9 +650,37 @@ data "honeycombio_query_specification" "test" {
 }
 
 output "query_json" {
-  value = data.honeycombio_query_specification.test.json
+  value = data.honeycombio_query_specification.less_than_time_range.json
 }`,
 				ExpectError: regexp.MustCompile("compare_time_offset must be greater than the queries time range"),
+			},
+		},
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "invalid_compare_time_offset" {
+  calculation {
+    op = "COUNT"
+  }
+
+  filter {
+    column = "duration_ms"
+    op     = "="
+    value  = 0
+  }
+
+  compare_time_offset = 1
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.invalid_compare_time_offset.json
+}`,
+				ExpectError: regexp.MustCompile("compare_time_offset is an invalid value"),
 			},
 		},
 	})
