@@ -3,8 +3,10 @@ package provider
 import (
 	"context"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -24,7 +26,8 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource = &querySpecDataSource{}
+	_ datasource.DataSource                   = &querySpecDataSource{}
+	_ datasource.DataSourceWithValidateConfig = &querySpecDataSource{}
 )
 
 func NewQuerySpecDataSource() datasource.DataSource {
@@ -89,7 +92,7 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 				Optional:   true,
 				Validators: []validator.Int64{int64validator.AtLeast(0)},
 			},
-			"compare_time_offset_seconds": schema.Int64Attribute{
+			"compare_time_offset": schema.Int64Attribute{
 				Description: "The time offset for comparison queries, in seconds. " +
 					"Used to compare current time range data with data from a previous time period.",
 				Optional: true,
@@ -446,8 +449,8 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 	if !data.Granularity.IsNull() {
 		querySpec.Granularity = client.ToPtr(int(data.Granularity.ValueInt64()))
 	}
-	if !data.CompareTimeOffsetSeconds.IsNull() {
-		querySpec.CompareTimeOffsetSeconds = client.ToPtr(int(data.CompareTimeOffsetSeconds.ValueInt64()))
+	if !data.CompareTimeOffset.IsNull() {
+		querySpec.CompareTimeOffsetSeconds = client.ToPtr(int(data.CompareTimeOffset.ValueInt64()))
 	}
 
 	if querySpec.TimeRange != nil && querySpec.StartTime != nil && querySpec.EndTime != nil {
@@ -491,4 +494,55 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
+}
+
+func (d *querySpecDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	var data models.QuerySpecificationModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !data.CompareTimeOffset.IsUnknown() && !data.CompareTimeOffset.IsNull() {
+
+		// get the query time range to check if the compare time offset is greater
+		var queryTimeRange int64
+		if !data.TimeRange.IsUnknown() && !data.TimeRange.IsNull() {
+			queryTimeRange = data.TimeRange.ValueInt64()
+		} else if !data.StartTime.IsUnknown() && !data.StartTime.IsNull() && !data.EndTime.IsUnknown() && !data.EndTime.IsNull() {
+			queryTimeRange = data.EndTime.ValueInt64() - data.StartTime.ValueInt64()
+		} else {
+			queryTimeRange = client.DefaultQueryTimeRange
+		}
+
+		if data.CompareTimeOffset.ValueInt64() < queryTimeRange {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("compare_time_offset"),
+				"compare_time_offset must be greater than the queries time range.",
+				"",
+			)
+		}
+
+		// validate that the compare time offset is one of the allowed values
+		timeOverTimeOptions := []int64{
+			queryTimeRange,
+			int64(30 * time.Minute / time.Second),
+			int64(1 * time.Hour / time.Second),
+			int64(2 * time.Hour / time.Second),
+			int64(8 * time.Hour / time.Second),
+			int64(24 * time.Hour / time.Second),
+			int64(7 * 24 * time.Hour / time.Second),
+			int64(28 * 24 * time.Hour / time.Second),
+			int64(182 * 24 * time.Hour / time.Second),
+		}
+
+		if !slices.Contains(timeOverTimeOptions, data.CompareTimeOffset.ValueInt64()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("compare_time_offset"),
+				"compare_time_offset is an invalid value.",
+				"",
+			)
+		}
+	}
 }
