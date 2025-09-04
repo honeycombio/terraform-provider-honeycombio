@@ -17,6 +17,7 @@ type QuerySpecificationModel struct {
 	StartTime         types.Int64                              `tfsdk:"start_time"`
 	EndTime           types.Int64                              `tfsdk:"end_time"`
 	Granularity       types.Int64                              `tfsdk:"granularity"`
+	CompareTimeOffset types.Int64                              `tfsdk:"compare_time_offset"`
 	Calculations      []QuerySpecificationCalculationModel     `tfsdk:"calculation"`
 	CalculatedFields  []QuerySpecificationCalculatedFieldModel `tfsdk:"calculated_field"`
 	Filters           []QuerySpecificationFilterModel          `tfsdk:"filter"`

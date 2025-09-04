@@ -181,10 +181,10 @@ data "honeycombio_query_specification" "test" {
         value        = 1000
     }
 
-    limit       = 250
-    time_range  = 7200
-    start_time  = 1577836800
-    granularity = 30
+    limit                       = 250
+    time_range                  = 7200
+    start_time                  = 1577836800
+    granularity                 = 30
 }
 
 output "query_json" {
@@ -569,6 +569,118 @@ output "query_json" {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckOutput("query_json", expected),
 				),
+			},
+		},
+	})
+}
+
+func TestAcc_QuerySpecificationDataSource_CompareTimeOffsetSecondsValid(t *testing.T) {
+	expected, err := test.MinifyJSON(`
+{
+  "calculations": [
+    {
+      "op": "COUNT"
+    }
+  ],
+  "filters": [
+    {
+      "column": "duration_ms",
+      "op": "=",
+      "value": 0
+    }
+  ],
+  "time_range": 7200,
+  "granularity": 0,
+  "compare_time_offset_seconds": 7200
+}`)
+	require.NoError(t, err)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  filter {
+    column = "duration_ms"
+    op     = "="
+    value  = 0
+  }
+
+  granularity = 0
+  compare_time_offset = 7200
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.test.json
+}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("query_json", expected),
+				),
+			},
+		},
+	})
+}
+
+func TestAcc_QuerySpecificationDataSource_TimeRange_CompareTimeOffsetInvalid(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "less_than_time_range" {
+  calculation {
+    op = "COUNT"
+  }
+
+  filter {
+    column = "duration_ms"
+    op     = "="
+    value  = 0
+  }
+
+  start_time = 1714738800
+  compare_time_offset = 1800
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.less_than_time_range.json
+}`,
+				ExpectError: regexp.MustCompile("compare_time_offset must be greater than the queries time range"),
+			},
+		},
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "invalid_compare_time_offset" {
+  calculation {
+    op = "COUNT"
+  }
+
+  filter {
+    column = "duration_ms"
+    op     = "="
+    value  = 0
+  }
+
+  compare_time_offset = 1
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.invalid_compare_time_offset.json
+}`,
+				ExpectError: regexp.MustCompile("compare_time_offset is an invalid value"),
 			},
 		},
 	})
