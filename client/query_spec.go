@@ -3,12 +3,25 @@ package client
 import (
 	"encoding/json"
 	"reflect"
+	"time"
 )
 
 const (
 	DefaultQueryTimeRange = 2 * 60 * 60
 	DefaultQueryLimit     = 1000
 )
+
+// ValidTimeCompareOffsets are the valid time offsets for comparison queries, in seconds.
+var ValidTimeCompareOffsets = []int64{
+	int64(30 * time.Minute / time.Second),
+	int64(1 * time.Hour / time.Second),
+	int64(2 * time.Hour / time.Second),
+	int64(8 * time.Hour / time.Second),
+	int64(24 * time.Hour / time.Second),
+	int64(7 * 24 * time.Hour / time.Second),
+	int64(28 * 24 * time.Hour / time.Second),
+	int64(182 * 24 * time.Hour / time.Second),
+}
 
 // QuerySpec represents a Honeycomb query.
 //
