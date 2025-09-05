@@ -1,3 +1,15 @@
+# 0.40.0 (Sep 05, 2025)
+
+ENHANCEMENTS:
+
+* feat(r/flexible_board): add panel type consistency validation (#749)
+* feat(d/query_specification): add support for `compare_time_offset` seconds (#751)
+
+HOUSEKEEPING:
+
+* maint(deps): bump github.com/stretchr/testify from 1.11.0 to 1.11.1 (#750)
+* maint(deps): bump actions/setup-go from 5 to 6 (#752)
+
 # 0.39.1 (Aug 25, 2025)
 
 BUGFIXES:
@@ -12,7 +24,7 @@ HOUSEKEEPING:
 
 ENHANCEMENTS:
 
-* feat(r/flexibleboard): Add support for text panels (#743)
+* feat(r/flexible_board): Add support for text panels (#743)
 * fix(client): add missing source field to query annotations (#742)
 
 HOUSEKEEPING:
