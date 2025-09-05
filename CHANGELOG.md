@@ -3,7 +3,7 @@
 ENHANCEMENTS:
 
 * feat(r/flexible_board): add panel type consistency validation (#749)
-* feat(r/query): add support for `compare_time_offset` seconds (#751)
+* feat(d/query_specification): add support for `compare_time_offset` seconds (#751)
 
 HOUSEKEEPING:
 
