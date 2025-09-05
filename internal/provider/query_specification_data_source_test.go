@@ -584,9 +584,14 @@ func TestAcc_QuerySpecificationDataSource_CompareTimeOffsetSecondsValid(t *testi
   ],
   "filters": [
     {
-      "column": "duration_ms",
-      "op": "=",
-      "value": 0
+      "column": "message",
+      "op": "contains",
+      "value": "a"
+    },
+    {
+      "column": "message",
+      "op": "contains",
+      "value": "b"
     }
   ],
   "time_range": 7200,
@@ -606,10 +611,13 @@ data "honeycombio_query_specification" "test" {
     op = "COUNT"
   }
 
-  filter {
-    column = "duration_ms"
-    op     = "="
-    value  = 0
+  dynamic "filter" {
+    for_each = toset(["a", "b"])
+    content {
+      column = "message"
+      op     = "contains"
+      value  = filter.value
+    }
   }
 
   granularity = 0
