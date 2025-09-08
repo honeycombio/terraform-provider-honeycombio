@@ -396,6 +396,100 @@ EOF
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.y_coordinate", "0"),
 				),
 			},
+			// remove all positions attributes
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_query_annotation" "test" {
+  dataset     = "%[1]s"
+  name        = "My annotated query"
+  description = "My lovely description"
+  query_id    = honeycombio_query.test.id
+}
+
+resource "honeycombio_flexible_board" "test" {
+  name        = "simple flexible board updated"
+  description = "simple flexible board description"
+
+  panel {
+    type = "slo"
+    slo_panel {
+      slo_id = "%[2]s"
+    }
+  }
+  panel {
+    type = "text"
+    text_panel {
+      content = <<EOF
+# Positioned Text Panel
+
+This is a **multiline** text panel with:
+- Fixed position and size
+- Rich markdown formatting
+- Multiple content sections
+
+## Additional Info
+Content positioned at specific coordinates.
+EOF
+    }
+  }
+
+  panel {
+    type = "query"
+    query_panel {
+      query_id            = honeycombio_query.test.id
+      query_annotation_id = honeycombio_query_annotation.test.id
+      query_style         = "table"
+    }
+  }
+}
+						  `, dataset, slo.ID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "name", "simple flexible board updated"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "description", "simple flexible board description"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "3"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.type", "slo"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.height"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.width"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.x_coordinate"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.0.position.y_coordinate"),
+					resource.TestCheckResourceAttrPair("honeycombio_flexible_board.test", "panel.2.query_panel.0.query_id", "honeycombio_query.test", "id"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.query_panel.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.query_panel.0.query_style", "table"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.query_panel.0.visualization_settings.#", "0"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.2.type", "query"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.2.position.height"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.2.position.width"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.2.position.x_coordinate"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.2.position.y_coordinate"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.type", "text"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.text_panel.#", "1"),
+					resource.TestCheckResourceAttrWith("honeycombio_flexible_board.test", "panel.1.text_panel.0.content", func(value string) error {
+						if !strings.Contains(value, "# Positioned Text Panel") {
+							return fmt.Errorf("expected content to contain '# Positioned Text Panel', got: %s", value)
+						}
+						if !strings.Contains(value, "Fixed position and size") {
+							return fmt.Errorf("expected content to contain 'Fixed position and size', got: %s", value)
+						}
+						return nil
+					}),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.height"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.width"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.x_coordinate"),
+					resource.TestCheckNoResourceAttr("honeycombio_flexible_board.test", "panel.1.position.y_coordinate"),
+				),
+			},
 		},
 	})
 }
