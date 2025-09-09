@@ -1,3 +1,9 @@
+# 0.40.1 (Sep 05, 2025)
+
+BUGFIXES:
+
+* fix(r/query_specification): handle validation with dynamic blocks (#754)
+
 # 0.40.0 (Sep 05, 2025)
 
 ENHANCEMENTS:
