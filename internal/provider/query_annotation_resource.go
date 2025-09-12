@@ -103,12 +103,6 @@ func (*queryAnnotationResource) Schema(_ context.Context, _ resource.SchemaReque
 }
 
 func (r *queryAnnotationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// if req.ID == "" {
-	// 	resp.Diagnostics.AddError("Invalid Import ID", "The Query Annotation ID must be provided")
-	// 	return
-	// }
-
-	// resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 	dataset, id, found := strings.Cut(req.ID, "/")
 
 	// if dataset separator not found, we will assume its the bare id
