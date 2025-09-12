@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -21,8 +22,9 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource              = &queryAnnotationResource{}
-	_ resource.ResourceWithConfigure = &queryAnnotationResource{}
+	_ resource.Resource                = &queryAnnotationResource{}
+	_ resource.ResourceWithConfigure   = &queryAnnotationResource{}
+	_ resource.ResourceWithImportState = &queryAnnotationResource{}
 )
 
 type queryAnnotationResource struct {
@@ -98,6 +100,30 @@ func (*queryAnnotationResource) Schema(_ context.Context, _ resource.SchemaReque
 			},
 		},
 	}
+}
+
+func (r *queryAnnotationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	// if req.ID == "" {
+	// 	resp.Diagnostics.AddError("Invalid Import ID", "The Query Annotation ID must be provided")
+	// 	return
+	// }
+
+	// resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	dataset, id, found := strings.Cut(req.ID, "/")
+
+	// if dataset separator not found, we will assume its the bare id
+	// if thats the case, we need to reassign values since strings.Cut would return (id, "", false)
+	dsValue := types.StringNull()
+	if !found {
+		id = dataset
+	} else {
+		dsValue = types.StringValue(dataset)
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &models.QueryAnnotationResourceModel{
+		ID:      types.StringValue(id),
+		Dataset: dsValue,
+	})...)
 }
 
 func (r *queryAnnotationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
