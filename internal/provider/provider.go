@@ -239,7 +239,7 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 			Debug:        debug,
 			UserAgent:    userAgent,
 		})
-		if helper.AddDiagnosticOnError(&resp.Diagnostics, "Unable to create Honeycomb API V2 Client DYOO TEST", err) {
+		if helper.AddDiagnosticOnError(&resp.Diagnostics, "Unable to create Honeycomb API V2 Client", err) {
 			return
 		}
 		cc.v2client = v2client
