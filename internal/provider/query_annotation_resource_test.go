@@ -64,6 +64,12 @@ resource "honeycombio_query_annotation" "test" {
 					resource.TestCheckResourceAttrPair("honeycombio_query_annotation.test", "query_id", "honeycombio_query.test", "id"),
 				),
 			},
+			{
+				ResourceName:        "honeycombio_query_annotation.test",
+				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
 		},
 	})
 
@@ -181,6 +187,107 @@ resource "honeycombio_query_annotation" "test" {
 }`,
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false,
+			},
+			{
+				ResourceName:      "honeycombio_query_annotation.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAcc_QueryAnnotationImportState(t *testing.T) {
+	dataset := testAccDataset()
+	name := "test annotation import"
+
+	config := fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+
+  filter {
+    column = "duration_ms"
+    op     = ">"
+    value  = 10
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_query_annotation" "test" {
+  query_id    = honeycombio_query.test.id
+  dataset     = "%s"
+  name        = "%s"
+  description = "Test query annotation description"
+}`, dataset, dataset, name)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckQueryAnnotationExists(t, dataset, "honeycombio_query_annotation.test"),
+					resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "name", name),
+					resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "description", "Test query annotation description"),
+					resource.TestCheckResourceAttrPair("honeycombio_query_annotation.test", "query_id", "honeycombio_query.test", "id"),
+				),
+			},
+			{
+				ResourceName:        "honeycombio_query_annotation.test",
+				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+		},
+	})
+}
+
+func TestAcc_QueryAnnotationImportState_EnvironmentWide(t *testing.T) {
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	if c.IsClassic(ctx) {
+		t.Skip("env-wide query annotations are not supported in classic")
+	}
+
+	name := "test env-wide annotation import"
+
+	config := fmt.Sprintf(`
+resource "honeycombio_query" "test" {
+  query_json = "{}"
+}
+
+resource "honeycombio_query_annotation" "test" {
+  query_id    = honeycombio_query.test.id
+  name        = "%s"
+  description = "Test env-wide query annotation description"
+}`, name)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckQueryAnnotationExists(t, client.EnvironmentWideSlug, "honeycombio_query_annotation.test"),
+					resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "name", name),
+					resource.TestCheckResourceAttr("honeycombio_query_annotation.test", "description", "Test env-wide query annotation description"),
+					resource.TestCheckResourceAttrPair("honeycombio_query_annotation.test", "query_id", "honeycombio_query.test", "id"),
+				),
+			},
+			{
+				ResourceName:      "honeycombio_query_annotation.test",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
