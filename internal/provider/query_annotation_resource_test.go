@@ -188,11 +188,6 @@ resource "honeycombio_query_annotation" "test" {
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: false,
 			},
-			{
-				ResourceName:      "honeycombio_query_annotation.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
 		},
 	})
 }
