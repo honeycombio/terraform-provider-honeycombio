@@ -56,4 +56,9 @@ In addition to all arguments above, the following attributes are exported:
 
 ## Import
 
-Query annotations cannot be imported.
+Query Annotations can be imported using a combination of the dataset name and their ID, e.g.
+
+```
+$ terraform import honeycombio_query_annotation.my_query_annotation my-dataset/JL0Xp8SH0Dg
+```
+
