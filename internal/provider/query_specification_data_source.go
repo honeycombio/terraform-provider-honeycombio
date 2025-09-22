@@ -490,7 +490,7 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 		)
 	}
 	if querySpec.TimeRange != nil && querySpec.Granularity != nil {
-		if *querySpec.Granularity >= *querySpec.TimeRange {
+		if *querySpec.Granularity > *querySpec.TimeRange {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("granularity"),
 				"invalid granularity",
