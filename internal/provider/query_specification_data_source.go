@@ -84,7 +84,7 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 			},
 			"granularity": schema.Int64Attribute{
 				Description: "The time resolution of the query's graph, in seconds. " +
-					"Valid values must be in between the query's time range /10 at maximum, and /1000 at minimum.",
+					"Valid values must be in between the query's time range at maximum, and /1000 at minimum.",
 				Optional:   true,
 				Validators: []validator.Int64{int64validator.AtLeast(0)},
 			},
@@ -490,11 +490,11 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 		)
 	}
 	if querySpec.TimeRange != nil && querySpec.Granularity != nil {
-		if *querySpec.Granularity > (*querySpec.TimeRange / 10) {
+		if *querySpec.Granularity >= *querySpec.TimeRange {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("granularity"),
 				"invalid granularity",
-				"granularity can not be greater than time_range/10",
+				"granularity can not be greater than time_range",
 			)
 		}
 		if *querySpec.Granularity != 0 && *querySpec.Granularity < (*querySpec.TimeRange/1000) {
