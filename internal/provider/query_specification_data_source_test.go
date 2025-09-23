@@ -302,10 +302,10 @@ data "honeycombio_query_specification" "test" {
 		Config: `
 data "honeycombio_query_specification" "test" {
   time_range  = 120
-  granularity = 13
+  granularity = 121
 }`,
 		PlanOnly:    true,
-		ExpectError: regexp.MustCompile("granularity can not be greater than time_range/10"),
+		ExpectError: regexp.MustCompile("granularity can not be greater than time_range"),
 	},
 	{
 		Config: `
