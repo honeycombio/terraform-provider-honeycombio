@@ -1,3 +1,20 @@
+# 0.41.0 (Oct 01, 2025)
+
+ENHANCEMENTS:
+
+* feat(r/query_annotation): add import support (#759)
+
+BUGFIXES:
+
+* fix(d/query_specification): Allow wider granularity range (#762)
+
+HOUSEKEEPING:
+
+* maint(deps): bump golang.org/x/net from 0.43.0 to 0.44.0 (#758)
+* maint(deps): bump the hashicorp group with 4 updates (#761)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.38.0 to 2.38.1 in the hashicorp group (#763)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.16.0 to 1.16.1 in the hashicorp group (#766)
+  
 # 0.40.1 (Sep 05, 2025)
 
 BUGFIXES:
