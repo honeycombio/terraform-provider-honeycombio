@@ -1140,7 +1140,7 @@ resource "honeycombio_trigger" "test" {
 
   query_json = data.honeycombio_query_specification.test.json
 }`,
-				ExpectError: regexp.MustCompile(`frequency must be at least equal to the query duration`),
+				ExpectError: regexp.MustCompile(`duration must be at least equal to the frequency`),
 			},
 			{
 				Config: `
@@ -1446,8 +1446,8 @@ resource "honeycombio_trigger" "test" {
 
   recipient {
 	id = honeycombio_webhook_recipient.test.id
-	
-	notification_details {	
+
+	notification_details {
 		variable {
 			name = "severity"
 			value = "%[3]s"
@@ -1517,8 +1517,8 @@ resource "honeycombio_trigger" "test" {
 
   recipient {
 	id = honeycombio_webhook_recipient.test.id
-	
-	notification_details {	
+
+	notification_details {
 		variable {
 			name = "severity"
 			value = "info"

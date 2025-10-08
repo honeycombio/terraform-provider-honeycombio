@@ -653,14 +653,14 @@ func (r *triggerResource) ValidateConfig(ctx context.Context, req resource.Valid
 			resp.Diagnostics.AddAttributeError(
 				path.Root("frequency"),
 				"Trigger validation error",
-				"The Trigger's frequency must be at least equal to the query duration.",
+				"The Trigger's query duration must be at least equal to the frequency.",
 			)
 		}
 		if *q.TimeRange > frequency*4 {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("frequency"),
 				"Trigger validation error",
-				"The Trigger's duration cannot be more than four times the frequency.",
+				"The Trigger's query duration cannot be more than four times the frequency.",
 			)
 		}
 	}
