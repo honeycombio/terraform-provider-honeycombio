@@ -1163,6 +1163,127 @@ resource "honeycombio_trigger" "test" {
 }`,
 				ExpectError: regexp.MustCompile(`duration cannot be more than four times the frequency`),
 			},
+			{
+				Config: `
+			data "honeycombio_query_specification" "test" {
+				calculation {
+					op = "COUNT"
+				}
+				calculation {
+					op     = "AVG"
+					column = "duration_ms"
+				}
+				calculation {
+					op     = "P99"
+					column = "duration_ms"
+				}
+
+				having {
+					calculate_op = "P99"
+					column       = "duration_ms"
+					op           = ">"
+					value        = 1000
+				}
+
+				time_range = 7200
+			}
+
+			resource "honeycombio_trigger" "test" {
+				name    = "multiple calculations not obscured by a valid having"
+				dataset = "%s"
+
+				threshold {
+					op    = ">"
+					value = 100
+				}
+
+				frequency = 7200
+
+				query_json = data.honeycombio_query_specification.test.json
+			}`,
+				ExpectError: regexp.MustCompile(`Trigger queries must contain a single calculation, but found COUNT,\s*AVG\(duration_ms\)`),
+			},
+		},
+	})
+}
+
+func TestAcc_TriggerResource_HavingScenarios(t *testing.T) {
+	dataset := testAccDataset()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+	calculation {
+		op = "COUNT"
+	}
+	calculation {
+		op     = "P99"
+		column = "duration_ms"
+	}
+
+	having {
+		calculate_op = "COUNT"
+		op           = ">"
+		value        = 5
+	}
+
+	time_range = 7200
+}
+
+resource "honeycombio_trigger" "test" {
+	name    = "two calculations but one matches having"
+	dataset = "%s"
+
+	threshold {
+		op    = ">"
+		value = 100
+	}
+
+	frequency = 7200
+
+	query_json = data.honeycombio_query_specification.test.json
+}`, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", "two calculations but one matches having"),
+				),
+			},
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+	calculation {
+		op = "COUNT"
+	}
+
+	having {
+		calculate_op = "COUNT"
+		op           = ">"
+		value        = 5
+	}
+
+	time_range = 7200
+}
+
+resource "honeycombio_trigger" "test" {
+	name    = "one calculation that matches having"
+	dataset = "%s"
+
+	threshold {
+		op    = ">"
+		value = 100
+	}
+
+	frequency = 7200
+
+	query_json = data.honeycombio_query_specification.test.json
+}`, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", "one calculation that matches having"),
+				),
+			},
 		},
 	})
 }

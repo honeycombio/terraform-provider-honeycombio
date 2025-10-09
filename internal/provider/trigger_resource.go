@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -593,28 +595,68 @@ func (r *triggerResource) ValidateConfig(ctx context.Context, req resource.Valid
 		return
 	}
 
-	// validate calculations
-	if len(q.Calculations) != 1 {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("query_json"),
-			"Trigger validation error",
-			"Trigger queries must contain a single calculation.",
-		)
-	} else {
-		if q.Calculations[0].Op == client.CalculationOpHeatmap {
+	var calculationsWithoutHavings []client.CalculationSpec
+	for _, calc := range q.Calculations {
+		if calc.Op == client.CalculationOpHeatmap {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("query_json"),
 				"Trigger validation error",
 				"Trigger queries cannot use HEATMAP calculations.",
 			)
 		}
-		if q.Calculations[0].Op == client.CalculationOpConcurrency {
+		if calc.Op == client.CalculationOpConcurrency {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("query_json"),
 				"Trigger validation error",
 				"Trigger queries cannot use CONCURRENCY calculations.",
 			)
 		}
+
+		matchesHaving := false
+		for _, having := range q.Havings {
+			if reflect.DeepEqual(having.Column, calc.Column) &&
+				*having.CalculateOp == calc.Op {
+				matchesHaving = true
+				break
+			}
+		}
+		if !matchesHaving {
+			calculationsWithoutHavings = append(calculationsWithoutHavings, calc)
+		}
+	}
+
+	// Can have one non-having calculation; which means two calculations if one of
+	// them matches the having, one calculation if it matches the having, and one
+	// calculation if there is no having
+	var numCalculations int
+	switch {
+	case len(q.Calculations) == 1:
+		numCalculations = 1
+	case len(q.Havings) == 0:
+		numCalculations = len(q.Calculations)
+	default:
+		numCalculations = len(calculationsWithoutHavings)
+	}
+
+	if numCalculations != 1 {
+		var namesList []string
+		for _, calc := range calculationsWithoutHavings {
+			s := string(calc.Op)
+			if calc.Column != nil {
+				s = fmt.Sprintf("%s(%s)", s, *calc.Column)
+			}
+			namesList = append(namesList, s)
+		}
+		names := strings.Join(namesList, ", ")
+
+		resp.Diagnostics.AddAttributeError(
+			path.Root("query_json"),
+			"Trigger validation error",
+			fmt.Sprintf(
+				"Trigger queries must contain a single calculation, but found %s",
+				names,
+			),
+		)
 	}
 
 	// ensure unsupported fields are unset
