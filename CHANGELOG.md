@@ -1,3 +1,16 @@
+# 0.42.0 (Oct 10, 2025)
+
+BUGFIXES:
+
+* fix(triggers): allow two trigger calculations if one is a having (#772)
+* fix(triggers): Trigger Duration/Frequency error message (#770)
+
+HOUSEKEEPING:
+
+* maint(deps): bump golang.org/x/net from 0.45.0 to 0.46.0 (#771)
+* maint(deps): bump golang.org/x/net from 0.44.0 to 0.45.0 (#769)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.18.0 to 0.19.0 in the hashicorp group (#768)
+
 # 0.41.0 (Oct 01, 2025)
 
 ENHANCEMENTS:
