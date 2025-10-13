@@ -2,6 +2,8 @@
 
 The `honeycombio_environment` data source retrieves the details of a single Environment.
 
+-> **API Keys** Note that this requires a [v2 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v2-apis)
+
 ~> **Warning** Terraform will fail unless exactly one environment is returned by the search.
   Ensure that your search is specific enough to return a single environment only.
   If you want to retrieve multiple environments, use the `honeycombio_environments` data source instead.

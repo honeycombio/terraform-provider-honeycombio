@@ -2,6 +2,8 @@
 
 Creates a legacy board. Legacy boards are deprecated, use [honeycombio_flexible_board](./flexible_board.md) resource instead. For more information about boards, check out [Create Custom Boards](https://docs.honeycomb.io/observe/boards).
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ## Example Usage
 
 ### Simple Legacy Board

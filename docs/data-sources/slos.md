@@ -1,6 +1,8 @@
 # Data Source: honeycombio_slos
 The SLOs data source retrieves the SLOs of a dataset or environment, with the option of narrowing the retrieval by providing a `detail_filter`.
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ~> **Note** Multi-Dataset SLOs are not supported yet for this data source.
 
 

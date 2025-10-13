@@ -2,6 +2,8 @@
 
 Creates a Dataset in an Environment.
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ~> **Warning** Prior to version 0.27.0 of the provider, datasets were *not* deleted on destroy but left in place and only removed from state.
 
 -> Version 0.38 and later of the Honeycomb Provider include a Feature Toggle which allows the dataset to be imported and updated automatically if there is a conflict during create instead of throwing an error.
