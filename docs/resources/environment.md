@@ -2,6 +2,8 @@
 
 Creates a Honeycomb Environment.
 
+-> **API Keys** Note that this requires a [v2 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v2-apis)
+
 -> This resource requires the provider be configured with a Management Key with `environments:write` in the configured scopes.
 
 ## Example Usage

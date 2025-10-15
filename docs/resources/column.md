@@ -3,6 +3,8 @@
 Provides a Honeycomb Column resource.
 This can be used to create, update, and delete columns in a dataset.
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ~> **Warning** Deleting a column is a destructive and irreversible operation which also removes the data in the column.
 
 -> Version 0.38 and later of the Honeycomb Provider include a Feature Toggle which allows the column to be imported and updated automatically if there is a conflict during create instead of throwing an error.

@@ -3,6 +3,8 @@
 The `honeycombio_slo` data source retrieves the details of a single SLO.  
 If you want to retreive multiple SLOs, use the `honeycombio_slos` data source instead.
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ## Example Usage
 
 ```hcl

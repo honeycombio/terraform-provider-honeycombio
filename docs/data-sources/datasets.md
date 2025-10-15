@@ -2,6 +2,8 @@
 
 The Datasets data source retrieves the Environment's Datasets.
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ## Example Usage
 
 ```hcl

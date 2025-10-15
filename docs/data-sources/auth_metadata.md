@@ -2,6 +2,8 @@
 
 The `honeycombio_auth_metadata` data source retreives information about the API key used to authenticate the provider.
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ## Example Usage
 
 ```hcl

@@ -3,6 +3,8 @@
 The `honeycombio_dataset` data source retrieves the details of a single Dataset.
 If you want to retrieve multiple Datasets, use the `honeycombio_datasets` data source instead.
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ## Example Usage
 
 ```hcl

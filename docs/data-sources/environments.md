@@ -2,6 +2,8 @@
 
 The Environments data source retrieves the Team's environments.
 
+-> **API Keys** Note that this requires a [v2 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v2-apis)
+
 -> This data source requires the provider be configured with a Management Key with `environments:read` in the configured scopes.
 
 ## Example Usage

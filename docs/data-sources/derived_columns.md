@@ -2,6 +2,8 @@
 
 The `honeycombio_derived_columns` data source allows the derived columns of a dataset to be retrieved.
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ## Example Usage
 
 ```hcl
