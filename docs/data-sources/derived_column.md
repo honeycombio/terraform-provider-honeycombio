@@ -2,6 +2,8 @@
 
 The `honeycombio_derived_column` data source retrieves the details of a single derived column.
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ~> **Warning** Terraform will fail unless a derived column is returned by the search. Ensure that your search is specific enough to return a derived column.
 If you want to match multiple derived columns, use the `honeycombio_derived_columns` data source instead.
 

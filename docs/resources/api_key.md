@@ -3,6 +3,8 @@
 Creates a Honeycomb API Key.
 For more information about API Keys, check out [Best Practices for API Keys](https://docs.honeycomb.io/get-started/best-practices/api-keys/).
 
+-> **API Keys** Note that this requires a [v2 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v2-apis)
+
 -> This resource requires the provider be configured with a Management Key with `api-keys:write` in the configured scopes.
 
 ## Example Usage

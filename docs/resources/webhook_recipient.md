@@ -2,6 +2,8 @@
 
 `honeycombio_webhook_recipient` allows you to define and manage a Webhook recipient that can be used by Triggers or BurnAlerts notifications.
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ## Standard Webhook Example
 
 ```hcl

@@ -4,6 +4,8 @@ Creates a Query scoped to a Dataset or Environment.
 
 Queries can be used by Triggers and Boards, or be executed via the [Query Data API](https://docs.honeycomb.io/api/query-results/).
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 -> Queries are immutable and can not be deleted -- only created or read.
   Any changes will result in a new query object being created.
 

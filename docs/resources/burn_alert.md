@@ -5,6 +5,8 @@ Creates a burn alert.
 For more information about burn alerts,
 check out [Define Burn Alerts](https://docs.honeycomb.io/working-with-your-data/slos/burn-alerts).
 
+-> **API Keys** Note that this requires a [v1 API Key](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs#v1-apis)
+
 ## Example Usage
 
 ### Basic Example - Exhaustion Time Burn Alert
