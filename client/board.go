@@ -57,20 +57,8 @@ type Board struct {
 	Name string `json:"name"`
 	// Description of the board.
 	Description string `json:"description,omitempty"`
-	// The number of columns to be laid out when displaying the board.
-	// Defaults to "multi".
-	//
-	// n.b. 'list' style boards cannot specify a column layout
-	ColumnLayout BoardColumnStyle `json:"column_layout,omitempty"`
-	// How the board should be displayed in the UI, defaults to "visual".
-	// Deprecated: All Boards are visual now. This field is ignored.
-	Style BoardStyle `json:"style,omitempty"`
 	// Links returned by the board API for the Board
 	Links BoardLinks `json:"links,omitempty"`
-	// A list of queries displayed on the board, in order of appearance.
-	Queries []BoardQuery `json:"queries"`
-	// A list of SLO IDs to be added to the board
-	SLOs []string `json:"slos"`
 	// A list of tags to organize the Board, for flexible boards only
 	Tags []Tag `json:"tags"`
 }
@@ -139,7 +127,6 @@ type BoardTextPanel struct {
 type BoardType string
 
 const (
-	BoardTypeClassic  BoardType = "classic"
 	BoardTypeFlexible BoardType = "flexible"
 )
 
@@ -150,46 +137,10 @@ const (
 	LayoutGenerationAuto   LayoutGeneration = "auto"
 )
 
-// BoardStyle determines how a Board should be displayed within the Honeycomb UI.
-type BoardStyle string
-
-// Declaration of board styles.
-const (
-	BoardStyleList   BoardStyle = "list"
-	BoardStyleVisual BoardStyle = "visual"
-)
-
-// BoardStyles returns an exhaustive list of board styles.
-func BoardStyles() []BoardStyle {
-	return []BoardStyle{BoardStyleList, BoardStyleVisual}
-}
-
-type BoardColumnStyle string
-
-const (
-	BoardColumnStyleMulti  BoardColumnStyle = "multi"
-	BoardColumnStyleSingle BoardColumnStyle = "single"
-)
-
 // BoardLinks represents links returned by the board API.
 type BoardLinks struct {
 	// URL For accessing the board
 	BoardURL string `json:"board_url,omitempty"`
-}
-
-// BoardQuery represents a query that is part of a board.
-type BoardQuery struct {
-	Caption string `json:"caption,omitempty"`
-	// Defaults to graph.
-	QueryStyle BoardQueryStyle `json:"query_style,omitempty"`
-	// Dataset is no longer required
-	Dataset string `json:"dataset,omitempty"`
-	// QueryID is required
-	QueryID string `json:"query_id,omitempty"`
-	// Optional
-	QueryAnnotationID string `json:"query_annotation_id,omitempty"`
-	// Optional
-	GraphSettings BoardGraphSettings `json:"graph_settings"`
 }
 
 // BoardQueryStyle determines how a query should be displayed on the board.
@@ -201,21 +152,6 @@ const (
 	BoardQueryStyleTable BoardQueryStyle = "table"
 	BoardQueryStyleCombo BoardQueryStyle = "combo"
 )
-
-// BoardGraphSettings represents the display settings for an individual graph in a board.
-type BoardGraphSettings struct {
-	OmitMissingValues    bool `json:"omit_missing_values"`
-	UseStackedGraphs     bool `json:"stacked_graphs"`
-	UseLogScale          bool `json:"log_scale"`
-	UseUTCXAxis          bool `json:"utc_xaxis"`
-	HideMarkers          bool `json:"hide_markers"`
-	PreferOverlaidCharts bool `json:"overlaid_charts"`
-}
-
-// BoardQueryStyles returns an exhaustive list of board query styles.
-func BoardQueryStyles() []BoardQueryStyle {
-	return []BoardQueryStyle{BoardQueryStyleGraph, BoardQueryStyleTable, BoardQueryStyleCombo}
-}
 
 func (s *boards) List(ctx context.Context) ([]Board, error) {
 	var b []Board

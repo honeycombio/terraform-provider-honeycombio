@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/require"
 )
 
@@ -592,4 +593,20 @@ resource "honeycombio_flexible_board" "test" {
   }
 }
 	`, dataset, sloID)
+}
+
+func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resourceState, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("not found: %s", name)
+		}
+
+		client := testAccClient(t)
+		_, err := client.Boards.Get(context.Background(), resourceState.Primary.ID)
+		if err != nil {
+			return fmt.Errorf("could not find created board: %w", err)
+		}
+		return nil
+	}
 }
