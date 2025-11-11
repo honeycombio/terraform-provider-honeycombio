@@ -9,8 +9,5 @@ IF(
 			$duration_ms
 		)
 	),
-	LTE(
-		$duration_ms,
-		300
-	)
+	$duration_ms < 300
 )

@@ -28,6 +28,9 @@ func Test_IsValidCalculatedFieldValidator(t *testing.T) {
 		"valid": {
 			val: types.StringValue(`IF(AND(NOT(EXISTS($trace.parent_id)),EXISTS($duration_ms)),LTE($duration_ms,300))`),
 		},
+		"valid with infix": {
+			val: types.StringValue(`IF(AND(NOT(EXISTS($trace.parent_id)),EXISTS($duration_ms)),$duration_ms <= 300)`),
+		},
 		"mismatched input": {
 			val:         types.StringValue(`BOOL(1`),
 			expectError: true,

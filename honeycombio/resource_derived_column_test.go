@@ -112,6 +112,19 @@ EOF
 				PlanOnly:           true,
 				ExpectNonEmptyPlan: true,
 			},
+			{
+				Config: `
+resource "honeycombio_derived_column" "test_infix" {
+  alias      = "valid_infix_syntax"
+  expression = <<EOF
+IF(AND(NOT(EXISTS($trace.parent_id)),EXISTS($duration_ms)),$duration_ms <= 300)
+EOF
+
+  dataset = "foobar"
+}`,
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
 		},
 	})
 }
