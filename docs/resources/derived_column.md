@@ -44,7 +44,7 @@ resource "honeycombio_derived_column" "sli_calculation" {
   DC
 
   alias       = "sli.errors"
-  description = "Return true if any request error in the `Backend` service"
+  description = "Return true if the request succeeded without error in the `Backend` service"
 }
 ```
 
