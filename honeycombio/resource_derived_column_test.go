@@ -117,7 +117,7 @@ EOF
 resource "honeycombio_derived_column" "test_infix" {
   alias      = "valid_infix_syntax"
   expression = <<EOF
-IF(AND(NOT(EXISTS($trace.parent_id)),EXISTS($duration_ms)),$duration_ms <= 300)
+IF(!EXISTS($trace.parent_id) AND EXISTS($duration_ms), $duration_ms <= 300)
 EOF
 
   dataset = "foobar"

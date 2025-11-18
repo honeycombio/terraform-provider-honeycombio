@@ -1,13 +1,4 @@
 IF(
-	AND(
-		NOT(
-			EXISTS(
-				$trace.parent_id
-			)
-		),
-		EXISTS(
-			$duration_ms
-		)
-	),
-	$duration_ms < 300
+	!EXISTS($trace.parent_id) AND EXISTS($duration_ms),
+	$duration_ms <= 300
 )
