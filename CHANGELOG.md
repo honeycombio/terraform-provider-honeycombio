@@ -1,5 +1,9 @@
 # 0.43.0 (Nov 25, 2025)
 
+NOTES:
+
+* This release removes the long-deprecated classic boards from `r/boards`.
+
 ENHANCEMENTS:
 
 * feat(derived-columns): Infix notation support (#779)
