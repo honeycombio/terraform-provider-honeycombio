@@ -1,3 +1,21 @@
+# 0.43.0 (Nov 25, 2025)
+
+NOTES:
+
+* This release removes the long-deprecated classic boards from `r/boards`.
+
+ENHANCEMENTS:
+
+* feat(derived-columns): Infix notation support (#779)
+
+HOUSEKEEPING:
+
+* maint(deps): bump actions/checkout from 5 to 6 (#784)
+* maint(deps): bump golangci/golangci-lint-action from 9.0.0 to 9.1.0 (#785)
+* maint(deps): bump golang.org/x/crypto from 0.44.0 to 0.45.0 (#783)
+* maint(deps): bump golangci/golangci-lint-action from 8.0.0 to 9.0.0 (#778)
+* maint(deps): bump golang.org/x/net from 0.46.0 to 0.47.0 (#782)
+
 # 0.42.0 (Oct 10, 2025)
 
 BUGFIXES:
