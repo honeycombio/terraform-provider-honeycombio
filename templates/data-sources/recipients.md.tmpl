@@ -1,0 +1,17 @@
+# Data Source: honeycombio_recipients
+
+`honeycombio_recipients` data source provides recipient IDs of recipients matching a set of criteria.
+
+## Example Usage
+
+### Get all recipients
+
+{{tffile "examples/data-sources/honeycombio_recipients/get_all_recipients.tf"}}
+
+### Get all email recipients matching a specific domain
+
+{{tffile "examples/data-sources/honeycombio_recipients/get_all_email_recipients_matching_a_specific_domain.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+~> **Note** One of `value` or `value_regex` is required for each `detail_filter` block.

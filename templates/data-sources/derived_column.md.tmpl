@@ -1,0 +1,12 @@
+# Data Source: honeycombio_derived_column
+
+The `honeycombio_derived_column` data source retrieves the details of a single derived column.
+
+~> **Warning** Terraform will fail unless a derived column is returned by the search. Ensure that your search is specific enough to return a derived column.
+If you want to match multiple derived columns, use the `honeycombio_derived_columns` data source instead.
+
+## Example Usage
+
+{{tffile "examples/data-sources/honeycombio_derived_column/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}

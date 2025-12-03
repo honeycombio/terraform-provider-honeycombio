@@ -1,0 +1,25 @@
+# Resource: honeycombio_flexible_board
+
+Creates a flexible board. For more information about boards, check out [Create Custom Boards](https://docs.honeycomb.io/observe/boards).
+
+## Example Usage
+
+### Simple Flexible Board
+
+{{tffile "examples/resources/honeycombio_flexible_board/simple_flexible_board.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+Each `panel` block must have exactly one of `query_panel`, `slo_panel`, or `text_panel` configured.
+
+For `chart` blocks in `visualization_settings`, the `chart_type` attribute accepts the following values: `line`, `tsbar`, `stacked`, `stat`, `cpie`, `cbar`, or `default`.
+
+## Import
+
+Boards can be imported using their ID, e.g.
+
+```shell
+terraform import honeycombio_flexible_board.my_board AobW9oAZX71
+```
+
+You can find the ID in the URL bar when visiting the board from the UI.

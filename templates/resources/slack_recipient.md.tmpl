@@ -1,0 +1,17 @@
+# Resource: honeycombio_slack_recipient
+
+`honeycombio_slack_recipient` allows you to define and manage a Slack channel or user recipient that can be used by Triggers or BurnAlerts notifications.
+
+## Example Usage
+
+{{tffile "examples/resources/honeycombio_slack_recipient/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Slack Recipients can be imported by their ID, e.g.
+
+```
+$ terraform import honeycombio_slack_recipient.my_recipient nx2zsegA0dZ
+```

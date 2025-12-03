@@ -1,0 +1,26 @@
+# Resource: honeycombio_query
+
+Creates a Query scoped to a Dataset or Environment.
+
+Queries can be used by Triggers and Boards, or be executed via the [Query Data API](https://docs.honeycomb.io/api/query-results/).
+
+-> Queries are immutable and can not be deleted -- only created or read.
+  Any changes will result in a new query object being created.
+
+## Example Usage
+
+{{tffile "examples/resources/honeycombio_query/resource.tf"}}
+
+-> **Note** If you are referencing a [Derived Column](derived_column.md) in your query and want to ensure you are always using the latest definition
+  of the derived column you should use the [replace_triggered_by](https://developer.hashicorp.com/terraform/language/meta-arguments/lifecycle#replace_triggered_by)
+  lifecycle argument as shown in the example above.
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Querys can be imported using a combination of the dataset name and their ID, e.g.
+
+```
+$ terraform import honeycombio_query.my_query my-dataset/bj8BwOa1uRz
+```

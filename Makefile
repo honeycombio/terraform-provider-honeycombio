@@ -1,4 +1,4 @@
-.PHONY: build testacc lint sweep
+.PHONY: build testacc lint sweep docs docs-check
 default: testacc
 
 build:
@@ -20,3 +20,11 @@ sweep:
 	@echo "WARNING: This will destroy resources. Use only in development teams."
 	go test ./internal/provider -v -timeout 5m -sweep=env
 
+docs:
+	@echo "Generating documentation..."
+	@go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-dir . --provider-name honeycombio
+
+docs-check:
+	@echo "Checking if documentation is up to date..."
+	@go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs generate --provider-dir . --provider-name honeycombio
+	@git diff --exit-code docs/ || (echo "Documentation is out of date. Run 'make docs' to regenerate." && exit 1)

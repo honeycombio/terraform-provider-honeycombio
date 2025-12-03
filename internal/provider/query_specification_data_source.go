@@ -94,10 +94,11 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 				Optional: true,
 			},
 			"json": schema.StringAttribute{
-				Description: "The generated query specification in JSON format.",
-				Computed:    true,
-				Required:    false,
-				Optional:    false,
+				Description:         "The generated query specification in JSON format.",
+				MarkdownDescription: "JSON representation of the query according to the [Query Specification](https://docs.honeycomb.io/api/query-specification/#fields-on-a-query-specification), can be used as input for other resources.",
+				Computed:            true,
+				Required:            false,
+				Optional:            false,
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -107,8 +108,9 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"op": schema.StringAttribute{
-							Description: "The operatior to apply.",
-							Required:    true,
+							Description:         "The operator to apply.",
+							MarkdownDescription: "The operator to apply. See the supported list at [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators).",
+							Required:            true,
 							Validators: []validator.String{
 								stringvalidator.OneOf(helper.AsStringSlice(client.CalculationOps())...),
 							},
@@ -130,8 +132,9 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Required:    true,
 						},
 						"expression": schema.StringAttribute{
-							Description: "The formula to use for the Calculated Field.",
-							Required:    true,
+							Description:         "The formula to use for the Calculated Field.",
+							MarkdownDescription: "The formula to use for the Calculated Field. See the [Calculated Field Formula Reference](https://docs.honeycomb.io/reference/derived-column-formula/) for syntax and functions.",
+							Required:            true,
 							Validators: []validator.String{
 								validation.IsValidCalculatedField(),
 							},
@@ -148,8 +151,9 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Required:    true,
 						},
 						"op": schema.StringAttribute{
-							Description: "The operator to apply.",
-							Required:    true,
+							Description:         "The operator to apply.",
+							MarkdownDescription: "The operator to apply. See the supported list at [Filter Operators](https://docs.honeycomb.io/api/query-specification/#filter-operators). Not all operators require a value.",
+							Required:            true,
 							Validators: []validator.String{
 								stringvalidator.OneOf(helper.AsStringSlice(client.FilterOps())...),
 							},
@@ -166,8 +170,9 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"calculate_op": schema.StringAttribute{
-							Description: "The operator to apply.",
-							Required:    true,
+							Description:         "The operator to apply.",
+							MarkdownDescription: "The calculation operator to apply. Supports all [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators) except `HEATMAP`.",
+							Required:            true,
 							Validators: []validator.String{
 								stringvalidator.OneOf(helper.AsStringSlice(client.HavingCalculationOps())...),
 							},
@@ -200,8 +205,9 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Optional:    true,
 						},
 						"op": schema.StringAttribute{
-							Description: "The operator to apply.",
-							Optional:    true,
+							Description:         "The operator to apply.",
+							MarkdownDescription: "The calculation operator to apply. See the supported list at [Calculation Operators](https://docs.honeycomb.io/api/query-specification/#calculation-operators).",
+							Optional:            true,
 							Validators: []validator.String{
 								stringvalidator.OneOf(helper.AsStringSlice(client.CalculationOps())...),
 							},

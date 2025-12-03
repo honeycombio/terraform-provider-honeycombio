@@ -65,24 +65,24 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 		Description: "API keys are used to authenticate the Honeycomb API.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Description: "The unique identifier for this API key.",
-				Computed:    true,
-				Required:    false,
-				Optional:    false,
+				MarkdownDescription: "The ID of the API Key.",
+				Computed:            true,
+				Required:            false,
+				Optional:            false,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
 			"name": schema.StringAttribute{
-				Required:    true,
-				Description: "The name of the API Key.",
+				Required:            true,
+				MarkdownDescription: "The name of the API key.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 100),
 				},
 			},
 			"type": schema.StringAttribute{
-				Required:    true,
-				Description: "The type of the API key.",
+				Required:            true,
+				MarkdownDescription: "The type of API key. Currently only `ingest` is supported.",
 				Validators: []validator.String{
 					stringvalidator.OneOf("ingest"),
 				},
@@ -91,36 +91,36 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				},
 			},
 			"environment_id": schema.StringAttribute{
-				Required:    true,
-				Description: "The Environment ID the API key is scoped to.",
+				Required:            true,
+				MarkdownDescription: "The Environment ID the API key is scoped to.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
 			"disabled": schema.BoolAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Whether the API key is disabled.",
-				Default:     booldefault.StaticBool(false),
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "Whether the API key is disabled. Defaults to `false`.",
+				Default:             booldefault.StaticBool(false),
 			},
 			"key": schema.StringAttribute{
-				Computed:    true,
-				Required:    false,
-				Optional:    false,
-				Sensitive:   true,
-				Description: "The API key as a string. This is only available when creating a new key.",
+				Computed:            true,
+				Required:            false,
+				Optional:            false,
+				Sensitive:           true,
+				MarkdownDescription: "The API key formatted for use based on its type.",
 			},
 			"secret": schema.StringAttribute{
-				Computed:    true,
-				Required:    false,
-				Optional:    false,
-				Sensitive:   true,
-				Description: "The secret portion of the API key. This is only available when creating a new key.",
+				Computed:            true,
+				Required:            false,
+				Optional:            false,
+				Sensitive:           true,
+				MarkdownDescription: "The secret portion of the API Key.",
 			},
 		},
 		Blocks: map[string]schema.Block{
 			"permissions": schema.ListNestedBlock{
-				Description: "Permissions control what actions the API key can perform.",
+				MarkdownDescription: "A configuration block setting what actions the API key can perform.",
 				Validators: []validator.List{
 					listvalidator.SizeAtMost(1),
 				},
@@ -130,10 +130,10 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"create_datasets": schema.BoolAttribute{
-							Optional:    true,
-							Computed:    true,
-							Default:     booldefault.StaticBool(false),
-							Description: "Allow this key to create missing datasets when sending telemetry.",
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this key to create missing datasets when sending telemetry. Defaults to `false`.",
 							PlanModifiers: []planmodifier.Bool{
 								boolplanmodifier.RequiresReplace(),
 							},

@@ -1,0 +1,33 @@
+# Resource: honeycombio_derived_column
+
+Creates a derived column. For more information about derived columns, check out [Calculate with derived columns](https://docs.honeycomb.io/working-with-your-data/customizing-your-query/derived-columns/).
+
+## Example Usage
+
+### Dataset-specific
+
+{{tffile "examples/resources/honeycombio_derived_column/dataset_specific.tf"}}
+
+### Environment-wide
+
+{{tffile "examples/resources/honeycombio_derived_column/environment_wide.tf"}}
+
+### Complex Formula
+
+{{tffile "examples/resources/honeycombio_derived_column/complex_formula.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Dataset-specific derived columns can be imported using a combination of the dataset name and their alias, e.g.
+
+```
+$ terraform import honeycombio_derived_column.my_column my-dataset/any_error
+```
+
+Environment-wide derived columns can be imported using just the alias, e.g.
+
+```
+$ terraform import honeycombio_derived_column.my_column duration_ms_log10
+```
