@@ -35,6 +35,38 @@ Any PRs reimplementing Plugin SDKv2 resources or datasources in the Plugin Frame
 Hashicorp has a tool to preview documentation.
 Visit [registry.terraform.io/tools/doc-preview](https://registry.terraform.io/tools/doc-preview).
 
+### Generating documentation
+
+Provider documentation is generated using [tfplugindocs](https://github.com/hashicorp/terraform-plugin-docs).
+
+To regenerate the documentation after making changes:
+
+```sh
+make docs
+```
+
+To verify documentation is up to date (used in CI):
+
+```sh
+make docs-check
+```
+
+#### Documentation structure
+
+- `templates/` - Markdown templates (`.md.tmpl`) that control documentation structure
+- `examples/` - Standalone `.tf` files referenced in templates via `{{tffile "path/to/example.tf"}}`
+- `docs/` - Generated documentation (do not edit directly)
+
+#### Adding or updating documentation
+
+1. **Schema descriptions**: Update `Description` or `MarkdownDescription` fields in the Go schema definitions. Use `MarkdownDescription` when you need links or formatting.
+
+2. **Examples**: Add or edit `.tf` files in `examples/resources/<resource_name>/` or `examples/data-sources/<data_source_name>/`. Reference them in templates using `{{tffile}}`.
+
+3. **Custom content**: Edit the relevant `.md.tmpl` template in `templates/`. The `{{ .SchemaMarkdown | trimspace }}` directive inserts the auto-generated schema documentation.
+
+4. **Regenerate**: Run `make docs` and commit both template and generated changes.
+
 ### Running the tests
 
 Most of the tests are live integration tests against the [Honeycomb API](https://docs.honeycomb.io/api).
