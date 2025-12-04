@@ -1,0 +1,14 @@
+# Data Source: honeycombio_query_result
+
+The `query_result` data source allows you to execute Honeycomb queries via the [Query Data API](https://docs.honeycomb.io/api/query-results/).
+As this data source is a wrapper around the Query Data API all of its [documented restrictions](https://docs.honeycomb.io/api/query-results/#api-restrictions) apply.
+
+-> Use of this data source requires a Honeycomb Enterprise plan.
+
+## Example Usage
+
+{{tffile "examples/data-sources/honeycombio_query_result/data-source.tf"}}
+
+~> **NOTE:** This data source is experimental and we're actively looking to learn how you are using it! Please consider opening an issue with feedback or joining the conversation in `#terraform-provider` in the [Pollinators Slack Community](https://join.slack.com/t/honeycombpollinators/shared_invite/zt-xqexg936-dckd0l29wdE3WLmUs8Qvpg).
+
+{{ .SchemaMarkdown | trimspace }}

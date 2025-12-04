@@ -1,0 +1,19 @@
+# Data Source: honeycombio_environment
+
+The `honeycombio_environment` data source retrieves the details of a single Environment.
+
+~> **Warning** Terraform will fail unless exactly one environment is returned by the search.
+  Ensure that your search is specific enough to return a single environment only.
+  If you want to retrieve multiple environments, use the `honeycombio_environments` data source instead.
+
+-> This data source requires the provider be configured with a Management Key with `environments:read` in the configured scopes.
+
+## Example Usage
+
+{{tffile "examples/data-sources/honeycombio_environment/example_1.tf"}}
+
+### Filter Example
+
+{{tffile "examples/data-sources/honeycombio_environment/filter_example.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}

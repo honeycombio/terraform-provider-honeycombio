@@ -1,0 +1,19 @@
+# Resource: honeycombio_environment
+
+Creates a Honeycomb Environment.
+
+-> This resource requires the provider be configured with a Management Key with `environments:write` in the configured scopes.
+
+## Example Usage
+
+{{tffile "examples/resources/honeycombio_environment/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Environments can be imported by their ID. e.g.
+
+```
+$ terraform import honeycombio_environment.myenv hcaen_01j1jrsewaha3m0z6fwffpcrxg
+```

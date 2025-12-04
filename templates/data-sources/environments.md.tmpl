@@ -1,0 +1,13 @@
+# Data Source: honeycombio_environments
+
+The Environments data source retrieves the Team's environments.
+
+-> This data source requires the provider be configured with a Management Key with `environments:read` in the configured scopes.
+
+## Example Usage
+
+{{tffile "examples/data-sources/honeycombio_environments/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+~> **Note** One of `value` or `value_regex` is required for each `detail_filter` block.

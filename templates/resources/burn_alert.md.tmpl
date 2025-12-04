@@ -1,0 +1,54 @@
+# Resource: honeycombio_burn_alert
+
+Creates a burn alert.
+
+For more information about burn alerts,
+check out [Define Burn Alerts](https://docs.honeycomb.io/working-with-your-data/slos/burn-alerts).
+
+## Example Usage
+
+### Basic Example - Exhaustion Time Burn Alert
+
+{{tffile "examples/resources/honeycombio_burn_alert/basic_example___exhaustion_time_burn_alert.tf"}}
+
+### Basic Example - Budget Rate Burn Alert
+
+{{tffile "examples/resources/honeycombio_burn_alert/basic_example___budget_rate_burn_alert.tf"}}
+
+### Example - Exhaustion Time Burn Alert with PagerDuty Recipient and Severity
+
+{{tffile "examples/resources/honeycombio_burn_alert/example___exhaustion_time_burn_alert_with_pagerduty_recipient_and_severity.tf"}}
+
+### Example - Exhaustion Time Burn Alert with Webhook Recipient and Notification Variable
+
+{{tffile "examples/resources/honeycombio_burn_alert/example___exhaustion_time_burn_alert_with_webhook_recipient_and_notification_variable.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+Each `recipient` block can either refer to an existing recipient (already present in another burn alert or trigger) or a new recipient.
+When specifying an existing recipient, only `id` may be set.
+To retrieve the ID of an existing recipient, refer to the [`honeycombio_recipient`](../data-sources/recipient.md) data source.
+
+| Type      | Target              |
+| --------- | ------------------- |
+| email     | an email address    |
+| pagerduty | _N/A_               |
+| slack     | name of the channel |
+| webhook   | name of the webhook |
+
+## Import
+
+Burn alerts can be imported using by using their ID combined with their dataset.
+If the burn alert is a multi-dataset (MD) burn alert, the dataset is not provided.
+
+### Burn Alert
+
+```
+$ terraform import honeycombio_burn_alert.my_alert my-dataset/bj9BwOb1uKz
+```
+
+### Multi-dataset Burn Alert
+
+```
+$ terraform import honeycombio_burn_alert.my_alert bc9XwOb2yJu
+```

@@ -1,0 +1,17 @@
+# Resource: honeycombio_email_recipient
+
+`honeycombio_email_recipient` allows you to define and manage an Email recipient that can be used by Triggers or BurnAlerts notifications.
+
+## Example Usage
+
+{{tffile "examples/resources/honeycombio_email_recipient/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Email Recipients can be imported by their ID, e.g.
+
+```
+$ terraform import honeycombio_email_recipient.my_recipient nx2zsegA0dZ
+```

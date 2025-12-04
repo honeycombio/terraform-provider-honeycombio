@@ -1,0 +1,29 @@
+# Resource: honeycombio_webhook_recipient
+
+`honeycombio_webhook_recipient` allows you to define and manage a Webhook recipient that can be used by Triggers or BurnAlerts notifications.
+
+## Example Usage
+
+### Standard Webhook
+
+{{tffile "examples/resources/honeycombio_webhook_recipient/standard_webhook.tf"}}
+
+### Custom Webhook
+
+{{tffile "examples/resources/honeycombio_webhook_recipient/custom_webhook.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+When configuring custom webhook payloads, use the `template` block. The `type` attribute can be `trigger`, `exhaustion_time`, or `budget_rate`. Only one template block of each type is allowed on a single recipient.
+
+The `variable` block creates custom variables that can be interpolated in a template. To configure a variable, at least one `template` block must also be configured.
+
+The `header` block adds custom HTTP headers to the webhook request. Up to five custom headers can be configured. Reserved headers `Content-Type`, `User-Agent`, and `X-Honeycomb-Webhook-Token` cannot be used.
+
+## Import
+
+Webhook Recipients can be imported by their ID, e.g.
+
+```
+$ terraform import honeycombio_webhook_recipient.my_recipient nx2zsegA0dZ
+```

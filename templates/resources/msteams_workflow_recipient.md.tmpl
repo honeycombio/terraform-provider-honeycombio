@@ -1,0 +1,17 @@
+# Resource: honeycombio_msteams_workflow_recipient
+
+`honeycombio_msteams_workflow_recipient` allows you to define and manage an MSTeams Workflows recipient that can be used by Triggers or BurnAlerts notifications.
+
+## Example Usage
+
+{{tffile "examples/resources/honeycombio_msteams_workflow_recipient/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+MSTeams Workflow Recipients can be imported by their ID, e.g.
+
+```
+$ terraform import honeycombio_msteams_workflow_recipient.my_recipient nx2zsefB1cX
+```

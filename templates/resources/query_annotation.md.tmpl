@@ -1,0 +1,21 @@
+# Resource: honeycombio_query_annotation
+
+Creates a query annotation in a dataset.
+
+-> A query annotation points to a specific query. Any change to the query will result in a new query ID and the annotation will no longer apply.
+If you use the "honeycombio_query_specification" to determine the `query_id` parameter (as in the example below), Terraform will destroy the old query annotation and create a new one.
+If this is wrong for your use case, please open an issue in [honeycombio/terraform-provider-honeycombio](https://github.com/honeycombio/terraform-provider-honeycombio).
+
+## Example Usage
+
+{{tffile "examples/resources/honeycombio_query_annotation/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Query Annotations can be imported using a combination of the dataset name and their ID, e.g.
+
+```
+$ terraform import honeycombio_query_annotation.my_query_annotation my-dataset/JL0Xp8SH0Dg
+```

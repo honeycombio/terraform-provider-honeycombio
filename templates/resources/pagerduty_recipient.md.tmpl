@@ -1,0 +1,17 @@
+# Resource: honeycombio_pagerduty_recipient
+
+`honeycombio_pagerduty_recipient` allows you to define and manage a PagerDuty recipient that can be used by Triggers or BurnAlerts notifications.
+
+## Example Usage
+
+{{tffile "examples/resources/honeycombio_pagerduty_recipient/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+PagerDuty Recipients can be imported by their ID, e.g.
+
+```
+$ terraform import honeycombio_pagerduty_recipient.my_recipient nx2zsegA0dZ
+```

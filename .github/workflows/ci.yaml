@@ -30,6 +30,9 @@ jobs:
       - name: Build
         run: go build -v .
 
+      - name: Check documentation
+        run: make docs-check
+
   test-us:
     name: Test US
     needs: build

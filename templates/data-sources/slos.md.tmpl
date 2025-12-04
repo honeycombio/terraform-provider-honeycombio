@@ -1,0 +1,12 @@
+# Data Source: honeycombio_slos
+The SLOs data source retrieves the SLOs of a dataset or environment, with the option of narrowing the retrieval by providing a `detail_filter`.
+
+~> **Note** Multi-Dataset SLOs are not supported yet for this data source.
+
+## Example Usage
+
+{{tffile "examples/data-sources/honeycombio_slos/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+~> **Note:** Either `value` or `value_regex` must be specified for each `detail_filter` block, but not both.
