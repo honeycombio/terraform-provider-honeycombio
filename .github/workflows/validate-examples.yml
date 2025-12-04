@@ -33,4 +33,4 @@ jobs:
         env:
           TF_IN_AUTOMATION: 1
         run: |
-          TF_CLI_CONFIG_FILE="$GITHUB_WORKSPACE/.terraformrc.local" ./scripts/validate-examples example
+          TF_CLI_CONFIG_FILE="$GITHUB_WORKSPACE/.terraformrc.local" ./scripts/validate-examples examples/samples
