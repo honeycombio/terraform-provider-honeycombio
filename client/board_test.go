@@ -67,7 +67,7 @@ func TestFlexibleBoards(t *testing.T) {
 		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
 	})
 
-	t.Run("Create flexible board", func(t *testing.T) {
+	t.Run("Create board", func(t *testing.T) {
 		data := &client.Board{
 			Name:        test.RandomStringWithPrefix("test.", 8),
 			BoardType:   "flexible",
@@ -112,6 +112,10 @@ func TestFlexibleBoards(t *testing.T) {
 					},
 				},
 			},
+			PresetFilters: &[]client.PresetFilter{
+				{Column: "column1", Alias: "alias1"},
+				{Column: "column2", Alias: "alias2"},
+			},
 		}
 		flexibleBoard, err = c.Boards.Create(ctx, data)
 		require.NoError(t, err)
@@ -135,7 +139,7 @@ func TestFlexibleBoards(t *testing.T) {
 		assert.Equal(t, data, flexibleBoard)
 	})
 
-	t.Run("Create flexible board with auto layout generation", func(t *testing.T) {
+	t.Run("Create board with auto layout generation", func(t *testing.T) {
 		data := &client.Board{
 			Name:             test.RandomStringWithPrefix("test.", 8),
 			BoardType:        "flexible",
@@ -162,6 +166,10 @@ func TestFlexibleBoards(t *testing.T) {
 						Content: "This is a text panel",
 					},
 				},
+			},
+			PresetFilters: &[]client.PresetFilter{
+				{Column: "column1", Alias: "alias1"},
+				{Column: "column2", Alias: "alias2"},
 			},
 		}
 		flexibleBoard, err = c.Boards.Create(ctx, data)
@@ -198,7 +206,7 @@ func TestFlexibleBoards(t *testing.T) {
 		}
 	})
 
-	t.Run("Create flexible board with tags", func(t *testing.T) {
+	t.Run("Create board with tags", func(t *testing.T) {
 		data := &client.Board{
 			Name:        test.RandomStringWithPrefix("test.", 8),
 			BoardType:   "flexible",
@@ -243,6 +251,10 @@ func TestFlexibleBoards(t *testing.T) {
 					},
 				},
 			},
+			PresetFilters: &[]client.PresetFilter{
+				{Column: "column1", Alias: "alias1"},
+				{Column: "column2", Alias: "alias2"},
+			},
 			Tags: []client.Tag{
 				{Key: "color", Value: "blue"},
 			},
@@ -269,6 +281,7 @@ func TestFlexibleBoards(t *testing.T) {
 		// ensure the tags were added
 		assert.NotEmpty(t, flexibleBoard.Tags)
 		assert.ElementsMatch(t, flexibleBoard.Tags, data.Tags, "tags do not match")
+		assert.ElementsMatch(t, flexibleBoard.PresetFilters, data.PresetFilters, "preset filters do not match")
 
 		assert.Equal(t, data, flexibleBoard)
 	})
