@@ -154,6 +154,7 @@ EOF
 
 - `description` (String) The description of the Board. Supports Markdown.
 - `panel` (Block List) List of panels to render on the board. (see [below for nested schema](#nestedblock--panel))
+- `preset_filter` (Block List) List of preset filters for the board. (see [below for nested schema](#nestedblock--preset_filter))
 - `tags` (Map of String) A map of tags to assign to the resource.
 
 ### Read-Only
@@ -242,6 +243,15 @@ Required:
 - `content` (String) The content of the text panel. Supports Markdown.
 
 Each `panel` block must have exactly one of `query_panel`, `slo_panel`, or `text_panel` configured.
+
+<a id="nestedblock--preset_filter"></a>
+
+### Nested Schema for `preset_filter`
+
+Required:
+
+- `alias` (String) The alias for the preset filter.
+- `column` (String) The column name for the preset filter.
 
 For `chart` blocks in `visualization_settings`, the `chart_type` attribute accepts the following values: `line`, `tsbar`, `stacked`, `stat`, `cpie`, `cbar`, or `default`.
 
