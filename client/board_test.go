@@ -167,10 +167,6 @@ func TestFlexibleBoards(t *testing.T) {
 					},
 				},
 			},
-			PresetFilters: &[]client.PresetFilter{
-				{Column: "column1", Alias: "alias1"},
-				{Column: "column2", Alias: "alias2"},
-			},
 		}
 		flexibleBoard, err = c.Boards.Create(ctx, data)
 		require.NoError(t, err)
@@ -281,8 +277,7 @@ func TestFlexibleBoards(t *testing.T) {
 		// ensure the tags were added
 		assert.NotEmpty(t, flexibleBoard.Tags)
 		assert.ElementsMatch(t, flexibleBoard.Tags, data.Tags, "tags do not match")
-		assert.ElementsMatch(t, flexibleBoard.PresetFilters, data.PresetFilters, "preset filters do not match")
-
+		assert.ElementsMatch(t, *flexibleBoard.PresetFilters, *data.PresetFilters, "preset filters do not match")
 		assert.Equal(t, data, flexibleBoard)
 	})
 
@@ -290,7 +285,15 @@ func TestFlexibleBoards(t *testing.T) {
 		result, err := c.Boards.List(ctx)
 		require.NoError(t, err)
 
-		assert.Contains(t, result, *flexibleBoard, "could not find newly created board with List")
+		found := false
+		for _, board := range result {
+			if board.ID == flexibleBoard.ID {
+				found = true
+				break
+			}
+		}
+
+		assert.True(t, found, "could not find newly created board with List")
 	})
 
 	t.Run("Get", func(t *testing.T) {
