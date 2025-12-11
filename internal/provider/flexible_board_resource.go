@@ -1085,7 +1085,8 @@ func expandPresetFilters(
 	diags *diag.Diagnostics,
 ) *[]client.PresetFilter {
 	if presetFilters.IsNull() || presetFilters.IsUnknown() {
-		return nil
+		emptySlice := []client.PresetFilter{}
+		return &emptySlice
 	}
 
 	var filterModels []models.PresetFilterModel
@@ -1094,8 +1095,10 @@ func expandPresetFilters(
 		return nil
 	}
 
+	// If explicitly set to empty list, return empty slice to delete preset filters
 	if len(filterModels) == 0 {
-		return nil
+		emptySlice := []client.PresetFilter{}
+		return &emptySlice
 	}
 
 	result := make([]client.PresetFilter, 0, len(filterModels))
