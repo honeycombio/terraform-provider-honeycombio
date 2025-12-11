@@ -546,7 +546,7 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var oldState models.FlexibleBoardResourceModel
+				var oldState models.FlexibleBoardResourceModelV0
 				resp.Diagnostics.Append(req.State.Get(ctx, &oldState)...)
 				if resp.Diagnostics.HasError() {
 					return
@@ -607,12 +607,13 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 				resp.Diagnostics.Append(diags...)
 
 				newState := models.FlexibleBoardResourceModel{
-					ID:          oldState.ID,
-					Name:        oldState.Name,
-					Description: oldState.Description,
-					URL:         oldState.URL,
-					Panels:      finalPanels,
-					Tags:        oldState.Tags,
+					ID:            oldState.ID,
+					Name:          oldState.Name,
+					Description:   oldState.Description,
+					URL:           oldState.URL,
+					Panels:        finalPanels,
+					Tags:          oldState.Tags,
+					PresetFilters: types.ListNull(types.ObjectType{AttrTypes: models.PresetFilterModelAttrType}),
 				}
 				resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 			},
