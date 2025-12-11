@@ -397,6 +397,384 @@ EOF
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.1.position.y_coordinate", "0"),
 				),
 			},
+			// add preset filters
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_query_annotation" "test" {
+  dataset     = "%[1]s"
+  name        = "My annotated query"
+  description = "My lovely description"
+  query_id    = honeycombio_query.test.id
+}
+
+resource "honeycombio_flexible_board" "test" {
+  name        = "simple flexible board updated"
+  description = "simple flexible board description"
+
+  panel {
+    type = "slo"
+    position {
+      height = 4
+      width  = 3
+    }
+    slo_panel {
+      slo_id = "%[2]s"
+    }
+  }
+  panel {
+    type = "text"
+	position {
+      height = 3
+      width  = 4
+    }
+    text_panel {
+      content = <<EOF
+# Positioned Text Panel
+
+This is a **multiline** text panel with:
+- Fixed position and size
+- Rich markdown formatting
+- Multiple content sections
+
+## Additional Info
+Content positioned at specific coordinates.
+EOF
+    }
+  }
+
+  panel {
+    type = "query"
+    query_panel {
+      query_id            = honeycombio_query.test.id
+      query_annotation_id = honeycombio_query_annotation.test.id
+      query_style         = "table"
+    }
+    position {
+      height = 5
+      width  = 6
+    }
+  }
+
+  preset_filter {
+    column = "column1"
+    alias  = "alias1"
+  }
+  preset_filter {
+    column = "column2"
+    alias  = "alias2"
+  }
+}
+						  `, dataset, slo.ID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.#", "2"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.column", "column1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.alias", "alias1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.1.column", "column2"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.1.alias", "alias2"),
+				),
+			},
+			// update preset filters - change one and remove one
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_query_annotation" "test" {
+  dataset     = "%[1]s"
+  name        = "My annotated query"
+  description = "My lovely description"
+  query_id    = honeycombio_query.test.id
+}
+
+resource "honeycombio_flexible_board" "test" {
+  name        = "simple flexible board updated"
+  description = "simple flexible board description"
+
+  panel {
+    type = "slo"
+    position {
+      height = 4
+      width  = 3
+    }
+    slo_panel {
+      slo_id = "%[2]s"
+    }
+  }
+  panel {
+    type = "text"
+	position {
+      height = 3
+      width  = 4
+    }
+    text_panel {
+      content = <<EOF
+# Positioned Text Panel
+
+This is a **multiline** text panel with:
+- Fixed position and size
+- Rich markdown formatting
+- Multiple content sections
+
+## Additional Info
+Content positioned at specific coordinates.
+EOF
+    }
+  }
+
+  panel {
+    type = "query"
+    query_panel {
+      query_id            = honeycombio_query.test.id
+      query_annotation_id = honeycombio_query_annotation.test.id
+      query_style         = "table"
+    }
+    position {
+      height = 5
+      width  = 6
+    }
+  }
+
+  preset_filter {
+    column = "column1"
+    alias  = "updated_alias1"
+  }
+}
+						  `, dataset, slo.ID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.column", "column1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.alias", "updated_alias1"),
+				),
+			},
+			// remove preset filters
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_query_annotation" "test" {
+  dataset     = "%[1]s"
+  name        = "My annotated query"
+  description = "My lovely description"
+  query_id    = honeycombio_query.test.id
+}
+
+resource "honeycombio_flexible_board" "test" {
+  name        = "simple flexible board updated"
+  description = "simple flexible board description"
+
+  panel {
+    type = "slo"
+    position {
+      height = 4
+      width  = 3
+    }
+    slo_panel {
+      slo_id = "%[2]s"
+    }
+  }
+  panel {
+    type = "text"
+	position {
+      height = 3
+      width  = 4
+    }
+    text_panel {
+      content = <<EOF
+# Positioned Text Panel
+
+This is a **multiline** text panel with:
+- Fixed position and size
+- Rich markdown formatting
+- Multiple content sections
+
+## Additional Info
+Content positioned at specific coordinates.
+EOF
+    }
+  }
+
+  panel {
+    type = "query"
+    query_panel {
+      query_id            = honeycombio_query.test.id
+      query_annotation_id = honeycombio_query_annotation.test.id
+      query_style         = "table"
+    }
+    position {
+      height = 5
+      width  = 6
+    }
+  }
+}
+						  `, dataset, slo.ID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccHoneycombioFlexibleBoard_presetFilters tests preset_filters functionality
+func TestAccHoneycombioFlexibleBoard_presetFilters(t *testing.T) {
+	ctx := context.Background()
+	dataset := testAccDataset()
+	c := testAccClient(t)
+
+	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
+		Alias:      "sli." + acctest.RandString(8),
+		Expression: "BOOL(1)",
+	})
+	require.NoError(t, err)
+	slo, err := c.SLOs.Create(ctx, dataset, &client.SLO{
+		Name:             acctest.RandString(8) + " SLO",
+		TimePeriodDays:   14,
+		TargetPerMillion: 995000,
+		SLI:              client.SLIRef{Alias: sli.Alias},
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		// remove SLOs, and SLIs at end of test run
+		c.SLOs.Delete(ctx, dataset, slo.ID)
+		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			// create board with preset filters
+			{
+				Config: `
+resource "honeycombio_flexible_board" "test" {
+  name        = "Test board with preset filters"
+  description = "Testing preset filters"
+
+  preset_filter {
+    column = "service.name"
+    alias  = "service"
+  }
+  preset_filter {
+    column = "trace.trace_id"
+    alias  = "trace"
+  }
+}
+				`,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "name", "Test board with preset filters"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.#", "2"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.column", "service.name"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.alias", "service"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.1.column", "trace.trace_id"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.1.alias", "trace"),
+				),
+			},
+			// update preset filters - modify values
+			{
+				Config: `
+			resource "honeycombio_flexible_board" "test" {
+			  name        = "Test board with preset filters"
+			  description = "Testing preset filters"
+
+			  preset_filter {
+			    column = "service.name"
+			    alias  = "updated_service"
+			  }
+			  preset_filter {
+			    column = "environment"
+			    alias  = "env"
+			  }
+			  preset_filter {
+			    column = "deployment.id"
+			    alias  = "deployment"
+			  }
+			}
+							`,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.#", "3"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.column", "service.name"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.alias", "updated_service"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.1.column", "environment"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.1.alias", "env"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.2.column", "deployment.id"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.2.alias", "deployment"),
+				),
+			},
+			// remove all preset filters
+			{
+				Config: `
+			resource "honeycombio_flexible_board" "test" {
+			  name        = "Test board with preset filters"
+			  description = "Testing preset filters"
+			}
+							`,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.#", "0"),
+				),
+			},
+			// add preset filters back with panels
+			{
+				Config: fmt.Sprintf(`
+			resource "honeycombio_flexible_board" "test" {
+			  name        = "Test board with preset filters"
+			  description = "Testing preset filters"
+
+			  panel {
+			    type = "slo"
+			    slo_panel {
+			      slo_id = "%[2]s"
+			    }
+			  }
+
+			  preset_filter {
+			    column = "final.column"
+			    alias  = "final_alias"
+			  }
+			}
+							`, dataset, slo.ID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.column", "final.column"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.alias", "final_alias"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "1"),
+				),
+			},
 		},
 	})
 }

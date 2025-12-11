@@ -6,12 +6,13 @@ import (
 )
 
 type FlexibleBoardResourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	URL         types.String `tfsdk:"board_url"`
-	Panels      types.List   `tfsdk:"panel"`
-	Tags        types.Map    `tfsdk:"tags"`
+	ID            types.String `tfsdk:"id"`
+	Name          types.String `tfsdk:"name"`
+	Description   types.String `tfsdk:"description"`
+	URL           types.String `tfsdk:"board_url"`
+	Panels        types.List   `tfsdk:"panel"`
+	Tags          types.Map    `tfsdk:"tags"`
+	PresetFilters types.List   `tfsdk:"preset_filter"`
 }
 
 type BoardPanelModel struct {
@@ -126,6 +127,16 @@ var ChartSettingsModelAttrType = map[string]attr.Type{
 	"chart_index":         types.Int64Type,
 	"omit_missing_values": types.BoolType,
 	"use_log_scale":       types.BoolType,
+}
+
+type PresetFilterModel struct {
+	Column types.String `tfsdk:"column"`
+	Alias  types.String `tfsdk:"alias"`
+}
+
+var PresetFilterModelAttrType = map[string]attr.Type{
+	"column": types.StringType,
+	"alias":  types.StringType,
 }
 
 // This is the old version of the BoardPanelModel
