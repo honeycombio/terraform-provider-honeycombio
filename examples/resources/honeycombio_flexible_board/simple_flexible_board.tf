@@ -78,6 +78,16 @@ resource "honeycombio_flexible_board" "overview" {
     project = "secret"
   }
 
+  preset_filter {
+    column = "duration_ms"
+    alias  = "Duration"
+  }
+
+  preset_filter {
+    column = "app.user_id"
+    alias  = "User ID"
+  }
+
   panel {
     type = "query"
 
