@@ -835,6 +835,59 @@ func TestAccHoneycombioFlexibleBoard_upgradeFromVersion036_2(t *testing.T) {
 	})
 }
 
+func TestAccHoneycombioFlexibleBoard_upgradeFromVersion043_0(t *testing.T) {
+	ctx := context.Background()
+	dataset := testAccDataset()
+	c := testAccClient(t)
+
+	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
+		Alias:      "sli." + acctest.RandString(8),
+		Expression: "BOOL(1)",
+	})
+	require.NoError(t, err)
+	slo, err := c.SLOs.Create(ctx, dataset, &client.SLO{
+		Name:             acctest.RandString(8) + " SLO",
+		TimePeriodDays:   14,
+		TargetPerMillion: 995000,
+		SLI:              client.SLIRef{Alias: sli.Alias},
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		// remove SLOs, and SLIs at end of test run
+		c.SLOs.Delete(ctx, dataset, slo.ID)
+		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+	})
+
+	config := testFlexibleBoardConfigNoTextPanel(dataset, slo.ID)
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"honeycombio": {
+						VersionConstraint: "0.43.0",
+						Source:            "honeycombio/honeycombio",
+					},
+				},
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+				),
+			},
+			{
+				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+				Config:                   config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
 // testFlexibleBoardConfig returns a configuration string for a flexible board
 // with a query panel and an SLO panel.
 func testFlexibleBoardConfig(dataset, sloID string) string {
@@ -987,4 +1040,55 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 		}
 		return nil
 	}
+}
+
+func TestImportHoneycombioFlexibleBoard(t *testing.T) {
+	config := `
+resource "honeycombio_flexible_board" "test" {
+  name        = "Test board for import"
+  description = "Testing import with preset filters"
+
+  preset_filter {
+    column = "service.name"
+    alias  = "service"
+  }
+  preset_filter {
+    column = "trace.trace_id"
+    alias  = "trace"
+  }
+  preset_filter {
+    column = "environment"
+    alias  = "env"
+  }
+}
+	`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "name", "Test board for import"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "description", "Testing import with preset filters"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.#", "3"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.column", "service.name"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.alias", "service"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.1.column", "trace.trace_id"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.1.alias", "trace"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.2.column", "environment"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.2.alias", "env"),
+				),
+			},
+			{
+				ResourceName:      "honeycombio_flexible_board.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// Don't ignore any import fields when verifying the imported state
+				ImportStateVerifyIgnore: []string{},
+			},
+		},
+	})
 }
