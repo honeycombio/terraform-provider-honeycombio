@@ -6,12 +6,13 @@ import (
 )
 
 type FlexibleBoardResourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	Name        types.String `tfsdk:"name"`
-	Description types.String `tfsdk:"description"`
-	URL         types.String `tfsdk:"board_url"`
-	Panels      types.List   `tfsdk:"panel"`
-	Tags        types.Map    `tfsdk:"tags"`
+	ID            types.String `tfsdk:"id"`
+	Name          types.String `tfsdk:"name"`
+	Description   types.String `tfsdk:"description"`
+	URL           types.String `tfsdk:"board_url"`
+	Panels        types.List   `tfsdk:"panel"`
+	Tags          types.Map    `tfsdk:"tags"`
+	PresetFilters types.List   `tfsdk:"preset_filter"`
 }
 
 type BoardPanelModel struct {
@@ -128,6 +129,16 @@ var ChartSettingsModelAttrType = map[string]attr.Type{
 	"use_log_scale":       types.BoolType,
 }
 
+type PresetFilterModel struct {
+	Column types.String `tfsdk:"column"`
+	Alias  types.String `tfsdk:"alias"`
+}
+
+var PresetFilterModelAttrType = map[string]attr.Type{
+	"column": types.StringType,
+	"alias":  types.StringType,
+}
+
 // This is the old version of the BoardPanelModel
 // It was used to store the board panel in a list of objects
 // This is no longer used, but is kept here for backwards compatibility
@@ -136,4 +147,16 @@ type FlexibleBoardPanelModelV0 struct {
 	Position   types.List   `tfsdk:"position"`
 	QueryPanel types.List   `tfsdk:"query_panel"`
 	SLOPanel   types.List   `tfsdk:"slo_panel"`
+}
+
+// This is the old version of the FlexibleBoardResourceModel (version 0)
+// It was used before preset_filter was added
+// This is no longer used, but is kept here for backwards compatibility in state upgrades
+type FlexibleBoardResourceModelV0 struct {
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	URL         types.String `tfsdk:"board_url"`
+	Panels      types.List   `tfsdk:"panel"`
+	Tags        types.Map    `tfsdk:"tags"`
 }

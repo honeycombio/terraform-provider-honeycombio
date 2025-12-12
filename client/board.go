@@ -61,6 +61,14 @@ type Board struct {
 	Links BoardLinks `json:"links,omitempty"`
 	// A list of tags to organize the Board, for flexible boards only
 	Tags []Tag `json:"tags"`
+	// A list of preset filters for the board.
+	PresetFilters *[]PresetFilter `json:"preset_filters,omitempty"`
+}
+
+// PresetFilter represents a single combination of column name and alias for a preset filter on a board.
+type PresetFilter struct {
+	Column string `json:"column,omitempty"`
+	Alias  string `json:"alias,omitempty"`
 }
 
 // BoardPanel represents a single panel on a board.

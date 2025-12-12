@@ -87,6 +87,16 @@ resource "honeycombio_flexible_board" "overview" {
     project = "secret"
   }
 
+  preset_filter {
+    column = "duration_ms"
+    alias  = "Duration"
+  }
+
+  preset_filter {
+    column = "app.user_id"
+    alias  = "User ID"
+  }
+
   panel {
     type = "query"
 
@@ -143,6 +153,7 @@ EOF
 
 - `description` (String) The description of the Board. Supports Markdown.
 - `panel` (Block List) List of panels to render on the board. (see [below for nested schema](#nestedblock--panel))
+- `preset_filter` (Block List) List of preset filters for the board. (see [below for nested schema](#nestedblock--preset_filter))
 - `tags` (Map of String) A map of tags to assign to the resource.
 
 ### Read-Only
@@ -227,6 +238,16 @@ Required:
 Required:
 
 - `content` (String) The content of the text panel. Supports Markdown.
+
+
+
+<a id="nestedblock--preset_filter"></a>
+### Nested Schema for `preset_filter`
+
+Required:
+
+- `alias` (String) The alias for the preset filter.
+- `column` (String) The column name for the preset filter.
 
 Each `panel` block must have exactly one of `query_panel`, `slo_panel`, or `text_panel` configured.
 

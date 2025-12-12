@@ -293,6 +293,21 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 					},
 				},
 			},
+			"preset_filter": schema.ListNestedBlock{
+				Description: "List of preset filters for the board.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"column": schema.StringAttribute{
+							Required:    true,
+							Description: "The column name for the preset filter.",
+						},
+						"alias": schema.StringAttribute{
+							Required:    true,
+							Description: "The alias for the preset filter.",
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -531,7 +546,7 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var oldState models.FlexibleBoardResourceModel
+				var oldState models.FlexibleBoardResourceModelV0
 				resp.Diagnostics.Append(req.State.Get(ctx, &oldState)...)
 				if resp.Diagnostics.HasError() {
 					return
@@ -592,12 +607,13 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 				resp.Diagnostics.Append(diags...)
 
 				newState := models.FlexibleBoardResourceModel{
-					ID:          oldState.ID,
-					Name:        oldState.Name,
-					Description: oldState.Description,
-					URL:         oldState.URL,
-					Panels:      finalPanels,
-					Tags:        oldState.Tags,
+					ID:            oldState.ID,
+					Name:          oldState.Name,
+					Description:   oldState.Description,
+					URL:           oldState.URL,
+					Panels:        finalPanels,
+					Tags:          oldState.Tags,
+					PresetFilters: types.ListNull(types.ObjectType{AttrTypes: models.PresetFilterModelAttrType}),
 				}
 				resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
 			},
@@ -620,6 +636,7 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 
 	panelFromConfig := expandBoardPanels(ctx, plan.Panels, &resp.Diagnostics)
 	finalPanels, layoutGeneration := setAPIDefaultsAndDetermineLayoutGeneration(panelFromConfig)
+	presetFilters := expandPresetFilters(ctx, plan.PresetFilters, &resp.Diagnostics)
 	createRequest := &client.Board{
 		Name:             plan.Name.ValueString(),
 		Description:      plan.Description.ValueString(),
@@ -627,6 +644,7 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 		Panels:           finalPanels,
 		Tags:             planTags,
 		LayoutGeneration: layoutGeneration,
+		PresetFilters:    presetFilters,
 	}
 
 	if resp.Diagnostics.HasError() {
@@ -674,6 +692,11 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 	state.Tags = tags
+
+	state.PresetFilters = flattenPresetFilters(ctx, board.PresetFilters, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -757,6 +780,11 @@ func (r *flexibleBoardResource) Read(ctx context.Context, req resource.ReadReque
 	}
 	state.Tags = tags
 
+	state.PresetFilters = flattenPresetFilters(ctx, board.PresetFilters, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 
 }
@@ -776,6 +804,7 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 
 	panelConfig := expandBoardPanels(ctx, plan.Panels, &resp.Diagnostics)
 	finalPanels, layoutGeneration := setAPIDefaultsAndDetermineLayoutGeneration(panelConfig)
+	presetFilters := expandPresetFilters(ctx, plan.PresetFilters, &resp.Diagnostics)
 	updateRequest := &client.Board{
 		ID:               plan.ID.ValueString(),
 		Name:             plan.Name.ValueString(),
@@ -784,6 +813,7 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 		Panels:           finalPanels,
 		Tags:             planTags,
 		LayoutGeneration: layoutGeneration,
+		PresetFilters:    presetFilters,
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -836,6 +866,11 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 	state.Tags = tags
+
+	state.PresetFilters = flattenPresetFilters(ctx, board.PresetFilters, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 
@@ -1045,6 +1080,39 @@ func expandBoardTextPanel(
 	}
 }
 
+func expandPresetFilters(
+	ctx context.Context,
+	presetFilters types.List,
+	diags *diag.Diagnostics,
+) *[]client.PresetFilter {
+	if presetFilters.IsNull() || presetFilters.IsUnknown() {
+		emptySlice := []client.PresetFilter{}
+		return &emptySlice
+	}
+
+	var filterModels []models.PresetFilterModel
+	diags.Append(presetFilters.ElementsAs(ctx, &filterModels, false)...)
+	if diags.HasError() {
+		return nil
+	}
+
+	// If explicitly set to empty list, return empty slice to delete preset filters
+	if len(filterModels) == 0 {
+		emptySlice := []client.PresetFilter{}
+		return &emptySlice
+	}
+
+	result := make([]client.PresetFilter, 0, len(filterModels))
+	for _, filter := range filterModels {
+		result = append(result, client.PresetFilter{
+			Column: filter.Column.ValueString(),
+			Alias:  filter.Alias.ValueString(),
+		})
+	}
+
+	return &result
+}
+
 func flattenBoardPanel(
 	ctx context.Context,
 	panel client.BoardPanel,
@@ -1230,6 +1298,36 @@ func flattenBoardTextPanel(
 		ctx,
 		types.ObjectType{AttrTypes: models.TextPanelModelAttrType},
 		[]attr.Value{obj},
+	)
+	diags.Append(d...)
+
+	return result
+}
+
+func flattenPresetFilters(
+	ctx context.Context,
+	presetFilters *[]client.PresetFilter,
+	diags *diag.Diagnostics,
+) types.List {
+	if presetFilters == nil || len(*presetFilters) == 0 {
+		return types.ListNull(types.ObjectType{AttrTypes: models.PresetFilterModelAttrType})
+	}
+
+	filtersObj := make([]attr.Value, 0, len(*presetFilters))
+	for _, filter := range *presetFilters {
+		obj, d := types.ObjectValue(models.PresetFilterModelAttrType, map[string]attr.Value{
+			"column": types.StringValue(filter.Column),
+			"alias":  types.StringValue(filter.Alias),
+		})
+		diags.Append(d...)
+
+		filtersObj = append(filtersObj, obj)
+	}
+
+	result, d := types.ListValueFrom(
+		ctx,
+		types.ObjectType{AttrTypes: models.PresetFilterModelAttrType},
+		filtersObj,
 	)
 	diags.Append(d...)
 
