@@ -1,3 +1,16 @@
+# 0.44.0 (Dec 15, 2025)
+
+ENHANCEMENTS:
+
+* feat(r/flexibleboard): Add support for preset filters (#792)
+
+HOUSEKEEPING:
+
+* maint(deps): bump golang.org/x/net from 0.47.0 to 0.48.0 (#791)
+* maint(deps): bump golangci/golangci-lint-action from 9.1.0 to 9.2.0 (#787)
+* maint(deps): bump the hashicorp group across 1 directory with 2 updates (#790)
+* docs: migrate docs generation to tfplugindocs with templates (#789)
+
 # 0.43.0 (Nov 25, 2025)
 
 NOTES:
