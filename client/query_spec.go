@@ -312,6 +312,29 @@ func FilterOps() []FilterOp {
 	}
 }
 
+// FilterOpFromString converts a string to a FilterOp. Returns an empty FilterOp if the string
+// does not match any valid filter operation.
+func FilterOpFromString(s string) FilterOp {
+	for _, op := range FilterOps() {
+		if string(op) == s {
+			return op
+		}
+	}
+	return FilterOp("")
+}
+
+// IsUnary returns true if the filter operation is unary (does not require a value).
+// Unary operations are "exists" and "does-not-exist".
+func (f FilterOp) IsUnary() bool {
+	return f == FilterOpExists || f == FilterOpDoesNotExist
+}
+
+// IsArray returns true if the filter operation requires an array value.
+// Array operations are "in" and "not-in".
+func (f FilterOp) IsArray() bool {
+	return f == FilterOpIn || f == FilterOpNotIn
+}
+
 // FilterCombination describes how the filters of a query should be combined.
 type FilterCombination string
 
