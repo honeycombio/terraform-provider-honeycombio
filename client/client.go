@@ -57,6 +57,7 @@ type Client struct {
 
 	Auth               Auth
 	Boards             Boards
+	BoardViews         BoardViews
 	Columns            Columns
 	Datasets           Datasets
 	DatasetDefinitions DatasetDefinitions
@@ -155,6 +156,7 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 
 	client.Auth = &auth{client: client}
 	client.Boards = &boards{client: client}
+	client.BoardViews = &boardViews{client: client}
 	client.Columns = &columns{client: client}
 	client.Datasets = &datasets{client: client}
 	client.DatasetDefinitions = &datasetDefinitions{client: client}
