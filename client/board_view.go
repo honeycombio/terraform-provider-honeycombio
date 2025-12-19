@@ -17,6 +17,9 @@ type BoardViews interface {
 	// Create a new board view. When creating a new view ID may not be set.
 	Create(ctx context.Context, boardID string, view *BoardView) (*BoardView, error)
 
+	// Update an existing board view.
+	Update(ctx context.Context, boardID string, view *BoardView) (*BoardView, error)
+
 	// Delete a board view.
 	Delete(ctx context.Context, boardID, viewID string) error
 }
@@ -64,6 +67,12 @@ func (s *boardViews) Get(ctx context.Context, boardID, viewID string) (*BoardVie
 func (s *boardViews) Create(ctx context.Context, boardID string, data *BoardView) (*BoardView, error) {
 	var view BoardView
 	err := s.client.Do(ctx, "POST", fmt.Sprintf("/1/boards/%s/views", boardID), data, &view)
+	return &view, err
+}
+
+func (s *boardViews) Update(ctx context.Context, boardID string, data *BoardView) (*BoardView, error) {
+	var view BoardView
+	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/boards/%s/views/%s", boardID, data.ID), data, &view)
 	return &view, err
 }
 

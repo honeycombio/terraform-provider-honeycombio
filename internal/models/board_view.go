@@ -13,14 +13,14 @@ type BoardViewResourceModel struct {
 }
 
 type BoardViewFilterModel struct {
-	Column    types.String   `tfsdk:"column"`
-	Operation types.String   `tfsdk:"operation"`
-	Value     types.Dynamic  `tfsdk:"value"`
+	Column    types.String `tfsdk:"column"`
+	Operation types.String `tfsdk:"operation"`
+	Value     types.String `tfsdk:"value"` // TODO: convert to types.DynamicType when supported in nested blocks
 }
 
 var BoardViewFilterModelAttrType = map[string]attr.Type{
 	"column":    types.StringType,
 	"operation": types.StringType,
-	"value":     types.DynamicType,
+	"value":     types.StringType,
 }
 
