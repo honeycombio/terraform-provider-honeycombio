@@ -23,4 +23,3 @@ var BoardViewFilterModelAttrType = map[string]attr.Type{
 	"operation": types.StringType,
 	"value":     types.StringType,
 }
-

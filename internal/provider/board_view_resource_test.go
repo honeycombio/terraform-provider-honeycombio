@@ -136,4 +136,3 @@ func testAccBoardViewImportStateIdFunc(resourceName, boardID string) resource.Im
 		return fmt.Sprintf("%s/%s", boardID, viewID), nil
 	}
 }
-

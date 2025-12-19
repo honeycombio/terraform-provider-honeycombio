@@ -28,7 +28,7 @@ import (
 var (
 	_ resource.Resource                = &boardViewResource{}
 	_ resource.ResourceWithConfigure   = &boardViewResource{}
-	_ resource.ResourceWithImportState  = &boardViewResource{}
+	_ resource.ResourceWithImportState = &boardViewResource{}
 )
 
 type boardViewResource struct {
@@ -417,4 +417,3 @@ func formatFilterValueToString(value any) string {
 		return coerce.ValueToString(value)
 	}
 }
-
