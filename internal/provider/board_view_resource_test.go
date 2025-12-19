@@ -3,10 +3,12 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/require"
 
@@ -135,4 +137,219 @@ func testAccBoardViewImportStateIdFunc(resourceName, boardID string) resource.Im
 
 		return fmt.Sprintf("%s/%s", boardID, viewID), nil
 	}
+}
+
+func TestAccHoneycombioBoardView_validation(t *testing.T) {
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	// Create a board first since views belong to boards
+	board, err := c.Boards.Create(ctx, &client.Board{
+		Name:      "Test Board " + acctest.RandString(8),
+		BoardType: "flexible",
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		c.Boards.Delete(ctx, board.ID)
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config:      testBoardViewConfigNoFilters(board.ID),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?i)block filter must have a configuration value`),
+			},
+			{
+				// Create a valid board view
+				Config: testBoardViewConfigBasic(board.ID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardViewExists(t, "honeycombio_board_view.test", board.ID),
+					resource.TestCheckResourceAttr("honeycombio_board_view.test", "filter.#", "2"),
+				),
+			},
+			{
+				// Try to update to remove all filters - this will fail at schema validation
+				// because the block is required
+				Config:      testBoardViewConfigNoFilters(board.ID),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?i)block filter must have a configuration value`),
+			},
+			{
+				// Final step with valid configuration to allow cleanup
+				Config: testBoardViewConfigBasic(board.ID),
+			},
+		},
+	})
+}
+
+func TestAccHoneycombioBoardView_emptyStringInArrayFilter(t *testing.T) {
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	// Create a board first since views belong to boards
+	board, err := c.Boards.Create(ctx, &client.Board{
+		Name:      "Test Board " + acctest.RandString(8),
+		BoardType: "flexible",
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		c.Boards.Delete(ctx, board.ID)
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				// Test with empty strings in comma-separated list - should fail validation
+				Config:      testBoardViewConfigWithEmptyStrings(board.ID),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?i)empty.*comma-separated`),
+			},
+			{
+				// Test with only empty strings - should fail validation
+				Config:      testBoardViewConfigWithOnlyEmptyStrings(board.ID),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?i)empty.*comma-separated`),
+			},
+			{
+				// Test with valid comma-separated values (no empty strings)
+				Config: testBoardViewConfigWithValidArrayFilter(board.ID),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardViewExists(t, "honeycombio_board_view.test", board.ID),
+					resource.TestCheckResourceAttr("honeycombio_board_view.test", "filter.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_board_view.test", "filter.0.operation", "in"),
+					resource.TestCheckResourceAttr("honeycombio_board_view.test", "filter.0.value", "value1,value2,value3"),
+				),
+			},
+		},
+	})
+}
+
+func testBoardViewConfigWithEmptyStrings(boardID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_board_view" "test" {
+  board_id = "%s"
+  name     = "Test View With Empty Strings"
+
+  filter {
+    column    = "environment"
+    operation = "in"
+    value     = "value1,,value2, ,value3"
+  }
+}
+`, boardID)
+}
+
+func testBoardViewConfigWithOnlyEmptyStrings(boardID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_board_view" "test" {
+  board_id = "%s"
+  name     = "Test View With Only Empty Strings"
+
+  filter {
+    column    = "environment"
+    operation = "in"
+    value     = ", ,,"
+  }
+}
+`, boardID)
+}
+
+func testBoardViewConfigWithValidArrayFilter(boardID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_board_view" "test" {
+  board_id = "%s"
+  name     = "Test View With Valid Array Filter"
+
+  filter {
+    column    = "environment"
+    operation = "in"
+    value     = "value1,value2,value3"
+  }
+}
+`, boardID)
+}
+
+func testBoardViewConfigNoFilters(boardID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_board_view" "test" {
+  board_id = "%s"
+  name     = "Test Board View Without Filters"
+}
+`, boardID)
+}
+
+func TestAccHoneycombioBoardView_boardIdRequiresReplace(t *testing.T) {
+	ctx := context.Background()
+	c := testAccClient(t)
+
+	// Create two boards
+	board1, err := c.Boards.Create(ctx, &client.Board{
+		Name:      "Test Board 1 " + acctest.RandString(8),
+		BoardType: "flexible",
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		c.Boards.Delete(ctx, board1.ID)
+	})
+
+	board2, err := c.Boards.Create(ctx, &client.Board{
+		Name:      "Test Board 2 " + acctest.RandString(8),
+		BoardType: "flexible",
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		c.Boards.Delete(ctx, board2.ID)
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				// Create board view on board1
+				Config: testBoardViewConfigForBoard(board1.ID, "Test View"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardViewExists(t, "honeycombio_board_view.test", board1.ID),
+					resource.TestCheckResourceAttr("honeycombio_board_view.test", "board_id", board1.ID),
+				),
+			},
+			{
+				// Change board_id to board2 - this should trigger a replacement
+				Config: testBoardViewConfigForBoard(board2.ID, "Test View"),
+				// Verify the plan shows replacement
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("honeycombio_board_view.test", plancheck.ResourceActionReplace),
+					},
+				},
+			},
+			{
+				// Apply the change and verify it works
+				Config: testBoardViewConfigForBoard(board2.ID, "Test View"),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardViewExists(t, "honeycombio_board_view.test", board2.ID),
+					resource.TestCheckResourceAttr("honeycombio_board_view.test", "board_id", board2.ID),
+				),
+			},
+		},
+	})
+}
+
+func testBoardViewConfigForBoard(boardID, name string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_board_view" "test" {
+  board_id = "%s"
+  name     = "%s"
+
+  filter {
+    column    = "service.name"
+    operation = "exists"
+  }
+}
+`, boardID, name)
 }

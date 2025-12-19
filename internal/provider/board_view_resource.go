@@ -29,6 +29,7 @@ var (
 	_ resource.Resource                = &boardViewResource{}
 	_ resource.ResourceWithConfigure   = &boardViewResource{}
 	_ resource.ResourceWithImportState = &boardViewResource{}
+	_ resource.ResourceWithValidateConfig = &boardViewResource{}
 )
 
 type boardViewResource struct {
@@ -71,6 +72,9 @@ func (*boardViewResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"board_id": schema.StringAttribute{
 				Required:    true,
 				Description: "The ID of the flexible board this view belongs to.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"name": schema.StringAttribute{
 				Required:    true,
@@ -82,8 +86,10 @@ func (*boardViewResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 		},
 		Blocks: map[string]schema.Block{
 			"filter": schema.ListNestedBlock{
-				Description: "List of filters to apply to the board view.",
+				Description:         "List of filters to apply to the board view. **Required:** At least one filter must be specified.",
+				MarkdownDescription: "List of filters to apply to the board view. **Required:** At least one filter must be specified.",
 				Validators: []validator.List{
+					listvalidator.IsRequired(),
 					listvalidator.SizeAtLeast(1),
 				},
 				NestedObject: schema.NestedBlockObject{
@@ -111,6 +117,46 @@ func (*boardViewResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	}
 }
 
+func (r *boardViewResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var config models.BoardViewResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Validate filters if present
+	if !config.Filters.IsNull() && !config.Filters.IsUnknown() {
+		var filterModels []models.BoardViewFilterModel
+		resp.Diagnostics.Append(config.Filters.ElementsAs(ctx, &filterModels, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		for i, f := range filterModels {
+			filterOp := client.FilterOpFromString(f.Operation.ValueString())
+			if filterOp == client.FilterOp("") {
+				// Skip invalid operations - they'll be caught by schema validation
+				continue
+			}
+
+			// Validate array operations for empty strings in comma-separated values
+			if filterOp.IsArray() && !f.Value.IsNull() && !f.Value.IsUnknown() {
+				values := strings.Split(f.Value.ValueString(), ",")
+				for j, value := range values {
+					trimmed := strings.TrimSpace(value)
+					if trimmed == "" {
+						resp.Diagnostics.AddAttributeError(
+							path.Root("filter").AtListIndex(i).AtName("value"),
+							"Empty value in comma-separated list",
+							fmt.Sprintf("operation '%s' does not allow empty values in the comma-separated list (found empty value at position %d)", f.Operation.ValueString(), j+1),
+						)
+					}
+				}
+			}
+		}
+	}
+}
+
 func (r *boardViewResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// Import format: board_id/view_id
 	boardID, viewID, found := strings.Cut(req.ID, "/")
@@ -134,6 +180,31 @@ func (r *boardViewResource) Create(ctx context.Context, req resource.CreateReque
 	var plan models.BoardViewResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Validate that at least one filter is provided
+	if plan.Filters.IsNull() || plan.Filters.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("filter"),
+			"At least one filter is required",
+			"Board views must have at least one filter defined.",
+		)
+		return
+	}
+
+	var filterModels []models.BoardViewFilterModel
+	resp.Diagnostics.Append(plan.Filters.ElementsAs(ctx, &filterModels, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if len(filterModels) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("filter"),
+			"At least one filter is required",
+			"Board views must have at least one filter defined.",
+		)
 		return
 	}
 
@@ -202,6 +273,31 @@ func (r *boardViewResource) Update(ctx context.Context, req resource.UpdateReque
 	var plan models.BoardViewResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Validate that at least one filter is provided
+	if plan.Filters.IsNull() || plan.Filters.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("filter"),
+			"At least one filter is required",
+			"Board views must have at least one filter defined.",
+		)
+		return
+	}
+
+	var filterModels []models.BoardViewFilterModel
+	resp.Diagnostics.Append(plan.Filters.ElementsAs(ctx, &filterModels, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if len(filterModels) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("filter"),
+			"At least one filter is required",
+			"Board views must have at least one filter defined.",
+		)
 		return
 	}
 
@@ -294,11 +390,33 @@ func expandBoardViewFilters(
 			if filterOp.IsArray() {
 				// For array operations, expect comma-separated string
 				values := strings.Split(f.Value.ValueString(), ",")
-				result := make([]any, len(values))
+				// Validate that there are no empty strings (after trimming)
+				hasEmpty := false
+				result := make([]any, 0, len(values))
 				for j, value := range values {
-					result[j] = coerce.ValueToType(strings.TrimSpace(value))
+					trimmed := strings.TrimSpace(value)
+					if trimmed == "" {
+						hasEmpty = true
+						diags.AddAttributeError(
+							path.Root("filter").AtListIndex(i).AtName("value"),
+							"Empty value in comma-separated list",
+							fmt.Sprintf("operation '%s' does not allow empty values in the comma-separated list (found empty value at position %d)", f.Operation.ValueString(), j+1),
+						)
+					} else {
+						result = append(result, coerce.ValueToType(trimmed))
+					}
 				}
-				filter.Value = result
+				// Validate that at least one non-empty value was provided
+				if len(result) == 0 {
+					diags.AddAttributeError(
+						path.Root("filter").AtListIndex(i).AtName("value"),
+						"Empty filter value",
+						fmt.Sprintf("operation '%s' requires at least one non-empty value in the comma-separated list", f.Operation.ValueString()),
+					)
+				} else if !hasEmpty {
+					// Only set filter.Value if validation passed (no empty strings)
+					filter.Value = result
+				}
 			} else {
 				// For scalar operations, convert string to appropriate type
 				filter.Value = coerce.ValueToType(f.Value.ValueString())

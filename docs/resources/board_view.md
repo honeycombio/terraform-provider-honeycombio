@@ -22,7 +22,7 @@ Manages a board view in a Honeycomb flexible board.
 
 ### Optional
 
-- `filter` (Block List) List of filters to apply to the board view. (see [below for nested schema](#nestedblock--filter))
+- `filter` (Block List) List of filters to apply to the board view. **Required:** At least one filter must be specified. (see [below for nested schema](#nestedblock--filter))
 
 ### Read-Only
 
