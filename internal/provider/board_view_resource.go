@@ -26,9 +26,9 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &boardViewResource{}
-	_ resource.ResourceWithConfigure   = &boardViewResource{}
-	_ resource.ResourceWithImportState = &boardViewResource{}
+	_ resource.Resource                   = &boardViewResource{}
+	_ resource.ResourceWithConfigure      = &boardViewResource{}
+	_ resource.ResourceWithImportState    = &boardViewResource{}
 	_ resource.ResourceWithValidateConfig = &boardViewResource{}
 )
 
