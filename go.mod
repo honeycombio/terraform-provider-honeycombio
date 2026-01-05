@@ -4,7 +4,7 @@ go 1.24.6
 
 require (
 	github.com/dunglas/httpsfv v1.1.0
-	github.com/google/go-querystring v1.1.0
+	github.com/google/go-querystring v1.2.0
 	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
 	github.com/hashicorp/jsonapi v1.5.0
