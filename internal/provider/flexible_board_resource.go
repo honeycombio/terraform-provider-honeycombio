@@ -294,7 +294,10 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 				},
 			},
 			"preset_filter": schema.ListNestedBlock{
-				Description: "List of preset filters for the board.",
+				Description: "List of preset filters for the board. Maximum of 5 preset filters per board.",
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(5),
+				},
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"column": schema.StringAttribute{
