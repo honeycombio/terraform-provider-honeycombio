@@ -3,12 +3,12 @@
 page_title: "honeycombio_board_view Resource - honeycombio"
 subcategory: ""
 description: |-
-  Manages a board view in a Honeycomb flexible board.
+  Manages a board view in a Honeycomb flexible board. Maximum of 50 boards views per board.
 ---
 
 # honeycombio_board_view (Resource)
 
-Manages a board view in a Honeycomb flexible board.
+Manages a board view in a Honeycomb flexible board. Maximum of 50 boards views per board.
 
 
 

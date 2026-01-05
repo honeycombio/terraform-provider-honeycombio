@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -774,6 +775,51 @@ resource "honeycombio_flexible_board" "test" {
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "preset_filter.0.alias", "final_alias"),
 					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.#", "1"),
 				),
+			},
+		},
+	})
+}
+
+// TestAccHoneycombioFlexibleBoard_presetFilterLimit tests that the preset filter limit (5) is enforced
+func TestAccHoneycombioFlexibleBoard_presetFilterLimit(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				// Test that 6 preset filters is rejected during plan
+				Config: `
+resource "honeycombio_flexible_board" "test" {
+  name = "Test board with 6 preset filters"
+
+  preset_filter {
+    column = "service.name"
+    alias  = "service1"
+  }
+  preset_filter {
+    column = "trace.trace_id"
+    alias  = "trace1"
+  }
+  preset_filter {
+    column = "environment"
+    alias  = "env1"
+  }
+  preset_filter {
+    column = "deployment.id"
+    alias  = "deployment1"
+  }
+  preset_filter {
+    column = "version"
+    alias  = "version1"
+  }
+  preset_filter {
+    column = "extra"
+    alias  = "extra1"
+  }
+}
+				`,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?i).*preset_filter.*at most.*5.*elements?`),
 			},
 		},
 	})

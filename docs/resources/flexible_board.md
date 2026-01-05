@@ -153,7 +153,7 @@ EOF
 
 - `description` (String) The description of the Board. Supports Markdown.
 - `panel` (Block List) List of panels to render on the board. (see [below for nested schema](#nestedblock--panel))
-- `preset_filter` (Block List) List of preset filters for the board. (see [below for nested schema](#nestedblock--preset_filter))
+- `preset_filter` (Block List) List of preset filters for the board. Maximum of 5 preset filters per board. (see [below for nested schema](#nestedblock--preset_filter))
 - `tags` (Map of String) A map of tags to assign to the resource.
 
 ### Read-Only

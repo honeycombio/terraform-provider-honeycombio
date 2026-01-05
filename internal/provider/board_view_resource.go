@@ -60,7 +60,7 @@ func (r *boardViewResource) Configure(_ context.Context, req resource.ConfigureR
 
 func (*boardViewResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a board view in a Honeycomb flexible board.",
+		Description: "Manages a board view in a Honeycomb flexible board. Maximum of 50 boards views per board.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
