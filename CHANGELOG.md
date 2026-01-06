@@ -1,3 +1,17 @@
+# 0.45.0 (Jan 06, 2026)
+
+ENHANCEMENTS:
+
+* feat(r/flexible_board): Add support for board views (#794)
+
+BUGFIXES:
+
+* fix(r/flexible_board): Add limits for preset filters, docs for views (#796)
+
+HOUSEKEEPING:
+
+* maint(deps): bump github.com/google/go-querystring from 1.1.0 to 1.2.0 (#795)
+
 # 0.44.0 (Dec 15, 2025)
 
 ENHANCEMENTS:
