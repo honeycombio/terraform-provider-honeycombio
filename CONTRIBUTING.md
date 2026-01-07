@@ -148,3 +148,4 @@ Once the release commit has landed on the `main` branch:
 - Copy the section from `CHANGELOG.md` for this release into the release description.
 - Publish the release.
 - Within a few minutes, the [Terraform Registry](https://registry.terraform.io/providers/honeycombio/honeycombio/latest) should have picked up and published the new version.
+- After the release has been published, update the latest version in the Pollinators api-and-terraform channel description.
