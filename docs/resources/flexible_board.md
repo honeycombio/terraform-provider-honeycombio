@@ -246,7 +246,7 @@ Required:
 
 Required:
 
-- `alias` (String) The alias for the preset filter.
+- `alias` (String) The alias for the preset filter. Maximum length of 50 characters.
 - `column` (String) The column name for the preset filter.
 
 Each `panel` block must have exactly one of `query_panel`, `slo_panel`, or `text_panel` configured.
