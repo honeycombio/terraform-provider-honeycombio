@@ -306,7 +306,10 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 						},
 						"alias": schema.StringAttribute{
 							Required:    true,
-							Description: "The alias for the preset filter.",
+							Description: "The alias for the preset filter. Maximum length of 50 characters.",
+							Validators: []validator.String{
+								stringvalidator.LengthBetween(1, 50),
+							},
 						},
 					},
 				},
