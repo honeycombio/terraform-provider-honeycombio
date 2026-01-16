@@ -63,6 +63,7 @@ output "json_query" {
 - `end_time` (Number) The absolute end time of the query's time range, in seconds since the Unix epoch.
 - `filter` (Block List) Zero or more configuration blocks describing the filters to apply to the query results. (see [below for nested schema](#nestedblock--filter))
 - `filter_combination` (String) How to combine multiple filters. Defaults to "AND".
+- `formula` (Block List) Zero or more configuration blocks describing formulas that compute values from calculations. (see [below for nested schema](#nestedblock--formula))
 - `granularity` (Number) The time resolution of the query's graph, in seconds. Valid values must be in between the query's time range at maximum, and /1000 at minimum.
 - `having` (Block List) Zero or more configuration blocks used to restrict returned groups in the query result. (see [below for nested schema](#nestedblock--having))
 - `limit` (Number) The maximum number of results to return. Defaults to 1000.
@@ -94,6 +95,22 @@ Required:
 Optional:
 
 - `column` (String) The column to apply the operator on. Not allowed with "COUNT" or "CONCURRENCY", required for all other operators.
+- `filter` (Block List) Zero or more configuration blocks describing filters to apply to this specific calculation. (see [below for nested schema](#nestedblock--calculation--filter))
+- `filter_combination` (String) How to combine multiple calculation filters. Defaults to "AND".
+- `name` (String) The name of the calculation. Required when using calculation filters or when referencing the calculation in a formula.
+
+<a id="nestedblock--calculation--filter"></a>
+### Nested Schema for `calculation.filter`
+
+Required:
+
+- `column` (String) The column to filter on.
+- `op` (String) The operator to apply. See the supported list at [Filter Operators](https://docs.honeycomb.io/api/query-specification/#filter-operators). Not all operators require a value.
+
+Optional:
+
+- `value` (String) The value used for the filter. Not needed if op is "exists" or "does-not-exist".
+
 
 
 <a id="nestedblock--filter"></a>
@@ -107,6 +124,15 @@ Required:
 Optional:
 
 - `value` (String) The value used for the filter. Not needed if op is "exists" or "not-exists".
+
+
+<a id="nestedblock--formula"></a>
+### Nested Schema for `formula`
+
+Required:
+
+- `expression` (String) An expression that references calculations by name. Uses the same syntax as [Calculated Field expressions](https://docs.honeycomb.io/reference/derived-column-formula/), but references calculation names instead of column names.
+- `name` (String) The name of the formula.
 
 
 <a id="nestedblock--having"></a>

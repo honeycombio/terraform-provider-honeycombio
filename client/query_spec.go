@@ -39,6 +39,10 @@ type QuerySpec struct {
 	// They are not saved in the dataset and are not available in the dataset
 	// after the query is run.
 	CalculatedFields []CalculatedFieldSpec `json:"calculated_fields,omitempty"`
+	// Formulas are expressions that reference calculations by name.
+	// They operate on the results of calculations and are returned in query
+	// results instead of calculations.
+	Formulas []FormulaSpec `json:"formulas,omitempty"`
 	// The filters with which to restrict the considered events.
 	Filters []FilterSpec `json:"filters,omitempty"`
 	// If multiple filters are specified, filter_combination determines how
@@ -96,7 +100,7 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 		calcMatch = false
 	} else {
 		for i := range qs.Calculations {
-			if !reflect.DeepEqual(qs.Calculations[i], other.Calculations[i]) {
+			if !qs.Calculations[i].EquivalentTo(other.Calculations[i]) {
 				calcMatch = false
 				break
 			}
@@ -112,9 +116,22 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 		if len(other.Calculations) != 0 {
 			oC = other.Calculations
 		}
-		if !reflect.DeepEqual(qsC, oC) {
+		if len(qsC) != len(oC) {
 			return false
 		}
+		for i := range qsC {
+			if !qsC[i].EquivalentTo(oC[i]) {
+				return false
+			}
+		}
+	}
+
+	// The order of Formulas is important for visualization rendering
+	if !reflect.DeepEqual(qs.Formulas, other.Formulas) &&
+		// an empty Formulas is equivalent to a nil Formulas
+		((qs.Formulas != nil || len(other.Formulas) != 0) &&
+			(len(qs.Formulas) != 0 || other.Formulas != nil)) {
+		return false
 	}
 
 	// Orders have a default ascending order, so we need to check equivalence
@@ -178,10 +195,46 @@ type CalculationSpec struct {
 	Op CalculationOp `json:"op"`
 	// Column to perform the operation on. Not needed with COUNT or CONCURRENCY
 	Column *string `json:"column,omitempty"`
+	// Name is an optional identifier for the calculation.
+	// Required when using calculation filters or when referencing the calculation in a formula.
+	Name *string `json:"name,omitempty"`
+	// Filters restrict the events considered for this particular calculation.
+	Filters []FilterSpec `json:"filters,omitempty"`
+	// FilterCombination determines how calculation filters are combined. Defaults to AND.
+	FilterCombination FilterCombination `json:"filter_combination,omitempty"`
+}
+
+// EquivalentTo determines if two CalculationSpecs are equivalent.
+// Filter order does not matter, but other fields must match.
+func (c CalculationSpec) EquivalentTo(other CalculationSpec) bool {
+	if c.Op != other.Op {
+		return false
+	}
+	if !reflect.DeepEqual(c.Column, other.Column) {
+		return false
+	}
+	if !reflect.DeepEqual(c.Name, other.Name) {
+		return false
+	}
+	// Filter order does not matter
+	if !Equivalent(c.Filters, other.Filters) {
+		return false
+	}
+	if ValueOrDefault(c.FilterCombination, DefaultFilterCombination) != ValueOrDefault(other.FilterCombination, DefaultFilterCombination) {
+		return false
+	}
+	return true
 }
 
 // CalculatedFieldSpec represents a Temporary Calculated Field within a query.
 type CalculatedFieldSpec struct {
+	Name       string `json:"name"`
+	Expression string `json:"expression"`
+}
+
+// FormulaSpec represents a formula within a query.
+// Formulas allow expressions that reference calculations by name.
+type FormulaSpec struct {
 	Name       string `json:"name"`
 	Expression string `json:"expression"`
 }
