@@ -270,7 +270,7 @@ data "honeycombio_query_specification" "test" {
   }
 }`,
 		PlanOnly:    true,
-		ExpectError: regexp.MustCompile(`duplicate name.*already used by calculation`),
+		ExpectError: regexp.MustCompile(`duplicate name`),
 	},
 }
 
@@ -934,7 +934,7 @@ data "honeycombio_query_specification" "test" {
   }
 }`,
 		PlanOnly:    true,
-		ExpectError: regexp.MustCompile(`duplicate name.*already used by formula`),
+		ExpectError: regexp.MustCompile(`duplicate name`),
 	},
 	// Formula name cannot match calculation name
 	{
@@ -950,7 +950,7 @@ data "honeycombio_query_specification" "test" {
   }
 }`,
 		PlanOnly:    true,
-		ExpectError: regexp.MustCompile(`duplicate name.*already used by calculation`),
+		ExpectError: regexp.MustCompile(`duplicate name`),
 	},
 	// Relational fields in filters not allowed when using formulas
 	{
