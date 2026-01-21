@@ -32,7 +32,8 @@ type QuerySpec struct {
 	ID *string `json:"id,omitempty"`
 
 	// The calculations to return as a time series and summary table. If no
-	// calculations are provided, COUNT is applied.
+	// calculations are provided, COUNT is applied. Can be used in formulas, aswell
+	// when calculations are named.
 	Calculations []CalculationSpec `json:"calculations,omitempty"`
 	// CalculatedFields are temporary Calculated Fields that are
 	// created for the query.
@@ -77,6 +78,9 @@ type QuerySpec struct {
 	// The time offset for comparison queries, in seconds. Used to compare current
 	// time range data with data from a previous time period.
 	CompareTimeOffsetSeconds *int `json:"compare_time_offset_seconds,omitempty"`
+	// A list of objects describing named expressions that can be used with named aggregates to calculate the result
+	// of a query
+	Formulas []FormulaSpec `json:"formulas,omitempty"`
 }
 
 // Encode returns the JSON string representation of the QuerySpec.
@@ -175,7 +179,8 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 
 // CalculationSpec represents a calculation within a query.
 type CalculationSpec struct {
-	Op CalculationOp `json:"op"`
+	Name string        `json:"name"`
+	Op   CalculationOp `json:"op"`
 	// Column to perform the operation on. Not needed with COUNT or CONCURRENCY
 	Column *string `json:"column,omitempty"`
 }
@@ -402,4 +407,10 @@ func HavingOps() []HavingOp {
 		HavingOpLessThan,
 		HavingOpLessThanOrEqual,
 	}
+}
+
+// FormulaSpec describes named expressions that are used to calculate a query result
+type FormulaSpec struct {
+	Name       string `json:"name,omitempty"`
+	Expression string `json:"expression,omitempty"`
 }

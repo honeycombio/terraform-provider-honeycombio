@@ -23,10 +23,12 @@ type QuerySpecificationModel struct {
 	Filters           []QuerySpecificationFilterModel          `tfsdk:"filter"`
 	Havings           []QuerySpecificationHavingModel          `tfsdk:"having"`
 	Orders            []QuerySpecificationOrderModel           `tfsdk:"order"`
+	Formulas          []QuerySpecificationFormulaModel         `tfsdk:"formula"`
 	Json              types.String                             `tfsdk:"json"` // Computed JSON query specification output
 }
 
 type QuerySpecificationCalculationModel struct {
+	Name   types.String `tfsdk:"name"`
 	Column types.String `tfsdk:"column"`
 	Op     types.String `tfsdk:"op"`
 }
@@ -47,6 +49,11 @@ type QuerySpecificationHavingModel struct {
 	Column      types.String  `tfsdk:"column"`
 	Op          types.String  `tfsdk:"op"`
 	Value       types.Float64 `tfsdk:"value"`
+}
+
+type QuerySpecificationFormulaModel struct {
+	Name       types.String `tfsdk:"name"`
+	Expression types.String `tfsdk:"expression"`
 }
 
 type QuerySpecificationOrderModel struct {
