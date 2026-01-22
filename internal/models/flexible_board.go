@@ -114,11 +114,30 @@ var VisualizationSettingsModelAttrType = map[string]attr.Type{
 	},
 }
 
+type ThresholdModel struct {
+	Value      types.Float64 `tfsdk:"value"`
+	Label      types.String  `tfsdk:"label"`
+	Color      types.Int64   `tfsdk:"color"`
+	Operation  types.Int64   `tfsdk:"operation"`
+	LineStyle  types.Int64   `tfsdk:"line_style"`
+	ChartIndex types.Int64   `tfsdk:"chart_index"`
+}
+
+var ThresholdModelAttrType = map[string]attr.Type{
+	"value":       types.Float64Type,
+	"label":       types.StringType,
+	"color":       types.Int64Type,
+	"operation":   types.Int64Type,
+	"line_style":  types.Int64Type,
+	"chart_index": types.Int64Type,
+}
+
 type ChartSettingsModel struct {
 	ChartType         types.String `tfsdk:"chart_type"`
 	ChartIndex        types.Int64  `tfsdk:"chart_index"`
 	OmitMissingValues types.Bool   `tfsdk:"omit_missing_values"`
 	LogScale          types.Bool   `tfsdk:"use_log_scale"`
+	Thresholds        types.List   `tfsdk:"thresholds"` // List of ThresholdModel
 }
 
 var ChartSettingsModelAttrType = map[string]attr.Type{
@@ -126,6 +145,11 @@ var ChartSettingsModelAttrType = map[string]attr.Type{
 	"chart_index":         types.Int64Type,
 	"omit_missing_values": types.BoolType,
 	"use_log_scale":       types.BoolType,
+	"thresholds": types.ListType{
+		ElemType: types.ObjectType{
+			AttrTypes: ThresholdModelAttrType,
+		},
+	},
 }
 
 // This is the old version of the BoardPanelModel

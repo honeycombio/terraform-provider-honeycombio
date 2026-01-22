@@ -268,6 +268,39 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 																Description: "Use logarithmic scale on Y axis.",
 															},
 														},
+														Blocks: map[string]schema.Block{
+															"thresholds": schema.ListNestedBlock{
+																Description: "Threshold lines to display on the chart.",
+																NestedObject: schema.NestedBlockObject{
+																	Attributes: map[string]schema.Attribute{
+																		"value": schema.Float64Attribute{
+																			Required:    true,
+																			Description: "The threshold value.",
+																		},
+																		"label": schema.StringAttribute{
+																			Optional:    true,
+																			Description: "Label for the threshold line.",
+																		},
+																		"color": schema.Int64Attribute{
+																			Optional:    true,
+																			Description: "Color index for the threshold line.",
+																		},
+																		"operation": schema.Int64Attribute{
+																			Optional:    true,
+																			Description: "Operation type for the threshold.",
+																		},
+																		"line_style": schema.Int64Attribute{
+																			Optional:    true,
+																			Description: "Line style for the threshold (e.g., solid, dashed).",
+																		},
+																		"chart_index": schema.Int64Attribute{
+																			Optional:    true,
+																			Description: "Chart index this threshold applies to.",
+																		},
+																	},
+																},
+															},
+														},
 													},
 												},
 											},
@@ -996,6 +1029,35 @@ func expandBoardQueryVisualizationSettings(
 	}
 }
 
+func expandThresholds(
+	ctx context.Context,
+	thresholdsList types.List,
+	diags *diag.Diagnostics,
+) []*client.Threshold {
+	if thresholdsList.IsNull() || thresholdsList.IsUnknown() {
+		return nil
+	}
+	var thresholds []models.ThresholdModel
+	diags.Append(thresholdsList.ElementsAs(ctx, &thresholds, false)...)
+	if len(thresholds) == 0 {
+		return nil
+	}
+
+	result := make([]*client.Threshold, 0, len(thresholds))
+	for _, threshold := range thresholds {
+		result = append(result, &client.Threshold{
+			Value:      threshold.Value.ValueFloat64(),
+			Label:      threshold.Label.ValueString(),
+			Color:      int(threshold.Color.ValueInt64()),
+			Operation:  int(threshold.Operation.ValueInt64()),
+			LineStyle:  int(threshold.LineStyle.ValueInt64()),
+			ChartIndex: int(threshold.ChartIndex.ValueInt64()),
+		})
+	}
+
+	return result
+}
+
 func expandBoardQueryVizCharts(
 	ctx context.Context,
 	chartsList types.List,
@@ -1017,6 +1079,7 @@ func expandBoardQueryVizCharts(
 			ChartIndex:        int(chart.ChartIndex.ValueInt64()),
 			OmitMissingValues: chart.OmitMissingValues.ValueBool(),
 			UseLogScale:       chart.LogScale.ValueBool(),
+			Thresholds:        expandThresholds(ctx, chart.Thresholds, diags),
 		})
 	}
 
@@ -1151,6 +1214,44 @@ func flattenBoardQueryVisualizationSettings(
 	return result
 }
 
+func flattenThresholds(
+	ctx context.Context,
+	thresholds []*client.Threshold,
+	diags *diag.Diagnostics,
+) types.List {
+	if len(thresholds) == 0 {
+		return types.ListNull(types.ObjectType{AttrTypes: models.ThresholdModelAttrType})
+	}
+
+	thresholdsObj := make([]attr.Value, 0, len(thresholds))
+	for _, threshold := range thresholds {
+		if threshold == nil {
+			continue
+		}
+
+		obj, d := types.ObjectValue(models.ThresholdModelAttrType, map[string]attr.Value{
+			"value":       types.Float64Value(threshold.Value),
+			"label":       types.StringValue(threshold.Label),
+			"color":       types.Int64Value(int64(threshold.Color)),
+			"operation":   types.Int64Value(int64(threshold.Operation)),
+			"line_style":  types.Int64Value(int64(threshold.LineStyle)),
+			"chart_index": types.Int64Value(int64(threshold.ChartIndex)),
+		})
+		diags.Append(d...)
+
+		thresholdsObj = append(thresholdsObj, obj)
+	}
+
+	result, d := types.ListValueFrom(
+		ctx,
+		types.ObjectType{AttrTypes: models.ThresholdModelAttrType},
+		thresholdsObj,
+	)
+	diags.Append(d...)
+
+	return result
+}
+
 func flattenBoardQueryVizCharts(
 	ctx context.Context,
 	charts []*client.ChartSettings,
@@ -1171,6 +1272,7 @@ func flattenBoardQueryVizCharts(
 			"chart_index":         types.Int64Value(int64(chart.ChartIndex)),
 			"omit_missing_values": types.BoolValue(chart.OmitMissingValues),
 			"use_log_scale":       types.BoolValue(chart.UseLogScale),
+			"thresholds":          flattenThresholds(ctx, chart.Thresholds, diags),
 		})
 		diags.Append(d...)
 
