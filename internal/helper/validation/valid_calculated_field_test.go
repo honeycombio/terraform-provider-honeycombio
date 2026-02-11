@@ -43,6 +43,13 @@ func Test_IsValidCalculatedFieldValidator(t *testing.T) {
 			val:         types.StringValue(`IF(AND(NOT(EXISTS($trace.parent_id)),EXISTS($duration_ms)),LTE($duration_ms,300)),`),
 			expectError: true,
 		},
+		"valid timeseries function": {
+			val: types.StringValue(`MAX(LAST(1))`),
+		},
+		"nested timeseries functions": {
+			val:         types.StringValue(`RATE(LAST(1))`),
+			expectError: true,
+		},
 	}
 
 	for name, tc := range testCases {
