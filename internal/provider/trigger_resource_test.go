@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -1783,6 +1784,18 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, name, tagsConfig)
 }
 
+// testAccCheckQueryJSON returns a resource.CheckResourceAttrWithFunc that
+// unmarshals the query_json attribute and runs the provided check function.
+func testAccCheckQueryJSON(check func(client.QuerySpec) error) resource.CheckResourceAttrWithFunc {
+	return func(value string) error {
+		var q client.QuerySpec
+		if err := json.Unmarshal([]byte(value), &q); err != nil {
+			return fmt.Errorf("failed to unmarshal query_json: %w", err)
+		}
+		return check(q)
+	}
+}
+
 func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
@@ -2029,7 +2042,19 @@ func TestAcc_TriggerResourceWithFormula(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
-					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_id"),
+					resource.TestCheckResourceAttrWith("honeycombio_trigger.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if len(q.Formulas) != 1 {
+							return fmt.Errorf("expected 1 formula, got %d", len(q.Formulas))
+						}
+						if len(q.Calculations) != 2 {
+							return fmt.Errorf("expected 2 calculations, got %d", len(q.Calculations))
+						}
+						if q.TimeRange == nil || *q.TimeRange != 900 {
+							return fmt.Errorf("expected time_range 900, got %v", q.TimeRange)
+						}
+						return nil
+					})),
 				),
 			},
 			// update the trigger name
@@ -2107,6 +2132,20 @@ func TestAcc_TriggerResourceWithMetrics(t *testing.T) {
 				Config: testAccConfigTriggerMetricsSimple(dataset, name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_id"),
+					resource.TestCheckResourceAttrWith("honeycombio_trigger.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if q.Granularity == nil || *q.Granularity != 300 {
+							return fmt.Errorf("expected granularity 300, got %v", q.Granularity)
+						}
+						if len(q.Calculations) != 1 {
+							return fmt.Errorf("expected 1 calculation, got %d", len(q.Calculations))
+						}
+						if q.Calculations[0].Op != client.CalculationOpAvg {
+							return fmt.Errorf("expected AVG calculation, got %s", q.Calculations[0].Op)
+						}
+						return nil
+					})),
 				),
 			},
 			// update to custom temporal aggregation with calculated field
@@ -2114,6 +2153,19 @@ func TestAcc_TriggerResourceWithMetrics(t *testing.T) {
 				Config: testAccConfigTriggerMetricsCustom(dataset, name+"-updated"),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name+"-updated"),
+					resource.TestCheckResourceAttrWith("honeycombio_trigger.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if q.Granularity == nil || *q.Granularity != 60 {
+							return fmt.Errorf("expected granularity 60, got %v", q.Granularity)
+						}
+						if len(q.CalculatedFields) != 1 {
+							return fmt.Errorf("expected 1 calculated field, got %d", len(q.CalculatedFields))
+						}
+						if len(q.Calculations) != 1 {
+							return fmt.Errorf("expected 1 calculation, got %d", len(q.Calculations))
+						}
+						return nil
+					})),
 				),
 			},
 			{
