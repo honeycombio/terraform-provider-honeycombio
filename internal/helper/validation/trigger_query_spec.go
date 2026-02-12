@@ -87,54 +87,110 @@ func (v triggerQuerySpecValidator) ValidateString(ctx context.Context, request v
 			"Trigger queries cannot use granularity.",
 		))
 	}
-
-	// Build list of calculations that don't match havings
-	var calculationsWithoutHavings []client.CalculationSpec
-	for _, calc := range q.Calculations {
-		matchesHaving := false
-		for _, having := range q.Havings {
-			if reflect.DeepEqual(having.Column, calc.Column) &&
-				having.CalculateOp != nil &&
-				*having.CalculateOp == calc.Op {
-				matchesHaving = true
-				break
-			}
-		}
-		if !matchesHaving {
-			calculationsWithoutHavings = append(calculationsWithoutHavings, calc)
-		}
-	}
-
-	// Enforce single non-having calculation
-	var numCalculations int
-	switch {
-	case len(q.Calculations) == 1:
-		numCalculations = 1
-	case len(q.Havings) == 0:
-		numCalculations = len(q.Calculations)
-	default:
-		numCalculations = len(calculationsWithoutHavings)
-	}
-
-	if numCalculations != 1 {
-		var namesList []string
-		for _, calc := range calculationsWithoutHavings {
-			s := string(calc.Op)
-			if calc.Column != nil {
-				s = fmt.Sprintf("%s(%s)", s, *calc.Column)
-			}
-			namesList = append(namesList, s)
-		}
-		names := strings.Join(namesList, ", ")
-
+	// Max 1 HAVING clause
+	if len(q.Havings) > 1 {
 		response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
 			request.Path,
 			v.Description(ctx),
-			fmt.Sprintf(
-				"Trigger queries must contain a single calculation, but found %s",
-				names,
-			),
+			fmt.Sprintf("Trigger queries support at most 1 having clause, but found %d.", len(q.Havings)),
 		))
+	}
+
+	// Determine if any calculation uses named aggregates or aggregate filters
+	hasNamedOrFilteredCalcs := false
+	for _, calc := range q.Calculations {
+		if calc.Name != nil || len(calc.Filters) > 0 {
+			hasNamedOrFilteredCalcs = true
+			break
+		}
+	}
+
+	// Global where clause cannot be used with named aggregates or aggregate filters
+	if hasNamedOrFilteredCalcs && len(q.Filters) > 0 {
+		response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+			request.Path,
+			v.Description(ctx),
+			"Trigger queries cannot use global filters when calculations have names or aggregate filters. Use calculation-level filters instead.",
+		))
+	}
+
+	// Two valid query shapes:
+	// Path A (standard): no formulas, max 1 non-having calculation, no names/filters on calcs
+	// Path B (formula):  exactly 1 formula, up to 100 calculations
+	if len(q.Formulas) > 0 {
+		// Formula path
+		if len(q.Formulas) > 1 {
+			response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+				request.Path,
+				v.Description(ctx),
+				fmt.Sprintf("Trigger queries support at most 1 formula, but found %d.", len(q.Formulas)),
+			))
+		}
+		if len(q.Calculations) > 100 {
+			response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+				request.Path,
+				v.Description(ctx),
+				fmt.Sprintf("Trigger queries with formulas support at most 100 calculations, but found %d.", len(q.Calculations)),
+			))
+		}
+	} else {
+		// Standard path: max 1 non-having calculation, no names or filters
+		if hasNamedOrFilteredCalcs {
+			response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+				request.Path,
+				v.Description(ctx),
+				"Trigger queries without formulas cannot use named calculations or calculation-level filters.",
+			))
+		}
+
+		// Build list of calculations that don't match havings
+		var calculationsWithoutHavings []client.CalculationSpec
+		for _, calc := range q.Calculations {
+			matchesHaving := false
+			for _, having := range q.Havings {
+				if reflect.DeepEqual(having.Column, calc.Column) &&
+					having.CalculateOp != nil &&
+					*having.CalculateOp == calc.Op {
+					matchesHaving = true
+					break
+				}
+			}
+			if !matchesHaving {
+				calculationsWithoutHavings = append(calculationsWithoutHavings, calc)
+			}
+		}
+
+		// Enforce single non-having calculation
+		var numCalculations int
+		switch {
+		case len(q.Calculations) == 1:
+			numCalculations = 1
+		case len(q.Havings) == 0:
+			numCalculations = len(q.Calculations)
+		default:
+			numCalculations = len(calculationsWithoutHavings)
+		}
+
+		if numCalculations != 1 {
+			var namesList []string
+			for _, calc := range calculationsWithoutHavings {
+				s := string(calc.Op)
+				if calc.Column != nil {
+					s = fmt.Sprintf("%s(%s)", s, *calc.Column)
+				}
+				namesList = append(namesList, s)
+			}
+			names := strings.Join(namesList, ", ")
+
+			response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+				request.Path,
+				v.Description(ctx),
+				fmt.Sprintf(
+					"Trigger queries must contain a single calculation, but found %s",
+					names,
+				),
+			))
+		}
 	}
 }
 
