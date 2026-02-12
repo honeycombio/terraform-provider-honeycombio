@@ -32,9 +32,23 @@ Creates a trigger. For more information about triggers, check out [Alert with Tr
 
 {{tffile "examples/resources/honeycombio_trigger/trigger_with_having_count.tf"}}
 
+### Trigger with Formula
+
+{{tffile "examples/resources/honeycombio_trigger/trigger_with_formula.tf"}}
+
+### Metrics Trigger (Simple)
+
+{{tffile "examples/resources/honeycombio_trigger/trigger_with_granularity.tf"}}
+
+### Metrics Trigger (Custom Temporal Aggregation)
+
+{{tffile "examples/resources/honeycombio_trigger/trigger_with_temporal_aggregates.tf"}}
+
 {{ .SchemaMarkdown | trimspace }}
 
--> **NOTE** The query used in a Trigger must follow a strict subset: the query must contain *exactly one* calculation and may only contain `calculation`, `filter`, `filter_combination` and `breakdowns` fields.
+-> **NOTE** The query used in a Trigger must follow a strict subset. It supports two query shapes:
+**Standard:** The query must contain *exactly one* non-having calculation (without names or aggregate filters) and may only contain `calculation`, `filter`, `filter_combination`, `having` (at most 1), and `breakdowns` fields.
+**Formula:** The query must contain *exactly one* formula with up to 100 named calculations. When calculations use names or aggregate-level filters, global filters cannot be used — use calculation-level filters instead.
 The query's duration cannot be more than four times the trigger frequency (i.e. `duration <= frequency*4`).
 See [A Caveat on Time](https://docs.honeycomb.io/working-with-your-data/query-specification/#a-caveat-on-time)) for more information on specifying a query's duration.
 For example: if using the default query `time_range` of `7200` the lowest `frequency` for a trigger is `1800`.
