@@ -9,7 +9,6 @@ HOUSEKEEPING:
 * maint(deps): bump golang.org/x/net from 0.48.0 to 0.50.0 (#809)
 * maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.38.1 to 2.38.2 in the hashicorp group (#808)
 * chore(docs): Add example usage for board views resource, and alias max length (#802)
-* chore(docs): add step to update pollinators channel description when a new release is cut (#800)
 
 # 0.45.0 (Jan 06, 2026)
 
