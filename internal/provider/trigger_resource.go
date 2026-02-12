@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"reflect"
 	"regexp"
 	"strings"
 
@@ -118,6 +116,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Validators: []validator.String{
 					stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("query_id")),
 					validation.ValidQuerySpec(),
+					validation.ValidTriggerQuerySpec(),
 				},
 			},
 			"alert_type": schema.StringAttribute{
@@ -595,100 +594,8 @@ func (r *triggerResource) ValidateConfig(ctx context.Context, req resource.Valid
 		return
 	}
 
-	var calculationsWithoutHavings []client.CalculationSpec
-	for _, calc := range q.Calculations {
-		if calc.Op == client.CalculationOpHeatmap {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("query_json"),
-				"Trigger validation error",
-				"Trigger queries cannot use HEATMAP calculations.",
-			)
-		}
-		if calc.Op == client.CalculationOpConcurrency {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("query_json"),
-				"Trigger validation error",
-				"Trigger queries cannot use CONCURRENCY calculations.",
-			)
-		}
-
-		matchesHaving := false
-		for _, having := range q.Havings {
-			if reflect.DeepEqual(having.Column, calc.Column) &&
-				*having.CalculateOp == calc.Op {
-				matchesHaving = true
-				break
-			}
-		}
-		if !matchesHaving {
-			calculationsWithoutHavings = append(calculationsWithoutHavings, calc)
-		}
-	}
-
-	// Can have one non-having calculation; which means two calculations if one of
-	// them matches the having, one calculation if it matches the having, and one
-	// calculation if there is no having
-	var numCalculations int
-	switch {
-	case len(q.Calculations) == 1:
-		numCalculations = 1
-	case len(q.Havings) == 0:
-		numCalculations = len(q.Calculations)
-	default:
-		numCalculations = len(calculationsWithoutHavings)
-	}
-
-	if numCalculations != 1 {
-		var namesList []string
-		for _, calc := range calculationsWithoutHavings {
-			s := string(calc.Op)
-			if calc.Column != nil {
-				s = fmt.Sprintf("%s(%s)", s, *calc.Column)
-			}
-			namesList = append(namesList, s)
-		}
-		names := strings.Join(namesList, ", ")
-
-		resp.Diagnostics.AddAttributeError(
-			path.Root("query_json"),
-			"Trigger validation error",
-			fmt.Sprintf(
-				"Trigger queries must contain a single calculation, but found %s",
-				names,
-			),
-		)
-	}
-
-	// ensure unsupported fields are unset
-	if q.Orders != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("query_json"),
-			"Trigger validation error",
-			"Trigger queries cannot use orders.",
-		)
-	}
-	if q.Limit != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("query_json"),
-			"Trigger validation error",
-			"Trigger queries cannot use limit.",
-		)
-	}
-	if q.StartTime != nil || q.EndTime != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("query_json"),
-			"Trigger validation error",
-			"Trigger queries cannot use start_time or end_time.",
-		)
-	}
-	if q.Granularity != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("query_json"),
-			"Trigger validation error",
-			"Trigger queries cannot use granularity.",
-		)
-	}
-
+	// Cross-field validations that require access to other resource attributes
+	// (query spec field validations are handled by ValidTriggerQuerySpec validator)
 	if q.TimeRange != nil {
 		frequency := int(data.Frequency.ValueInt64())
 		if *q.TimeRange < frequency {
