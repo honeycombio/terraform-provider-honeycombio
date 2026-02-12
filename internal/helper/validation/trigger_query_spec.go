@@ -80,13 +80,6 @@ func (v triggerQuerySpecValidator) ValidateString(ctx context.Context, request v
 			"Trigger queries cannot use start_time or end_time.",
 		))
 	}
-	if q.Granularity != nil {
-		response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
-			request.Path,
-			v.Description(ctx),
-			"Trigger queries cannot use granularity.",
-		))
-	}
 	// Max 1 HAVING clause
 	if len(q.Havings) > 1 {
 		response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(

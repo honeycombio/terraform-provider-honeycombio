@@ -95,9 +95,14 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 			val:         types.StringValue(`{"calculations": [{"op": "COUNT"}], "end_time": 1454808600}`),
 			expectError: true,
 		},
-		"invalid granularity": {
-			val:         types.StringValue(`{"calculations": [{"op": "COUNT"}], "granularity": 120}`),
-			expectError: true,
+		"valid granularity": {
+			val: types.StringValue(`{"calculations": [{"op": "COUNT"}], "granularity": 120}`),
+		},
+		"valid RATE_AVG with granularity": {
+			val: types.StringValue(`{"calculations": [{"op": "RATE_AVG", "column": "http.server.requests"}], "granularity": 300}`),
+		},
+		"valid calculated field with granularity": {
+			val: types.StringValue(`{"calculations": [{"op": "AVG", "column": "request_rate_5m"}], "calculated_fields": [{"name": "request_rate_5m", "expression": "RATE($http.server.requests, 300)"}], "granularity": 60}`),
 		},
 		"invalid more than 1 having": {
 			val: types.StringValue(`{
