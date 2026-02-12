@@ -78,6 +78,10 @@ func testAccDataset() string {
 	return os.Getenv("HONEYCOMB_DATASET")
 }
 
+// testAccMetricsDataset returns the value of the env HONEYCOMB_METRICS_DATASET
+// If unset, we skip the test. In the future, we will enforce this is set, but
+// we aren't yet able to run these tests in CI since we cannot clean up metrics
+// datasets after test runs
 func testAccMetricsDataset(t *testing.T) string {
 	t.Helper()
 
