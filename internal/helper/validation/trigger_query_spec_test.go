@@ -2,6 +2,8 @@ package validation_test
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -37,7 +39,27 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 			val: types.StringValue(`{"calculations": [{"op": "COUNT"}, {"op": "P99", "column": "duration_ms"}], "havings": [{"calculate_op": "COUNT", "op": ">", "value": 5}]}`),
 		},
 		"valid single calculation with filters and breakdowns": {
-			val: types.StringValue(`{"calculations": [{"op": "AVG", "column": "duration_ms"}], "filters": [{"column": "status", "op": "=", "value": "error"}], "breakdowns": ["service"]}`),
+			val: types.StringValue(`{"calculations": [{"op": "AVG", "column": "duration_ms"}], "filters": [{"column": "status", "op": "!=", "value": "error"}], "breakdowns": ["service"]}`),
+		},
+		"valid formula with named calculations": {
+			val: types.StringValue(`{
+				"calculations": [
+					{"op": "COUNT", "name": "total"},
+					{"op": "COUNT", "name": "errors", "filters": [{"column": "status", "op": "=", "value": "error"}]}
+				],
+				"formulas": [{"name": "error_rate", "expression": "DIV($errors, $total)"}]
+			}`),
+		},
+		"valid formula with having": {
+			val: types.StringValue(`{
+				"calculations": [
+					{"op": "COUNT", "name": "total"},
+					{"op": "COUNT", "name": "errors", "filters": [{"column": "status", "op": "=", "value": "error"}]},
+					{"op": "SUM", "column": "bytes", "name": "total_bytes"}
+				],
+				"formulas": [{"name": "error_rate", "expression": "DIV($errors, $total)"}],
+				"havings": [{"column": "error_rate", "op": ">", "value": 1000}]
+			}`),
 		},
 
 		// --- Invalid cases ---
@@ -77,6 +99,62 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 			val:         types.StringValue(`{"calculations": [{"op": "COUNT"}], "granularity": 120}`),
 			expectError: true,
 		},
+		"invalid more than 1 having": {
+			val: types.StringValue(`{
+				"calculations": [{"op": "COUNT"}, {"op": "AVG", "column": "duration_ms"}, {"op": "MAX", "column": "duration_ms"}],
+				"havings": [
+					{"calculate_op": "COUNT", "op": ">", "value": 5},
+					{"calculate_op": "AVG", "column": "duration_ms", "op": ">", "value": 100}
+				]
+			}`),
+			expectError: true,
+		},
+		"invalid more than 1 formula": {
+			val: types.StringValue(`{
+				"calculations": [
+					{"op": "COUNT", "name": "a"},
+					{"op": "AVG", "column": "duration_ms", "name": "b"}
+				],
+				"formulas": [
+					{"name": "f1", "expression": "DIV($a, $b)"},
+					{"name": "f2", "expression": "MUL($a, $b)"}
+				]
+			}`),
+			expectError: true,
+		},
+		"invalid named calculation without formula": {
+			val: types.StringValue(`{
+				"calculations": [{"op": "COUNT", "name": "total"}]
+			}`),
+			expectError: true,
+		},
+		"invalid calculation-level filters without formula": {
+			val: types.StringValue(`{
+				"calculations": [{"op": "COUNT", "filters": [{"column": "status", "op": "=", "value": "error"}]}]
+			}`),
+			expectError: true,
+		},
+		"invalid global filters with named aggregates": {
+			val: types.StringValue(`{
+				"calculations": [
+					{"op": "COUNT", "name": "total"},
+					{"op": "COUNT", "name": "errors", "filters": [{"column": "status", "op": "=", "value": "error"}]}
+				],
+				"formulas": [{"name": "error_rate", "expression": "DIV($errors, $total)"}],
+				"filters": [{"column": "service", "op": "=", "value": "web"}]
+			}`),
+			expectError: true,
+		},
+		"invalid global filters with aggregate filters": {
+			val: types.StringValue(`{
+				"calculations": [
+					{"op": "COUNT", "name": "errors", "filters": [{"column": "status", "op": "=", "value": "error"}]}
+				],
+				"formulas": [{"name": "error_count", "expression": "$errors"}],
+				"filters": [{"column": "service", "op": "=", "value": "web"}]
+			}`),
+			expectError: true,
+		},
 		"invalid multiple calculations not obscured by having": {
 			val: types.StringValue(`{
 				"calculations": [{"op": "COUNT"}, {"op": "AVG", "column": "duration_ms"}, {"op": "P99", "column": "duration_ms"}],
@@ -84,6 +162,19 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 			}`),
 			expectError: true,
 		},
+	}
+
+	// Add test for >100 calculations with formula
+	calcs := make([]string, 101)
+	for i := range calcs {
+		calcs[i] = fmt.Sprintf(`{"op": "COUNT", "name": "c%d"}`, i)
+	}
+	tests["invalid more than 100 calculations with formula"] = testCase{
+		val: types.StringValue(fmt.Sprintf(`{
+			"calculations": [%s],
+			"formulas": [{"name": "f", "expression": "$c0"}]
+		}`, strings.Join(calcs, ","))),
+		expectError: true,
 	}
 
 	for name, test := range tests {

@@ -1857,3 +1857,263 @@ resource "honeycombio_trigger" "test" {
   }
 }`, name)
 }
+
+func TestAcc_TriggerResourceWithFormula(t *testing.T) {
+	dataset := testAccDataset()
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerWithFormula(dataset, name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
+				),
+			},
+			// update the trigger name
+			{
+				Config: testAccConfigTriggerWithFormula(dataset, name+"-updated"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name+"-updated"),
+				),
+			},
+			{
+				ResourceName:        "honeycombio_trigger.test",
+				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+				ImportState:         true,
+			},
+		},
+	})
+}
+
+func TestAcc_TriggerResourceValidatesFormulaQueryJSON(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				// more than 1 having clause
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT"
+  }
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+  calculation {
+    op     = "MAX"
+    column = "duration_ms"
+  }
+
+  having {
+    calculate_op = "AVG"
+    column       = "duration_ms"
+    op           = ">"
+    value        = 100
+  }
+
+  having {
+    calculate_op = "MAX"
+    column       = "duration_ms"
+    op           = ">"
+    value        = 500
+  }
+
+  time_range = 7200
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = 7200
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`at most 1 having clause`),
+				PlanOnly:    true,
+			},
+			{
+				// more than 1 formula
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+
+    filter {
+      column = "error"
+      op     = "exists"
+    }
+  }
+
+  formula {
+    name       = "error_rate"
+    expression = "DIV($errors, $total)"
+  }
+
+  formula {
+    name       = "error_pct"
+    expression = "MUL(DIV($errors, $total), 100)"
+  }
+
+  time_range = 900
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 0.1
+  }
+
+  frequency = 900
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`at most 1 formula`),
+				PlanOnly:    true,
+			},
+			{
+				// global filters with named aggregates
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+
+    filter {
+      column = "error"
+      op     = "exists"
+    }
+  }
+
+  formula {
+    name       = "error_rate"
+    expression = "DIV($errors, $total)"
+  }
+
+  filter {
+    column = "service"
+    op     = "="
+    value  = "web"
+  }
+
+  time_range = 900
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 0.1
+  }
+
+  frequency = 900
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`(?s)cannot use global filters when calculations have names or\s+aggregate filters`),
+				PlanOnly:    true,
+			},
+			{
+				// named calculation without formula
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+
+  time_range = 900
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = 900
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`without formulas cannot use named calculations`),
+				PlanOnly:    true,
+			},
+		},
+	})
+}
+
+func testAccConfigTriggerWithFormula(dataset, name string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+
+    filter {
+      column = "error"
+      op     = "exists"
+    }
+  }
+
+  formula {
+    name       = "error_rate"
+    expression = "DIV($errors, $total)"
+  }
+
+  time_range = 900
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  threshold {
+    op    = ">"
+    value = 0.1
+  }
+
+  frequency = 900
+
+  recipient {
+    type   = "marker"
+    target = "Formula trigger fired"
+  }
+}`, dataset, name)
+}
