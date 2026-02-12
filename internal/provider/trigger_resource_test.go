@@ -1101,29 +1101,6 @@ data "honeycombio_query_specification" "test" {
     op = "COUNT"
   }
 
-  granularity = 120
-}
-
-resource "honeycombio_trigger" "test" {
-  name    = "I fail validation"
-  dataset = "foobar"
-
-  threshold {
-    op    = ">"
-    value = 100
-  }
-
-  query_json = data.honeycombio_query_specification.test.json
-}`,
-				ExpectError: regexp.MustCompile(`queries cannot use granularity`),
-			},
-			{
-				Config: `
-data "honeycombio_query_specification" "test" {
-  calculation {
-    op = "COUNT"
-  }
-
   time_range = 1800
 }
 
@@ -1858,39 +1835,6 @@ resource "honeycombio_trigger" "test" {
 }`, name)
 }
 
-func TestAcc_TriggerResourceWithFormula(t *testing.T) {
-	dataset := testAccDataset()
-	name := test.RandomStringWithPrefix("test.", 20)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccConfigTriggerWithFormula(dataset, name),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
-					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
-					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
-				),
-			},
-			// update the trigger name
-			{
-				Config: testAccConfigTriggerWithFormula(dataset, name+"-updated"),
-				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
-					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name+"-updated"),
-				),
-			},
-			{
-				ResourceName:        "honeycombio_trigger.test",
-				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
-				ImportState:         true,
-			},
-		},
-	})
-}
-
 func TestAcc_TriggerResourceValidatesFormulaQueryJSON(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
@@ -1965,12 +1909,12 @@ data "honeycombio_query_specification" "test" {
 
   formula {
     name       = "error_rate"
-    expression = "DIV($errors, $total)"
+    expression = "$errors / $total"
   }
 
   formula {
     name       = "error_pct"
-    expression = "MUL(DIV($errors, $total), 100)"
+    expression = "$errors / $total * 100)"
   }
 
   time_range = 900
@@ -2012,7 +1956,7 @@ data "honeycombio_query_specification" "test" {
 
   formula {
     name       = "error_rate"
-    expression = "DIV($errors, $total)"
+    expression = "$errors / $total"
   }
 
   filter {
@@ -2072,6 +2016,39 @@ resource "honeycombio_trigger" "test" {
 	})
 }
 
+func TestAcc_TriggerResourceWithFormula(t *testing.T) {
+	dataset := testAccDataset()
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerWithFormula(dataset, name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "frequency", "900"),
+				),
+			},
+			// update the trigger name
+			{
+				Config: testAccConfigTriggerWithFormula(dataset, name+"-updated"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name+"-updated"),
+				),
+			},
+			{
+				ResourceName:        "honeycombio_trigger.test",
+				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+				ImportState:         true,
+			},
+		},
+	})
+}
+
 func testAccConfigTriggerWithFormula(dataset, name string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
@@ -2114,6 +2091,105 @@ resource "honeycombio_trigger" "test" {
   recipient {
     type   = "marker"
     target = "Formula trigger fired"
+  }
+}`, dataset, name)
+}
+
+func TestAcc_TriggerResourceWithMetrics(t *testing.T) {
+	dataset := testAccMetricsDataset(t)
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerMetricsSimple(dataset, name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+				),
+			},
+			// update to custom temporal aggregation with calculated field
+			{
+				Config: testAccConfigTriggerMetricsCustom(dataset, name+"-updated"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+				),
+			},
+			{
+				ResourceName:        "honeycombio_trigger.test",
+				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+				ImportState:         true,
+			},
+		},
+	})
+}
+
+func testAccConfigTriggerMetricsCustom(dataset, name string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculated_field {
+    name       = "rate_last_5m"
+    expression = "RATE($app.cumulative, 300)"
+  }
+
+  calculation {
+    op     = "AVG"
+    column = "rate_last_5m"
+  }
+
+  time_range  = 1800
+  granularity = 60
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  frequency = 900
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  recipient {
+    type   = "marker"
+    target = "Metrics trigger fired"
+  }
+}`, dataset, name)
+}
+
+func testAccConfigTriggerMetricsSimple(dataset, name string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "app.cumulative"
+  }
+
+  time_range  = 1800
+  granularity = 300
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  frequency = 900
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  recipient {
+    type   = "marker"
+    target = "Metrics trigger fired"
   }
 }`, dataset, name)
 }

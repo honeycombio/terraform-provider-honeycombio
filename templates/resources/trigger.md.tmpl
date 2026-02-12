@@ -36,6 +36,14 @@ Creates a trigger. For more information about triggers, check out [Alert with Tr
 
 {{tffile "examples/resources/honeycombio_trigger/trigger_with_formula.tf"}}
 
+### Metrics Trigger (Simple)
+
+{{tffile "examples/resources/honeycombio_trigger/trigger_with_granularity.tf"}}
+
+### Metrics Trigger (Custom Temporal Aggregation)
+
+{{tffile "examples/resources/honeycombio_trigger/trigger_with_temporal_aggregates.tf"}}
+
 {{ .SchemaMarkdown | trimspace }}
 
 -> **NOTE** The query used in a Trigger must follow a strict subset. It supports two query shapes:
