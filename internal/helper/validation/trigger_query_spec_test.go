@@ -18,8 +18,9 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 	t.Parallel()
 
 	type testCase struct {
-		val         types.String
-		expectError bool
+		val              types.String
+		expectError      bool
+		expectedErrorMsg string
 	}
 	tests := map[string]testCase{
 		// --- Valid cases ---
@@ -64,36 +65,44 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 
 		// --- Invalid cases ---
 		"invalid json": {
-			val:         types.StringValue("whoop"),
-			expectError: true,
+			val:              types.StringValue("whoop"),
+			expectError:      true,
+			expectedErrorMsg: "value must be a valid Trigger Query Specification",
 		},
 		"invalid HEATMAP calculation": {
-			val:         types.StringValue(`{"calculations": [{"op": "HEATMAP", "column": "duration_ms"}]}`),
-			expectError: true,
+			val:              types.StringValue(`{"calculations": [{"op": "HEATMAP", "column": "duration_ms"}]}`),
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries cannot use HEATMAP calculations.",
 		},
 		"invalid CONCURRENCY calculation": {
-			val:         types.StringValue(`{"calculations": [{"op": "CONCURRENCY"}]}`),
-			expectError: true,
+			val:              types.StringValue(`{"calculations": [{"op": "CONCURRENCY"}]}`),
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries cannot use CONCURRENCY calculations.",
 		},
 		"invalid multiple calculations without formula": {
-			val:         types.StringValue(`{"calculations": [{"op": "COUNT"}, {"op": "AVG", "column": "duration_ms"}]}`),
-			expectError: true,
+			val:              types.StringValue(`{"calculations": [{"op": "COUNT"}, {"op": "AVG", "column": "duration_ms"}]}`),
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries must contain a single calculation, but found COUNT, AVG(duration_ms)",
 		},
 		"invalid orders": {
-			val:         types.StringValue(`{"calculations": [{"op": "COUNT"}], "orders": [{"op": "COUNT", "order": "descending"}]}`),
-			expectError: true,
+			val:              types.StringValue(`{"calculations": [{"op": "COUNT"}], "orders": [{"op": "COUNT", "order": "descending"}]}`),
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries cannot use orders.",
 		},
 		"invalid limit": {
-			val:         types.StringValue(`{"calculations": [{"op": "COUNT"}], "limit": 10}`),
-			expectError: true,
+			val:              types.StringValue(`{"calculations": [{"op": "COUNT"}], "limit": 10}`),
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries cannot use limit.",
 		},
 		"invalid start_time": {
-			val:         types.StringValue(`{"calculations": [{"op": "COUNT"}], "start_time": 1454808600}`),
-			expectError: true,
+			val:              types.StringValue(`{"calculations": [{"op": "COUNT"}], "start_time": 1454808600}`),
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries cannot use start_time or end_time.",
 		},
 		"invalid end_time": {
-			val:         types.StringValue(`{"calculations": [{"op": "COUNT"}], "end_time": 1454808600}`),
-			expectError: true,
+			val:              types.StringValue(`{"calculations": [{"op": "COUNT"}], "end_time": 1454808600}`),
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries cannot use start_time or end_time.",
 		},
 		"valid granularity": {
 			val: types.StringValue(`{"calculations": [{"op": "COUNT"}], "granularity": 120}`),
@@ -112,7 +121,8 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 					{"calculate_op": "AVG", "column": "duration_ms", "op": ">", "value": 100}
 				]
 			}`),
-			expectError: true,
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries support at most 1 having clause, but found 2.",
 		},
 		"invalid more than 1 formula": {
 			val: types.StringValue(`{
@@ -125,19 +135,22 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 					{"name": "f2", "expression": "MUL($a, $b)"}
 				]
 			}`),
-			expectError: true,
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries support at most 1 formula, but found 2.",
 		},
 		"invalid named calculation without formula": {
 			val: types.StringValue(`{
 				"calculations": [{"op": "COUNT", "name": "total"}]
 			}`),
-			expectError: true,
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries without formulas cannot use named calculations or calculation-level filters.",
 		},
 		"invalid calculation-level filters without formula": {
 			val: types.StringValue(`{
 				"calculations": [{"op": "COUNT", "filters": [{"column": "status", "op": "=", "value": "error"}]}]
 			}`),
-			expectError: true,
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries without formulas cannot use named calculations or calculation-level filters.",
 		},
 		"invalid global filters with named aggregates": {
 			val: types.StringValue(`{
@@ -148,7 +161,8 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 				"formulas": [{"name": "error_rate", "expression": "DIV($errors, $total)"}],
 				"filters": [{"column": "service", "op": "=", "value": "web"}]
 			}`),
-			expectError: true,
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries cannot use global filters when calculations have names or aggregate filters. Use calculation-level filters instead.",
 		},
 		"invalid global filters with aggregate filters": {
 			val: types.StringValue(`{
@@ -158,7 +172,8 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 				"formulas": [{"name": "error_count", "expression": "$errors"}],
 				"filters": [{"column": "service", "op": "=", "value": "web"}]
 			}`),
-			expectError: true,
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries cannot use global filters when calculations have names or aggregate filters. Use calculation-level filters instead.",
 		},
 		"invalid duplicate calculation names": {
 			val: types.StringValue(`{
@@ -168,7 +183,8 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 				],
 				"formulas": [{"name": "f", "expression": "$total"}]
 			}`),
-			expectError: true,
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries cannot have duplicate calculation names.",
 		},
 		"invalid calculation name conflicts with formula name": {
 			val: types.StringValue(`{
@@ -178,14 +194,16 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 				],
 				"formulas": [{"name": "result", "expression": "$b"}]
 			}`),
-			expectError: true,
+			expectError:      true,
+			expectedErrorMsg: `Trigger queries cannot have a formula with the same name as a calculation: "result".`,
 		},
 		"invalid multiple calculations not obscured by having": {
 			val: types.StringValue(`{
 				"calculations": [{"op": "COUNT"}, {"op": "AVG", "column": "duration_ms"}, {"op": "P99", "column": "duration_ms"}],
 				"havings": [{"calculate_op": "P99", "column": "duration_ms", "op": ">", "value": 1000}]
 			}`),
-			expectError: true,
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries must contain a single calculation, but found COUNT, AVG(duration_ms)",
 		},
 	}
 
@@ -199,7 +217,8 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 			"calculations": [%s],
 			"formulas": [{"name": "f", "expression": "$c0"}]
 		}`, strings.Join(calcs, ","))),
-		expectError: true,
+		expectError:      true,
+		expectedErrorMsg: "Trigger queries with formulas support at most 100 calculations, but found 101.",
 	}
 
 	for name, test := range tests {
@@ -219,6 +238,20 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 				response.Diagnostics.HasError(),
 				"unexpected result for %q: %s", name, response.Diagnostics,
 			)
+
+			if test.expectedErrorMsg != "" {
+				assert.True(t, response.Diagnostics.HasError(), "expected an error but got none")
+				if response.Diagnostics.HasError() {
+					found := false
+					for _, diag := range response.Diagnostics.Errors() {
+						if strings.Contains(diag.Detail(), test.expectedErrorMsg) {
+							found = true
+							break
+						}
+					}
+					assert.True(t, found, "expected error message %q but got: %s", test.expectedErrorMsg, response.Diagnostics)
+				}
+			}
 		})
 	}
 }
