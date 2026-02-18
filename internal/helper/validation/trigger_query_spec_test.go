@@ -160,6 +160,26 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 			}`),
 			expectError: true,
 		},
+		"invalid duplicate calculation names": {
+			val: types.StringValue(`{
+				"calculations": [
+					{"op": "COUNT", "name": "total"},
+					{"op": "AVG", "column": "duration_ms", "name": "total"}
+				],
+				"formulas": [{"name": "f", "expression": "$total"}]
+			}`),
+			expectError: true,
+		},
+"invalid calculation name conflicts with formula name": {
+			val: types.StringValue(`{
+				"calculations": [
+					{"op": "COUNT", "name": "result"},
+					{"op": "AVG", "column": "duration_ms", "name": "b"}
+				],
+				"formulas": [{"name": "result", "expression": "$b"}]
+			}`),
+			expectError: true,
+		},
 		"invalid multiple calculations not obscured by having": {
 			val: types.StringValue(`{
 				"calculations": [{"op": "COUNT"}, {"op": "AVG", "column": "duration_ms"}, {"op": "P99", "column": "duration_ms"}],

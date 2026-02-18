@@ -89,6 +89,31 @@ func (v triggerQuerySpecValidator) ValidateString(ctx context.Context, request v
 		))
 	}
 
+	// Reject duplicate calculation names and detect conflicts with formula names
+	usedNames := map[string]bool{}
+	for _, calc := range q.Calculations {
+		if calc.Name != nil {
+			if usedNames[*calc.Name] {
+				response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+					request.Path,
+					v.Description(ctx),
+					"Trigger queries cannot have duplicate calculation names.",
+				))
+			}
+			usedNames[*calc.Name] = true
+		}
+	}
+	for _, formula := range q.Formulas {
+		if usedNames[formula.Name] {
+			response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+				request.Path,
+				v.Description(ctx),
+				fmt.Sprintf("Trigger queries cannot have a formula with the same name as a calculation: %q.", formula.Name),
+			))
+		}
+		usedNames[formula.Name] = true
+	}
+
 	// Determine if any calculation uses named aggregates or aggregate filters
 	hasNamedOrFilteredCalcs := false
 	for _, calc := range q.Calculations {
