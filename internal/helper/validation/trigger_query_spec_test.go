@@ -170,7 +170,7 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 			}`),
 			expectError: true,
 		},
-"invalid calculation name conflicts with formula name": {
+		"invalid calculation name conflicts with formula name": {
 			val: types.StringValue(`{
 				"calculations": [
 					{"op": "COUNT", "name": "result"},
