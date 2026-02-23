@@ -141,7 +141,7 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Description: "How to combine multiple calculation filters. Defaults to \"AND\".",
 							Optional:    true,
 							Validators: []validator.String{stringvalidator.OneOf(
-								string(client.FilterCombinationAnd), string(client.FilterCombinationOr),
+								helper.AsStringSlice(client.FilterCombinations())...,
 							)},
 						},
 					},
