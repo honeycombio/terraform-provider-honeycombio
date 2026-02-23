@@ -946,6 +946,26 @@ data "honeycombio_query_specification" "test" {
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile(`duplicate name`),
 	},
+	// Invalid formula syntax not allowed
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+  }
+  formula {
+    name       = "rate"
+    expression = "100 ) * $errors"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile(`valid calculated field`),
+	},
 	// Formula name cannot match calculation name
 	{
 		Config: `
