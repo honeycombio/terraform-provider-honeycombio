@@ -22,10 +22,14 @@ jobs:
           go-version-file: "go.mod"
           cache: true
 
+      - name: Get tool versions
+        id: versions
+        run: echo "lint-version=$(make lint-version)" >> "$GITHUB_OUTPUT"
+
       - name: Lint
         uses: golangci/golangci-lint-action@v9.2.0
         with:
-          version: latest
+          version: ${{ steps.versions.outputs.lint-version }}
 
       - name: Build
         run: go build -v .

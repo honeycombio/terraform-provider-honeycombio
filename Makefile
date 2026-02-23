@@ -1,5 +1,7 @@
-.PHONY: build testacc lint sweep docs docs-check
+.PHONY: build testacc lint lint-version sweep docs docs-check
 default: testacc
+
+GOLANGCI_LINT_VERSION := v2.9.0
 
 build:
 	go build -o terraform-provider-honeycombio
@@ -8,12 +10,10 @@ testacc:
 	TF_ACC=1 go test -v ./...
 
 lint:
-# VSCode requires the binary be named golangci-lint-v2, so we check for both names
-	@if command -v golangci-lint-v2 >/dev/null 2>&1; then \
-		golangci-lint-v2 run; \
-	else \
-		golangci-lint run; \
-	fi
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION) run
+
+lint-version:
+	@echo $(GOLANGCI_LINT_VERSION)
 
 sweep:
 # the sweep flag requires a string to be passed, but it is not used
