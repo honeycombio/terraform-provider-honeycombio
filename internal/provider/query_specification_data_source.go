@@ -204,6 +204,9 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Description:         "An expression that references calculations by name using the calculated field syntax.",
 							MarkdownDescription: "An expression that references calculations by name. Uses the same syntax as [Calculated Field expressions](https://docs.honeycomb.io/reference/derived-column-formula/), but references calculation names instead of column names.",
 							Required:            true,
+							Validators: []validator.String{
+								validation.IsValidCalculatedField(),
+							},
 						},
 					},
 				},
