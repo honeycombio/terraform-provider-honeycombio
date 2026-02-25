@@ -519,6 +519,16 @@ data "honeycombio_query_specification" "test" {
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("cannot order by HEATMAP"),
 	},
+	// Final clean step to ensure destroy doesn't fail due to ValidateConfig errors
+	// from the previous ExpectError step's config.
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}`,
+	},
 }
 
 func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {
@@ -935,6 +945,26 @@ data "honeycombio_query_specification" "test" {
 }`,
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile(`duplicate name`),
+	},
+	// Invalid formula syntax not allowed
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+  }
+  formula {
+    name       = "rate"
+    expression = "100 ) * $errors"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile(`valid calculated field`),
 	},
 	// Formula name cannot match calculation name
 	{
