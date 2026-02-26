@@ -1,3 +1,17 @@
+# 0.46.1 (Feb 26, 2026)
+
+BUGFIXES:
+
+* fix(ci): use configured golangci (#812)
+
+HOUSEKEEPING:
+
+* maint(deps): bump golang.org/x/net from 0.50.0 to 0.51.0 (#819)
+* maint(deps): bump github.com/cloudflare/circl from 1.6.1 to 1.6.3 (#817)
+* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.29.0 to 0.30.0 in the hashicorp group (#816)
+* maint(deps): bump hashicorp/setup-terraform from 3 to 4 (#815)
+* maint(deps): bump goreleaser/goreleaser-action from 6.4.0 to 7.0.0 (#813)
+
 # 0.46.0 (Feb 12, 2026)
 
 ENHANCEMENTS:
