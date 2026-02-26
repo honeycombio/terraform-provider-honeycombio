@@ -136,7 +136,12 @@ To properly setup the GitHub Actions, add the following secrets:
 To release a new version of the Terraform provider a binary has to be built for a list of platforms ([more information](https://developer.hashicorp.com/terraform/registry/providers/publishing#creating-a-github-release)).
 This process is largely automated with GoReleaser and GitHub Actions.
 
-The unautomated part is creating a "release commit" which updates `CHANGELOG.md` in the root of the repository. If it's a non-patch release, also update references to the build version in the various examples (`README.md`, `docs/index.md`). Add the `no-changelog` tag to the PR so the change PR is not included in the generated release notes.
+First, we have to create a "releast commit" which updates `CHANGELOG.md` in the root of the repository.
+- Update `CHANGELOG.md` in the root of the repository with the changes since the previous release (skipping those marked as `no-changelog`)
+  - Easy mode: run `./scripts/generate-changelog --check-labels` from the root of the repository to do this automatically. Flag requires `gh` CLI tool is installed, but can be run without.
+- If it's a non-patch release, also update references to the build version in the various examples (`README.md`, `docs/index.md`).
+- Open the PR with these changes, and add the `no-changelog` tag to the PR so the change PR is not included in the generated release notes.
+- Merge once approved
 
 Once the release commit has landed on the `main` branch:
 
