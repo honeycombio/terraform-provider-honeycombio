@@ -1,9 +1,5 @@
 # 0.46.1 (Feb 26, 2026)
 
-BUGFIXES:
-
-* fix(ci): use configured golangci (#812)
-
 HOUSEKEEPING:
 
 * maint(deps): bump golang.org/x/net from 0.50.0 to 0.51.0 (#819)
