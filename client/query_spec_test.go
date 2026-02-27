@@ -390,6 +390,145 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			},
 			false,
 		},
+		{
+			"Equivalent formulas",
+			client.QuerySpec{
+				Formulas: []client.FormulaSpec{
+					{Name: "rate", Expression: "DIV($a, $b)"},
+				},
+			},
+			client.QuerySpec{
+				Formulas: []client.FormulaSpec{
+					{Name: "rate", Expression: "DIV($a, $b)"},
+				},
+			},
+			true,
+		},
+		{
+			"Empty formulas equivalent to nil formulas",
+			client.QuerySpec{
+				Formulas: []client.FormulaSpec{},
+			},
+			client.QuerySpec{
+				Formulas: nil,
+			},
+			true,
+		},
+		{
+			"Different formulas",
+			client.QuerySpec{
+				Formulas: []client.FormulaSpec{
+					{Name: "rate", Expression: "DIV($a, $b)"},
+				},
+			},
+			client.QuerySpec{
+				Formulas: []client.FormulaSpec{
+					{Name: "rate", Expression: "MUL($a, $b)"},
+				},
+			},
+			false,
+		},
+		{
+			"Equivalent calculations with filters",
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{
+						Op:   client.CalculationOpCount,
+						Name: client.ToPtr("filtered"),
+						Filters: []client.FilterSpec{
+							{Column: "status", Op: "=", Value: "error"},
+						},
+					},
+				},
+			},
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{
+						Op:   client.CalculationOpCount,
+						Name: client.ToPtr("filtered"),
+						Filters: []client.FilterSpec{
+							{Column: "status", Op: "=", Value: "error"},
+						},
+					},
+				},
+			},
+			true,
+		},
+		{
+			"Calculation filters order does not matter",
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{
+						Op:   client.CalculationOpCount,
+						Name: client.ToPtr("filtered"),
+						Filters: []client.FilterSpec{
+							{Column: "a", Op: "=", Value: "1"},
+							{Column: "b", Op: "=", Value: "2"},
+						},
+					},
+				},
+			},
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{
+						Op:   client.CalculationOpCount,
+						Name: client.ToPtr("filtered"),
+						Filters: []client.FilterSpec{
+							{Column: "b", Op: "=", Value: "2"},
+							{Column: "a", Op: "=", Value: "1"},
+						},
+					},
+				},
+			},
+			true,
+		},
+		{
+			"Different calculation names",
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{
+						Op:   client.CalculationOpCount,
+						Name: client.ToPtr("count_a"),
+					},
+				},
+			},
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{
+						Op:   client.CalculationOpCount,
+						Name: client.ToPtr("count_b"),
+					},
+				},
+			},
+			false,
+		},
+		{
+			"Calculation filter combination defaults to AND",
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{
+						Op:   client.CalculationOpCount,
+						Name: client.ToPtr("filtered"),
+						Filters: []client.FilterSpec{
+							{Column: "status", Op: "=", Value: "error"},
+						},
+						FilterCombination: client.FilterCombinationAnd,
+					},
+				},
+			},
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{
+						Op:   client.CalculationOpCount,
+						Name: client.ToPtr("filtered"),
+						Filters: []client.FilterSpec{
+							{Column: "status", Op: "=", Value: "error"},
+						},
+					},
+				},
+			},
+			true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

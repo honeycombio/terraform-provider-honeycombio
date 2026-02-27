@@ -20,6 +20,7 @@ type QuerySpecificationModel struct {
 	CompareTimeOffset types.Int64                              `tfsdk:"compare_time_offset"`
 	Calculations      []QuerySpecificationCalculationModel     `tfsdk:"calculation"`
 	CalculatedFields  []QuerySpecificationCalculatedFieldModel `tfsdk:"calculated_field"`
+	Formulas          []QuerySpecificationFormulaModel         `tfsdk:"formula"`
 	Filters           []QuerySpecificationFilterModel          `tfsdk:"filter"`
 	Havings           []QuerySpecificationHavingModel          `tfsdk:"having"`
 	Orders            []QuerySpecificationOrderModel           `tfsdk:"order"`
@@ -27,11 +28,19 @@ type QuerySpecificationModel struct {
 }
 
 type QuerySpecificationCalculationModel struct {
-	Column types.String `tfsdk:"column"`
-	Op     types.String `tfsdk:"op"`
+	Column            types.String                    `tfsdk:"column"`
+	Op                types.String                    `tfsdk:"op"`
+	Name              types.String                    `tfsdk:"name"`
+	Filters           []QuerySpecificationFilterModel `tfsdk:"filter"`
+	FilterCombination types.String                    `tfsdk:"filter_combination"`
 }
 
 type QuerySpecificationCalculatedFieldModel struct {
+	Name       types.String `tfsdk:"name"`
+	Expression types.String `tfsdk:"expression"`
+}
+
+type QuerySpecificationFormulaModel struct {
 	Name       types.String `tfsdk:"name"`
 	Expression types.String `tfsdk:"expression"`
 }
