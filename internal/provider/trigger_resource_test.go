@@ -1927,7 +1927,7 @@ data "honeycombio_query_specification" "test" {
 
   formula {
     name       = "error_pct"
-    expression = "$errors / $total * 100)"
+    expression = "$errors / $total * 100"
   }
 
   time_range = 900
