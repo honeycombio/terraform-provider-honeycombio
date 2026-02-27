@@ -78,6 +78,20 @@ func testAccDataset() string {
 	return os.Getenv("HONEYCOMB_DATASET")
 }
 
+// testAccMetricsDataset returns the value of the env HONEYCOMB_METRICS_DATASET
+// If unset, we skip the test. In the future, we will enforce this is set, but
+// we aren't yet able to run these tests in CI since we cannot clean up metrics
+// datasets after test runs
+func testAccMetricsDataset(t *testing.T) string {
+	t.Helper()
+
+	dataset := os.Getenv("HONEYCOMB_METRICS_DATASET")
+	if dataset == "" {
+		t.Skip("set HONEYCOMB_METRICS_DATASET to run metrics acceptance tests")
+	}
+	return dataset
+}
+
 // newTestEnvirionment creates a new Environment with a random name and description
 // for testing purposes.
 // The Environment is automatically deleted when the test completes.
