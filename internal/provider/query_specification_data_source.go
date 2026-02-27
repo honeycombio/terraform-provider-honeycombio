@@ -331,7 +331,7 @@ func (d *querySpecDataSource) ValidateConfig(ctx context.Context, req datasource
 			hasCalculationFilters = true
 
 			// Require name when using filters
-			if c.Name.IsNull() && c.Name.ValueString() != "" {
+			if c.Name.IsNull() || c.Name.ValueString() == "" {
 				resp.Diagnostics.AddAttributeError(
 					path.Root("calculation").AtListIndex(i).AtName("name"),
 					"name is required when using calculation filters",
