@@ -204,6 +204,8 @@ func TestAcc_QuerySpecificationDataSource_validationChecks(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: appendAllTestSteps(
 			testStepsQueryValidationChecks_calculation,
+			testStepsQueryValidationChecks_calculationFilters,
+			testStepsQueryValidationChecks_formulas,
 			testStepsQueryValidationChecks_filter,
 			testStepsQueryValidationChecks_limit(),
 			testStepsQueryValidationChecks_time,
@@ -234,6 +236,41 @@ data "honeycombio_query_specification" "test" {
 }`,
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("AVG requires a colum"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "HEATMAP"
+    column = "duration_ms"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  formula {
+    name       = "rate"
+    expression = "DIV($total, 100)"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("HEATMAP calculations cannot be used with formulas"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "my_count"
+  }
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+    name   = "my_count"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile(`duplicate name`),
 	},
 }
 
@@ -443,7 +480,7 @@ data "honeycombio_query_specification" "test" {
   }
 }`,
 		PlanOnly:    true,
-		ExpectError: regexp.MustCompile("missing matching calculation or breakdown"),
+		ExpectError: regexp.MustCompile("missing matching calculation, formula, or breakdown"),
 	},
 	{
 		Config: `
@@ -461,7 +498,7 @@ data "honeycombio_query_specification" "test" {
   }
 }`,
 		PlanOnly:    true,
-		ExpectError: regexp.MustCompile("missing matching calculation or breakdown"),
+		ExpectError: regexp.MustCompile("missing matching calculation, formula, or breakdown"),
 	},
 	{
 		Config: `
@@ -481,6 +518,16 @@ data "honeycombio_query_specification" "test" {
 }`,
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("cannot order by HEATMAP"),
+	},
+	// Final clean step to ensure destroy doesn't fail due to ValidateConfig errors
+	// from the previous ExpectError step's config.
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}`,
 	},
 }
 
@@ -633,6 +680,385 @@ output "query_json" {
 			},
 		},
 	})
+}
+
+func TestAcc_QuerySpecificationDataSource_formulas(t *testing.T) {
+	expected, err := test.MinifyJSON(`
+{
+  "calculations": [
+    {"op": "COUNT", "name": "total"},
+    {"op": "COUNT", "name": "errors", "filters": [{"column": "status_code", "op": "\u003e=", "value": 500}]}
+  ],
+  "formulas": [
+    {"name": "error_rate", "expression": "DIV($errors, $total)"}
+  ],
+  "time_range": 7200
+}`)
+	require.NoError(t, err)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+    filter {
+      column = "status_code"
+      op     = ">="
+      value  = 500
+    }
+  }
+  formula {
+    name       = "error_rate"
+    expression = "DIV($errors, $total)"
+  }
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.test.json
+}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("query_json", expected),
+				),
+			},
+		},
+	})
+}
+
+func TestAcc_QuerySpecificationDataSource_calculationFilters(t *testing.T) {
+	expected, err := test.MinifyJSON(`
+{
+  "calculations": [
+    {
+      "op": "AVG",
+      "column": "duration_ms",
+      "name": "avg_duration",
+      "filters": [
+        {"column": "status", "op": "=", "value": "success"},
+        {"column": "region", "op": "in", "value": ["us-west-1", "us-east-1"]}
+      ],
+      "filter_combination": "OR"
+    }
+  ],
+  "time_range": 7200
+}`)
+	require.NoError(t, err)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+    name   = "avg_duration"
+    filter_combination = "OR"
+    filter {
+      column = "status"
+      op     = "="
+      value  = "success"
+    }
+    filter {
+      column = "region"
+      op     = "in"
+      value  = "us-west-1,us-east-1"
+    }
+  }
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.test.json
+}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("query_json", expected),
+				),
+			},
+		},
+	})
+}
+
+func TestAcc_QuerySpecificationDataSource_orderByFormula(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+  }
+  formula {
+    name       = "error_rate"
+    expression = "DIV($errors, $total)"
+  }
+  order {
+    column = "error_rate"
+    order  = "descending"
+  }
+}`,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+func TestAcc_QuerySpecificationDataSource_orderByNamedCalculation(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "my_count"
+  }
+  order {
+    column = "my_count"
+    order  = "descending"
+  }
+}`,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+var testStepsQueryValidationChecks_calculationFilters = []resource.TestStep{
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+    filter {
+      column = "status"
+      op     = "="
+      value  = "error"
+    }
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("name is required when using calculation filters"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "filtered_count"
+    filter {
+      column = "status"
+      op     = "exists"
+      value  = "should-not-be-here"
+    }
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("exists does not take a value"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "filtered_count"
+    filter {
+      column = "status"
+      op     = "="
+    }
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("operator = requires a value"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "filtered_count"
+    filter {
+      column = "root.status_code"
+      op     = "="
+      value  = "500"
+    }
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("relational fields are not supported in calculation filters"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "filtered_count"
+    filter {
+      column = "child.duration_ms"
+      op     = ">"
+      value  = "100"
+    }
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("relational fields are not supported in calculation filters"),
+	},
+}
+
+var testStepsQueryValidationChecks_formulas = []resource.TestStep{
+	// Duplicate formula names not allowed
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+  }
+  formula {
+    name       = "rate"
+    expression = "DIV($total, 100)"
+  }
+  formula {
+    name       = "rate"
+    expression = "DIV($errors, 100)"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile(`duplicate name`),
+	},
+	// Invalid formula syntax not allowed
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+  }
+  formula {
+    name       = "rate"
+    expression = "100 ) * $errors"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile(`valid calculated field`),
+	},
+	// Formula name cannot match calculation name
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  formula {
+    name       = "total"
+    expression = "DIV($total, 100)"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile(`duplicate name`),
+	},
+	// Relational fields in filters not allowed when using formulas
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  formula {
+    name       = "rate"
+    expression = "DIV($total, 100)"
+  }
+  filter {
+    column = "root.status_code"
+    op     = "="
+    value  = "200"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("relational fields are not supported when using formulas or calculation filters"),
+	},
+	// Relational fields in breakdowns not allowed when using formulas
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  formula {
+    name       = "rate"
+    expression = "DIV($total, 100)"
+  }
+  breakdowns = ["child.service_name"]
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("relational fields are not supported when using formulas or calculation filters"),
+	},
+	// Relational fields in filters not allowed when using calculation filters
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "filtered"
+    filter {
+      column = "status"
+      op     = "="
+      value  = "error"
+    }
+  }
+  filter {
+    column = "parent.trace_id"
+    op     = "exists"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("relational fields are not supported when using formulas or calculation filters"),
+	},
+	// Relational fields in breakdowns not allowed when using calculation filters
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "filtered"
+    filter {
+      column = "status"
+      op     = "="
+      value  = "error"
+    }
+  }
+  breakdowns = ["root.service_name"]
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("relational fields are not supported when using formulas or calculation filters"),
+	},
 }
 
 func TestAcc_QuerySpecificationDataSource_TimeRange_CompareTimeOffsetInvalid(t *testing.T) {

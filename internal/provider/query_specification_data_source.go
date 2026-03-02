@@ -25,6 +25,20 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var _ datasource.DataSource = &querySpecDataSource{}
+var _ datasource.DataSourceWithValidateConfig = &querySpecDataSource{}
+
+// relationalFieldPrefixes are the prefixes that indicate a field references a related span.
+var relationalFieldPrefixes = []string{"root.", "child.", "parent.", "any.", "any2.", "any3.", "none."}
+
+// isRelationalField returns true if the column name references a related span.
+func isRelationalField(column string) bool {
+	for _, prefix := range relationalFieldPrefixes {
+		if strings.HasPrefix(column, prefix) {
+			return true
+		}
+	}
+	return false
+}
 
 func NewQuerySpecDataSource() datasource.DataSource {
 	return &querySpecDataSource{}
@@ -120,6 +134,42 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 								"Not allowed with \"COUNT\" or \"CONCURRENCY\", required for all other operators.",
 							Optional: true,
 						},
+						"name": schema.StringAttribute{
+							Description: "The name of the calculation. Required when using calculation filters or when referencing the calculation in a formula.",
+							Optional:    true,
+						},
+						"filter_combination": schema.StringAttribute{
+							Description: "How to combine multiple calculation filters. Defaults to \"AND\".",
+							Optional:    true,
+							Validators: []validator.String{stringvalidator.OneOf(
+								helper.AsStringSlice(client.FilterCombinations())...,
+							)},
+						},
+					},
+					Blocks: map[string]schema.Block{
+						"filter": schema.ListNestedBlock{
+							Description: "Zero or more configuration blocks describing filters to apply to this specific calculation.",
+							NestedObject: schema.NestedBlockObject{
+								Attributes: map[string]schema.Attribute{
+									"column": schema.StringAttribute{
+										Description: "The column to filter on.",
+										Required:    true,
+									},
+									"op": schema.StringAttribute{
+										Description:         "The operator to apply.",
+										MarkdownDescription: "The operator to apply. See the supported list at [Filter Operators](https://docs.honeycomb.io/api/query-specification/#filter-operators). Not all operators require a value.",
+										Required:            true,
+										Validators: []validator.String{
+											stringvalidator.OneOf(helper.AsStringSlice(client.FilterOps())...),
+										},
+									},
+									"value": schema.StringAttribute{
+										Description: "The value used for the filter. Not needed if op is \"exists\" or \"does-not-exist\".",
+										Optional:    true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -134,6 +184,25 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 						"expression": schema.StringAttribute{
 							Description:         "The formula to use for the Calculated Field.",
 							MarkdownDescription: "The formula to use for the Calculated Field. See the [Calculated Field Formula Reference](https://docs.honeycomb.io/reference/derived-column-formula/) for syntax and functions.",
+							Required:            true,
+							Validators: []validator.String{
+								validation.IsValidCalculatedField(),
+							},
+						},
+					},
+				},
+			},
+			"formula": schema.ListNestedBlock{
+				Description: "Zero or more configuration blocks describing formulas that compute values from calculations.",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Description: "The name of the formula.",
+							Required:    true,
+						},
+						"expression": schema.StringAttribute{
+							Description:         "An expression that references calculations by name using the calculated field syntax.",
+							MarkdownDescription: "An expression that references calculations by name. Uses the same syntax as [Calculated Field expressions](https://docs.honeycomb.io/reference/derived-column-formula/), but references calculation names instead of column names.",
 							Required:            true,
 							Validators: []validator.String{
 								validation.IsValidCalculatedField(),
@@ -226,6 +295,134 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 	}
 }
 
+func (d *querySpecDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+	var data models.QuerySpecificationModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Track all names used by calculations and formulas (must be unique across both)
+	type nameSource struct {
+		sourceType string // "calculation" or "formula"
+		index      int
+	}
+	namesSeen := make(map[string]nameSource)
+
+	hasCalculationFilters := false
+
+	for i, c := range data.Calculations {
+		// Check for duplicate calculation names
+		if !c.Name.IsNull() && c.Name.ValueString() != "" {
+			if prev, exists := namesSeen[c.Name.ValueString()]; exists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("calculation").AtListIndex(i).AtName("name"),
+					"duplicate name",
+					"name \""+c.Name.ValueString()+"\" is already used by "+prev.sourceType+" at index "+strconv.Itoa(prev.index),
+				)
+			} else {
+				namesSeen[c.Name.ValueString()] = nameSource{sourceType: "calculation", index: i}
+			}
+		}
+
+		// Validate calculation filters
+		if len(c.Filters) > 0 {
+			hasCalculationFilters = true
+
+			// Require name when using filters
+			if c.Name.IsNull() || c.Name.ValueString() == "" {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("calculation").AtListIndex(i).AtName("name"),
+					"name is required when using calculation filters",
+					"",
+				)
+			}
+
+			for j, f := range c.Filters {
+				// Validate that relational fields are not used in calculation filters
+				if isRelationalField(f.Column.ValueString()) {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("calculation").AtListIndex(i).AtName("filter").AtListIndex(j).AtName("column"),
+						"relational fields are not supported in calculation filters",
+						"columns prefixed with 'root.', 'child.', 'parent.', etc cannot be used in calculation filters",
+					)
+				}
+
+				filterOp := client.FilterOp(f.Op.ValueString())
+				// Validate filter op/value combinations
+				if filterOp == client.FilterOpExists || filterOp == client.FilterOpDoesNotExist {
+					if !f.Value.IsNull() {
+						resp.Diagnostics.AddAttributeError(
+							path.Root("calculation").AtListIndex(i).AtName("filter").AtListIndex(j).AtName("value"),
+							f.Op.ValueString()+" does not take a value",
+							"",
+						)
+					}
+				} else {
+					if f.Value.IsNull() {
+						resp.Diagnostics.AddAttributeError(
+							path.Root("calculation").AtListIndex(i).AtName("filter").AtListIndex(j).AtName("op"),
+							"operator "+f.Op.ValueString()+" requires a value",
+							"",
+						)
+					}
+				}
+			}
+		}
+	}
+
+	// Check for duplicate formula names (including conflicts with calculation names)
+	for i, f := range data.Formulas {
+		if f.Name.ValueString() != "" {
+			if prev, exists := namesSeen[f.Name.ValueString()]; exists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("formula").AtListIndex(i).AtName("name"),
+					"duplicate name",
+					"name \""+f.Name.ValueString()+"\" is already used by "+prev.sourceType+" at index "+strconv.Itoa(prev.index),
+				)
+			} else {
+				namesSeen[f.Name.ValueString()] = nameSource{sourceType: "formula", index: i}
+			}
+		}
+	}
+
+	// Validate that formulas cannot be used with HEATMAP calculations
+	if len(data.Formulas) > 0 {
+		for i, c := range data.Calculations {
+			if client.CalculationOp(c.Op.ValueString()) == client.CalculationOpHeatmap {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("calculation").AtListIndex(i).AtName("op"),
+					"HEATMAP calculations cannot be used with formulas",
+					"formulas are not supported when any calculation uses the HEATMAP operator",
+				)
+			}
+		}
+	}
+
+	// Validate that relational fields are not used in filters when formulas or calculation filters are present
+	for i, f := range data.Filters {
+		if (len(data.Formulas) > 0 || hasCalculationFilters) && isRelationalField(f.Column.ValueString()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("filter").AtListIndex(i).AtName("column"),
+				"relational fields are not supported when using formulas or calculation filters",
+				"columns prefixed with 'root.', 'child.', 'parent.', etc cannot be used in filters when formulas or calculation filters are present",
+			)
+		}
+	}
+
+	// Validate that relational fields are not used in breakdowns when formulas or calculation filters are present
+	for i, b := range data.Breakdowns {
+		if (len(data.Formulas) > 0 || hasCalculationFilters) && isRelationalField(b.ValueString()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("breakdowns").AtListIndex(i),
+				"relational fields are not supported when using formulas or calculation filters",
+				"columns prefixed with 'root.', 'child.', 'parent.', etc cannot be used in breakdowns when formulas or calculation filters are present",
+			)
+		}
+	}
+}
+
 func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data models.QuerySpecificationModel
 
@@ -239,6 +436,7 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 		calculation := client.CalculationSpec{
 			Op:     client.CalculationOp(c.Op.ValueString()),
 			Column: c.Column.ValueStringPointer(),
+			Name:   c.Name.ValueStringPointer(),
 		}
 
 		if calculation.Op.IsUnaryOp() && calculation.Column != nil {
@@ -254,6 +452,35 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 				"",
 			)
 		}
+
+		// Process calculation filters
+		if len(c.Filters) > 0 {
+			calcFilters := make([]client.FilterSpec, 0, len(c.Filters))
+			for _, f := range c.Filters {
+				filter := client.FilterSpec{
+					Column: f.Column.ValueString(),
+					Op:     client.FilterOp(f.Op.ValueString()),
+				}
+
+				if !f.Value.IsNull() {
+					if filter.Op == client.FilterOpIn || filter.Op == client.FilterOpNotIn {
+						values := strings.Split(f.Value.ValueString(), ",")
+						result := make([]any, len(values))
+						for k, value := range values {
+							result[k] = coerce.ValueToType(value)
+						}
+						filter.Value = result
+					} else {
+						filter.Value = coerce.ValueToType(f.Value.ValueString())
+					}
+				}
+
+				calcFilters = append(calcFilters, filter)
+			}
+			calculation.Filters = calcFilters
+			calculation.FilterCombination = client.FilterCombination(c.FilterCombination.ValueString())
+		}
+
 		calculations = append(calculations, calculation)
 	}
 	// 'COUNT' is the default calculation and will be returned by the API if
@@ -266,6 +493,14 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 	calculatedFields := make([]client.CalculatedFieldSpec, len(data.CalculatedFields))
 	for i, f := range data.CalculatedFields {
 		calculatedFields[i] = client.CalculatedFieldSpec{
+			Name:       f.Name.ValueString(),
+			Expression: f.Expression.ValueString(),
+		}
+	}
+
+	formulas := make([]client.FormulaSpec, len(data.Formulas))
+	for i, f := range data.Formulas {
+		formulas[i] = client.FormulaSpec{
 			Name:       f.Name.ValueString(),
 			Expression: f.Expression.ValueString(),
 		}
@@ -387,7 +622,7 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 		orders[i] = order
 	}
-	// ensure all orders have a matching calculation, calculated_field or breakdown
+	// ensure all orders have a matching calculation, calculated_field, formula, or breakdown
 	for i, order := range orders {
 		if order.Op != nil && *order.Op == client.CalculationOpHeatmap {
 			resp.Diagnostics.AddAttributeError(
@@ -403,10 +638,23 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 				found = true
 				break
 			}
+			// Also check if order references a named calculation
+			if order.Column != nil && calc.Name != nil && *order.Column == *calc.Name {
+				found = true
+				break
+			}
 		}
 		if !found {
 			for _, calc := range calculatedFields {
-				if reflect.DeepEqual(order.Column, calc.Name) {
+				if order.Column != nil && *order.Column == calc.Name {
+					found = true
+					break
+				}
+			}
+		}
+		if !found {
+			for _, formula := range formulas {
+				if order.Column != nil && *order.Column == formula.Name {
 					found = true
 					break
 				}
@@ -423,8 +671,8 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 		if !found {
 			resp.Diagnostics.AddAttributeError(
 				path.Root("order").AtListIndex(i),
-				"missing matching calculation or breakdown",
-				"each order must have a matching calculation or breakdown",
+				"missing matching calculation, formula, or breakdown",
+				"each order must have a matching calculation, formula, or breakdown",
 			)
 		}
 	}
@@ -432,6 +680,7 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 	querySpec := &client.QuerySpec{
 		Calculations:      calculations,
 		CalculatedFields:  calculatedFields,
+		Formulas:          formulas,
 		Filters:           filters,
 		Havings:           havings,
 		FilterCombination: client.FilterCombination(data.FilterCombination.ValueString()),
