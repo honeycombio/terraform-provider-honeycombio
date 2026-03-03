@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -1101,29 +1102,6 @@ data "honeycombio_query_specification" "test" {
     op = "COUNT"
   }
 
-  granularity = 120
-}
-
-resource "honeycombio_trigger" "test" {
-  name    = "I fail validation"
-  dataset = "foobar"
-
-  threshold {
-    op    = ">"
-    value = 100
-  }
-
-  query_json = data.honeycombio_query_specification.test.json
-}`,
-				ExpectError: regexp.MustCompile(`queries cannot use granularity`),
-			},
-			{
-				Config: `
-data "honeycombio_query_specification" "test" {
-  calculation {
-    op = "COUNT"
-  }
-
   time_range = 1800
 }
 
@@ -1806,6 +1784,18 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, name, tagsConfig)
 }
 
+// testAccCheckQueryJSON returns a resource.CheckResourceAttrWithFunc that
+// unmarshals the query_json attribute and runs the provided check function.
+func testAccCheckQueryJSON(check func(client.QuerySpec) error) resource.CheckResourceAttrWithFunc {
+	return func(value string) error {
+		var q client.QuerySpec
+		if err := json.Unmarshal([]byte(value), &q); err != nil {
+			return fmt.Errorf("failed to unmarshal query_json: %w", err)
+		}
+		return check(q)
+	}
+}
+
 func testAccEnsureTriggerExists(t *testing.T, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resourceState, ok := s.RootModule().Resources[name]
@@ -1856,4 +1846,402 @@ resource "honeycombio_trigger" "test" {
     target = "Environment-wide trigger fired"
   }
 }`, name)
+}
+
+func TestAcc_TriggerResourceValidatesFormulaQueryJSON(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				// more than 1 having clause
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT"
+  }
+  calculation {
+    op     = "AVG"
+    column = "duration_ms"
+  }
+  calculation {
+    op     = "MAX"
+    column = "duration_ms"
+  }
+
+  having {
+    calculate_op = "AVG"
+    column       = "duration_ms"
+    op           = ">"
+    value        = 100
+  }
+
+  having {
+    calculate_op = "MAX"
+    column       = "duration_ms"
+    op           = ">"
+    value        = 500
+  }
+
+  time_range = 7200
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = 7200
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`at most 1 having clause`),
+				PlanOnly:    true,
+			},
+			{
+				// more than 1 formula
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+
+    filter {
+      column = "error"
+      op     = "exists"
+    }
+  }
+
+  formula {
+    name       = "error_rate"
+    expression = "$errors / $total"
+  }
+
+  formula {
+    name       = "error_pct"
+    expression = "$errors / $total * 100"
+  }
+
+  time_range = 900
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 0.1
+  }
+
+  frequency = 900
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`at most 1 formula`),
+				PlanOnly:    true,
+			},
+			{
+				// global filters with named aggregates
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+
+    filter {
+      column = "error"
+      op     = "exists"
+    }
+  }
+
+  formula {
+    name       = "error_rate"
+    expression = "$errors / $total"
+  }
+
+  filter {
+    column = "service"
+    op     = "="
+    value  = "web"
+  }
+
+  time_range = 900
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 0.1
+  }
+
+  frequency = 900
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`(?s)cannot use global filters when calculations have names or\s+aggregate filters`),
+				PlanOnly:    true,
+			},
+			{
+				// named calculation without formula
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+
+  time_range = 900
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "I fail validation"
+  dataset = "foobar"
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = 900
+
+  query_json = data.honeycombio_query_specification.test.json
+}`,
+				ExpectError: regexp.MustCompile(`without formulas cannot use named calculations`),
+				PlanOnly:    true,
+			},
+		},
+	})
+}
+
+func TestAcc_TriggerResourceWithFormula(t *testing.T) {
+	dataset := testAccDataset()
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerWithFormula(dataset, name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_id"),
+					resource.TestCheckResourceAttrWith("honeycombio_trigger.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if len(q.Formulas) != 1 {
+							return fmt.Errorf("expected 1 formula, got %d", len(q.Formulas))
+						}
+						if len(q.Calculations) != 2 {
+							return fmt.Errorf("expected 2 calculations, got %d", len(q.Calculations))
+						}
+						if q.TimeRange == nil || *q.TimeRange != 900 {
+							return fmt.Errorf("expected time_range 900, got %v", q.TimeRange)
+						}
+						return nil
+					})),
+				),
+			},
+			// update the trigger name
+			{
+				Config: testAccConfigTriggerWithFormula(dataset, name+"-updated"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name+"-updated"),
+				),
+			},
+			{
+				ResourceName:        "honeycombio_trigger.test",
+				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+				ImportState:         true,
+			},
+		},
+	})
+}
+
+func testAccConfigTriggerWithFormula(dataset, name string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "total"
+  }
+
+  calculation {
+    op   = "COUNT"
+    name = "errors"
+
+    filter {
+      column = "error"
+      op     = "exists"
+    }
+  }
+
+  formula {
+    name       = "error_rate"
+    expression = "DIV($errors, $total)"
+  }
+
+  time_range = 900
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  threshold {
+    op    = ">"
+    value = 0.1
+  }
+
+  frequency = 900
+
+  recipient {
+    type   = "marker"
+    target = "Formula trigger fired"
+  }
+}`, dataset, name)
+}
+
+func TestAcc_TriggerResourceWithMetrics(t *testing.T) {
+	dataset := testAccMetricsDataset(t)
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerMetricsSimple(dataset, name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "query_id"),
+					resource.TestCheckResourceAttrWith("honeycombio_trigger.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if q.Granularity == nil || *q.Granularity != 300 {
+							return fmt.Errorf("expected granularity 300, got %v", q.Granularity)
+						}
+						if len(q.Calculations) != 1 {
+							return fmt.Errorf("expected 1 calculation, got %d", len(q.Calculations))
+						}
+						if q.Calculations[0].Op != client.CalculationOpAvg {
+							return fmt.Errorf("expected AVG calculation, got %s", q.Calculations[0].Op)
+						}
+						return nil
+					})),
+				),
+			},
+			// update to custom temporal aggregation with calculated field
+			{
+				Config: testAccConfigTriggerMetricsCustom(dataset, name+"-updated"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name+"-updated"),
+					resource.TestCheckResourceAttrWith("honeycombio_trigger.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if q.Granularity == nil || *q.Granularity != 60 {
+							return fmt.Errorf("expected granularity 60, got %v", q.Granularity)
+						}
+						if len(q.CalculatedFields) != 1 {
+							return fmt.Errorf("expected 1 calculated field, got %d", len(q.CalculatedFields))
+						}
+						if len(q.Calculations) != 1 {
+							return fmt.Errorf("expected 1 calculation, got %d", len(q.Calculations))
+						}
+						return nil
+					})),
+				),
+			},
+			{
+				ResourceName:        "honeycombio_trigger.test",
+				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+				ImportState:         true,
+			},
+		},
+	})
+}
+
+func testAccConfigTriggerMetricsCustom(dataset, name string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculated_field {
+    name       = "rate_last_5m"
+    expression = "RATE($app.cumulative, 300)"
+  }
+
+  calculation {
+    op     = "AVG"
+    column = "rate_last_5m"
+  }
+
+  time_range  = 1800
+  granularity = 60
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  frequency = 900
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  recipient {
+    type   = "marker"
+    target = "Metrics trigger fired"
+  }
+}`, dataset, name)
+}
+
+func testAccConfigTriggerMetricsSimple(dataset, name string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "app.cumulative"
+  }
+
+  time_range  = 1800
+  granularity = 300
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  frequency = 900
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  recipient {
+    type   = "marker"
+    target = "Metrics trigger fired"
+  }
+}`, dataset, name)
 }
