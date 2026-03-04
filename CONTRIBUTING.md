@@ -136,9 +136,18 @@ To properly setup the GitHub Actions, add the following secrets:
 To release a new version of the Terraform provider a binary has to be built for a list of platforms ([more information](https://developer.hashicorp.com/terraform/registry/providers/publishing#creating-a-github-release)).
 This process is largely automated with GoReleaser and GitHub Actions.
 
+### When to release
+
+Do **not** cut a release if the only unreleased commits are dependency bumps (e.g. Dependabot PRs), unless the bump addresses a critical vulnerability or security patch. Releases should contain user-facing changes (features, bug fixes, enhancements, or notable documentation updates).
+
+### Preparing the release commit
+
 First, we have to create a "release commit" which updates `CHANGELOG.md` in the root of the repository.
 - Update `CHANGELOG.md` in the root of the repository with the changes since the previous release (skipping those marked as `no-changelog`)
-- If it's a non-patch release, also update references to the build version in the various examples (`README.md`, `docs/index.md`).
+- If it's a non-patch release, also update references to the build version in the following files:
+  - `README.md`
+  - `docs/index.md`
+  - `templates/index.md.tmpl`
 - Open the PR with these changes, and add the `no-changelog` tag to the PR so the change PR is not included in the generated release notes.
 - Merge once approved
 

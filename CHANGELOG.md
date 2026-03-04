@@ -1,3 +1,15 @@
+# 0.47.0 (Mar 4, 2026)
+
+ENHANCEMENTS:
+
+* feat(d/query_specification): Add formulas and calculation filters support (#803)
+* feat(r/triggers): Query Math Support (#807)
+
+HOUSEKEEPING:
+
+* maint(deps): bump the hashicorp group with 3 updates (#821)
+* maint(deps): bump crazy-max/ghaction-import-gpg from 6 to 7 (#822)
+
 # 0.46.1 (Feb 26, 2026)
 
 HOUSEKEEPING:
