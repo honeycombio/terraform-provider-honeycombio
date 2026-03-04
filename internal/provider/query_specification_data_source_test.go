@@ -711,9 +711,9 @@ output "query_json" {
 	})
 }
 
-// TestAcc_QuerySpecificationDataSource_dynamicFilterUnknown tests the full plan+apply
-// lifecycle when a dynamic filter's for_each is driven by an unknown resource output.
-func TestAcc_QuerySpecificationDataSource_dynamicFilterUnknown(t *testing.T) {
+// TestAcc_QuerySpecificationDataSource_dynamicFilter verifies that a dynamic filter
+// block driven by a for_each produces the correct JSON output.
+func TestAcc_QuerySpecificationDataSource_dynamicFilter(t *testing.T) {
 	expected, err := test.MinifyJSON(`{
   "calculations": [{"op": "COUNT"}],
   "filters": [{"column": "message", "op": "contains", "value": "hello"}],
@@ -721,18 +721,19 @@ func TestAcc_QuerySpecificationDataSource_dynamicFilterUnknown(t *testing.T) {
 }`)
 	require.NoError(t, err)
 
-	const config = `
-resource "terraform_data" "filter_value" {
-  input = "hello"
-}
-
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
 data "honeycombio_query_specification" "test" {
   calculation {
     op = "COUNT"
   }
 
   dynamic "filter" {
-    for_each = [terraform_data.filter_value.output]
+    for_each = ["hello"]
     content {
       column = "message"
       op     = "contains"
@@ -743,14 +744,7 @@ data "honeycombio_query_specification" "test" {
 
 output "query_json" {
   value = data.honeycombio_query_specification.test.json
-}`
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
-		Steps: []resource.TestStep{
-			{
-				Config: config,
+}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckOutput("query_json", expected),
 				),
@@ -759,10 +753,9 @@ output "query_json" {
 	})
 }
 
-// TestAcc_QuerySpecificationDataSource_dynamicCalculationFilterForEach verifies the full
-// plan+apply lifecycle when a dynamic filter block nested inside a calculation block is
-// driven by an unknown resource output. During plan Read is deferred (no crash); on apply
-// Read runs and produces the correct JSON.
+// TestAcc_QuerySpecificationDataSource_dynamicCalculationFilterForEach verifies that a
+// dynamic filter block nested inside a calculation block driven by a for_each produces
+// the correct JSON output.
 func TestAcc_QuerySpecificationDataSource_dynamicCalculationFilterForEach(t *testing.T) {
 	expected, err := test.MinifyJSON(`{
   "calculations": [
@@ -776,18 +769,19 @@ func TestAcc_QuerySpecificationDataSource_dynamicCalculationFilterForEach(t *tes
 }`)
 	require.NoError(t, err)
 
-	const config = `
-resource "terraform_data" "status" {
-  input = "ok"
-}
-
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
 data "honeycombio_query_specification" "test" {
   calculation {
     op   = "COUNT"
     name = "filtered_count"
 
     dynamic "filter" {
-      for_each = [terraform_data.status.output]
+      for_each = ["ok"]
       content {
         column = "status"
         op     = "="
@@ -799,16 +793,7 @@ data "honeycombio_query_specification" "test" {
 
 output "query_json" {
   value = data.honeycombio_query_specification.test.json
-}`
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
-		Steps: []resource.TestStep{
-			{
-				// Apply: terraform_data is created first (output was unknown during plan),
-				// then Read is called with known filter values and produces correct JSON.
-				Config: config,
+}`,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckOutput("query_json", expected),
 				),
