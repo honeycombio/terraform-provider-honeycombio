@@ -292,11 +292,40 @@ data "honeycombio_query_specification" "test" {
 data "honeycombio_query_specification" "test" {
   filter {
     column = "column"
+    op     = "does-not-exist"
+    value  = "this-value-should-not-be-here"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("does-not-exist does not take a value"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  filter {
+    column = "column"
     op     = ">"
   }
 }`,
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("operator > requires a value"),
+	},
+	{
+		// dynamic filter with a fully-known for_each still validates at plan time
+		// (Read is called during plan when all config values are known).
+		Config: `
+data "honeycombio_query_specification" "test" {
+  dynamic "filter" {
+    for_each = toset(["irrelevant"])
+    content {
+      column = "column"
+      op     = "exists"
+      value  = filter.value
+    }
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("exists does not take a value"),
 	},
 }
 
@@ -682,6 +711,97 @@ output "query_json" {
 	})
 }
 
+// TestAcc_QuerySpecificationDataSource_dynamicFilter verifies that a dynamic filter
+// block driven by a for_each produces the correct JSON output.
+func TestAcc_QuerySpecificationDataSource_dynamicFilter(t *testing.T) {
+	expected, err := test.MinifyJSON(`{
+  "calculations": [{"op": "COUNT"}],
+  "filters": [{"column": "message", "op": "contains", "value": "hello"}],
+  "time_range": 7200
+}`)
+	require.NoError(t, err)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  dynamic "filter" {
+    for_each = ["hello"]
+    content {
+      column = "message"
+      op     = "contains"
+      value  = filter.value
+    }
+  }
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.test.json
+}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("query_json", expected),
+				),
+			},
+		},
+	})
+}
+
+// TestAcc_QuerySpecificationDataSource_dynamicCalculationFilterForEach verifies that a
+// dynamic filter block nested inside a calculation block driven by a for_each produces
+// the correct JSON output.
+func TestAcc_QuerySpecificationDataSource_dynamicCalculationFilterForEach(t *testing.T) {
+	expected, err := test.MinifyJSON(`{
+  "calculations": [
+    {
+      "op": "COUNT",
+      "name": "filtered_count",
+      "filters": [{"column": "status", "op": "=", "value": "ok"}]
+    }
+  ],
+  "time_range": 7200
+}`)
+	require.NoError(t, err)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "filtered_count"
+
+    dynamic "filter" {
+      for_each = ["ok"]
+      content {
+        column = "status"
+        op     = "="
+        value  = filter.value
+      }
+    }
+  }
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.test.json
+}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("query_json", expected),
+				),
+			},
+		},
+	})
+}
+
 func TestAcc_QuerySpecificationDataSource_formulas(t *testing.T) {
 	expected, err := test.MinifyJSON(`
 {
@@ -880,6 +1000,22 @@ data "honeycombio_query_specification" "test" {
     name = "filtered_count"
     filter {
       column = "status"
+      op     = "does-not-exist"
+      value  = "should-not-be-here"
+    }
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("does-not-exist does not take a value"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "filtered_count"
+    filter {
+      column = "status"
       op     = "="
     }
   }
@@ -918,6 +1054,25 @@ data "honeycombio_query_specification" "test" {
 }`,
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("relational fields are not supported in calculation filters"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "filtered_count"
+    dynamic "filter" {
+      for_each = toset(["irrelevant"])
+      content {
+        column = "status"
+        op     = "exists"
+        value  = filter.value
+      }
+    }
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("exists does not take a value"),
 	},
 }
 

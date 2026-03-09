@@ -25,7 +25,6 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var _ datasource.DataSource = &querySpecDataSource{}
-var _ datasource.DataSourceWithValidateConfig = &querySpecDataSource{}
 
 // relationalFieldPrefixes are the prefixes that indicate a field references a related span.
 var relationalFieldPrefixes = []string{"root.", "child.", "parent.", "any.", "any2.", "any3.", "none."}
@@ -295,7 +294,7 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 	}
 }
 
-func (d *querySpecDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
+func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data models.QuerySpecificationModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
@@ -312,7 +311,28 @@ func (d *querySpecDataSource) ValidateConfig(ctx context.Context, req datasource
 
 	hasCalculationFilters := false
 
+	calculations := make([]client.CalculationSpec, 0, len(data.Calculations))
 	for i, c := range data.Calculations {
+		calculation := client.CalculationSpec{
+			Op:     client.CalculationOp(c.Op.ValueString()),
+			Column: c.Column.ValueStringPointer(),
+			Name:   c.Name.ValueStringPointer(),
+		}
+
+		if calculation.Op.IsUnaryOp() && calculation.Column != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("calculation").AtListIndex(i).AtName("column"),
+				"column is not allowed with operator "+c.Op.ValueString(),
+				"",
+			)
+		} else if !calculation.Op.IsUnaryOp() && calculation.Column == nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("calculation").AtListIndex(i).AtName("op"),
+				c.Op.ValueString()+" requires a column",
+				"",
+			)
+		}
+
 		// Check for duplicate calculation names
 		if !c.Name.IsNull() && c.Name.ValueString() != "" {
 			if prev, exists := namesSeen[c.Name.ValueString()]; exists {
@@ -339,6 +359,7 @@ func (d *querySpecDataSource) ValidateConfig(ctx context.Context, req datasource
 				)
 			}
 
+			calcFilters := make([]client.FilterSpec, 0, len(c.Filters))
 			for j, f := range c.Filters {
 				// Validate that relational fields are not used in calculation filters
 				if isRelationalField(f.Column.ValueString()) {
@@ -368,98 +389,10 @@ func (d *querySpecDataSource) ValidateConfig(ctx context.Context, req datasource
 						)
 					}
 				}
-			}
-		}
-	}
 
-	// Check for duplicate formula names (including conflicts with calculation names)
-	for i, f := range data.Formulas {
-		if f.Name.ValueString() != "" {
-			if prev, exists := namesSeen[f.Name.ValueString()]; exists {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("formula").AtListIndex(i).AtName("name"),
-					"duplicate name",
-					"name \""+f.Name.ValueString()+"\" is already used by "+prev.sourceType+" at index "+strconv.Itoa(prev.index),
-				)
-			} else {
-				namesSeen[f.Name.ValueString()] = nameSource{sourceType: "formula", index: i}
-			}
-		}
-	}
-
-	// Validate that formulas cannot be used with HEATMAP calculations
-	if len(data.Formulas) > 0 {
-		for i, c := range data.Calculations {
-			if client.CalculationOp(c.Op.ValueString()) == client.CalculationOpHeatmap {
-				resp.Diagnostics.AddAttributeError(
-					path.Root("calculation").AtListIndex(i).AtName("op"),
-					"HEATMAP calculations cannot be used with formulas",
-					"formulas are not supported when any calculation uses the HEATMAP operator",
-				)
-			}
-		}
-	}
-
-	// Validate that relational fields are not used in filters when formulas or calculation filters are present
-	for i, f := range data.Filters {
-		if (len(data.Formulas) > 0 || hasCalculationFilters) && isRelationalField(f.Column.ValueString()) {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("filter").AtListIndex(i).AtName("column"),
-				"relational fields are not supported when using formulas or calculation filters",
-				"columns prefixed with 'root.', 'child.', 'parent.', etc cannot be used in filters when formulas or calculation filters are present",
-			)
-		}
-	}
-
-	// Validate that relational fields are not used in breakdowns when formulas or calculation filters are present
-	for i, b := range data.Breakdowns {
-		if (len(data.Formulas) > 0 || hasCalculationFilters) && isRelationalField(b.ValueString()) {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("breakdowns").AtListIndex(i),
-				"relational fields are not supported when using formulas or calculation filters",
-				"columns prefixed with 'root.', 'child.', 'parent.', etc cannot be used in breakdowns when formulas or calculation filters are present",
-			)
-		}
-	}
-}
-
-func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var data models.QuerySpecificationModel
-
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	calculations := make([]client.CalculationSpec, 0, len(data.Calculations))
-	for i, c := range data.Calculations {
-		calculation := client.CalculationSpec{
-			Op:     client.CalculationOp(c.Op.ValueString()),
-			Column: c.Column.ValueStringPointer(),
-			Name:   c.Name.ValueStringPointer(),
-		}
-
-		if calculation.Op.IsUnaryOp() && calculation.Column != nil {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("calculation").AtListIndex(i).AtName("column"),
-				"column is not allowed with operator "+c.Op.ValueString(),
-				"",
-			)
-		} else if !calculation.Op.IsUnaryOp() && calculation.Column == nil {
-			resp.Diagnostics.AddAttributeError(
-				path.Root("calculation").AtListIndex(i).AtName("op"),
-				c.Op.ValueString()+" requires a column",
-				"",
-			)
-		}
-
-		// Process calculation filters
-		if len(c.Filters) > 0 {
-			calcFilters := make([]client.FilterSpec, 0, len(c.Filters))
-			for _, f := range c.Filters {
 				filter := client.FilterSpec{
 					Column: f.Column.ValueString(),
-					Op:     client.FilterOp(f.Op.ValueString()),
+					Op:     filterOp,
 				}
 
 				if !f.Value.IsNull() {
@@ -504,10 +437,45 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 			Name:       f.Name.ValueString(),
 			Expression: f.Expression.ValueString(),
 		}
+
+		// Check for duplicate formula names (including conflicts with calculation names)
+		if f.Name.ValueString() != "" {
+			if prev, exists := namesSeen[f.Name.ValueString()]; exists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("formula").AtListIndex(i).AtName("name"),
+					"duplicate name",
+					"name \""+f.Name.ValueString()+"\" is already used by "+prev.sourceType+" at index "+strconv.Itoa(prev.index),
+				)
+			} else {
+				namesSeen[f.Name.ValueString()] = nameSource{sourceType: "formula", index: i}
+			}
+		}
+	}
+
+	// Validate that formulas cannot be used with HEATMAP calculations
+	if len(data.Formulas) > 0 {
+		for i, c := range data.Calculations {
+			if client.CalculationOp(c.Op.ValueString()) == client.CalculationOpHeatmap {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("calculation").AtListIndex(i).AtName("op"),
+					"HEATMAP calculations cannot be used with formulas",
+					"formulas are not supported when any calculation uses the HEATMAP operator",
+				)
+			}
+		}
 	}
 
 	filters := make([]client.FilterSpec, 0, len(data.Filters))
 	for i, f := range data.Filters {
+		// Validate that relational fields are not used in filters when formulas or calculation filters are present
+		if (len(data.Formulas) > 0 || hasCalculationFilters) && isRelationalField(f.Column.ValueString()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("filter").AtListIndex(i).AtName("column"),
+				"relational fields are not supported when using formulas or calculation filters",
+				"columns prefixed with 'root.', 'child.', 'parent.', etc cannot be used in filters when formulas or calculation filters are present",
+			)
+		}
+
 		filter := client.FilterSpec{
 			Column: f.Column.ValueString(),
 			Op:     client.FilterOp(f.Op.ValueString()),
@@ -597,6 +565,14 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	breakdowns := make([]string, len(data.Breakdowns))
 	for i, b := range data.Breakdowns {
+		// Validate that relational fields are not used in breakdowns when formulas or calculation filters are present
+		if (len(data.Formulas) > 0 || hasCalculationFilters) && isRelationalField(b.ValueString()) {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("breakdowns").AtListIndex(i),
+				"relational fields are not supported when using formulas or calculation filters",
+				"columns prefixed with 'root.', 'child.', 'parent.', etc cannot be used in breakdowns when formulas or calculation filters are present",
+			)
+		}
 		breakdowns[i] = b.ValueString()
 	}
 
