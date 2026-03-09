@@ -102,14 +102,11 @@ resource "honeycombio_column" "test" {
 			c.Columns.Delete(ctx, dataset, column.KeyName)
 		})
 
-		// give the backend a chance to catch up
-		time.Sleep(31 * time.Second)
-
-		// column creation can be a bit racey, so we'll wait for it to be available
+		// poll until the column is visible to the API before running the test steps
 		assert.Eventually(t, func() bool {
 			_, err := c.Columns.GetByKeyName(ctx, dataset, column.KeyName)
 			return err == nil
-		}, 5*time.Second, 200*time.Millisecond)
+		}, 45*time.Second, 500*time.Millisecond)
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
