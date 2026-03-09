@@ -1,3 +1,9 @@
+# 0.47.1 (Mar 9, 2026)
+
+BUGFIXES:
+
+* fix(d/query_specification): fix crash when `dynamic "filter"` block uses an unknown `for_each` value (#824)
+
 # 0.47.0 (Mar 4, 2026)
 
 ENHANCEMENTS:
