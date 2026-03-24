@@ -5,12 +5,9 @@
 # all board resources are owned by the growth team
 *board* @honeycombio/growth
 
-# all query, dataset, derived column, environment, column, trigger,
-# SLO, burn alert, and webhook resources are owned by app-observability
+# all query, column, trigger, SLO, burn alert, and webhook resources
+# are owned by app-observability
 *query* @honeycombio/app-observability
-*dataset* @honeycombio/app-observability
-*derived_column* @honeycombio/app-observability
-*environment* @honeycombio/app-observability
 *column* @honeycombio/app-observability
 *trigger* @honeycombio/app-observability
 *slo* @honeycombio/app-observability
