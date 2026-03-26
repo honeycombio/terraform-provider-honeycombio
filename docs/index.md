@@ -70,32 +70,38 @@ provider "honeycombio" {
 
 ## Authentication
 
-The Honeycomb provider requires an API key to communicate with the Honeycomb APIs.
-The provider can make calls to v1 and v2 APIs and requires specific key configurations for each.
-For more information about API Keys, check out [Best Practices for API Keys](https://docs.honeycomb.io/get-started/best-practices/api-keys/).
+The Honeycomb Terraform provider requires an API key to communicate with the Honeycomb APIs.
+The provider supports both v1 and v2 APIs, each requiring a different key type.
+You can configure a single provider instance with both key types, but at least one is required.
 
-A single instance of the provider can be configured with both key types.
-At least one of the v1 or v2 API key configuration is required.
+To learn more about API Keys, visit [Best Practices for API Keys](https://docs.honeycomb.io/get-started/best-practices/api-keys/).
 
 ### v1 APIs
 
-v1 APIs require Configuration Keys.
-Their permissions can be managed in _Environment settings_.
-Most resources and data sources call v1 APIs today.
+v1 APIs require a Configuration Key.
+Most resources and data sources use v1 APIs.
+You can manage Configuration Key permissions in _Environment settings_.
 
-The key can be set with the `api_key` argument or via the `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variable.
+Set the key with the `api_key` argument, or use one of these environment variables:
 
-`HONEYCOMB_API_KEY` environment variable will take priority over the `HONEYCOMBIO_APIKEY` environment variable.
+- `HONEYCOMB_API_KEY`
+- `HONEYCOMBIO_APIKEY`
+
+If both are set, `HONEYCOMB_API_KEY` takes priority.
+
+~> **Note** Use only the Key value; do not include the Key ID.
 
 ### v2 APIs
 
-v2 APIs require a Mangement Key.
-Their permissions can be managed in _Team settings_.
-Resources and data sources that call v2 APIs will be noted along with the scope required to use the resource or data source.
+v2 APIs require a Management Key.
+You can manage Management Key permissions in _Team settings_.
+Resources and data sources that use v2 APIs are noted individually, along with the required scope.
 
-The key pair can be set with the `api_key_id` and `api_key_secret` arguments, or via the `HONEYCOMB_KEY_ID` and `HONEYCOMB_KEY_SECRET` environment variables.
+Set the key pair with the `api_key_id` and `api_key_secret` arguments, or use the `HONEYCOMB_KEY_ID` and `HONEYCOMB_KEY_SECRET` environment variables.
+`api_key_id` takes the Key ID and `api_key_secret` takes the Key Secret.
 
-~> **Note** Hard-coding API keys in any Terraform configuration is not recommended. Consider using the one of the environment variable options.
+~> **Note** Avoid hard-coding API keys in Terraform configuration.
+Use the environment variables instead.
 
 ## Argument Reference
 
