@@ -1,1 +1,15 @@
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence.
 * @honeycombio/scale
+
+# all board resources are owned by the growth team
+*board* @honeycombio/growth
+
+# all query, trigger, SLO, burn alert, and webhook resources
+# are owned by app-observability
+*query* @honeycombio/app-observability
+*trigger* @honeycombio/app-observability
+*slo* @honeycombio/app-observability
+*burn_alert* @honeycombio/app-observability
+*webhook* @honeycombio/app-observability
+*notification* @honeycombio/app-observability
