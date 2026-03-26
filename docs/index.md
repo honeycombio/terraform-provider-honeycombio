@@ -1,13 +1,15 @@
 # Honeycomb.io Provider
 
-[Honeycomb](https://honeycomb.io) provides observability for high-performance engineering teams so they can quickly understand what their code does in the hands of real users in unpredictable and highly complex cloud environments.
-Honeycomb customers stop wasting precious time on engineering mysteries because they can quickly solve them and know exactly how to create fast, reliable, and great customer experiences.
+[Honeycomb](https://honeycomb.io) is an observability platform built for high-performance engineering teams.
+Use Honeycomb to understand how your code behaves in the hands of real users and to quickly identify and resolve issues in unpredictable and highly complex cloud environments.
+Honeycomb helps engineering teams spend less time chasing down mysteries and more time building fast, reliable, and great experiences for their users.
 
-In order to use this provider, you must have a Honeycomb account. You can get started today with a [free account](http://ui.honeycomb.io/signup?&utm_source=terraform&utm_medium=partner&utm_campaign=signup&utm_keyword=&utm_content=free-product-signup).
+To use this provider, you must have a Honeycomb account.
+[Sign up for free](http://ui.honeycomb.io/signup?&utm_source=terraform&utm_medium=partner&utm_campaign=signup&utm_keyword=&utm_content=free-product-signup) to get started.
 
 Use the navigation to the left to read about the available resources and data sources.
 
-## Example usage
+## Example Usage
 
 ```hcl
 terraform {
@@ -43,24 +45,24 @@ resource "honeycombio_marker" "hello" {
 
 More advanced examples can be found in the [example directory](https://github.com/honeycombio/terraform-provider-honeycombio/tree/main/example).
 
-## A note on "Datasets"
+## Datasets
 
 Several resources in this provider accept a `dataset` or `datasets` argument to specify which Honeycomb Dataset the resource belongs to.
 These resources include but aren't limited to:
-* queries
-* triggers
-* slos
-* markers
-* columns
-* boards
 
-Whenever a resource accepts a `dataset` or `datasets` argument, the argument is expected to be a Dataset **slug**, not a Dataset name or ID.
-Dataset slugs can be found in the URL of the dataset in the Honeycomb UI, or in the `slug` field of the [Dataset API](https://api-docs.honeycomb.io/api/datasets/createdataset#datasets/createdataset/t=response&c=200&path=slug).
+* Queries
+* Triggers
+* SLOs
+* Markers
+* Columns
+* Boards
 
-### Configuring the provider for Honeycomb EU
+The `dataset` and `datasets` arguments expect a Dataset **slug**, not a Dataset name or ID.
+Dataset slugs appear in the URL of the Dataset in the Honeycomb UI, or in the `slug` field of the [Dataset API](https://api-docs.honeycomb.io/api/datasets/createdataset#datasets/createdataset/t=response&c=200&path=slug).
 
-If you are a Honeycomb EU customer, to use the provider you must override the default API host.
-This can be done with a `provider` block or by setting the `HONEYCOMB_API_ENDPOINT` environment variable.
+## Configuring for Honeycomb EU
+
+If you are a Honeycomb EU customer, override the default API host using a `provider` block or the `HONEYCOMB_API_ENDPOINT` environment variable.
 
 ```hcl
 provider "honeycombio" {
@@ -107,26 +109,27 @@ Use the environment variables instead.
 
 Arguments accepted by this provider include:
 
-* `api_key` - (Optional) The Honeycomb API key to use. It can also be set using `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variables.
-* `api_key_id` - (Optional) The ID portion of the Honeycomb Management API key to use. It can also be set via the `HONEYCOMB_KEY_ID` environment variable.
-* `api_key_secret` - (Optional) The secret portion of the Honeycomb Management API key to use. It can also be set via the `HONEYCOMB_KEY_SECRET` environment variable.
-* `api_url` - (Optional) Override the URL of the Honeycomb.io API. It can also be set using `HONEYCOMB_API_ENDPOINT`. Defaults to `https://api.honeycomb.io`.
-* `debug` - (Optional) Enable to log additional debug information. To view the logs, set `TF_LOG` to at least debug.
-* `features` - (Optional) The features block allows customization of the behavior of the Honeycomb Provider. Full details documented below.
+* `api_key` - (Optional) The Configuration Key for v1 API access. Can also be set with the `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variables.
+* `api_key_id` - (Optional) The Key ID portion of a Management Key for v2 API access. Can also be set with the `HONEYCOMB_KEY_ID` environment variable.
+* `api_key_secret` - (Optional) The Key Secret portion of a Management Key for v2 API access. Can also be set with the `HONEYCOMB_KEY_SECRET` environment variable.
+* `api_url` - (Optional) Override the Honeycomb API URL. Can also be set with `HONEYCOMB_API_ENDPOINT`. Defaults to `https://api.honeycomb.io`.
+* `debug` - (Optional) Log additional debug information. To view the logs, set `TF_LOG` to at least `debug`.
+* `features` - (Optional) Customize the behavior of specific Honeycomb Provider resources. See [Features Block](#features-block).
 
-At least one of `api_key`, or the `api_key_id` and `api_key_secret` pair must be configured.
+At least one of `api_key`, or the `api_key_id` and `api_key_secret` pair, must be configured.
 
 ## Features Block
 
-The Honeycomb Provider allows the behavior of certain resources to be modified using the features block.
+The `features` block lets you modify the behavior of certain resources.
+If the default behavior works for your use case, no configuration is needed.
 
-This allows different users to select the behavior they require for their use case while preserving default, "Terraform-y" behavior.
+~> **Warning** Some behaviors enabled by the features block can cause data loss.
+Review each option carefully before enabling it.
 
 ### Example Usage
 
-If you wish to use the default behaviors of the Honeycomb provider, then nothing needs to be done to your configuration at all.
-
-Each of the blocks defined below can be optionally specified to configure the behaviour as needed - this example shows all the possible behaviors which can be configured:
+Each option can be configured individually.
+This example shows all available options:
 
 ```hcl
 provider "honeycombio" {
@@ -143,16 +146,19 @@ provider "honeycombio" {
 
 ### Arguments Reference
 
-The `features` block supports the following:
+The `features` block supports:
 
 * `column` - (Optional) A `column` block as defined below.
 * `dataset` - (Optional) A `dataset` block as defined below.
 
 ---
-The `column` block supports the following:
-* `import_on_conflict` - (Optional) This changes the creation behavior of the column resource to import and update an existing column if it already exists, rather than erroring out. Defaults to `false`.
-    This is potentially dangerous if the type changes on the update -- switching from `string` to `boolean` and causing dataloss, for example -- and should be used with caution.
+#### `column` block
+
+* `import_on_conflict` - (Optional) When `true`, if a column already exists, the provider imports and updates it rather then returning an error. Defaults to `false`.
+
+~> **Warning** Changing a column type (for example, from `string` to `boolean`) can cause data loss. Use this option with caution.
 
 ---
-The `dataset` block supports the following:
-* `import_on_conflict` - (Optional) This changes the creation behavior of the dataset resource to import and update an existing dataset if it already exists, rather than erroring out. Defaults to `false`.
+#### `dataset` block
+
+* `import_on_conflict` - (Optional) When `true`, if a dataset already exists, the provider imports and updates it rather than returning an error. Defaults to `false`.
