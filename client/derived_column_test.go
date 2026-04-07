@@ -76,7 +76,6 @@ func TestDerivedColumns(t *testing.T) {
 		// change all the fields to test
 		data := &client.DerivedColumn{
 			ID:          derivedColumn.ID,
-			Alias:       test.RandomStringWithPrefix("test.", 10),
 			Expression:  "BOOL(0)",
 			Description: "This is a new description",
 		}
