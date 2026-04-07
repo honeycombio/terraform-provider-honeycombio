@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -21,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/features"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
@@ -34,7 +36,8 @@ var (
 )
 
 type burnAlertResource struct {
-	client *client.Client
+	client  *client.Client
+	feature features.FeaturesIntelligence
 }
 
 func NewBurnAlertResource() resource.Resource {
@@ -57,6 +60,13 @@ func (r *burnAlertResource) Configure(_ context.Context, req resource.ConfigureR
 		return
 	}
 	r.client = c
+
+	f, err := w.Features()
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to get features", err.Error())
+		return
+	}
+	r.feature = f.Intelligence
 }
 
 func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -113,6 +123,12 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Validators: []validator.String{
 					stringvalidator.LengthAtMost(1023),
 				},
+			},
+			"auto_investigate": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Whether to automatically investigate when this Burn Alert fires. Requires Honeycomb Intelligence to be enabled.",
+				Default:     booldefault.StaticBool(false),
 			},
 			"exhaustion_minutes": schema.Int64Attribute{
 				Optional:    true,
@@ -244,12 +260,25 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
+	if plan.AutoInvestigate.ValueBool() && !r.feature.Enabled {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("auto_investigate"),
+			"Intelligence feature not enabled",
+			"Setting \"auto_investigate\" to true requires the intelligence feature to be enabled in the provider configuration. "+
+				"Add a features block with intelligence { enabled = true } to your provider configuration.",
+		)
+		return
+	}
+
 	// Get attributes from config and construct the create request
 	createRequest := &client.BurnAlert{
 		AlertType:   client.BurnAlertAlertType(plan.AlertType.ValueString()),
 		Recipients:  expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		SLO:         client.SLORef{ID: plan.SLOID.ValueString()},
 		Description: plan.Description.ValueString(),
+	}
+	if r.feature.Enabled {
+		createRequest.AutoInvestigate = helper.ToPtr(plan.AutoInvestigate.ValueBool())
 	}
 
 	// Process any attributes that could be nil and add them to the create request
@@ -282,6 +311,12 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)
+
+	if burnAlert.AutoInvestigate != nil {
+		state.AutoInvestigate = types.BoolValue(*burnAlert.AutoInvestigate)
+	} else {
+		state.AutoInvestigate = plan.AutoInvestigate
+	}
 
 	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {
@@ -341,6 +376,12 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	state.Recipients = reconcileReadNotificationRecipientState(ctx, burnAlert.Recipients, state.Recipients, &resp.Diagnostics)
 	state.Description = types.StringValue(burnAlert.Description)
 
+	if burnAlert.AutoInvestigate != nil {
+		state.AutoInvestigate = types.BoolValue(*burnAlert.AutoInvestigate)
+	} else if state.AutoInvestigate.IsNull() || state.AutoInvestigate.IsUnknown() {
+		state.AutoInvestigate = types.BoolValue(false)
+	}
+
 	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {
 		state.ExhaustionMinutes = types.Int64Value(int64(*burnAlert.ExhaustionMinutes))
@@ -367,6 +408,16 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
+	if plan.AutoInvestigate.ValueBool() && !r.feature.Enabled {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("auto_investigate"),
+			"Intelligence feature not enabled",
+			"Setting \"auto_investigate\" to true requires the intelligence feature to be enabled in the provider configuration. "+
+				"Add a features block with intelligence { enabled = true } to your provider configuration.",
+		)
+		return
+	}
+
 	// Get attributes from config and construct the update request
 	updateRequest := &client.BurnAlert{
 		ID:          plan.ID.ValueString(),
@@ -374,6 +425,9 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 		Recipients:  expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		SLO:         client.SLORef{ID: plan.SLOID.ValueString()},
 		Description: plan.Description.ValueString(),
+	}
+	if r.feature.Enabled {
+		updateRequest.AutoInvestigate = helper.ToPtr(plan.AutoInvestigate.ValueBool())
 	}
 
 	// Process any attributes that could be nil and add them to the update request
@@ -412,6 +466,12 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 	state.Recipients = config.Recipients
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)
 	state.Description = types.StringValue(burnAlert.Description)
+
+	if burnAlert.AutoInvestigate != nil {
+		state.AutoInvestigate = types.BoolValue(*burnAlert.AutoInvestigate)
+	} else {
+		state.AutoInvestigate = plan.AutoInvestigate
+	}
 
 	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {
