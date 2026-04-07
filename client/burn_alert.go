@@ -47,6 +47,7 @@ type BurnAlert struct {
 	BudgetRateWindowMinutes               *int                    `json:"budget_rate_window_minutes,omitempty"`
 	BudgetRateDecreaseThresholdPerMillion *int                    `json:"budget_rate_decrease_threshold_per_million,omitempty"`
 	Description                           string                  `json:"description"`
+	AutoInvestigate                       *bool                   `json:"auto_investigate,omitempty"`
 	SLO                                   SLORef                  `json:"slo"`
 	CreatedAt                             time.Time               `json:"created_at,omitempty"`
 	UpdatedAt                             time.Time               `json:"updated_at,omitempty"`

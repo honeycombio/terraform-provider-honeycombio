@@ -79,6 +79,9 @@ type Trigger struct {
 	// Recipients are notified when the trigger fires.
 	Recipients      []NotificationRecipient `json:"recipients,omitempty"`
 	BaselineDetails *TriggerBaselineDetails `json:"baseline_details,omitempty"`
+	// AutoInvestigate enables automatic investigation when this trigger fires.
+	// Requires Honeycomb Intelligence to be enabled on the team.
+	AutoInvestigate *bool `json:"auto_investigate,omitempty"`
 	// Tags are used to categorize triggers. They can be used to filtering triggers
 	// and are useful for grouping triggers together.
 	Tags []Tag `json:"tags"`
@@ -162,6 +165,7 @@ func (t *Trigger) MarshalJSON() ([]byte, error) {
 			Recipients:             t.Recipients,
 			EvaluationScheduleType: t.EvaluationScheduleType,
 			EvaluationSchedule:     t.EvaluationSchedule,
+			AutoInvestigate:        t.AutoInvestigate,
 			Tags:                   t.Tags,
 		}
 		return json.Marshal(&struct{ *ATrigger }{ATrigger: a})
