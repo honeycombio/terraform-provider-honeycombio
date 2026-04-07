@@ -4,8 +4,9 @@ import "github.com/hashicorp/terraform-plugin-framework/types"
 
 // Features represents provider-level features.
 type Features struct {
-	Column  FeaturesColumn
-	Dataset FeaturesDataset
+	Column       FeaturesColumn
+	Dataset      FeaturesDataset
+	Intelligence FeaturesIntelligence
 }
 
 // FeaturesColumn represents column-specific features.
@@ -31,9 +32,22 @@ type FeaturesDatasetModel struct {
 	ImportOnConflict types.Bool `tfsdk:"import_on_conflict"`
 }
 
+// FeaturesIntelligence represents Honeycomb Intelligence-specific features.
+type FeaturesIntelligence struct {
+	// Enabled indicates the team has Honeycomb Intelligence enabled,
+	// unlocking features such as auto-investigation on burn alerts and triggers.
+	Enabled bool
+}
+
+// FeaturesIntelligenceModel represents Intelligence features for Terraform schema.
+type FeaturesIntelligenceModel struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
+
 type Model struct {
-	Column  []FeaturesColumnModel  `tfsdk:"column"`
-	Dataset []FeaturesDatasetModel `tfsdk:"dataset"`
+	Column       []FeaturesColumnModel       `tfsdk:"column"`
+	Dataset      []FeaturesDatasetModel      `tfsdk:"dataset"`
+	Intelligence []FeaturesIntelligenceModel `tfsdk:"intelligence"`
 }
 
 // Parse converts a Terraform model to internal Features representation for
@@ -58,6 +72,14 @@ func Parse(m []Model) *Features {
 		datasetFeatures := features.Dataset[0]
 		if !datasetFeatures.ImportOnConflict.IsNull() && !datasetFeatures.ImportOnConflict.IsUnknown() {
 			result.Dataset.ImportOnConflict = datasetFeatures.ImportOnConflict.ValueBool()
+		}
+	}
+
+	// parse intelligence features
+	if len(features.Intelligence) > 0 {
+		intelligenceFeatures := features.Intelligence[0]
+		if !intelligenceFeatures.Enabled.IsNull() && !intelligenceFeatures.Enabled.IsUnknown() {
+			result.Intelligence.Enabled = intelligenceFeatures.Enabled.ValueBool()
 		}
 	}
 

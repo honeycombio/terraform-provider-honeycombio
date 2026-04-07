@@ -38,6 +38,17 @@ func GetFeaturesBlock() schema.Block {
 						},
 					},
 				},
+				"intelligence": schema.ListNestedBlock{
+					MarkdownDescription: "Intelligence features. Enable this block when the team has Honeycomb Intelligence enabled.",
+					NestedObject: schema.NestedBlockObject{
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								MarkdownDescription: "Set to true when the team has Honeycomb Intelligence enabled.",
+								Optional:            true,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -78,6 +89,21 @@ func GetPluginSDKFeaturesSchema() *pluginsdk.Schema {
 								Type:        pluginsdk.TypeBool,
 								Optional:    true,
 								Description: "This changes the creation behavior of the dataset resource to import an existing dataset if it already exists, rather than erroring out.",
+							},
+						},
+					},
+				},
+				"intelligence": {
+					Type:        pluginsdk.TypeList,
+					Optional:    true,
+					MaxItems:    1,
+					Description: "Intelligence features. Enable this block when the team has Honeycomb Intelligence enabled.",
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
+							"enabled": {
+								Type:        pluginsdk.TypeBool,
+								Optional:    true,
+								Description: "Set to true when the team has Honeycomb Intelligence enabled.",
 							},
 						},
 					},
