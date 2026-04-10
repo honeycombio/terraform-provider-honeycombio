@@ -151,6 +151,63 @@ func TestTriggers(t *testing.T) {
 	})
 }
 
+func TestTriggers_AutoInvestigate(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := newTestClient(t)
+	dataset := testDataset(t)
+
+	t.Run("Create with auto_investigate enabled", func(t *testing.T) {
+		data := &client.Trigger{
+			Name:            test.RandomStringWithPrefix("test.", 8),
+			Description:     "auto investigate trigger",
+			AutoInvestigate: client.ToPtr(true),
+			Query: &client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{Op: client.CalculationOpCount},
+				},
+				TimeRange: client.ToPtr(900),
+			},
+			Frequency: 900,
+			Threshold: &client.TriggerThreshold{
+				Op:    client.TriggerThresholdOpGreaterThan,
+				Value: 100,
+			},
+			Recipients: []client.NotificationRecipient{
+				{
+					Type:   client.RecipientTypeMarker,
+					Target: "auto investigate trigger fired",
+				},
+			},
+		}
+		trigger, err := c.Triggers.Create(ctx, dataset, data)
+		require.NoError(t, err)
+		assert.NotEmpty(t, trigger.ID)
+
+		t.Cleanup(func() {
+			c.Triggers.Delete(ctx, dataset, trigger.ID)
+		})
+
+		t.Run("Get returns auto_investigate", func(t *testing.T) {
+			result, err := c.Triggers.Get(ctx, dataset, trigger.ID)
+			require.NoError(t, err)
+			if result.AutoInvestigate != nil {
+				assert.True(t, *result.AutoInvestigate)
+			}
+		})
+
+		t.Run("Update auto_investigate to false", func(t *testing.T) {
+			trigger.AutoInvestigate = client.ToPtr(false)
+			updated, err := c.Triggers.Update(ctx, dataset, trigger)
+			require.NoError(t, err)
+			if updated.AutoInvestigate != nil {
+				assert.False(t, *updated.AutoInvestigate)
+			}
+		})
+	})
+}
+
 func TestMatchesTriggerSubset(t *testing.T) {
 	t.Parallel()
 

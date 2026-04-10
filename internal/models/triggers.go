@@ -11,6 +11,7 @@ type TriggerResourceModel struct {
 	Dataset            types.String `tfsdk:"dataset"`
 	Description        types.String `tfsdk:"description"`
 	Disabled           types.Bool   `tfsdk:"disabled"`
+	AutoInvestigate    types.Bool   `tfsdk:"auto_investigate"`
 	QueryID            types.String `tfsdk:"query_id"`
 	QueryJson          types.String `tfsdk:"query_json"`
 	AlertType          types.String `tfsdk:"alert_type"`

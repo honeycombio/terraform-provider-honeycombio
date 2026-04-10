@@ -38,6 +38,17 @@ func GetFeaturesBlock() schema.Block {
 						},
 					},
 				},
+				"intelligence": schema.ListNestedBlock{
+					MarkdownDescription: "Configuration for teams with Honeycomb Intelligence. Honeycomb Intelligence must first be enabled for your team in the Honeycomb UI before using this block.",
+					NestedObject: schema.NestedBlockObject{
+						Attributes: map[string]schema.Attribute{
+							"enabled": schema.BoolAttribute{
+								MarkdownDescription: "Set to true to enable intelligence features such as auto_investigate on triggers and burn alerts. Requires Honeycomb Intelligence to be enabled for your team in the Honeycomb UI.",
+								Optional:            true,
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -78,6 +89,21 @@ func GetPluginSDKFeaturesSchema() *pluginsdk.Schema {
 								Type:        pluginsdk.TypeBool,
 								Optional:    true,
 								Description: "This changes the creation behavior of the dataset resource to import an existing dataset if it already exists, rather than erroring out.",
+							},
+						},
+					},
+				},
+				"intelligence": {
+					Type:        pluginsdk.TypeList,
+					Optional:    true,
+					MaxItems:    1,
+					Description: "Configuration for teams with Honeycomb Intelligence. Honeycomb Intelligence must first be enabled for your team in the Honeycomb UI before using this block.",
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
+							"enabled": {
+								Type:        pluginsdk.TypeBool,
+								Optional:    true,
+								Description: "Set to true to enable intelligence features such as auto_investigate on triggers and burn alerts. Requires Honeycomb Intelligence to be enabled for your team in the Honeycomb UI.",
 							},
 						},
 					},

@@ -131,6 +131,9 @@ provider "honeycombio" {
     dataset {
       import_on_conflict = true
     }
+    intelligence {
+      enabled = true
+    }
   }
 }
 ```
@@ -141,6 +144,7 @@ The `features` block supports the following:
 
 * `column` - (Optional) A `column` block as defined below.
 * `dataset` - (Optional) A `dataset` block as defined below.
+* `intelligence` - (Optional) An `intelligence` block as defined below.
 
 ---
 The `column` block supports the following:
@@ -150,3 +154,9 @@ The `column` block supports the following:
 ---
 The `dataset` block supports the following:
 * `import_on_conflict` - (Optional) This changes the creation behavior of the dataset resource to import and update an existing dataset if it already exists, rather than erroring out. Defaults to `false`.
+
+---
+The `intelligence` block supports the following:
+* `enabled` - (Optional) Set to `true` to enable intelligence features such as `auto_investigate` on triggers and burn alerts. Defaults to `false`.
+
+~> **Note** [Honeycomb Intelligence](https://docs.honeycomb.io/security-compliance/honeycomb-intelligence) must first be enabled for your team in the Honeycomb UI before using this block. The `intelligence` feature block in the provider tells Terraform that your team has Honeycomb Intelligence enabled and unlocks related attributes like `auto_investigate`.

@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
@@ -1301,6 +1302,141 @@ resource honeycombio_trigger "test" {
 			},
 		},
 	})
+}
+
+func TestAcc_TriggerResource_autoInvestigate(t *testing.T) {
+	dataset := testAccDataset()
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerAutoInvestigate(dataset, name, true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "auto_investigate", "true"),
+				),
+			},
+			{
+				Config: testAccConfigTriggerAutoInvestigate(dataset, name, false),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "auto_investigate", "false"),
+				),
+			},
+			{
+				ResourceName:            "honeycombio_trigger.test",
+				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"recipient", "query_id", "query_json"},
+			},
+		},
+	})
+}
+
+func testAccConfigTriggerAutoInvestigate(dataset, name string, autoInvestigate bool) string {
+	return fmt.Sprintf(`
+provider "honeycombio" {
+  features {
+    intelligence {
+      enabled = true
+    }
+  }
+}
+
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  time_range = 1800
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_trigger" "test" {
+  name             = "%[2]s"
+  dataset          = "%[1]s"
+  auto_investigate = %[3]t
+
+  query_id = honeycombio_query.test.id
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = 1800
+
+  recipient {
+    type   = "email"
+    target = "%[4]s"
+  }
+}`, dataset, name, autoInvestigate, test.RandomEmail())
+}
+
+func TestAcc_TriggerResource_autoInvestigateNoDiffOnUpgrade(t *testing.T) {
+	dataset := testAccDataset()
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerWithoutAutoInvestigate(dataset, name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "auto_investigate", "false"),
+				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+func testAccConfigTriggerWithoutAutoInvestigate(dataset, name string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  time_range = 1800
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%[1]s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_id = honeycombio_query.test.id
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = 1800
+
+  recipient {
+    type   = "email"
+    target = "%[3]s"
+  }
+}`, dataset, name, test.RandomEmail())
 }
 
 func testAccConfigBasicTriggerTest(dataset, name, pdseverity string) string {

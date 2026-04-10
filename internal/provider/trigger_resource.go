@@ -26,6 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/features"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/modifiers"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
@@ -45,7 +46,8 @@ func NewTriggerResource() resource.Resource {
 }
 
 type triggerResource struct {
-	client *client.Client
+	client  *client.Client
+	feature features.FeaturesIntelligence
 }
 
 // matches HH:mm timestamps with optional leading 0
@@ -99,6 +101,12 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Optional:    true,
 				Computed:    true,
 				Description: "The state of the Trigger. If true, the Trigger will not be run.",
+				Default:     booldefault.StaticBool(false),
+			},
+			"auto_investigate": schema.BoolAttribute{
+				Optional:    true,
+				Computed:    true,
+				Description: "Whether to automatically investigate when this Trigger fires. Requires Honeycomb Intelligence to be enabled for your team in the Honeycomb UI and the intelligence feature block to be set in the provider configuration.",
 				Default:     booldefault.StaticBool(false),
 			},
 			"query_id": schema.StringAttribute{
@@ -257,6 +265,13 @@ func (r *triggerResource) Configure(_ context.Context, req resource.ConfigureReq
 		return
 	}
 	r.client = c
+
+	f, err := w.Features()
+	if err != nil {
+		resp.Diagnostics.AddError("Unable to get features", err.Error())
+		return
+	}
+	r.feature = f.Intelligence
 }
 
 func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -264,6 +279,16 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan.AutoInvestigate.ValueBool() && !r.feature.Enabled {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("auto_investigate"),
+			"Honeycomb Intelligence not configured",
+			"Setting \"auto_investigate\" to true requires Honeycomb Intelligence to be enabled for your team and the intelligence feature block to be configured in the provider. "+
+				"Ensure Honeycomb Intelligence is enabled in the Honeycomb UI, then add a features block with intelligence { enabled = true } to your provider configuration.",
+		)
 		return
 	}
 
@@ -283,6 +308,9 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
 		BaselineDetails:    expandBaselineDetails(ctx, plan.BaselineDetails, &resp.Diagnostics),
 		Tags:               planTags,
+	}
+	if r.feature.Enabled {
+		newTrigger.AutoInvestigate = helper.ToPtr(plan.AutoInvestigate.ValueBool())
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -323,6 +351,11 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	state.Name = types.StringValue(trigger.Name)
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
+	if trigger.AutoInvestigate != nil {
+		state.AutoInvestigate = types.BoolValue(*trigger.AutoInvestigate)
+	} else {
+		state.AutoInvestigate = plan.AutoInvestigate
+	}
 	state.AlertType = types.StringValue(string(trigger.AlertType))
 	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
@@ -387,6 +420,11 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.Name = types.StringValue(trigger.Name)
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
+	if trigger.AutoInvestigate != nil {
+		state.AutoInvestigate = types.BoolValue(*trigger.AutoInvestigate)
+	} else if state.AutoInvestigate.IsNull() || state.AutoInvestigate.IsUnknown() {
+		state.AutoInvestigate = types.BoolValue(false)
+	}
 	state.AlertType = types.StringValue(string(trigger.AlertType))
 	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
@@ -431,6 +469,16 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
+	if plan.AutoInvestigate.ValueBool() && !r.feature.Enabled {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("auto_investigate"),
+			"Honeycomb Intelligence not configured",
+			"Setting \"auto_investigate\" to true requires Honeycomb Intelligence to be enabled for your team and the intelligence feature block to be configured in the provider. "+
+				"Ensure Honeycomb Intelligence is enabled in the Honeycomb UI, then add a features block with intelligence { enabled = true } to your provider configuration.",
+		)
+		return
+	}
+
 	planTags, diags := helper.MapToTags(ctx, plan.Tags)
 	if diags.HasError() {
 		return
@@ -448,6 +496,9 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
 		BaselineDetails:    expandBaselineDetails(ctx, plan.BaselineDetails, &resp.Diagnostics),
 		Tags:               planTags,
+	}
+	if r.feature.Enabled {
+		updatedTrigger.AutoInvestigate = helper.ToPtr(plan.AutoInvestigate.ValueBool())
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -495,6 +546,11 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	state.Name = types.StringValue(trigger.Name)
 	state.Description = types.StringValue(trigger.Description)
 	state.Disabled = types.BoolValue(trigger.Disabled)
+	if trigger.AutoInvestigate != nil {
+		state.AutoInvestigate = types.BoolValue(*trigger.AutoInvestigate)
+	} else {
+		state.AutoInvestigate = plan.AutoInvestigate
+	}
 	state.AlertType = types.StringValue(string(trigger.AlertType))
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)

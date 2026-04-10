@@ -967,6 +967,100 @@ func getNewDatasetAndSLO(t *testing.T) (string, string) {
 	return dataset.Slug, slo.ID
 }
 
+func TestAcc_BurnAlertResource_autoInvestigate(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigBurnAlertAutoInvestigate(dataset, sloID, true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("honeycombio_burn_alert.test", "id"),
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "auto_investigate", "true"),
+				),
+			},
+			{
+				Config: testAccConfigBurnAlertAutoInvestigate(dataset, sloID, false),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("honeycombio_burn_alert.test", "id"),
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "auto_investigate", "false"),
+				),
+			},
+			{
+				ResourceName:            "honeycombio_burn_alert.test",
+				ImportStateIdPrefix:     fmt.Sprintf("%v/", dataset),
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"recipient"},
+			},
+		},
+	})
+}
+
+func testAccConfigBurnAlertAutoInvestigate(dataset, sloID string, autoInvestigate bool) string {
+	return fmt.Sprintf(`
+provider "honeycombio" {
+  features {
+    intelligence {
+      enabled = true
+    }
+  }
+}
+
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = 60
+  auto_investigate   = %[3]t
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    type   = "email"
+    target = "%[4]s"
+  }
+}`, dataset, sloID, autoInvestigate, test.RandomEmail())
+}
+
+func TestAcc_BurnAlertResource_autoInvestigateNoDiffOnUpgrade(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigBurnAlertWithoutAutoInvestigate(dataset, sloID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("honeycombio_burn_alert.test", "id"),
+					resource.TestCheckResourceAttr("honeycombio_burn_alert.test", "auto_investigate", "false"),
+				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+func testAccConfigBurnAlertWithoutAutoInvestigate(dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  exhaustion_minutes = 60
+
+  dataset = "%[1]s"
+  slo_id  = "%[2]s"
+
+  recipient {
+    type   = "email"
+    target = "%[3]s"
+  }
+}`, dataset, sloID, test.RandomEmail())
+}
+
 func testAccConfigBurnAlert_withoutDescription(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {

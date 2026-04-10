@@ -8,6 +8,7 @@ type BurnAlertResourceModel struct {
 	BudgetRateWindowMinutes   types.Int64   `tfsdk:"budget_rate_window_minutes"`
 	BudgetRateDecreasePercent types.Float64 `tfsdk:"budget_rate_decrease_percent"`
 	Description               types.String  `tfsdk:"description"`
+	AutoInvestigate           types.Bool    `tfsdk:"auto_investigate"`
 	Dataset                   types.String  `tfsdk:"dataset"`
 	SLOID                     types.String  `tfsdk:"slo_id"`
 	ExhaustionMinutes         types.Int64   `tfsdk:"exhaustion_minutes"`

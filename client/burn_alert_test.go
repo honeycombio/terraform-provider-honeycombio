@@ -184,6 +184,7 @@ func TestBurnAlerts(t *testing.T) {
 			data.CreatedAt = burnAlert.CreatedAt
 			data.UpdatedAt = burnAlert.UpdatedAt
 			data.Recipients[0].ID = burnAlert.Recipients[0].ID
+			data.AutoInvestigate = burnAlert.AutoInvestigate
 			assert.Equal(t, data, burnAlert)
 		})
 
@@ -206,6 +207,7 @@ func TestBurnAlerts(t *testing.T) {
 			data.CreatedAt = burnAlert.CreatedAt
 			data.UpdatedAt = burnAlert.UpdatedAt
 			data.Recipients[0].ID = burnAlert.Recipients[0].ID
+			data.AutoInvestigate = burnAlert.AutoInvestigate
 			assert.Equal(t, burnAlert, data)
 		})
 
@@ -232,6 +234,76 @@ func TestBurnAlerts(t *testing.T) {
 			assert.True(t, de.IsNotFound())
 		})
 	}
+}
+
+func TestBurnAlerts_AutoInvestigate(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := newTestClient(t)
+	dataset := testDataset(t)
+	testAlertEmail := test.RandomEmail()
+
+	sli, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
+		Alias:      test.RandomStringWithPrefix("test.", 8),
+		Expression: "BOOL(1)",
+	})
+	require.NoError(t, err)
+	slo, err := c.SLOs.Create(ctx, dataset, &client.SLO{
+		Name:             test.RandomStringWithPrefix("test.", 8),
+		TimePeriodDays:   7,
+		TargetPerMillion: 999000,
+		SLI:              client.SLIRef{Alias: sli.Alias},
+	})
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		c.SLOs.Delete(ctx, dataset, slo.ID)
+		c.DerivedColumns.Delete(ctx, dataset, sli.ID)
+	})
+
+	exhaustionMinutes := 60
+
+	t.Run("Create with auto_investigate enabled", func(t *testing.T) {
+		data := &client.BurnAlert{
+			AlertType:         client.BurnAlertAlertTypeExhaustionTime,
+			Description:       "auto investigate burn alert",
+			ExhaustionMinutes: &exhaustionMinutes,
+			AutoInvestigate:   client.ToPtr(true),
+			SLO:               client.SLORef{ID: slo.ID},
+			Recipients: []client.NotificationRecipient{
+				{
+					Type:   "email",
+					Target: testAlertEmail,
+				},
+			},
+		}
+		burnAlert, err := c.BurnAlerts.Create(ctx, dataset, data)
+		require.NoError(t, err)
+		assert.NotEmpty(t, burnAlert.ID)
+
+		t.Cleanup(func() {
+			c.BurnAlerts.Delete(ctx, dataset, burnAlert.ID)
+		})
+
+		t.Run("Get returns auto_investigate", func(t *testing.T) {
+			result, err := c.BurnAlerts.Get(ctx, dataset, burnAlert.ID)
+			require.NoError(t, err)
+			if result.AutoInvestigate != nil {
+				assert.True(t, *result.AutoInvestigate)
+			}
+		})
+
+		t.Run("Update auto_investigate to false", func(t *testing.T) {
+			data.ID = burnAlert.ID
+			data.AutoInvestigate = client.ToPtr(false)
+			updated, err := c.BurnAlerts.Update(ctx, dataset, data)
+			require.NoError(t, err)
+			if updated.AutoInvestigate != nil {
+				assert.False(t, *updated.AutoInvestigate)
+			}
+		})
+	})
 }
 
 func TestBurnAlerts_BurnAlertAlertTypes(t *testing.T) {
