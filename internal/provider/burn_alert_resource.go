@@ -127,7 +127,7 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"auto_investigate": schema.BoolAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Whether to automatically investigate when this Burn Alert fires. Requires Honeycomb Intelligence to be enabled.",
+				Description: "Whether to automatically investigate when this Burn Alert fires. Requires Honeycomb Intelligence to be enabled for your team in the Honeycomb UI and the intelligence feature block to be set in the provider configuration.",
 				Default:     booldefault.StaticBool(false),
 			},
 			"exhaustion_minutes": schema.Int64Attribute{
@@ -263,9 +263,9 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 	if plan.AutoInvestigate.ValueBool() && !r.feature.Enabled {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("auto_investigate"),
-			"Intelligence feature not enabled",
-			"Setting \"auto_investigate\" to true requires the intelligence feature to be enabled in the provider configuration. "+
-				"Add a features block with intelligence { enabled = true } to your provider configuration.",
+			"Honeycomb Intelligence not configured",
+			"Setting \"auto_investigate\" to true requires Honeycomb Intelligence to be enabled for your team and the intelligence feature block to be configured in the provider. "+
+				"Ensure Honeycomb Intelligence is enabled in the Honeycomb UI, then add a features block with intelligence { enabled = true } to your provider configuration.",
 		)
 		return
 	}
@@ -312,13 +312,12 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 	state.Recipients = config.Recipients
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)
 
+	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.AutoInvestigate != nil {
 		state.AutoInvestigate = types.BoolValue(*burnAlert.AutoInvestigate)
 	} else {
 		state.AutoInvestigate = plan.AutoInvestigate
 	}
-
-	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {
 		state.ExhaustionMinutes = types.Int64Value(int64(*burnAlert.ExhaustionMinutes))
 	}
@@ -376,13 +375,12 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 	state.Recipients = reconcileReadNotificationRecipientState(ctx, burnAlert.Recipients, state.Recipients, &resp.Diagnostics)
 	state.Description = types.StringValue(burnAlert.Description)
 
+	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.AutoInvestigate != nil {
 		state.AutoInvestigate = types.BoolValue(*burnAlert.AutoInvestigate)
 	} else if state.AutoInvestigate.IsNull() || state.AutoInvestigate.IsUnknown() {
 		state.AutoInvestigate = types.BoolValue(false)
 	}
-
-	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {
 		state.ExhaustionMinutes = types.Int64Value(int64(*burnAlert.ExhaustionMinutes))
 	}
@@ -411,9 +409,9 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 	if plan.AutoInvestigate.ValueBool() && !r.feature.Enabled {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("auto_investigate"),
-			"Intelligence feature not enabled",
-			"Setting \"auto_investigate\" to true requires the intelligence feature to be enabled in the provider configuration. "+
-				"Add a features block with intelligence { enabled = true } to your provider configuration.",
+			"Honeycomb Intelligence not configured",
+			"Setting \"auto_investigate\" to true requires Honeycomb Intelligence to be enabled for your team and the intelligence feature block to be configured in the provider. "+
+				"Ensure Honeycomb Intelligence is enabled in the Honeycomb UI, then add a features block with intelligence { enabled = true } to your provider configuration.",
 		)
 		return
 	}
@@ -467,13 +465,12 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 	state.SLOID = types.StringValue(burnAlert.SLO.ID)
 	state.Description = types.StringValue(burnAlert.Description)
 
+	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.AutoInvestigate != nil {
 		state.AutoInvestigate = types.BoolValue(*burnAlert.AutoInvestigate)
 	} else {
 		state.AutoInvestigate = plan.AutoInvestigate
 	}
-
-	// Process any attributes that could be nil and add them to the state values
 	if burnAlert.ExhaustionMinutes != nil {
 		state.ExhaustionMinutes = types.Int64Value(int64(*burnAlert.ExhaustionMinutes))
 	}

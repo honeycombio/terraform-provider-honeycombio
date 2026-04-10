@@ -106,7 +106,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"auto_investigate": schema.BoolAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Whether to automatically investigate when this Trigger fires. Requires Honeycomb Intelligence to be enabled.",
+				Description: "Whether to automatically investigate when this Trigger fires. Requires Honeycomb Intelligence to be enabled for your team in the Honeycomb UI and the intelligence feature block to be set in the provider configuration.",
 				Default:     booldefault.StaticBool(false),
 			},
 			"query_id": schema.StringAttribute{
@@ -285,9 +285,9 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	if plan.AutoInvestigate.ValueBool() && !r.feature.Enabled {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("auto_investigate"),
-			"Intelligence feature not enabled",
-			"Setting \"auto_investigate\" to true requires the intelligence feature to be enabled in the provider configuration. "+
-				"Add a features block with intelligence { enabled = true } to your provider configuration.",
+			"Honeycomb Intelligence not configured",
+			"Setting \"auto_investigate\" to true requires Honeycomb Intelligence to be enabled for your team and the intelligence feature block to be configured in the provider. "+
+				"Ensure Honeycomb Intelligence is enabled in the Honeycomb UI, then add a features block with intelligence { enabled = true } to your provider configuration.",
 		)
 		return
 	}
@@ -472,9 +472,9 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	if plan.AutoInvestigate.ValueBool() && !r.feature.Enabled {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("auto_investigate"),
-			"Intelligence feature not enabled",
-			"Setting \"auto_investigate\" to true requires the intelligence feature to be enabled in the provider configuration. "+
-				"Add a features block with intelligence { enabled = true } to your provider configuration.",
+			"Honeycomb Intelligence not configured",
+			"Setting \"auto_investigate\" to true requires Honeycomb Intelligence to be enabled for your team and the intelligence feature block to be configured in the provider. "+
+				"Ensure Honeycomb Intelligence is enabled in the Honeycomb UI, then add a features block with intelligence { enabled = true } to your provider configuration.",
 		)
 		return
 	}

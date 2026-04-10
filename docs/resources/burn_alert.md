@@ -155,7 +155,7 @@ resource "honeycombio_burn_alert" "example_alert" {
 ### Optional
 
 - `alert_type` (String) The alert type of this Burn Alert.
-- `auto_investigate` (Boolean) Whether to automatically investigate when this Burn Alert fires. Requires Honeycomb Intelligence to be enabled.
+- `auto_investigate` (Boolean) Whether to automatically investigate when this Burn Alert fires. Requires Honeycomb Intelligence to be enabled for your team in the Honeycomb UI and the intelligence feature block to be set in the provider configuration.
 - `budget_rate_decrease_percent` (Number) The percent the budget has decreased over the budget rate window.
 - `budget_rate_window_minutes` (Number) The time period, in minutes, over which a budget rate will be calculated.
 - `dataset` (String) The dataset this Burn Alert is associated with. Will be deprecated in a future release.
