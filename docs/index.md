@@ -47,13 +47,12 @@ More advanced examples can be found in the [example directory](https://github.co
 
 Several resources in this provider accept a `dataset` or `datasets` argument to specify which Honeycomb Dataset the resource belongs to.
 These resources include but aren't limited to:
-
-- queries
-- triggers
-- slos
-- markers
-- columns
-- boards
+* queries
+* triggers
+* slos
+* markers
+* columns
+* boards
 
 Whenever a resource accepts a `dataset` or `datasets` argument, the argument is expected to be a Dataset **slug**, not a Dataset name or ID.
 Dataset slugs can be found in the URL of the dataset in the Honeycomb UI, or in the `slug` field of the [Dataset API](https://api-docs.honeycomb.io/api/datasets/createdataset#datasets/createdataset/t=response&c=200&path=slug).
@@ -102,12 +101,12 @@ The key pair can be set with the `api_key_id` and `api_key_secret` arguments, or
 
 Arguments accepted by this provider include:
 
-- `api_key` - (Optional) The Honeycomb API key to use. It can also be set using `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variables.
-- `api_key_id` - (Optional) The ID portion of the Honeycomb Management API key to use. It can also be set via the `HONEYCOMB_KEY_ID` environment variable.
-- `api_key_secret` - (Optional) The secret portion of the Honeycomb Management API key to use. It can also be set via the `HONEYCOMB_KEY_SECRET` environment variable.
-- `api_url` - (Optional) Override the URL of the Honeycomb.io API. It can also be set using `HONEYCOMB_API_ENDPOINT`. Defaults to `https://api.honeycomb.io`.
-- `debug` - (Optional) Enable to log additional debug information. To view the logs, set `TF_LOG` to at least debug.
-- `features` - (Optional) The features block allows customization of the behavior of the Honeycomb Provider. Full details documented below.
+* `api_key` - (Optional) The Honeycomb API key to use. It can also be set using `HONEYCOMB_API_KEY` or `HONEYCOMBIO_APIKEY` environment variables.
+* `api_key_id` - (Optional) The ID portion of the Honeycomb Management API key to use. It can also be set via the `HONEYCOMB_KEY_ID` environment variable.
+* `api_key_secret` - (Optional) The secret portion of the Honeycomb Management API key to use. It can also be set via the `HONEYCOMB_KEY_SECRET` environment variable.
+* `api_url` - (Optional) Override the URL of the Honeycomb.io API. It can also be set using `HONEYCOMB_API_ENDPOINT`. Defaults to `https://api.honeycomb.io`.
+* `debug` - (Optional) Enable to log additional debug information. To view the logs, set `TF_LOG` to at least debug.
+* `features` - (Optional) The features block allows customization of the behavior of the Honeycomb Provider. Full details documented below.
 
 At least one of `api_key`, or the `api_key_id` and `api_key_secret` pair must be configured.
 
@@ -143,27 +142,21 @@ provider "honeycombio" {
 
 The `features` block supports the following:
 
-- `column` - (Optional) A `column` block as defined below.
-- `dataset` - (Optional) A `dataset` block as defined below.
-- `intelligence` - (Optional) An `intelligence` block as defined below.
+* `column` - (Optional) A `column` block as defined below.
+* `dataset` - (Optional) A `dataset` block as defined below.
+* `intelligence` - (Optional) An `intelligence` block as defined below.
 
 ---
-
 The `column` block supports the following:
-
-- `import_on_conflict` - (Optional) This changes the creation behavior of the column resource to import and update an existing column if it already exists, rather than erroring out. Defaults to `false`.
-  This is potentially dangerous if the type changes on the update -- switching from `string` to `boolean` and causing dataloss, for example -- and should be used with caution.
+* `import_on_conflict` - (Optional) This changes the creation behavior of the column resource to import and update an existing column if it already exists, rather than erroring out. Defaults to `false`.
+    This is potentially dangerous if the type changes on the update -- switching from `string` to `boolean` and causing dataloss, for example -- and should be used with caution.
 
 ---
-
 The `dataset` block supports the following:
-
-- `import_on_conflict` - (Optional) This changes the creation behavior of the dataset resource to import and update an existing dataset if it already exists, rather than erroring out. Defaults to `false`.
+* `import_on_conflict` - (Optional) This changes the creation behavior of the dataset resource to import and update an existing dataset if it already exists, rather than erroring out. Defaults to `false`.
 
 ---
-
 The `intelligence` block supports the following:
-
-- `enabled` - (Optional) Set to `true` to enable intelligence features such as `auto_investigate` on triggers and burn alerts. Defaults to `false`.
+* `enabled` - (Optional) Set to `true` to enable intelligence features such as `auto_investigate` on triggers and burn alerts. Defaults to `false`.
 
 ~> **Note** [Honeycomb Intelligence](https://docs.honeycomb.io/security-compliance/honeycomb-intelligence) must first be enabled for your team in the Honeycomb UI before using this block. The `intelligence` feature block in the provider tells Terraform that your team has Honeycomb Intelligence enabled and unlocks related attributes like `auto_investigate`.
