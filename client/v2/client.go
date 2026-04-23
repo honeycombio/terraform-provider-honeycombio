@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
@@ -29,13 +30,12 @@ const (
 )
 
 type Config struct {
-	APIKeyID           string
-	APIKeySecret       string
-	BaseURL            string
-	Debug              bool
-	HTTPClient         *http.Client
-	UserAgent          string
-	skipInitialization bool
+	APIKeyID     string
+	APIKeySecret string
+	BaseURL      string
+	Debug        bool
+	HTTPClient   *http.Client
+	UserAgent    string
 }
 
 type Client struct {
@@ -45,9 +45,31 @@ type Client struct {
 
 	http *retryablehttp.Client
 
+	// authInfo is populated on first use by teamSlug. It caches the team slug
+	// needed to construct v2 API paths so we don't do a blocking round-trip
+	// during client construction.
+	authMu   sync.Mutex
+	authInfo *AuthMetadata
+
 	// API handlers here
 	APIKeys      APIKeys
 	Environments Environments
+}
+
+// teamSlug returns the team slug for the configured API key, fetching the
+// auth metadata from the API on first use and caching the result. Errors are
+// not cached so that a transient failure does not poison later calls.
+func (c *Client) teamSlug(ctx context.Context) (string, error) {
+	c.authMu.Lock()
+	defer c.authMu.Unlock()
+	if c.authInfo == nil {
+		info, err := c.AuthInfo(ctx)
+		if err != nil {
+			return "", err
+		}
+		c.authInfo = info
+	}
+	return c.authInfo.Team.Slug, nil
 }
 
 func NewClient() (*Client, error) {
@@ -101,7 +123,7 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 		HTTPClient:   config.HTTPClient,
 		RetryWaitMin: 200 * time.Millisecond,
 		RetryWaitMax: time.Minute,
-		RetryMax:     30,
+		RetryMax:     10,
 	}
 
 	if config.Debug {
@@ -113,20 +135,9 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 		}
 	}
 
-	// early out if we're just creating the client for testing
-	if config.skipInitialization {
-		return client, nil
-	}
-
-	var authinfo *AuthMetadata
-	authinfo, err = client.AuthInfo(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
 	// bind API handlers here
-	client.APIKeys = &apiKeys{client: client, authinfo: authinfo}
-	client.Environments = &environments{client: client, authinfo: authinfo}
+	client.APIKeys = &apiKeys{client: client}
+	client.Environments = &environments{client: client}
 
 	return client, nil
 }
