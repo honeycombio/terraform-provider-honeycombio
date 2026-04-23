@@ -1,1280 +1,1330 @@
+# 0.48.0 (Apr 23, 2026)
+
+## Notes
+
+- Invalid v2 credentials (`HONEYCOMB_KEY_ID` / `HONEYCOMB_KEY_SECRET`) now surface
+  on first use of a v2 resource or data source (`honeycombio_api_key`,
+  `honeycombio_environment`, `honeycombio_environments`) rather than at
+  provider-configure time. Error message is unchanged; only the timing differs.
+- Users of only v1 resources with broken v2 creds will see a strict improvement —
+  those errors no longer block unrelated operations.
+
+## Enhancements
+
+- feat: Add auto_investigate support for burn alerts and triggers (#835)
+
+## Bugfixes
+
+- fix(tests): update derived column test to use existing alias (#834)
+- fix(client): defer v2 auth validation until first use (#841)
+
+## Housekeeping
+
+- maint(deps): bump goreleaser/goreleaser-action from 7.0.0 to 7.1.0 (#839)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-docs from 0.24.0 to 0.25.0 in the hashicorp group (#840)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.23.0 to 0.23.1 in the hashicorp group across 1 directory (#838)
+- maint(deps): bump golang.org/x/net from 0.52.0 to 0.53.0 (#837)
+- maint(deps): bump google.golang.org/grpc from 1.79.2 to 1.79.3 (#830)
+- maint(deps): bump slackapi/slack-github-action from 2.1.1 to 3.0.1 (#829)
+- maint(deps): bump golang.org/x/net from 0.51.0 to 0.52.0 (#828)
+- maint(deps): bump the hashicorp group with 5 updates (#827)
+- maint: Add per-team CODEOWNERS for provider resources (#832)
+- maint: Bump go version to latest-1, current patch (#842)
+
 # 0.47.1 (Mar 9, 2026)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(d/query_specification): fix crash when `dynamic "filter"` block uses an unknown `for_each` value (#824)
+- fix(d/query_specification): fix crash when `dynamic "filter"` block uses an unknown `for_each` value (#824)
 
 # 0.47.0 (Mar 4, 2026)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(d/query_specification): Add formulas and calculation filters support (#803)
-* feat(r/triggers): Query Math Support (#807)
+- feat(d/query_specification): Add formulas and calculation filters support (#803)
+- feat(r/triggers): Query Math Support (#807)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump the hashicorp group with 3 updates (#821)
-* maint(deps): bump crazy-max/ghaction-import-gpg from 6 to 7 (#822)
+- maint(deps): bump the hashicorp group with 3 updates (#821)
+- maint(deps): bump crazy-max/ghaction-import-gpg from 6 to 7 (#822)
 
 # 0.46.1 (Feb 26, 2026)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump golang.org/x/net from 0.50.0 to 0.51.0 (#819)
-* maint(deps): bump github.com/cloudflare/circl from 1.6.1 to 1.6.3 (#817)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.29.0 to 0.30.0 in the hashicorp group (#816)
-* maint(deps): bump hashicorp/setup-terraform from 3 to 4 (#815)
-* maint(deps): bump goreleaser/goreleaser-action from 6.4.0 to 7.0.0 (#813)
+- maint(deps): bump golang.org/x/net from 0.50.0 to 0.51.0 (#819)
+- maint(deps): bump github.com/cloudflare/circl from 1.6.1 to 1.6.3 (#817)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.29.0 to 0.30.0 in the hashicorp group (#816)
+- maint(deps): bump hashicorp/setup-terraform from 3 to 4 (#815)
+- maint(deps): bump goreleaser/goreleaser-action from 6.4.0 to 7.0.0 (#813)
 
 # 0.46.0 (Feb 12, 2026)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(calculated-fields): Update Syntax Validator (#810)
+- feat(calculated-fields): Update Syntax Validator (#810)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump golang.org/x/net from 0.48.0 to 0.50.0 (#809)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.38.1 to 2.38.2 in the hashicorp group (#808)
-* chore(docs): Add example usage for board views resource, and alias max length (#802)
+- maint(deps): bump golang.org/x/net from 0.48.0 to 0.50.0 (#809)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.38.1 to 2.38.2 in the hashicorp group (#808)
+- chore(docs): Add example usage for board views resource, and alias max length (#802)
 
 # 0.45.0 (Jan 06, 2026)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(r/flexible_board): Add support for board views (#794)
+- feat(r/flexible_board): Add support for board views (#794)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(r/flexible_board): Add limits for preset filters, docs for views (#796)
+- fix(r/flexible_board): Add limits for preset filters, docs for views (#796)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump github.com/google/go-querystring from 1.1.0 to 1.2.0 (#795)
+- maint(deps): bump github.com/google/go-querystring from 1.1.0 to 1.2.0 (#795)
 
 # 0.44.0 (Dec 15, 2025)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(r/flexibleboard): Add support for preset filters (#792)
+- feat(r/flexibleboard): Add support for preset filters (#792)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump golang.org/x/net from 0.47.0 to 0.48.0 (#791)
-* maint(deps): bump golangci/golangci-lint-action from 9.1.0 to 9.2.0 (#787)
-* maint(deps): bump the hashicorp group across 1 directory with 2 updates (#790)
-* docs: migrate docs generation to tfplugindocs with templates (#789)
+- maint(deps): bump golang.org/x/net from 0.47.0 to 0.48.0 (#791)
+- maint(deps): bump golangci/golangci-lint-action from 9.1.0 to 9.2.0 (#787)
+- maint(deps): bump the hashicorp group across 1 directory with 2 updates (#790)
+- docs: migrate docs generation to tfplugindocs with templates (#789)
 
 # 0.43.0 (Nov 25, 2025)
 
-NOTES:
+## Notes
 
-* This release removes the long-deprecated classic boards from `r/boards`.
+- This release removes the long-deprecated classic boards from `r/boards`.
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(derived-columns): Infix notation support (#779)
+- feat(derived-columns): Infix notation support (#779)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump actions/checkout from 5 to 6 (#784)
-* maint(deps): bump golangci/golangci-lint-action from 9.0.0 to 9.1.0 (#785)
-* maint(deps): bump golang.org/x/crypto from 0.44.0 to 0.45.0 (#783)
-* maint(deps): bump golangci/golangci-lint-action from 8.0.0 to 9.0.0 (#778)
-* maint(deps): bump golang.org/x/net from 0.46.0 to 0.47.0 (#782)
+- maint(deps): bump actions/checkout from 5 to 6 (#784)
+- maint(deps): bump golangci/golangci-lint-action from 9.0.0 to 9.1.0 (#785)
+- maint(deps): bump golang.org/x/crypto from 0.44.0 to 0.45.0 (#783)
+- maint(deps): bump golangci/golangci-lint-action from 8.0.0 to 9.0.0 (#778)
+- maint(deps): bump golang.org/x/net from 0.46.0 to 0.47.0 (#782)
 
 # 0.42.0 (Oct 10, 2025)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(triggers): allow two trigger calculations if one is a having (#772)
-* fix(triggers): Trigger Duration/Frequency error message (#770)
+- fix(triggers): allow two trigger calculations if one is a having (#772)
+- fix(triggers): Trigger Duration/Frequency error message (#770)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump golang.org/x/net from 0.45.0 to 0.46.0 (#771)
-* maint(deps): bump golang.org/x/net from 0.44.0 to 0.45.0 (#769)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.18.0 to 0.19.0 in the hashicorp group (#768)
+- maint(deps): bump golang.org/x/net from 0.45.0 to 0.46.0 (#771)
+- maint(deps): bump golang.org/x/net from 0.44.0 to 0.45.0 (#769)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.18.0 to 0.19.0 in the hashicorp group (#768)
 
 # 0.41.0 (Oct 01, 2025)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(r/query_annotation): add import support (#759)
+- feat(r/query_annotation): add import support (#759)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(d/query_specification): Allow wider granularity range (#762)
+- fix(d/query_specification): Allow wider granularity range (#762)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump golang.org/x/net from 0.43.0 to 0.44.0 (#758)
-* maint(deps): bump the hashicorp group with 4 updates (#761)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.38.0 to 2.38.1 in the hashicorp group (#763)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.16.0 to 1.16.1 in the hashicorp group (#766)
-  
+- maint(deps): bump golang.org/x/net from 0.43.0 to 0.44.0 (#758)
+- maint(deps): bump the hashicorp group with 4 updates (#761)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.38.0 to 2.38.1 in the hashicorp group (#763)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.16.0 to 1.16.1 in the hashicorp group (#766)
+
 # 0.40.1 (Sep 05, 2025)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(r/query_specification): handle validation with dynamic blocks (#754)
+- fix(r/query_specification): handle validation with dynamic blocks (#754)
 
 # 0.40.0 (Sep 05, 2025)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(r/flexible_board): add panel type consistency validation (#749)
-* feat(d/query_specification): add support for `compare_time_offset` seconds (#751)
+- feat(r/flexible_board): add panel type consistency validation (#749)
+- feat(d/query_specification): add support for `compare_time_offset` seconds (#751)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump github.com/stretchr/testify from 1.11.0 to 1.11.1 (#750)
-* maint(deps): bump actions/setup-go from 5 to 6 (#752)
+- maint(deps): bump github.com/stretchr/testify from 1.11.0 to 1.11.1 (#750)
+- maint(deps): bump actions/setup-go from 5 to 6 (#752)
 
 # 0.39.1 (Aug 25, 2025)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(r/query_annotation): handle empty description (#747)
+- fix(r/query_annotation): handle empty description (#747)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump github.com/stretchr/testify from 1.10.0 to 1.11.0 (#746)
+- maint(deps): bump github.com/stretchr/testify from 1.10.0 to 1.11.0 (#746)
 
 # 0.39.0 (Aug 22, 2025)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(r/flexible_board): Add support for text panels (#743)
-* fix(client): add missing source field to query annotations (#742)
+- feat(r/flexible_board): Add support for text panels (#743)
+- fix(client): add missing source field to query annotations (#742)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.13.2 to 1.13.3 (#741)
-* chore(build): upgrade golangci-lint and tidy (#740)
-* chore(r/query_annotation): migrate to Plugin Framework (#744)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.13.2 to 1.13.3 (#741)
+- chore(build): upgrade golangci-lint and tidy (#740)
+- chore(r/query_annotation): migrate to Plugin Framework (#744)
 
 # 0.38.1 (Aug 15, 2025)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(docs): fix 'features block' formatting (#738)
+- fix(docs): fix 'features block' formatting (#738)
 
 # 0.38.0 (Aug 15, 2025)
 
-NOTES:
+## Notes
 
-* This release introduces provider-level Feature Toggles which were heavily influenced by the Azure Provider.
+- This release introduces provider-level Feature Toggles which were heavily influenced by the Azure Provider.
   The first two toggles allow users to opt-in to the previous "import on conflict" behavior of both `r/column` and `r/dataset`.
-* This release removes the long-deprecated `key_name` attribute from `r/column`.
+- This release removes the long-deprecated `key_name` attribute from `r/column`.
 
-ENHANCEMENTS:
+## Enhancements
 
-* fix(client): add missing Dataset field to QueryPanel (#724)
-* feat(features): add features support with column import override (#731)
-* feat(r/dataset): add import_on_conflict feature (#732)
+- fix(client): add missing Dataset field to QueryPanel (#724)
+- feat(features): add features support with column import override (#731)
+- feat(r/dataset): add import_on_conflict feature (#732)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* chore(r/column): migrate to Plugin Framework (#730)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.15.0 to 1.15.1 (#727)
-* maint(deps): bump golang.org/x/net from 0.42.0 to 0.43.0 (#728)
-* maint(deps): bump actions/checkout from 4 to 5 (#729)
-* maint(deps): bump goreleaser/goreleaser-action from 6.3.0 to 6.4.0 (#734)
-* chore(build): bump Go to 1.24 (#735)
-* chore(docs,dataset): add note about feature toggle to r/dataset docs (#736)
+- chore(r/column): migrate to Plugin Framework (#730)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.15.0 to 1.15.1 (#727)
+- maint(deps): bump golang.org/x/net from 0.42.0 to 0.43.0 (#728)
+- maint(deps): bump actions/checkout from 4 to 5 (#729)
+- maint(deps): bump goreleaser/goreleaser-action from 6.3.0 to 6.4.0 (#734)
+- chore(build): bump Go to 1.24 (#735)
+- chore(docs,dataset): add note about feature toggle to r/dataset docs (#736)
 
 # 0.37.1 (July 23, 2025)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(client): Accommodate the "dataset_slug" field in triggers (#720)
+- feat(client): Accommodate the "dataset_slug" field in triggers (#720)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(r/flexible_board): Remove height limit (#721)
+- fix(r/flexible_board): Remove height limit (#721)
 
 # 0.37.0 (July 21, 2025)
 
-ENHANCEMENTS:
+## Enhancements
 
-* chore(tags): increase tag Value max length to 128 (#717)
-* feat(r/flexible_board): allow panel positions to be autogenerated (#716)
+- chore(tags): increase tag Value max length to 128 (#717)
+- feat(r/flexible_board): allow panel positions to be autogenerated (#716)
 
-BUGFIXES:
+## Bugfixes
 
-* chore(flexible-board): Fix typo in resource description (#712)
+- chore(flexible-board): Fix typo in resource description (#712)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump slackapi/slack-github-action from 2.1.0 to 2.1.1 (#713)
-* maint(deps): bump golang.org/x/net from 0.41.0 to 0.42.0 (#715)
+- maint(deps): bump slackapi/slack-github-action from 2.1.0 to 2.1.1 (#713)
+- maint(deps): bump golang.org/x/net from 0.41.0 to 0.42.0 (#715)
 
 # 0.36.2 (July 2, 2025)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(r/trigger): validate threshold when baseline_details in use (#708)
-* fix(r/trigger): updating env-wide trigger causes apply error (#709)
-* fix(r/slo): SLO update causing resource replacement (#710)
+- fix(r/trigger): validate threshold when baseline_details in use (#708)
+- fix(r/trigger): updating env-wide trigger causes apply error (#709)
+- fix(r/slo): SLO update causing resource replacement (#710)
 
 # 0.36.1 (June 24, 2025)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(tags): handle empty tags map (#705)
-* fix(r/flexible_board): avoid panic on read with index check (#706)
+- fix(tags): handle empty tags map (#705)
+- fix(r/flexible_board): avoid panic on read with index check (#706)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.13.1 to 1.13.2 (#700)
-* maint(deps): bump github.com/hashicorp/go-retryablehttp from 0.7.7 to 0.7.8 (#703)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.13.1 to 1.13.2 (#700)
+- maint(deps): bump github.com/hashicorp/go-retryablehttp from 0.7.7 to 0.7.8 (#703)
 
 # 0.36.0 (Jun 6, 2025)
 
-NOTES: this release contains support for tagging Flexible Boards, however at the time of release the Honeycomb UI is still missing tagging support for Boards.
-This was done to allow users to begin tag all three of the initial resources supporting tags (SLOs, Triggers, Boards).
+## Notes
 
-ENHANCEMENTS:
+- This release contains support for tagging Flexible Boards, however at the time of release the Honeycomb UI is still missing tagging support for Boards.
+  This was done to allow users to begin tag all three of the initial resources supporting tags (SLOs, Triggers, Boards).
 
-* feat(r/trigger): add support for tags on triggers (#683)
-* feat(r/trigger): add support for env-wide triggers (#687)
-* chore(client): add limit and disable series to query result request (#695)
-* feat(r/flexible_board): add support for tags on Boards (#694)
-* chore(docs): clarify that dataset and datasets field of slos expect slugs (#693)
-* feat: Enhance `detail_filter` support for multi-value and multi-filter (#689)
+## Enhancements
 
-BUGFIXES:
+- feat(r/trigger): add support for tags on triggers (#683)
+- feat(r/trigger): add support for env-wide triggers (#687)
+- chore(client): add limit and disable series to query result request (#695)
+- feat(r/flexible_board): add support for tags on Boards (#694)
+- chore(docs): clarify that dataset and datasets field of slos expect slugs (#693)
+- feat: Enhance `detail_filter` support for multi-value and multi-filter (#689)
 
-* fix(ci): cleanup burn alert and trigger recipient creation (#688)
-* fix(r/flexible_board): incorrect "prefer_overlaid_charts" field name in docs (#690)
-* fix(client): use proper format for Retry-After fallback (#686)
+## Bugfixes
 
-HOUSEKEEPING:
+- fix(ci): cleanup burn alert and trigger recipient creation (#688)
+- fix(r/flexible_board): incorrect "prefer_overlaid_charts" field name in docs (#690)
+- fix(client): use proper format for Retry-After fallback (#686)
 
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.14.1 to 1.15.0 (#680)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.26.0 to 0.27.0 (#680)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.18.0 to 0.19.0 (#680)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.36.1 to 2.37.0 (#680)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.12.0 to 1.13.0 (#680)
-* chore(r/slo): migrate SLO resource to Plugin Framework (#682)
-* maint(deps): bump golang.org/x/net from 0.40.0 to 0.41.0 (#696)
-* chore: remove existing .env file and create .env.example template (#691)
-* docs: Deprecate board resource in favour of flexible_board (#681)
+## Housekeeping
+
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.14.1 to 1.15.0 (#680)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.26.0 to 0.27.0 (#680)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.18.0 to 0.19.0 (#680)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.36.1 to 2.37.0 (#680)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.12.0 to 1.13.0 (#680)
+- chore(r/slo): migrate SLO resource to Plugin Framework (#682)
+- maint(deps): bump golang.org/x/net from 0.40.0 to 0.41.0 (#696)
+- chore: remove existing .env file and create .env.example template (#691)
+- docs: Deprecate board resource in favour of flexible_board (#681)
 
 # 0.35.0 (May 14, 2025)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat: add flexible board resource (#677, #676, #675)
+- feat: add flexible board resource (#677, #676, #675)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump slackapi/slack-github-action from 2.0.0 to 2.1.0 (#674)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.17.0 to 0.18.0 (#678)
+- maint(deps): bump slackapi/slack-github-action from 2.0.0 to 2.1.0 (#674)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.17.0 to 0.18.0 (#678)
 
 # 0.34.0 (May 6, 2025)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(d/slo,r/slo): add 'tags' support (#667)
+- feat(d/slo,r/slo): add 'tags' support (#667)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* chore(ci): fix CI status badge (#671)
-* maint(deps): bump goreleaser/goreleaser-action from 6.2.1 to 6.3.0 (#647)
-* maint(deps): bump golang.org/x/net from 0.39.0 to 0.40.0 (#668)
+- chore(ci): fix CI status badge (#671)
+- maint(deps): bump goreleaser/goreleaser-action from 6.2.1 to 6.3.0 (#647)
+- maint(deps): bump golang.org/x/net from 0.39.0 to 0.40.0 (#668)
 
 # 0.33.1 (Apr 30, 2025)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(r/trigger,r/burn_alert): gracefully handle recipients with notification details on import (#665)
+- fix(r/trigger,r/burn_alert): gracefully handle recipients with notification details on import (#665)
 
 # 0.33.0 (Apr 24, 2025)
 
-NOTES: this release contains support for [Dynamic Baseline Triggers](https://docs.honeycomb.io/notify/alert/triggers/create/#trigger-alert-type).
+## Notes
 
-ENHANCEMENTS:
+- This release contains support for [Dynamic Baseline Triggers](https://docs.honeycomb.io/notify/alert/triggers/create/#trigger-alert-type).
 
-* feat(d/environment): add `detail_filter` to simplify environment lookup (#660)
-* feat(r/trigger): add `baseline_details` support (#658)
-* feat(r/api_key): add computed `key` field (#661)
-* feat(r/slos): get all SLOs per environment (#662)
-* feat(d/query_specification): temporary calculated field support (#663)
+## Enhancements
 
-HOUSEKEEPING:
+- feat(d/environment): add `detail_filter` to simplify environment lookup (#660)
+- feat(r/trigger): add `baseline_details` support (#658)
+- feat(r/api_key): add computed `key` field (#661)
+- feat(r/slos): get all SLOs per environment (#662)
+- feat(d/query_specification): temporary calculated field support (#663)
 
-* chore(r/board): migrate to Plugin Framework (#659)
-* maint(deps): bump golang.org/x/net from 0.38.0 to 0.39.0 (#657)
+## Housekeeping
+
+- chore(r/board): migrate to Plugin Framework (#659)
+- maint(deps): bump golang.org/x/net from 0.38.0 to 0.39.0 (#657)
 
 # 0.32.0 (Apr 7, 2025)
 
-NOTES: this release contains support for [Multi-Dataset SLOs and Burn Alerts](https://docs.honeycomb.io/notify/alert/slos/#multiple-services-on-slos)!
-  In addition, the `dataset` argument has become optional for resources that are Environment aware, which means using the magic `__all__` string is no longer required.
-  In order to allow cleaner configurations and avoid destructive recreation, removing `dataset = "__all__"` from a resource does not force re-creation as the lack of `dataset` argument is treated as equivalent.
+## Notes
 
-ENHANCEMENTS:
+- This release contains support for [Multi-Dataset SLOs and Burn Alerts](https://docs.honeycomb.io/notify/alert/slos/#multiple-services-on-slos)!
+- In addition, the `dataset` argument has become optional for resources that are Environment aware, which means using the magic `__all__` string is no longer required.
+- In order to allow cleaner configurations and avoid destructive recreation, removing `dataset = "__all__"` from a resource does not force re-creation as the lack of `dataset` argument is treated as equivalent.
 
-* feat(r/slo, d/slo): multi-dataset support (#635, #641)
-* feat(r/burn_alert): multi-dataset support (#644)
-* feat(d/query_specification): 'order' validation support (#642)
-* chore(client): update default dataset definition values (#643)
-* chore(r/webhook_recipient): increase header value char limit (#648)
-* feat: remove need for magic environment-wide string (#654)
+## Enhancements
 
-BUGFIXES:
+- feat(r/slo, d/slo): multi-dataset support (#635, #641)
+- feat(r/burn_alert): multi-dataset support (#644)
+- feat(d/query_specification): 'order' validation support (#642)
+- chore(client): update default dataset definition values (#643)
+- chore(r/webhook_recipient): increase header value char limit (#648)
+- feat: remove need for magic environment-wide string (#654)
 
-* fix(r/trigger): adjust frequency<>duration validation error message for clarity (#655)
+## Bugfixes
 
-HOUSEKEEPING:
+- fix(r/trigger): adjust frequency<>duration validation error message for clarity (#655)
 
-* chore(ci): don't highlight skipped tests (#638)
-* maint(deps): bump golangci/golangci-lint-action from 6.5.0 to 6.5.1 (#634)
-* maint(deps): bump github.com/dunglas/httpsfv from 1.0.2 to 1.1.0 (#633)
-* maint(deps): bump github.com/hashicorp/go-cty from 1.4.1 to 1.5.0 (#637)
-* maint(deps): bump golangci/golangci-lint-action from 6.5.1 to 6.5.2 (#636)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.11.0 to 1.12.0 (#639)
-* maint(deps): bump golang.org/x/net from 0.37.0 to 0.38.0 (#646)
-* maint(deps): bump github.com/hashicorp/jsonapi from 1.4.2 to 1.5.0 (#650)
-* maint(deps): bump Go from 1.23.6 to 1.23.8 (#649)
-* fix(build): remove incorrect 'toolchain' directive (#652)
+## Housekeeping
+
+- chore(ci): don't highlight skipped tests (#638)
+- maint(deps): bump golangci/golangci-lint-action from 6.5.0 to 6.5.1 (#634)
+- maint(deps): bump github.com/dunglas/httpsfv from 1.0.2 to 1.1.0 (#633)
+- maint(deps): bump github.com/hashicorp/go-cty from 1.4.1 to 1.5.0 (#637)
+- maint(deps): bump golangci/golangci-lint-action from 6.5.1 to 6.5.2 (#636)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.11.0 to 1.12.0 (#639)
+- maint(deps): bump golang.org/x/net from 0.37.0 to 0.38.0 (#646)
+- maint(deps): bump github.com/hashicorp/jsonapi from 1.4.2 to 1.5.0 (#650)
+- maint(deps): bump Go from 1.23.6 to 1.23.8 (#649)
+- fix(build): remove incorrect 'toolchain' directive (#652)
 
 # 0.31.0 (Mar 6, 2025)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(client): improve V1 api client retry behaviour (#629)
+- feat(client): improve V1 api client retry behaviour (#629)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(r/slo): recommend using lifecycle argument to avoid conflicts during derived column updates (#626)
+- fix(r/slo): recommend using lifecycle argument to avoid conflicts during derived column updates (#626)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump golang.org/x/net from 0.35.0 to 0.36.0 (#628)
-* maint(deps): bump github.com/hashicorp/go-cty from 1.4.1-0.20200414143053-d3edf31b6320 to 1.4.1 (#630)
-* maint(deps): bump golang.org/x/net from 0.36.0 to 0.37.0 (#631)
+- maint(deps): bump golang.org/x/net from 0.35.0 to 0.36.0 (#628)
+- maint(deps): bump github.com/hashicorp/go-cty from 1.4.1-0.20200414143053-d3edf31b6320 to 1.4.1 (#630)
+- maint(deps): bump golang.org/x/net from 0.36.0 to 0.37.0 (#631)
 
 # 0.30.0 (Feb 24, 2025)
 
-NOTES: this release adds support for syntax validation of Derived Columns.
+## Notes
 
-ENHANCEMENTS:
+- This release adds support for syntax validation of Derived Columns.
 
-* feat(r/derived_column): expression syntax validation (#622)
+## Enhancements
 
-BUGFIXES:
+- feat(r/derived_column): expression syntax validation (#622)
 
-* fix(r/query_annotation): update name and description max length (#601)
-* fix(r/dataset): changing a dataset's name requires replacement (#618)
-* fix(r/derived_column): don't run validation parser in debug mode (#623)
+## Bugfixes
 
-HOUSEKEEPING:
+- fix(r/query_annotation): update name and description max length (#601)
+- fix(r/dataset): changing a dataset's name requires replacement (#618)
+- fix(r/derived_column): don't run validation parser in debug mode (#623)
 
-* fix(ci): extend 'go test' timeout to 20 min (#599)
-* maint(deps): bump golangci/golangci-lint-action from 6.1.1 to 6.2.0 (#600)
-* build(deps): bump github.com/hashicorp/yamux from 0.1.1 to 0.1.2 (#606)
-* maint(deps): bump golangci/golangci-lint-action from 6.2.0 to 6.3.0 (#608)
-* maint(deps): bump golangci/golangci-lint-action from 6.3.0 to 6.3.1 (#610)
-* maint(deps): bump goreleaser/goreleaser-action from 6.1.0 to 6.2.1 (#613)
-* maint(deps): bump golangci/golangci-lint-action from 6.3.1 to 6.3.2 (#612)
-* maint(deps): bump golang.org/x/net from 0.34.0 to 0.35.0 (#611)
-* maint(deps): bump github.com/hashicorp/jsonapi from 1.3.2 to 1.4.2 (#609)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.25.0 to 0.26.0 (#609)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.17.0 to 0.18.0 (#609)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.35.0 to 2.36.0 (#609)
-* chore(ci): adjust linter config. after golangci-lint update (#615)
-* chore(build): bump Go to 1.23 (#617)
-* maint(deps): bump golangci/golangci-lint-action from 6.3.2 to 6.4.1 (#616)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.13.0 to 1.14.1 (#621)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.36.0 to 2.36.1 (#621)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.13.0 to 1.14.1 (#621)
-* maint(deps): bump golangci/golangci-lint-action from 6.4.1 to 6.5.0 (#619)
+## Housekeeping
+
+- fix(ci): extend 'go test' timeout to 20 min (#599)
+- maint(deps): bump golangci/golangci-lint-action from 6.1.1 to 6.2.0 (#600)
+- build(deps): bump github.com/hashicorp/yamux from 0.1.1 to 0.1.2 (#606)
+- maint(deps): bump golangci/golangci-lint-action from 6.2.0 to 6.3.0 (#608)
+- maint(deps): bump golangci/golangci-lint-action from 6.3.0 to 6.3.1 (#610)
+- maint(deps): bump goreleaser/goreleaser-action from 6.1.0 to 6.2.1 (#613)
+- maint(deps): bump golangci/golangci-lint-action from 6.3.1 to 6.3.2 (#612)
+- maint(deps): bump golang.org/x/net from 0.34.0 to 0.35.0 (#611)
+- maint(deps): bump github.com/hashicorp/jsonapi from 1.3.2 to 1.4.2 (#609)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.25.0 to 0.26.0 (#609)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.17.0 to 0.18.0 (#609)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.35.0 to 2.36.0 (#609)
+- chore(ci): adjust linter config. after golangci-lint update (#615)
+- chore(build): bump Go to 1.23 (#617)
+- maint(deps): bump golangci/golangci-lint-action from 6.3.2 to 6.4.1 (#616)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.13.0 to 1.14.1 (#621)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.36.0 to 2.36.1 (#621)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.13.0 to 1.14.1 (#621)
+- maint(deps): bump golangci/golangci-lint-action from 6.4.1 to 6.5.0 (#619)
 
 # 0.29.0 (Jan 10, 2025)
 
-NOTES: this release contains support for managing Customizable Webhook Recipients.
-To learn more about the feature check out the [provider documentation](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs/resources/webhook_recipient)
-or the [Honeycomb documentation](https://docs.honeycomb.io/integrations/webhooks/#customize-your-webhook).
+## Notes
 
-ENHANCEMENTS:
+- This release contains support for managing Customizable Webhook Recipients.
+  To learn more about the feature check out the [provider documentation](https://registry.terraform.io/providers/honeycombio/honeycombio/latest/docs/resources/webhook_recipient)
+  or the [Honeycomb documentation](https://docs.honeycomb.io/integrations/webhooks/#customize-your-webhook).
 
-* feat(r/webhook_recipient): support for templates, custom headers, and template variables (#580, #582, #583, #586)
-* feat(r/board): bump up max number of SLOs on a board to 24 (#585)
-* feat(r/trigger, r/burn_alert): notification variable support (#594)
+## Enhancements
 
-HOUSEKEEPING:
+- feat(r/webhook_recipient): support for templates, custom headers, and template variables (#580, #582, #583, #586)
+- feat(r/board): bump up max number of SLOs on a board to 24 (#585)
+- feat(r/trigger, r/burn_alert): notification variable support (#594)
 
-* chore(ci): tidy up lint config (#577)
-* maint(deps): bump slackapi/slack-github-action from 1.27.0 to 2.0.0 (#570)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.10.0 to 1.11.0 (#579)
-* maint(deps): bump github.com/stretchr/testify from 1.9.0 to 1.10.0 (#584)
-* chore(ci): increase integration test timeout to 20min (#587)
-* chore(ci): remove codecov (#588)
-* maint(deps): bump golang.org/x/crypto from 0.29.0 to 0.31.0 (#589)
-* maint(deps): bump golang.org/x/net from 0.28.0 to 0.32.0 (#591)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.15.0 to 0.16.0 (#590)
-* maint(deps): bump golang.org/x/net from 0.32.0 to 0.33.0 (#592)
-* maint(deps): bump golang.org/x/net from 0.33.0 to 0.34.0 (#596)
-* maint(deps): bump github.com/hashicorp/jsonapi from 1.3.2-0.20240802183744-2490a9451c3d to 1.3.2 (#597)
+## Housekeeping
+
+- chore(ci): tidy up lint config (#577)
+- maint(deps): bump slackapi/slack-github-action from 1.27.0 to 2.0.0 (#570)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.10.0 to 1.11.0 (#579)
+- maint(deps): bump github.com/stretchr/testify from 1.9.0 to 1.10.0 (#584)
+- chore(ci): increase integration test timeout to 20min (#587)
+- chore(ci): remove codecov (#588)
+- maint(deps): bump golang.org/x/crypto from 0.29.0 to 0.31.0 (#589)
+- maint(deps): bump golang.org/x/net from 0.28.0 to 0.32.0 (#591)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.15.0 to 0.16.0 (#590)
+- maint(deps): bump golang.org/x/net from 0.32.0 to 0.33.0 (#592)
+- maint(deps): bump golang.org/x/net from 0.33.0 to 0.34.0 (#596)
+- maint(deps): bump github.com/hashicorp/jsonapi from 1.3.2-0.20240802183744-2490a9451c3d to 1.3.2 (#597)
 
 # 0.28.2 (Dec 20, 2024)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(r/trigger): handle state error with equivalent query_json (#593)
+- fix(r/trigger): handle state error with equivalent query_json (#593)
 
 # 0.28.1 (Nov 15, 2024)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(r/burn_alert): handle existing remote description with default description value (#575)
+- fix(r/burn_alert): handle existing remote description with default description value (#575)
 
 # 0.28.0 (Nov 15, 2024)
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(r/burn_alert): add description support (#563)
+- feat(r/burn_alert): add description support (#563)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(docs): incorrect formatting trigger example (#566)
-* fix(client): retry on server errors (#571)
+- fix(docs): incorrect formatting trigger example (#566)
+- fix(client): retry on server errors (#571)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.13.0 to 0.14.0 (#562)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.24.0 to 0.25.0 (#564)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.16.0 to 0.17.0 (#564)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.12.0 to 1.13.0 (#565)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.34.0 to 2.35.0 (#565)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.14.0 to 0.15.0 (#565)
-* maint(deps): bump goreleaser/goreleaser-action from 6.0.0 to 6.1.0 (#567)
-* chore: migrate r/webhook_recipient to Framework (#568)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.13.0 to 0.14.0 (#562)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.24.0 to 0.25.0 (#564)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.16.0 to 0.17.0 (#564)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.12.0 to 1.13.0 (#565)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.34.0 to 2.35.0 (#565)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework-validators from 0.14.0 to 0.15.0 (#565)
+- maint(deps): bump goreleaser/goreleaser-action from 6.0.0 to 6.1.0 (#567)
+- chore: migrate r/webhook_recipient to Framework (#568)
 
 # 0.27.2 (Oct 17, 2024)
 
-ENHANCEMENTS:
+## Enhancements
 
-* fix(r/derived_column): tidy up test (#547)
-* feat(d/query_specification): local-only datasource (#558)
-* chore: r/dataset_definition - add log_severity and log_message (#559)
+- fix(r/derived_column): tidy up test (#547)
+- feat(d/query_specification): local-only datasource (#558)
+- chore: r/dataset_definition \* add log_severity and log_message (#559)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(d/column): fix failing d/column test and tidy up (#548)
-* fix: generate random URLs for webhook-like recipients (#549)
-* fix: column-related test flakes (#554)
-* fix: slack channel regex for user ids (#557)
+- fix(d/column): fix failing d/column test and tidy up (#548)
+- fix: generate random URLs for webhook-like recipients (#549)
+- fix: column-related test flakes (#554)
+- fix: slack channel regex for user ids (#557)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* chore: bump Go to 1.22 (#542)
-* maint(deps): bump the hashicorp group with 2 updates (#545)
-* chore(go): fix go version (#546)
-* maint(deps): bump golangci/golangci-lint-action from 6.1.0 to 6.1.1 (#551)
-* maint(deps): bump codecov/codecov-action from 4.5.0 to 4.6.0 (#550)
+- chore: bump Go to 1.22 (#542)
+- maint(deps): bump the hashicorp group with 2 updates (#545)
+- chore(go): fix go version (#546)
+- maint(deps): bump golangci/golangci-lint-action from 6.1.0 to 6.1.1 (#551)
+- maint(deps): bump codecov/codecov-action from 4.5.0 to 4.6.0 (#550)
 
 # 0.27.1 (Sep 03, 2024)
 
-ENHANCEMENTS:
+## Enhancements
 
-* chore(docs): standardize use of notes (#538)
-* feat: slack channel regex accepts channel id (#540)
+- chore(docs): standardize use of notes (#538)
+- feat: slack channel regex accepts channel id (#540)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(r/trigger): handle dynamic evaluation schedule (#539)
+- fix(r/trigger): handle dynamic evaluation schedule (#539)
 
 # 0.27.0 (Aug 23, 2024)
 
-NOTES:
+## Notes
 
 **This release contains breaking and behavioral changes**
 
-* `r/dataset`: will now attempt to *delete* datasets on destroy.
+- `r/dataset`: will now attempt to _delete_ datasets on destroy.
   However, they come with delete protection (`delete_protection`) enabled by default and it must be disabled for the destroy to succeed.
   This behavior matches `r/environment` as introduced in v0.25.0
-* `r/dataset`: will now error on create if a Dataset with that name already exists in the Environment.
+- `r/dataset`: will now error on create if a Dataset with that name already exists in the Environment.
   Previously, the dataset would be silently imported into state, but given deletion is now possible on destroy this behavior has to changed to be more standard.
   The end-user can choose to either adjust the name or import the existing Dataset.
-* client: if the Datasets API returns an HTTP '200 OK' -- as opposed to '201 Created' -- on create the `Datasets.Create` method will now return `ErrDatasetExists`.
+- client: if the Datasets API returns an HTTP '200 OK' -_ as opposed to '201 Created' -_ on create the `Datasets.Create` method will now return `ErrDatasetExists`.
 
-ENHANCEMENTS:
+## Enhancements
 
-* *New Data Source*: `honeycombio_dataset` (#535)
-* feat: ends/does-not-end-with filters (#530)
-* feat: add P20 and P80 calculations (#534)
-* feat: full lifecycle support for datasets (#535)
+- _New Data Source_: `honeycombio_dataset` (#535)
+- feat: ends/does-not-end-with filters (#530)
+- feat: add P20 and P80 calculations (#534)
+- feat: full lifecycle support for datasets (#535)
 
-BUGFIXES:
+## Bugfixes
 
-* chore(r/query): improve doc for derived_column (#531)
+- chore(r/query): improve doc for derived_column (#531)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* chore: address new linter errors (#532)
+- chore: address new linter errors (#532)
 
 # 0.26.0 (Aug 12, 2024)
 
-NOTES:
+## Notes
 
-This release deprecates `r/msteams_recipient` in favor of the new `r/msteams_workflow_recipient` in line with Microsoft's deprecation of O365 Connectors.
-New instances of `r/msteams_recipient` can no longer be created and we recommend you migrate your integration to the Workflow-based solution as soon as possible.
+- This release deprecates `r/msteams_recipient` in favor of the new `r/msteams_workflow_recipient` in line with Microsoft's deprecation of O365 Connectors.
+  New instances of `r/msteams_recipient` can no longer be created and we recommend you migrate your integration to the Workflow-based solution as soon as possible.
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(client): V2 API client ratelimit improvements (#519)
-* chore(r/query): add doc note about using latest derived column definition (#521)
-* r/msteams_workflow_recipient: new resource for managing MS Teams Workflow integrations (#524)
-* chore(client): improve V2 API error reporting (#526)
+- feat(client): V2 API client ratelimit improvements (#519)
+- chore(r/query): add doc note about using latest derived column definition (#521)
+- r/msteams_workflow_recipient: new resource for managing MS Teams Workflow integrations (#524)
+- chore(client): improve V2 API error reporting (#526)
 
-BUGFIXES:
+## Bugfixes
 
-* fix: temporarily disable broken r/query test (#510)
-* fix: allow auto ('0') granularity (#514)
-* fix(limits): separately test min-max vs header+jitter cases (#520)
-* fix: environments data source test flake (#525)
+- fix: temporarily disable broken r/query test (#510)
+- fix: allow auto ('0') granularity (#514)
+- fix(limits): separately test min-max vs header+jitter cases (#520)
+- fix: environments data source test flake (#525)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* chore(ci): limit integration test concurrency (#513)
-* maint(deps): bump golangci/golangci-lint-action from 6.0.1 to 6.1.0 (#515)
-* chore(ci): add recipients sweeper (#516)
-* chore(ci): display test summary output (#517)
-* chore(ci): add environment sweeper (#522)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.10.0 to 1.11.0 (#523)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.9.0 to 1.10.0 (#527)
+- chore(ci): limit integration test concurrency (#513)
+- maint(deps): bump golangci/golangci-lint-action from 6.0.1 to 6.1.0 (#515)
+- chore(ci): add recipients sweeper (#516)
+- chore(ci): display test summary output (#517)
+- chore(ci): add environment sweeper (#522)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.10.0 to 1.11.0 (#523)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.9.0 to 1.10.0 (#527)
 
 # 0.25.0 (Jul 25, 2024)
 
-NOTES:
+## Notes
 
-This release includes new resources for managing your team's Environments and
-Ingest API Keys. These resources operate against new team-level APIs, which
-require a new team-level Management API Key for authentication. See the [new
-setup instructions for "v2 APIs"](https://github.com/honeycombio/terraform-provider-honeycombio/blob/main/README.md#v2-apis) in the README.
+- This release includes new resources for managing your team's Environments and
+  Ingest API Keys. These resources operate against new team-level APIs, which
+  require a new team-level Management API Key for authentication. See the [new
+  setup instructions for "v2 APIs"](https://github.com/honeycombio/terraform-provider-honeycombio/blob/main/README.md#v2-apis) in the README.
 
-[Best Practices for API Keys](https://docs.honeycomb.io/get-started/best-practices/api-keys/) has more information on the types of API keys and when to use them.
+- [Best Practices for API Keys](https://docs.honeycomb.io/get-started/best-practices/api-keys/) has more information on the types of API keys and when to use them.
 
-ENHANCEMENTS:
+## Enhancements
 
-* r/api_key: new resource for managing Ingest API Keys (#496)
-* r/environment: new resource for managing Environments (#501)
+- r/api_key: new resource for managing Ingest API Keys (#496)
+- r/environment: new resource for managing Environments (#501)
 
-BUGFIXES:
-* fix: Reflect OpenAPI validation of SLOs (#506)
-* fix: client - guard against nil resp during retry check (#491)
-* fix: incorrect conversion between integer types (#500)
-* fix: read of null definition causes panic  (#505)
+## Bugfixes
 
-HOUSEKEEPING:
+- fix: Reflect OpenAPI validation of SLOs (#506)
+- fix: client \* guard against nil resp during retry check (#491)
+- fix: incorrect conversion between integer types (#500)
+- fix: read of null definition causes panic (#505)
 
-* chore: validate examples (#492)
-* chore: d/query_specification - migrate to Plugin Framework (#493)
-* maint(deps): bump the hashicorp group with 3 updates (#495)
-* chore: add missing toolchain directive (#498)
-* chore: cleanup static environment ID in favour of new functionality (#502)
-* chore: refresh README and CONTRIBUTING docs (#503)
+## Housekeeping
+
+- chore: validate examples (#492)
+- chore: d/query_specification \* migrate to Plugin Framework (#493)
+- maint(deps): bump the hashicorp group with 3 updates (#495)
+- chore: add missing toolchain directive (#498)
+- chore: cleanup static environment ID in favour of new functionality (#502)
+- chore: refresh README and CONTRIBUTING docs (#503)
 
 # 0.24.0 (Jun 14, 2024)
 
-NOTES:
+## Notes
 
-* This release includes support for placing SLOs on Boards: a feature under active development.
-SLO placement on Boards does not yet support a custom order and instead are placed by creation date.
-Ordered placement is a roadmap item for the feature and when that lands there will be a subsequent provider update.
-* This release re-introduces the `query_json` attribute on `r/trigger` enabling validation that a query meets the restrictions for use by a Trigger.
-This was a poor development experience and the hope is that the slight deviation from other resource construction provides a better experience -- especially for those using the provider in CI systems like HCP Terraform, Atlantis, et cetera.
-Triggers require one of `query_json` or `query_id`, but the recommendation going forward will be to use `query_json`.
+- This release includes support for placing SLOs on Boards: a feature under active development.
+  SLO placement on Boards does not yet support a custom order and instead are placed by creation date.
+  Ordered placement is a roadmap item for the feature and when that lands there will be a subsequent provider update.
+- This release re-introduces the `query_json` attribute on `r/trigger` enabling validation that a query meets the restrictions for use by a Trigger.
+  This was a poor development experience and the hope is that the slight deviation from other resource construction provides a better experience -- especially for those using the provider in CI systems like HCP Terraform, Atlantis, et cetera.
+  Triggers require one of `query_json` or `query_id`, but the recommendation going forward will be to use `query_json`.
 
-ENHANCEMENTS:
+## Enhancements
 
-* r/query: clean up generated queryspec output (#469)
-* r/board: add SLO support (#485)
-* r/trigger: re-introduce query_json for deeper validation (#487)
+- r/query: clean up generated queryspec output (#469)
+- r/board: add SLO support (#485)
+- r/trigger: re-introduce query_json for deeper validation (#487)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(client): unflake Marker List test (#459)
-* fix: update columns conditional creation example with an alternative (#468)
+- fix(client): unflake Marker List test (#459)
+- fix: update columns conditional creation example with an alternative (#468)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.6.1 to 1.7.0 (#456)
-* maint(deps): bump codecov/codecov-action from 4.1.0 to 4.1.1 (#457)
-* maint(deps): bump codecov/codecov-action from 4.1.1 to 4.2.0 (#458)
-* maint(deps): bump codecov/codecov-action from 4.2.0 to 4.3.0 (#460)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.7.0 to 1.8.0 (#462)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.22.1 to 0.22.2 (#462)
-* maint(deps): bump golang.org/x/net from 0.21.0 to 0.23.0 (#463)
-* maint(deps): bump golangci/golangci-lint-action from 4.0.0 to 5.1.0 (#466)
-* maint(ci): setup-go - re-enable cache (#467)
-* maint(deps): bump codecov/codecov-action from 4.3.0 to 4.3.1 (#470)
-* maint(deps): bump golangci/golangci-lint-action from 5.1.0 to 5.3.0 (#471)
-* maint(deps): bump golangci/golangci-lint-action from 5.3.0 to 6.0.0 (#472)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.22.2 to 0.23.0 (#473)
-* maint(deps): bump golangci/golangci-lint-action from 6.0.0 to 6.0.1 (#474)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.15.0 to 0.16.0 (#475)
-* maint(deps): bump github.com/hashicorp/go-retryablehttp from 0.7.5 to 0.7.6 (#476)
-* maint(deps): bump goreleaser/goreleaser-action from 5.0.0 to 5.1.0 (#477)
-* maint(deps): bump codecov/codecov-action from 4.3.1 to 4.4.0 (#478)
-* maint(deps): bump codecov/codecov-action from 4.4.0 to 4.4.1 (#480)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.33.0 to 2.34.0 (#479)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.7.0 to 1.8.0 (#479)
-* maint(deps): bump github.com/hashicorp/go-retryablehttp from 0.7.6 to 0.7.7 (#481)
-* maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.8.0 to 1.9.0 (#484)
-* maint(deps): bump goreleaser/goreleaser-action from 5.1.0 to 6.0.0 (#483)
-* maint(deps): bump codecov/codecov-action from 4.4.1 to 4.5.0 (#486)
-* maint(ci): add eu integration test flow (#461)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.6.1 to 1.7.0 (#456)
+- maint(deps): bump codecov/codecov-action from 4.1.0 to 4.1.1 (#457)
+- maint(deps): bump codecov/codecov-action from 4.1.1 to 4.2.0 (#458)
+- maint(deps): bump codecov/codecov-action from 4.2.0 to 4.3.0 (#460)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.7.0 to 1.8.0 (#462)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.22.1 to 0.22.2 (#462)
+- maint(deps): bump golang.org/x/net from 0.21.0 to 0.23.0 (#463)
+- maint(deps): bump golangci/golangci-lint-action from 4.0.0 to 5.1.0 (#466)
+- maint(ci): setup-go \* re-enable cache (#467)
+- maint(deps): bump codecov/codecov-action from 4.3.0 to 4.3.1 (#470)
+- maint(deps): bump golangci/golangci-lint-action from 5.1.0 to 5.3.0 (#471)
+- maint(deps): bump golangci/golangci-lint-action from 5.3.0 to 6.0.0 (#472)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-go from 0.22.2 to 0.23.0 (#473)
+- maint(deps): bump golangci/golangci-lint-action from 6.0.0 to 6.0.1 (#474)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-mux from 0.15.0 to 0.16.0 (#475)
+- maint(deps): bump github.com/hashicorp/go-retryablehttp from 0.7.5 to 0.7.6 (#476)
+- maint(deps): bump goreleaser/goreleaser-action from 5.0.0 to 5.1.0 (#477)
+- maint(deps): bump codecov/codecov-action from 4.3.1 to 4.4.0 (#478)
+- maint(deps): bump codecov/codecov-action from 4.4.0 to 4.4.1 (#480)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.33.0 to 2.34.0 (#479)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-testing from 1.7.0 to 1.8.0 (#479)
+- maint(deps): bump github.com/hashicorp/go-retryablehttp from 0.7.6 to 0.7.7 (#481)
+- maint(deps): bump github.com/hashicorp/terraform-plugin-framework from 1.8.0 to 1.9.0 (#484)
+- maint(deps): bump goreleaser/goreleaser-action from 5.1.0 to 6.0.0 (#483)
+- maint(deps): bump codecov/codecov-action from 4.4.1 to 4.5.0 (#486)
+- maint(ci): add eu integration test flow (#461)
 
 # 0.23.0 (Mar 20, 2024)
 
-ENHANCEMENTS:
+## Enhancements
 
-* r/query - migrate from SDKv2 to Framework and add import support (#454)
+- r/query \* migrate from SDKv2 to Framework and add import support (#454)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* maint(ci): add testifylint (#449)
-* maint(deps): Bump github.com/stretchr/testify from 1.8.4 to 1.9.0 (#450)
-* maint(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.6.0 to 1.6.1 (#451)
-* maint(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.6.0 to 1.7.0 (#451)
-* maint(ci): update dependabot commit message prefix (#452)
-* maint(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.22.0 to 0.22.1 (#453)
+- maint(ci): add testifylint (#449)
+- maint(deps): Bump github.com/stretchr/testify from 1.8.4 to 1.9.0 (#450)
+- maint(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.6.0 to 1.6.1 (#451)
+- maint(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.6.0 to 1.7.0 (#451)
+- maint(ci): update dependabot commit message prefix (#452)
+- maint(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.22.0 to 0.22.1 (#453)
 
 # 0.22.0 (Feb 29, 2024)
 
-BUGFIXES:
+## Bugfixes
 
-* d/query_specification: always treat 'in','not-in' filter values as an array (#439)
-* r/burn_alert, r/trigger: fix dynamic recipient "Value Conversion Error" (#444)
+- d/query_specification: always treat 'in','not-in' filter values as an array (#439)
+- r/burn_alert, r/trigger: fix dynamic recipient "Value Conversion Error" (#444)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump codecov/codecov-action from 4.0.1 to 4.0.2 (#442)
-* build(deps): Bump codecov/codecov-action from 4.0.2 to 4.1.0 (#443)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.5.0 to 1.6.0 (#445)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.21.0 to 0.22.0 (#445)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.14.0 to 0.15.0 (#445)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.32.0 to 2.33.0 (#445)
-* build: bump Go to 1.21 (#447)
+- build(deps): Bump codecov/codecov-action from 4.0.1 to 4.0.2 (#442)
+- build(deps): Bump codecov/codecov-action from 4.0.2 to 4.1.0 (#443)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.5.0 to 1.6.0 (#445)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.21.0 to 0.22.0 (#445)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.14.0 to 0.15.0 (#445)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.32.0 to 2.33.0 (#445)
+- build: bump Go to 1.21 (#447)
 
 # 0.21.2 (Feb 20, 2024)
 
-BUGFIXES:
+## Bugfixes
 
-* handle column and derived column imports with slashes in the name (#437)
+- handle column and derived column imports with slashes in the name (#437)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(ci): fix codecov after v4 upgrade (#436)
+- build(ci): fix codecov after v4 upgrade (#436)
 
 # 0.21.1 (Feb 16, 2024)
 
-BUGFIXES:
+## Bugfixes
 
-* r/burn_alert, r/trigger: better handle the case where a recipient is modified outside of Terraform (#433)
+- r/burn_alert, r/trigger: better handle the case where a recipient is modified outside of Terraform (#433)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.20.0 to 0.21.0 (#426)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.13.0 to 0.14.0 (#427)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.31.0 to 2.32.0 (#427)
-* build(ci): Bump codecov/codecov-action from 3.1.5 to 3.1.6 (#428)
-* build(ci): Bump codecov/codecov-action from 3.1.6 to 4.0.0 (#429)
-* build(ci): Bump codecov/codecov-action from 4.0.0 to 4.0.1 (#430)
-* build(ci): Bump golangci/golangci-lint-action from 3.7.0 to 3.7.1 (#431)
-* build(ci): Bump golangci/golangci-lint-action from 3.7.1 to 4.0.0 (#432)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.20.0 to 0.21.0 (#426)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.13.0 to 0.14.0 (#427)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.31.0 to 2.32.0 (#427)
+- build(ci): Bump codecov/codecov-action from 3.1.5 to 3.1.6 (#428)
+- build(ci): Bump codecov/codecov-action from 3.1.6 to 4.0.0 (#429)
+- build(ci): Bump codecov/codecov-action from 4.0.0 to 4.0.1 (#430)
+- build(ci): Bump golangci/golangci-lint-action from 3.7.0 to 3.7.1 (#431)
+- build(ci): Bump golangci/golangci-lint-action from 3.7.1 to 4.0.0 (#432)
 
 # 0.21.0 (Jan 26, 2024)
 
-NOTES:
+## Notes
 
-* If you are a downstream consumer of the `client` package in another Go project, this release contains a breaking change:
-`client.NewClient` now takes no arguments and creates a client with the default configuration
-values, while `client.NewClientWithConfig` has been added to allow passing a custom configuration.
-  * This does not effect Terraform Configurations: only projects importing the `client` Package.
-* If you were making use of the previously undocumented `HONEYCOMB_API_HOST` environment variable to override the Honeycomb API URL,
-it has been renamed to the more standard `HONEYCOMB_API_ENDPOINT`.
+- If you are a downstream consumer of the `client` package in another Go project, this release contains a breaking change:
+  `client.NewClient` now takes no arguments and creates a client with the default configuration
+  values, while `client.NewClientWithConfig` has been added to allow passing a custom configuration.
+  - This does not effect Terraform Configurations: only projects importing the `client` Package.
+- If you were making use of the previously undocumented `HONEYCOMB_API_HOST` environment variable to override the Honeycomb API URL,
+  it has been renamed to the more standard `HONEYCOMB_API_ENDPOINT`.
 
-ENHANCEMENTS:
+## Enhancements
 
-* feat(client): standardize and document API endpoint envvar (#414)
-* refactor(client) - testsuite and constructor improvements (#416)
+- feat(client): standardize and document API endpoint envvar (#414)
+- refactor(client) \* testsuite and constructor improvements (#416)
 
-BUGFIXES:
+## Bugfixes
 
-* fix(client): fix Marker Settings flakey test (#420)
-* fix(client): fix queryspec equivalence for empty breakdowns (#421)
-* fix(docs): add missing mention to HONEYCOMB_API_ENDPOINT env var for endpoint configuration (#422)
+- fix(client): fix Marker Settings flakey test (#420)
+- fix(client): fix queryspec equivalence for empty breakdowns (#421)
+- fix(docs): add missing mention to HONEYCOMB_API_ENDPOINT env var for endpoint configuration (#422)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.19.1 to 0.20.0 (#413)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.12.0 to 0.13.0 (#413)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.30.0 to 2.31.0 (#413)
-* build(deps): Bump golang.org/x/crypto from 0.16.0 to 0.17.0 (#415)
-* chore(ci): switch to golangci-lint and fix lints (#417)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.4.2 to 1.5.0 (#419)
-* build(deps): Bump github.com/cloudflare/circl from 1.3.3 to 1.3.7 (#418)
-* build(deps): Bump codecov/codecov-action from 3.1.4 to 3.1.5 (#423)
-* chore(license): update copyright time range (#424)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.19.1 to 0.20.0 (#413)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.12.0 to 0.13.0 (#413)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.30.0 to 2.31.0 (#413)
+- build(deps): Bump golang.org/x/crypto from 0.16.0 to 0.17.0 (#415)
+- chore(ci): switch to golangci-lint and fix lints (#417)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.4.2 to 1.5.0 (#419)
+- build(deps): Bump github.com/cloudflare/circl from 1.3.3 to 1.3.7 (#418)
+- build(deps): Bump codecov/codecov-action from 3.1.4 to 3.1.5 (#423)
+- chore(license): update copyright time range (#424)
 
 # 0.20.3 (Dec 14, 2023)
 
-BUGFIXES:
+## Bugfixes
 
-* fix: legacy api key typo (#412)
-* Fix description of end_time in trigger docs (#408)
-* docs: cleanup value_string reference (#409)
+- fix: legacy api key typo (#412)
+- Fix description of end_time in trigger docs (#408)
+- docs: cleanup value_string reference (#409)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bumps github.com/hashicorp/terraform-plugin-testing from 1.5.1 to 1.6.0 (#406)
-* build(deps): Bump actions/setup-go from 4 to 5 (#407)
+- build(deps): Bumps github.com/hashicorp/terraform-plugin-testing from 1.5.1 to 1.6.0 (#406)
+- build(deps): Bump actions/setup-go from 4 to 5 (#407)
 
 # 0.20.2 (Nov 27, 2023)
 
-BUGFIXES:
+## Bugfixes
 
-* client - queryspec Granularity equivalency (#404)
-* r/burn_alert: validation needs to allow 'unknown' values for interpolation (#403)
+- client \* queryspec Granularity equivalency (#404)
+- r/burn_alert: validation needs to allow 'unknown' values for interpolation (#403)
 
 # 0.20.1 (Nov 20, 2023)
 
-BUGFIXES:
+## Bugfixes
 
-* fix: missing resources shouldn't error but be recreated (#398)
-* r/board: "graph_settings" values should revert to false when removed (#400)
+- fix: missing resources shouldn't error but be recreated (#398)
+- r/board: "graph_settings" values should revert to false when removed (#400)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* chore: first pass at moving away from pre-created columns (#401)
+- chore: first pass at moving away from pre-created columns (#401)
 
 # 0.20.0 (Nov 16, 2023)
 
-ENHANCEMENTS:
+## Enhancements
 
-* r/burn_alert: Add support for budget rate burn alerts (#391)
+- r/burn_alert: Add support for budget rate burn alerts (#391)
 
-BUGFIXES:
+## Bugfixes
 
-* client: Fix bug where API errors weren't including the field or getting separated (#392)
+- client: Fix bug where API errors weren't including the field or getting separated (#392)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump github.com/hashicorp/go-retryablehttp from v0.7.4 to v0.7.5 (#389)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from v2.29.0 to v2.30.0 (#390)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.19.0 to 0.19.1 (#394)
-* client: better support for nondefault api hosts (#393)
+- build(deps): Bump github.com/hashicorp/go-retryablehttp from v0.7.4 to v0.7.5 (#389)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from v2.29.0 to v2.30.0 (#390)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.19.0 to 0.19.1 (#394)
+- client: better support for nondefault api hosts (#393)
 
 # 0.19.0 (Nov 8, 2023)
 
-ENHANCEMENTS:
+## Enhancements
 
-* add support for 'msteams' recipients (#386)
+- add support for 'msteams' recipients (#386)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(ci): bump hashicorp/setup-terraform from 2 to 3 (#385)
-* maint: prune dead code and tidy up (#387)
+- build(ci): bump hashicorp/setup-terraform from 2 to 3 (#385)
+- maint: prune dead code and tidy up (#387)
 
 # 0.18.2 (Oct 30, 2023)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump google.golang.org/grpc from 1.57.0 to 1.57.1 (#382)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from v1.4.1 to v1.4.2 (#381)
+- build(deps): Bump google.golang.org/grpc from 1.57.0 to 1.57.1 (#382)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework from v1.4.1 to v1.4.2 (#381)
 
 # 0.18.1 (Oct 11, 2023)
 
-BUGFIXES:
+## Bugfixes
 
-* client: ensure Summary is set on SDK v2 Diagnostics (#378)
+- client: ensure Summary is set on SDK v2 Diagnostics (#378)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump golang.org/x/net from 0.13.0 to 0.17.0 (#377)
+- build(deps): Bump golang.org/x/net from 0.13.0 to 0.17.0 (#377)
 
 # 0.18.0 (Oct 11, 2023)
 
-ENHANCEMENTS:
+## Enhancements
 
-* docs: add environment-wide '__all__' note where supported (#371)
-* client: improve error handling and reporting (#372)
-* docs: add clarity around trigger frequency (#373)
+- docs: add environment-wide '**all**' note where supported (#371)
+- client: improve error handling and reporting (#372)
+- docs: add clarity around trigger frequency (#373)
 
-BUGFIXES:
+## Bugfixes
 
-* docs: Fix minor typo in "query_specification" documentation (#369)
+- docs: Fix minor typo in "query_specification" documentation (#369)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.4.0 to 1.4.1. (#370)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.4.0 to 1.4.1. (#370)
 
 # 0.17.0 (Sep 19, 2023)
 
-ENHANCEMENTS:
+## Enhancements
 
-* resources/honeycombio_board: deprecate list-style Boards (#365)
+- resources/honeycombio_board: deprecate list-style Boards (#365)
 
-BUGFIXES:
+## Bugfixes
 
-* datasource/honeycombio_auth_metadata: doc fix (#361)
-* fix Marker client test flake (#363)
-* queryspec Orders equivalency (#366)
+- datasource/honeycombio_auth_metadata: doc fix (#361)
+- fix Marker client test flake (#363)
+- queryspec Orders equivalency (#366)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump goreleaser/goreleaser-action from 4.4.0 to 4.6.0 (#352)
-* build: bump Golang to 1.20 (#359)
-* build(deps): upgrade all libraries to protocol version 5.4 and 6.4 (#360)
-* build(deps): Bump crazy-max/ghaction-import-gpg from 5 to 6 (#362)
-* build(deps): Bump goreleaser/goreleaser-action from 4.6.0 to 5.0.0 (#364)
+- build(deps): Bump goreleaser/goreleaser-action from 4.4.0 to 4.6.0 (#352)
+- build: bump Golang to 1.20 (#359)
+- build(deps): upgrade all libraries to protocol version 5.4 and 6.4 (#360)
+- build(deps): Bump crazy-max/ghaction-import-gpg from 5 to 6 (#362)
+- build(deps): Bump goreleaser/goreleaser-action from 4.6.0 to 5.0.0 (#364)
 
 # 0.16.0 (Sep 6, 2023)
 
-NOTES: this release includes a complete rewrite of the `honeycombio_burn_alert` resource: migrating it from the Terraform Plugin SDKv2 to the new Plugin Framework.
+## Notes
+
+This release includes a complete rewrite of the `honeycombio_burn_alert` resource: migrating it from the Terraform Plugin SDKv2 to the new Plugin Framework.
 This was done to fix a number of long-standing bugs related to the `recipient` block similar to the work done in 0.15.0 for the `honeycombio_trigger` resource.
 
 As with the `honeycombio_trigger` resource migration, this work has resulted in some subtle, but non-breaking side effects:
 
-* after updating, the next "plan" will show all burn alert recipients being updated in-place
-  * at the core of most all of these bugs was that fact that all of `id`, `type`, and `target` for a recipient were being stored in state.
-  Now only `id` or the `type`+`target` pair will be stored in the state and the plan output should reflect this.
-* enforcement of only specifying one of `id` or `type`+`target` is now possible due to the new flexibility gained by migrating to the Plugin Framework.
-Due to the shape of the recipient blocks in the schema, this validation was not possible with the Plugin SDK.
-  * in configurations specifying both `id` and `type`+`target` in recipient blocks, the suggestion is to just use `id` going forward.
+- after updating, the next "plan" will show all burn alert recipients being updated in-place
+  - at the core of most all of these bugs was that fact that all of `id`, `type`, and `target` for a recipient were being stored in state.
+    Now only `id` or the `type`+`target` pair will be stored in the state and the plan output should reflect this.
+- enforcement of only specifying one of `id` or `type`+`target` is now possible due to the new flexibility gained by migrating to the Plugin Framework.
+  Due to the shape of the recipient blocks in the schema, this validation was not possible with the Plugin SDK.
+  - in configurations specifying both `id` and `type`+`target` in recipient blocks, the suggestion is to just use `id` going forward.
 
 FEATURES:
 
-* *New Datasource*: `honeycombio_slo` (#345)
-* *New Datasource*: `honeycombio_slos` (#345)
-* *New Datasource*: `honeycombio_auth_metadata` (#353)
+- _New Datasource_: `honeycombio_slo` (#345)
+- _New Datasource_: `honeycombio_slos` (#345)
+- _New Datasource_: `honeycombio_auth_metadata` (#353)
 
-ENHANCEMENTS:
+## Enhancements
 
-* resource/honeycombio_trigger: add threshold `exceeded_limit` support (#351)
+- resource/honeycombio_trigger: add threshold `exceeded_limit` support (#351)
 
-BUGFIXES:
+## Bugfixes
 
-* client - fix flakey recipient time comparison test (#342)
-* resources/honeycombio_burn_alert: recipient fixes (#346)
+- client \* fix flakey recipient time comparison test (#342)
+- resources/honeycombio_burn_alert: recipient fixes (#346)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(ci): Bump goreleaser/goreleaser-action from 4.3.0 to 4.4.0 (#341)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.4 to 1.3.5 (#344)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.27.0 to 2.28.0 (#347)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework-validators from 0.11.0 to 0.12.0 (#348)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.4.0 to 1.5.1 (#349)
-* build(ci): Bump actions/checkout from 3 to 4 (#350)
+- build(ci): Bump goreleaser/goreleaser-action from 4.3.0 to 4.4.0 (#341)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.4 to 1.3.5 (#344)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.27.0 to 2.28.0 (#347)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework-validators from 0.11.0 to 0.12.0 (#348)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.4.0 to 1.5.1 (#349)
+- build(ci): Bump actions/checkout from 3 to 4 (#350)
 
 # 0.15.2 (Aug 8, 2023)
 
-BUGFIXES:
+## Bugfixes
 
-* resources/honeycombio_trigger: fix floating point precision comparison bug (#337)
-* resources/honeycombio_trigger: resolve trigger recipient panics (#339)
+- resources/honeycombio_trigger: fix floating point precision comparison bug (#337)
+- resources/honeycombio_trigger: resolve trigger recipient panics (#339)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.2.0 to 1.3.0 (#318)
-* build(deps): Bump goreleaser/goreleaser-action from 4.2.0 to 4.3.0 (#319)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.2.0 to 1.3.0 (#320)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.0 to 1.3.1 (#321)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.15.0 to 0.16.0 (#323)
-* client: update column test to not rename column (#324)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.26.1 to 2.27.0 (#328)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.16.0 to 0.17.0 (#326)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.10.0 to 0.11.0 (#327)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.1 to 1.3.2 (#325)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.11.0 to 0.11.1 (#329)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.2 to 1.3.3 (#334)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.3.0 to 1.4.0 (#336)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-framework-validators from 0.10.0 to 0.11.0 (#338)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.2.0 to 1.3.0 (#318)
+- build(deps): Bump goreleaser/goreleaser-action from 4.2.0 to 4.3.0 (#319)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.2.0 to 1.3.0 (#320)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.0 to 1.3.1 (#321)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.15.0 to 0.16.0 (#323)
+- client: update column test to not rename column (#324)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.26.1 to 2.27.0 (#328)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-go from 0.16.0 to 0.17.0 (#326)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.10.0 to 0.11.0 (#327)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.1 to 1.3.2 (#325)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-mux from 0.11.0 to 0.11.1 (#329)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework from 1.3.2 to 1.3.3 (#334)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-testing from 1.3.0 to 1.4.0 (#336)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-framework-validators from 0.10.0 to 0.11.0 (#338)
 
 # 0.15.1 (Jun 2, 2023)
 
-BUGFIXES:
+## Bugfixes
 
-* build(goreleaser): fix regression and set version on released artifact (#316)
+- build(goreleaser): fix regression and set version on released artifact (#316)
 
 # 0.15.0 (Jun 2, 2023)
 
-NOTES: this release includes a complete rewrite of the `honeycombio_trigger` resource: migrating it from the Terraform Plugin SDKv2 to the new Plugin Framework.
+## Notes
+
+This release includes a complete rewrite of the `honeycombio_trigger` resource: migrating it from the Terraform Plugin SDKv2 to the new Plugin Framework.
 This was done to fix a number of long-standing bugs related to the `recipient` block.
 
 This migration has resulted in some subtle, but non-breaking side effects:
 
-* after updating, the next "plan" will show all trigger recipients being updated in-place
-  * at the core of most all of these bugs was that fact that all of `id`, `type`, and `target` for a recipient were being stored in state. Now only `id` or the `type`+`target` pair will be stored in the state and the plan output should reflect this.
-* enforcement of only specifying one of `id` or `type`+`target` is now possible due to the new flexibility gained by migrating to the Plugin Framework. Due to the shape of the recipient blocks in the schema, this validation was not possible with the Plugin SDK.
-  * in configurations specifying both `id` and `type`+`target` in recipient blocks, the suggestion is to just use `id` going forward.
-* the migration has introduced a new bug (#309) affecting only PagerDuty recipients where the default notification severity of `critical` was being relied upon without specifying a `notification_details` block.
-  * we felt that the benefit of these fixes outweighted the impact of this newly introduced bug
-  * the bug has a very straight forward work around (just specify the severity!), documented in the issue (#309)
+- after updating, the next "plan" will show all trigger recipients being updated in-place
+  - at the core of most all of these bugs was that fact that all of `id`, `type`, and `target` for a recipient were being stored in state. Now only `id` or the `type`+`target` pair will be stored in the state and the plan output should reflect this.
+- enforcement of only specifying one of `id` or `type`+`target` is now possible due to the new flexibility gained by migrating to the Plugin Framework. Due to the shape of the recipient blocks in the schema, this validation was not possible with the Plugin SDK.
+  - in configurations specifying both `id` and `type`+`target` in recipient blocks, the suggestion is to just use `id` going forward.
+- the migration has introduced a new bug (#309) affecting only PagerDuty recipients where the default notification severity of `critical` was being relied upon without specifying a `notification_details` block.
+  - we felt that the benefit of these fixes outweighted the impact of this newly introduced bug
+  - the bug has a very straight forward work around (just specify the severity!), documented in the issue (#309)
 
 FEATURES:
 
-* *New Datasource*: `honeycombio_column` (#297)
-* *New Datasource*: `honeycombio_columns` (#297)
+- _New Datasource_: `honeycombio_column` (#297)
+- _New Datasource_: `honeycombio_columns` (#297)
 
-ENHANCEMENTS:
+## Enhancements
 
-* resource/honeycombio_trigger: add `evaluation_schedule` support (#314)
+- resource/honeycombio_trigger: add `evaluation_schedule` support (#314)
 
-BUGFIXES:
+## Bugfixes
 
-* client - escape query string when listing burn alerts for an SLO (#301)
-* resource/honeycombio_trigger: recipient fixes (#306, #311)
+- client \* escape query string when listing burn alerts for an SLO (#301)
+- resource/honeycombio_trigger: recipient fixes (#306, #311)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(ci): appease the linter gods (#296)
-* build(deps): bump codecov/codecov-action from 3.1.2 to 3.1.4 (#298, #307)
-* build(deps): bump github.com/stretchr/testify from 1.8.2 to 1.8.4 (#308, #312)
-* build(deps): introduce TF Plugin Framework (#305)
+- build(ci): appease the linter gods (#296)
+- build(deps): bump codecov/codecov-action from 3.1.2 to 3.1.4 (#298, #307)
+- build(deps): bump github.com/stretchr/testify from 1.8.2 to 1.8.4 (#308, #312)
+- build(deps): introduce TF Plugin Framework (#305)
 
 # 0.14.0 (Apr 19, 2023)
 
-ENHANCEMENTS:
+## Enhancements
 
-* resource/honeycombio_board: add overlaid charts `graph_settings` support (#291)
-* resource/honeycombio_dataset: add resource import support (#294)
+- resource/honeycombio_board: add overlaid charts `graph_settings` support (#291)
+- resource/honeycombio_dataset: add resource import support (#294)
 
-BUGFIXES:
+## Bugfixes
 
-* client: fix marker client test flake (#293) 
+- client: fix marker client test flake (#293)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump actions/setup-go from 3 to 4 (#286)
-* build(deps): Bump codecov/codecov-action from 3.1.1 to 3.1.2 (#289)
-* build(deps): bump Go to 1.19 (#292)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.25.0 to 2.26.1 (#288)
+- build(deps): Bump actions/setup-go from 3 to 4 (#286)
+- build(deps): Bump codecov/codecov-action from 3.1.1 to 3.1.2 (#289)
+- build(deps): bump Go to 1.19 (#292)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.25.0 to 2.26.1 (#288)
 
 # 0.13.1 (Mar 3, 2023)
 
-BUGFIXES:
+## Bugfixes
 
-* docs: correct dataset in `honeycombio_query` example (#270)
-* docs: correct `time_range` in `honeycombio_trigger` example (#272)
-* docs: mention SLI's in `__all__` in SLO dataset docs (#269)
-* datasource/honeycombio_query_specfication: fix query equivalence for time_range, filter ops, and calculations (#282)
+- docs: correct dataset in `honeycombio_query` example (#270)
+- docs: correct `time_range` in `honeycombio_trigger` example (#272)
+- docs: mention SLI's in `__all__` in SLO dataset docs (#269)
+- datasource/honeycombio_query_specfication: fix query equivalence for time_range, filter ops, and calculations (#282)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): Bump goreleaser/goreleaser-action from 4.1.0 to 4.2.0 (#264, #265)
-* build(deps): Bump github.com/joho/godotenv from 1.4.0 to 1.5.1 (#274)
-* build(deps): Bump honeycombio/gha-create-asana-task from 1.0.0 to 1.0.1 (#276)
-* build(ci): Fix Asana Task creation (#277, #279)
-* build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.24.1 to 2.25.0 (#281)
-* build(deps): Bump golang.org/x/net from 0.6.0 to 0.7.0 (#283)
-* build(deps): Bump github.com/stretchr/testify from 1.8.1 to 1.8.2 (#284)
+- build(deps): Bump goreleaser/goreleaser-action from 4.1.0 to 4.2.0 (#264, #265)
+- build(deps): Bump github.com/joho/godotenv from 1.4.0 to 1.5.1 (#274)
+- build(deps): Bump honeycombio/gha-create-asana-task from 1.0.0 to 1.0.1 (#276)
+- build(ci): Fix Asana Task creation (#277, #279)
+- build(deps): Bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.24.1 to 2.25.0 (#281)
+- build(deps): Bump golang.org/x/net from 0.6.0 to 0.7.0 (#283)
+- build(deps): Bump github.com/stretchr/testify from 1.8.1 to 1.8.2 (#284)
 
 # 0.13.0 (Jan 18, 2023)
 
-NOTES: The `honeycombio_column` resource will now *delete* dataset columns on destroy.
-Deletes are a destructive and irreversible operation.
-Prior to this release, column destroys were a 'noop' leaving the column untouched in the dataset.
+## Notes
 
-ENHANCEMENTS:
+- The `honeycombio_column` resource will now _delete_ dataset columns on destroy.
+  Deletes are a destructive and irreversible operation.
+  Prior to this release, column destroys were a 'noop' leaving the column untouched in the dataset.
 
-* resource/honeycombio_column: delete column on destroy (#258)
+## Enhancements
 
-HOUSEKEEPING:
+- resource/honeycombio_column: delete column on destroy (#258)
 
-* build(ci) - add repo name and link to Asana task (#257)
+## Housekeeping
+
+- build(ci) \* add repo name and link to Asana task (#257)
 
 # 0.12.0 (Dec 16, 2022)
 
-NOTES:
+## Notes
 
-* `honeycombio_column` resource's argument `key_name` has been deprecated in favor of `name` and will be removed in a future release of the provider.
-* `honeycombio_column` no longer silently imports an existing column on create.
+- `honeycombio_column` resource's argument `key_name` has been deprecated in favor of `name` and will be removed in a future release of the provider.
+- `honeycombio_column` no longer silently imports an existing column on create.
 
-ENHANCEMENTS:
+## Enhancements
 
-* *New Resource*: `honeycombio_dataset_definitions` (#217)
-* resource/honeycombio_column: deprecate 'key_name' in favor of 'name' (#242)
-* resource/honeycombio_board: add new 'board_url' attribute (#254)
+- _New Resource_: `honeycombio_dataset_definitions` (#217)
+- resource/honeycombio_column: deprecate 'key_name' in favor of 'name' (#242)
+- resource/honeycombio_board: add new 'board_url' attribute (#254)
 
-BUGFIXES:
+## Bugfixes
 
-* datasource/honeycombio_recipient: fix bug where only supplying 'type' would error (#240)
-* resource/honeycombio_column: no longer silently imports an existing column on create (#242)
-* docs: fix 'recipients' misspellings (#246)
-* docs: remove deprecated 'dataset' from simple board example (#249)
-* resource/honeycombio_board: fix panic on board graph settings parsing (#250)
-* docs: fix 'README' markdown rendering (#253)
+- datasource/honeycombio_recipient: fix bug where only supplying 'type' would error (#240)
+- resource/honeycombio_column: no longer silently imports an existing column on create (#242)
+- docs: fix 'recipients' misspellings (#246)
+- docs: remove deprecated 'dataset' from simple board example (#249)
+- resource/honeycombio_board: fix panic on board graph settings parsing (#250)
+- docs: fix 'README' markdown rendering (#253)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.24.0 to 2.24.1 (#239)
-* add missing OSS Lifecycle badge (#243)
-* build(ci): send GitHub issues and PRs to Asana (#244, #251)
-* build(deps): Bump goreleaser/goreleaser-action from 3.2.0 to 4.1.0 (#252)
+- build(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.24.0 to 2.24.1 (#239)
+- add missing OSS Lifecycle badge (#243)
+- build(ci): send GitHub issues and PRs to Asana (#244, #251)
+- build(deps): Bump goreleaser/goreleaser-action from 3.2.0 to 4.1.0 (#252)
 
 # 0.11.2 (Nov 7, 2022)
 
-BUGFIXES:
+## Bugfixes
 
-* datasource/honeycombio_query_specfication: missing 'calculation' can cause infinite diff (#234)
-* resource/honeycombio_column: missing `type` can cause infinite diff (#235) 
-* datasource/honeycombio_query_specification: suppress 'equivalent' Query Specification diffs (#236)
+- datasource/honeycombio_query_specfication: missing 'calculation' can cause infinite diff (#234)
+- resource/honeycombio_column: missing `type` can cause infinite diff (#235)
+- datasource/honeycombio_query_specification: suppress 'equivalent' Query Specification diffs (#236)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.23.0 to 2.24.0 (#228)
-* build(deps): bump goreleaser/goreleaser-action from 3.1.0 to 3.2.0 (#231)
-* build(deps): bump github.com/stretchr/testify from 1.8.0 to 1.8.1 (#232)
+- build(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 from 2.23.0 to 2.24.0 (#228)
+- build(deps): bump goreleaser/goreleaser-action from 3.1.0 to 3.2.0 (#231)
+- build(deps): bump github.com/stretchr/testify from 1.8.0 to 1.8.1 (#232)
 
 # 0.11.1 (Oct 14, 2022)
 
-BUGFIXES:
+## Bugfixes
 
-* resource/honeycombio_dataset - properly update `description` and `expand_json_depth` attributes (#229)
+- resource/honeycombio_dataset \* properly update `description` and `expand_json_depth` attributes (#229)
 
 # 0.11.0 (Oct 5, 2022)
 
-ENHANCEMENTS:
+## Enhancements
 
-* resource/honeycombio_marker_setting: support for `marker_setting` (#224)
+- resource/honeycombio_marker_setting: support for `marker_setting` (#224)
 
-BUGFIXES:
+## Bugfixes
 
-* docs: add clarifying note about Trigger time_range vs frequency (#219)
+- docs: add clarifying note about Trigger time_range vs frequency (#219)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* build(deps): bump goreleaser/goreleaser-action from 3.0.0 to 3.1.0 (#218)
-* build(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 (#223)
-* build(deps): bump codecov/codecov-action from 3.1.0 to 3.1.1 (#225)
-* Update CODEOWNERS (#220)
+- build(deps): bump goreleaser/goreleaser-action from 3.0.0 to 3.1.0 (#218)
+- build(deps): bump github.com/hashicorp/terraform-plugin-sdk/v2 (#223)
+- build(deps): bump codecov/codecov-action from 3.1.0 to 3.1.1 (#225)
+- Update CODEOWNERS (#220)
 
 # 0.10.0 (Aug 16, 2022)
 
-ENHANCEMENTS:
+## Enhancements
 
-* resource/honeycombio_board: support for `column_layout` (single vs multi) (#210)
-* resource/honeycombio_board: board queries' graph settings (Omit Missing Values, Use UTC X-Axis, et cetera) are now configurable via the optional `graph_settings` block (#211)
+- resource/honeycombio_board: support for `column_layout` (single vs multi) (#210)
+- resource/honeycombio_board: board queries' graph settings (Omit Missing Values, Use UTC X-Axis, et cetera) are now configurable via the optional `graph_settings` block (#211)
 
-BUGFIXES:
+## Bugfixes
 
-* resource/honeycombio_pagerduty_recipient: `integration_key` is now marked "sensitive" (#213)
+- resource/honeycombio_pagerduty_recipient: `integration_key` is now marked "sensitive" (#213)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* Go upgraded from 1.17.13 to 1.18.5 (#215)
-* terraform-plugin-sdk upgraded from 2.20.0 to 2.21.0 (#214)
+- Go upgraded from 1.17.13 to 1.18.5 (#215)
+- terraform-plugin-sdk upgraded from 2.20.0 to 2.21.0 (#214)
 
 # 0.9.0 (Aug 10, 2022)
 
-NOTES:
+## Notes
 
-* `honeycombio_board` no longer requires specifying `dataset` for each `query` object. `dataset` has been marked deprecated.
+- `honeycombio_board` no longer requires specifying `dataset` for each `query` object. `dataset` has been marked deprecated.
 
 FEATURES:
 
-* the provider's configuration now respects the more standard `HONEYCOMB_API_KEY` in addition to `HONEYCOMBIO_APIKEY` (#187, #208)
+- the provider's configuration now respects the more standard `HONEYCOMB_API_KEY` in addition to `HONEYCOMBIO_APIKEY` (#187, #208)
 
-ENHANCEMENTS:
+## Enhancements
 
-* resource/honeycombio_dataset: support for `description` and `expand_json_depth` arguments (#185)
-* resource/honeycombio_dataset: addition of `created_at` and `last_written_at` attributes (#204)
-* resource/honeycombio_column: addition of `created_at`, `last_written_at`, and `updated_at` attributes (#198)
-* resource/honeycombio_board: environment-wide queries are now supported. `dataset` is no longer required as part of the board `query` definition and has been marked deprecated. (#203)
+- resource/honeycombio_dataset: support for `description` and `expand_json_depth` arguments (#185)
+- resource/honeycombio_dataset: addition of `created_at` and `last_written_at` attributes (#204)
+- resource/honeycombio_column: addition of `created_at`, `last_written_at`, and `updated_at` attributes (#198)
+- resource/honeycombio_board: environment-wide queries are now supported. `dataset` is no longer required as part of the board `query` definition and has been marked deprecated. (#203)
 
-BUGFIXES:
+## Bugfixes
 
-* docs: typos and corrections (#199, #206)
-* resource/honeycombio_trigger: fix recipients ordering and potential infinite diff for pagerduty recipients (#202)
+- docs: typos and corrections (#199, #206)
+- resource/honeycombio_trigger: fix recipients ordering and potential infinite diff for pagerduty recipients (#202)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* CI: workflow improvements and scheduled nightly 'smoketest' runs (#195)
-* terraform-plugin-sdk upgraded from 2.19.0 to 2.20.0 (#201)
-* Go upgraded from 1.17.11 to 1.17.13 (#207)
+- CI: workflow improvements and scheduled nightly 'smoketest' runs (#195)
+- terraform-plugin-sdk upgraded from 2.19.0 to 2.20.0 (#201)
+- Go upgraded from 1.17.11 to 1.17.13 (#207)
 
 # 0.8.0 (July 22, 2022)
 
-NOTES:
+## Notes
 
-* client: support for `zenoss` recipient type removed (#190)
-  * this was never available at the Terraform resource level
-* `honeycombio_recipient` will now fail if your query returns more than one recipient. Before it just picked the first one returned by the API.
+- client: support for `zenoss` recipient type removed (#190)
+  - this was never available at the Terraform resource level
+- `honeycombio_recipient` will now fail if your query returns more than one recipient. Before it just picked the first one returned by the API.
 
 FEATURES:
 
-* *New Resource*: `honeycombio_email_recipient` (#186)
-* *New Resource*: `honeycombio_pagerduty_recipient` (#188)
-* *New Resource*: `honeycombio_slack_recipient` (#188)
-* *New Resource*: `honeycombio_webhook_recipient` (#188)
-* *New Data Source*: `honeycombio_recipients` (#188)
+- _New Resource_: `honeycombio_email_recipient` (#186)
+- _New Resource_: `honeycombio_pagerduty_recipient` (#188)
+- _New Resource_: `honeycombio_slack_recipient` (#188)
+- _New Resource_: `honeycombio_webhook_recipient` (#188)
+- _New Data Source_: `honeycombio_recipients` (#188)
 
-ENHANCEMENTS:
+## Enhancements
 
-* client: error details from the API are now displayed in Terraform errors (#184)
-* datasource/honeycombio_recipient: - now uses the [Recipients API](https://docs.honeycomb.io/api/recipients/) and can filter recipient types with an optional `detail_filter` (#188)
-  * `dataset` is now ignored and marked as a deprecated argument
-  * `target` contines to work but is now deprecated
-  * `detail_filter` improves the experience of selecting the _correct_ PagerDuty recipient you are looking for.
-* resource/honeycombio_trigger and resource/honeycombio_burn_alert - notification severity can now be specified when a Trigger or a Burn Alert fires (#191)
+- client: error details from the API are now displayed in Terraform errors (#184)
+- datasource/honeycombio_recipient: \* now uses the [Recipients API](https://docs.honeycomb.io/api/recipients/) and can filter recipient types with an optional `detail_filter` (#188)
+  - `dataset` is now ignored and marked as a deprecated argument
+  - `target` contines to work but is now deprecated
+  - `detail_filter` improves the experience of selecting the _correct_ PagerDuty recipient you are looking for.
+- resource/honeycombio_trigger and resource/honeycombio_burn_alert \* notification severity can now be specified when a Trigger or a Burn Alert fires (#191)
 
-BUGFIXES:
+## Bugfixes
 
-* docs: syntax and correctness updates (#176, #180)
-* resource/honeycombio_trigger - correct Trigger query test schema (#177)
+- docs: syntax and correctness updates (#176, #180)
+- resource/honeycombio_trigger \* correct Trigger query test schema (#177)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* terraform-plugin-sdk upgraded from 2.16.0 to 2.19.0 (#175, #183, #189)
-* testify upgraded from 1.7.1 to 1.8.0 (#178, #181, #182)
-* CI: goreleaser-action bumped from 2.9.1 to 3.0.0 (#168)
+- terraform-plugin-sdk upgraded from 2.16.0 to 2.19.0 (#175, #183, #189)
+- testify upgraded from 1.7.1 to 1.8.0 (#178, #181, #182)
+- CI: goreleaser-action bumped from 2.9.1 to 3.0.0 (#168)
 
 # 0.7.0 (Jun 2, 2022)
 
-NOTES:
+## Notes
 
-* `honeycombio_trigger_recipient` data source has been deprecated in favour of the more generic `honeycombio_recipient`.
-The deprecated data source will be removed in a future release.
+- `honeycombio_trigger_recipient` data source has been deprecated in favour of the more generic `honeycombio_recipient`.
+  The deprecated data source will be removed in a future release.
 
 FEATURES:
 
-* *New Resource*: `honeycombio_slo` (#166)
-* *New Resource*: `honeycombio_burn_alert` (#166)
-* *New Data Source*: `honeycombio_recipient` (#166)
+- _New Resource_: `honeycombio_slo` (#166)
+- _New Resource_: `honeycombio_burn_alert` (#166)
+- _New Data Source_: `honeycombio_recipient` (#166)
 
-ENHANCEMENTS:
+## Enhancements
 
-* resource/honeycombio_trigger: add `alert_type` argument (#159)
-* docs: fixes and additional examples (#167, #169)
+- resource/honeycombio_trigger: add `alert_type` argument (#159)
+- docs: fixes and additional examples (#167, #169)
 
 BREAKING CHANGES:
 
-* `honeycombio_query_result` now takes the Query Specification JSON directly (#165)
+- `honeycombio_query_result` now takes the Query Specification JSON directly (#165)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* terraform-plugin-sdk upgraded from 2.15.0 to 2.16.0 (#164)
+- terraform-plugin-sdk upgraded from 2.15.0 to 2.16.0 (#164)
 
 # 0.6.0 (May 9, 2022)
 
 FEATURES:
 
-* *New Data Source*: `honeycombio_query_result` (#151)
+- _New Data Source_: `honeycombio_query_result` (#151)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* terraform-plugin-sdk upgraded from 2.14.0 to 2.15.0 (#161)
+- terraform-plugin-sdk upgraded from 2.14.0 to 2.15.0 (#161)
 
 # 0.5.0 (Apr 25, 2022)
 
-BUGFIXES:
+## Bugfixes
 
-* docs: grammar fixes (#153, #152)
-* client: ensure Derived Column `alias` is properly URL escaped (#154)
-* resource/honeycombio_query_annotation: properly validate length for `name` at 80 characters (#155)
+- docs: grammar fixes (#153, #152)
+- client: ensure Derived Column `alias` is properly URL escaped (#154)
+- resource/honeycombio_query_annotation: properly validate length for `name` at 80 characters (#155)
 
-ENHANCEMENTS:
+## Enhancements
 
-* resource/honeycombio_derived_column: validate length for `alias`, `expression`, and `description` (#154)
-* resource/honeycombio_board: validate length for `name`, `description`, and query `caption` (#155)
-* resource/honeycombio_column: validate length for `key_name`, and `description` (#155)
-* resource/honeycombio_dataset: validate length for `name` (#155)
+- resource/honeycombio_derived_column: validate length for `alias`, `expression`, and `description` (#154)
+- resource/honeycombio_board: validate length for `name`, `description`, and query `caption` (#155)
+- resource/honeycombio_column: validate length for `key_name`, and `description` (#155)
+- resource/honeycombio_dataset: validate length for `name` (#155)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* terraform-plugin-sdk upgraded from 2.13.0 to 2.14.0 (#149)
-* CI: remove unmaintained buildevents action (#150)
-* CI: bump Go version to 1.17 (#150)
-* CI: hashicorp/setup-terraform action upgraded from 1 to 2 (#157)
-* CI: codecov/codecov-action action upgraded from 3.0.0 to 2.1.0 (#156)
+- terraform-plugin-sdk upgraded from 2.13.0 to 2.14.0 (#149)
+- CI: remove unmaintained buildevents action (#150)
+- CI: bump Go version to 1.17 (#150)
+- CI: hashicorp/setup-terraform action upgraded from 1 to 2 (#157)
+- CI: codecov/codecov-action action upgraded from 3.0.0 to 2.1.0 (#156)
 
 # 0.4.0 (Apr 13, 2022)
 
-NOTES:
+## Notes
 
-* A Trigger may need to be destroyed and recreated in order to stabalize the ordering of recipients.
+- A Trigger may need to be destroyed and recreated in order to stabalize the ordering of recipients.
 
-BUGFIXES:
+## Bugfixes
 
-* resource/honeycombio_trigger: fix unstable recipient ordering causing infinite diffs (#142)
-* datasource/honeycombio_query_specfication: fix for `filter_combination` 'AND' causing infinite diffs (#144)
+- resource/honeycombio_trigger: fix unstable recipient ordering causing infinite diffs (#142)
+- datasource/honeycombio_query_specfication: fix for `filter_combination` 'AND' causing infinite diffs (#144)
 
-ENHANCEMENTS:
+## Enhancements
 
-* docs: add SLI example (#138)
-* validation for Trigger and Board name and description lengths (#143)
+- docs: add SLI example (#138)
+- validation for Trigger and Board name and description lengths (#143)
 
-HOUSEKEEPING:
+## Housekeeping
 
-* terraform-plugin-sdk upgraded from 2.10.1 to 2.13.0 (#135, #139)
-* testify upgraded from 1.7.0 to 1.7.1 (#137)
+- terraform-plugin-sdk upgraded from 2.10.1 to 2.13.0 (#135, #139)
+- testify upgraded from 1.7.0 to 1.7.1 (#137)
 
 # 0.3.2 (Mar 9, 2022)
 
-BUGFIXES:
+## Bugfixes
 
-* resource/honeycombio_trigger: workaround for misparsing a recipient's empty 'target' when using dynamic blocks (#132)
+- resource/honeycombio_trigger: workaround for misparsing a recipient's empty 'target' when using dynamic blocks (#132)
 
-ENHANCEMENTS:
+## Enhancements
 
-* provider can be started in debug mode with support for debuggers like delve (#129)
+- provider can be started in debug mode with support for debuggers like delve (#129)
 
 # 0.3.1 (Mar 4, 2022)
 
-BUGFIXES:
+## Bugfixes
 
-* client: error if creating a derived column with an alias that already exists (#124)
+- client: error if creating a derived column with an alias that already exists (#124)
 
 # 0.3.0 (Feb 17, 2022)
 
-NOTES:
+## Notes
 
-* the `value` filter attribute has been *undeprecated* and now properly coerces the input when marshaling JSON to the Honeycomb API.
-* the type-specific `value_boolean`, `value_float`, `value_integer` and `value_string` filter values (introduced by #29) have been
-deprecated.
-The `value_*` filter attributes (introduced by #29) will be removed before the 1.0 release.
+- The `value` filter attribute has been _undeprecated_ and now properly coerces the input when marshaling JSON to the Honeycomb API.
+- the type-specific `value_boolean`, `value_float`, `value_integer` and `value_string` filter values (introduced by #29) have been
+  deprecated.
+  The `value_*` filter attributes (introduced by #29) will be removed before the 1.0 release.
 
-ENHANCEMENTS:
+## Enhancements
 
-* datasource/honeycombio_query_specfication: support for `having` filters (#110)
-* datasource/honeycombio_query_specfication: support for `CONCURRENCY` operator (#112)
-* docs: handful of fixes and clarifications (#111, #115, #116)
+- datasource/honeycombio_query_specfication: support for `having` filters (#110)
+- datasource/honeycombio_query_specfication: support for `CONCURRENCY` operator (#112)
+- docs: handful of fixes and clarifications (#111, #115, #116)
 
-BUGFIXES:
+## Bugfixes
 
-* datasource/honeycombio_query_specfication: filtering by the 'zero value' of a type and properly coerced values now sent to the API. Filter `value` has been undeprecated and the `value_*` have been deprecated (#114)
-* datasource/honeycombio_query_specfication: specifiying `ascending` sort order no longer causes constant diffs (#120)
+- datasource/honeycombio*query_specfication: filtering by the 'zero value' of a type and properly coerced values now sent to the API. Filter `value` has been undeprecated and the `value*\*` have been deprecated (#114)
+- datasource/honeycombio_query_specfication: specifiying `ascending` sort order no longer causes constant diffs (#120)
 
 # 0.2.0 (Jan 27, 2022)
 
-NOTES:
+## Notes
 
-* This is the first official release made by Honeycomb!
-* This release does contain three breaking changes, see below.
+- This is the first official release made by Honeycomb!
+- This release does contain three breaking changes, see below.
 
 FEATURES:
 
-* resource/honeycombio_board: board queries now support annotations (#100)
+- resource/honeycombio_board: board queries now support annotations (#100)
 
-ENHANCEMENTS:
+## Enhancements
 
-* client: API client is no longer a third party dependency (#88)
-* client: query specification support for RATE_AVG, RATE_MAX, and RATE_SUM (#92)
+- client: API client is no longer a third party dependency (#88)
+- client: query specification support for RATE_AVG, RATE_MAX, and RATE_SUM (#92)
 
-BUGFIXES:
+## Bugfixes
 
-* resource/honeycombio_trigger: `disabled` properly marshaled to allow disabling triggers (#91)
-* resource/honeycombio_query: Suppress equivalent `query_json` differences (#100)
-* documentation fixes (#94, #99)
+- resource/honeycombio_trigger: `disabled` properly marshaled to allow disabling triggers (#91)
+- resource/honeycombio_query: Suppress equivalent `query_json` differences (#100)
+- documentation fixes (#94, #99)
 
 BREAKING CHANGES:
 
-* datasource/honeycombio_query: renamed to `datasource/honeycombio_query_specification` (#98)
-* resource/honeycombio_board: board queries no longer support inline query JSON (#96)
-* resource/honeycombio_trigger: triggers no longer support inline query JSON (#96)
+- datasource/honeycombio_query: renamed to `datasource/honeycombio_query_specification` (#98)
+- resource/honeycombio_board: board queries no longer support inline query JSON (#96)
+- resource/honeycombio_trigger: triggers no longer support inline query JSON (#96)
