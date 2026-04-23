@@ -32,11 +32,10 @@ func TestClient_Config(t *testing.T) {
 
 	t.Run("constructs a client with config overrides", func(t *testing.T) {
 		c, err := NewClientWithConfig(&Config{
-			APIKeyID:           "123",
-			APIKeySecret:       "456",
-			BaseURL:            "https://api.example.com",
-			UserAgent:          testUserAgent,
-			skipInitialization: true,
+			APIKeyID:     "123",
+			APIKeySecret: "456",
+			BaseURL:      "https://api.example.com",
+			UserAgent:    testUserAgent,
 		})
 		require.NoError(t, err)
 		assert.Equal(t, "Bearer 123:456", c.Headers.Get("Authorization"))
@@ -46,8 +45,9 @@ func TestClient_Config(t *testing.T) {
 
 	t.Run("fails to construct a client with an invalid API URL", func(t *testing.T) {
 		_, err := NewClientWithConfig(&Config{
-			BaseURL:            "cache_object:foo/bar",
-			skipInitialization: true,
+			APIKeyID:     "123",
+			APIKeySecret: "456",
+			BaseURL:      "cache_object:foo/bar",
 		})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid BaseURL")
@@ -113,11 +113,14 @@ func TestClient_AuthInfo(t *testing.T) {
 	})
 
 	t.Run("handles unauthorized gracefully", func(t *testing.T) {
-		_, err := NewClientWithConfig(&Config{
+		c, err := NewClientWithConfig(&Config{
 			APIKeyID:     "foo",
 			APIKeySecret: "bar",
 			UserAgent:    testUserAgent,
 		})
+		require.NoError(t, err)
+
+		_, err = c.AuthInfo(ctx)
 
 		var de hnyclient.DetailedError
 		require.ErrorAs(t, err, &de)

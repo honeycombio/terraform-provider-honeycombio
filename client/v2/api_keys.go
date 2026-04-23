@@ -27,14 +27,17 @@ const (
 )
 
 type apiKeys struct {
-	client   *Client
-	authinfo *AuthMetadata
+	client *Client
 }
 
 func (a *apiKeys) Create(ctx context.Context, k *APIKey) (*APIKey, error) {
+	slug, err := a.client.teamSlug(ctx)
+	if err != nil {
+		return nil, err
+	}
 	r, err := a.client.Do(ctx,
 		http.MethodPost,
-		fmt.Sprintf(apiKeysPath, a.authinfo.Team.Slug),
+		fmt.Sprintf(apiKeysPath, slug),
 		k,
 	)
 	if err != nil {
@@ -54,9 +57,13 @@ func (a *apiKeys) Create(ctx context.Context, k *APIKey) (*APIKey, error) {
 }
 
 func (a *apiKeys) Get(ctx context.Context, id string) (*APIKey, error) {
+	slug, err := a.client.teamSlug(ctx)
+	if err != nil {
+		return nil, err
+	}
 	r, err := a.client.Do(ctx,
 		http.MethodGet,
-		fmt.Sprintf(apiKeysByIDPath, a.authinfo.Team.Slug, id),
+		fmt.Sprintf(apiKeysByIDPath, slug, id),
 		nil,
 	)
 	if err != nil {
@@ -76,9 +83,13 @@ func (a *apiKeys) Get(ctx context.Context, id string) (*APIKey, error) {
 }
 
 func (a *apiKeys) Update(ctx context.Context, k *APIKey) (*APIKey, error) {
+	slug, err := a.client.teamSlug(ctx)
+	if err != nil {
+		return nil, err
+	}
 	r, err := a.client.Do(ctx,
 		http.MethodPatch,
-		fmt.Sprintf(apiKeysByIDPath, a.authinfo.Team.Slug, k.ID),
+		fmt.Sprintf(apiKeysByIDPath, slug, k.ID),
 		k,
 	)
 	if err != nil {
@@ -98,9 +109,13 @@ func (a *apiKeys) Update(ctx context.Context, k *APIKey) (*APIKey, error) {
 }
 
 func (a *apiKeys) Delete(ctx context.Context, id string) error {
+	slug, err := a.client.teamSlug(ctx)
+	if err != nil {
+		return err
+	}
 	r, err := a.client.Do(ctx,
 		http.MethodDelete,
-		fmt.Sprintf(apiKeysByIDPath, a.authinfo.Team.Slug, id),
+		fmt.Sprintf(apiKeysByIDPath, slug, id),
 		nil,
 	)
 	if err != nil {
@@ -115,9 +130,13 @@ func (a *apiKeys) Delete(ctx context.Context, id string) error {
 }
 
 func (a *apiKeys) List(ctx context.Context, os ...ListOption) (*Pager[APIKey], error) {
+	slug, err := a.client.teamSlug(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return NewPager[APIKey](
 		a.client,
-		fmt.Sprintf(apiKeysPath, a.authinfo.Team.Slug),
+		fmt.Sprintf(apiKeysPath, slug),
 		os...,
 	)
 }

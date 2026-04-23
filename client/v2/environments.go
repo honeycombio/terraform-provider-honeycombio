@@ -22,8 +22,7 @@ type Environments interface {
 }
 
 type environments struct {
-	client   *Client
-	authinfo *AuthMetadata
+	client *Client
 }
 
 const (
@@ -60,9 +59,13 @@ func EnvironmentColorTypes() []string {
 }
 
 func (e *environments) Create(ctx context.Context, env *Environment) (*Environment, error) {
+	slug, err := e.client.teamSlug(ctx)
+	if err != nil {
+		return nil, err
+	}
 	r, err := e.client.Do(ctx,
 		http.MethodPost,
-		fmt.Sprintf(environmentsPath, e.authinfo.Team.Slug),
+		fmt.Sprintf(environmentsPath, slug),
 		env,
 	)
 	if err != nil {
@@ -82,9 +85,13 @@ func (e *environments) Create(ctx context.Context, env *Environment) (*Environme
 }
 
 func (e *environments) Get(ctx context.Context, id string) (*Environment, error) {
+	slug, err := e.client.teamSlug(ctx)
+	if err != nil {
+		return nil, err
+	}
 	r, err := e.client.Do(ctx,
 		http.MethodGet,
-		fmt.Sprintf(environmentsByIDPath, e.authinfo.Team.Slug, id),
+		fmt.Sprintf(environmentsByIDPath, slug, id),
 		nil,
 	)
 	if err != nil {
@@ -104,9 +111,13 @@ func (e *environments) Get(ctx context.Context, id string) (*Environment, error)
 }
 
 func (e *environments) Update(ctx context.Context, env *Environment) (*Environment, error) {
+	slug, err := e.client.teamSlug(ctx)
+	if err != nil {
+		return nil, err
+	}
 	r, err := e.client.Do(ctx,
 		http.MethodPatch,
-		fmt.Sprintf(environmentsByIDPath, e.authinfo.Team.Slug, env.ID),
+		fmt.Sprintf(environmentsByIDPath, slug, env.ID),
 		env,
 	)
 	if err != nil {
@@ -126,9 +137,13 @@ func (e *environments) Update(ctx context.Context, env *Environment) (*Environme
 }
 
 func (e *environments) Delete(ctx context.Context, id string) error {
+	slug, err := e.client.teamSlug(ctx)
+	if err != nil {
+		return err
+	}
 	r, err := e.client.Do(ctx,
 		http.MethodDelete,
-		fmt.Sprintf(environmentsByIDPath, e.authinfo.Team.Slug, id),
+		fmt.Sprintf(environmentsByIDPath, slug, id),
 		nil,
 	)
 	if err != nil {
@@ -143,9 +158,13 @@ func (e *environments) Delete(ctx context.Context, id string) error {
 }
 
 func (e *environments) List(ctx context.Context, os ...ListOption) (*Pager[Environment], error) {
+	slug, err := e.client.teamSlug(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return NewPager[Environment](
 		e.client,
-		fmt.Sprintf(environmentsPath, e.authinfo.Team.Slug),
+		fmt.Sprintf(environmentsPath, slug),
 		os...,
 	)
 }
