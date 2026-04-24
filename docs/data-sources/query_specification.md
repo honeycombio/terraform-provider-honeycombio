@@ -58,7 +58,7 @@ output "json_query" {
 
 - `breakdowns` (List of String) A list of fields to group results by.
 - `calculated_field` (Block List) Zero or more configuration blocks describing the Calculated Fields to create for use in this query. (see [below for nested schema](#nestedblock--calculated_field))
-- `calculation` (Block List) Zero or more configuration blocks describing the calculations to return as a time series and summary table. If no calculations are provided, "COUNT" is assumed. (see [below for nested schema](#nestedblock--calculation))
+- `calculation` (Block List) Zero or more configuration blocks describing the calculations to return as a time series and summary table. If no calculations are provided, a default count-like aggregate will be applied. (see [below for nested schema](#nestedblock--calculation))
 - `compare_time_offset` (Number) The time offset for comparison queries, in seconds. Used to compare current time range data with data from a previous time period.
 - `end_time` (Number) The absolute end time of the query's time range, in seconds since the Unix epoch.
 - `filter` (Block List) Zero or more configuration blocks describing the filters to apply to the query results. (see [below for nested schema](#nestedblock--filter))
@@ -94,7 +94,7 @@ Required:
 
 Optional:
 
-- `column` (String) The column to apply the operator on. Not allowed with "COUNT" or "CONCURRENCY", required for all other operators.
+- `column` (String) The column to apply the operator on. Not allowed with "CONCURRENCY", optional for "COUNT" and "COUNT_DATAPOINTS", required for all other operators.
 - `filter` (Block List) Zero or more configuration blocks describing filters to apply to this specific calculation. (see [below for nested schema](#nestedblock--calculation--filter))
 - `filter_combination` (String) How to combine multiple calculation filters. Defaults to "AND".
 - `name` (String) The name of the calculation. Required when using calculation filters or when referencing the calculation in a formula.
@@ -146,7 +146,7 @@ Required:
 
 Optional:
 
-- `column` (String) The column to filter on. Not allowed with "COUNT".
+- `column` (String) The column to filter on.
 
 
 <a id="nestedblock--order"></a>
@@ -163,3 +163,5 @@ Optional:
 -> **NOTE** Filter op `in` and `not-in` expect an array of strings as value. Use the `value` attribute and pass the values in a single string separated by `,` without additional spaces (similar to the query builder in the UI). For example: the list `foo`, `bar` becomes `foo,bar`.
 
 ~> **NOTE** A `having` block's `column`/`calculate_op` pair must have a corresponding `calculation`. There can be multiple `having` blocks for the same `column`/`calculate_op` pair.
+
+-> **NOTE** The `COUNT_DATAPOINTS` and `HISTOGRAM_COUNT` calculation operators are only valid against metrics datasets.

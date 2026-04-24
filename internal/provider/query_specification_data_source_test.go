@@ -241,6 +241,48 @@ data "honeycombio_query_specification" "test" {
 		Config: `
 data "honeycombio_query_specification" "test" {
   calculation {
+    op = "HISTOGRAM_COUNT"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("HISTOGRAM_COUNT requires a column"),
+	},
+	{
+		// COUNT_DATAPOINTS accepts no column (metrics datasets)
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT_DATAPOINTS"
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		// COUNT_DATAPOINTS also accepts a column (metrics datasets)
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT_DATAPOINTS"
+    column = "app.cumulative"
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		// HISTOGRAM_COUNT accepts a column
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "HISTOGRAM_COUNT"
+    column = "request.duration"
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
     op     = "HEATMAP"
     column = "duration_ms"
   }
@@ -435,6 +477,50 @@ data "honeycombio_query_specification" "test" {
 }`,
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("P95 missing matching calculation"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  having {
+    calculate_op = "HISTOGRAM_COUNT"
+    op           = ">"
+    value        = 1
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("HISTOGRAM_COUNT requires a column"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT_DATAPOINTS"
+  }
+
+  having {
+    calculate_op = "COUNT_DATAPOINTS"
+    op           = ">"
+    value        = 1
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT_DATAPOINTS"
+    column = "app.cumulative"
+  }
+
+  having {
+    calculate_op = "COUNT_DATAPOINTS"
+    column       = "app.cumulative"
+    op           = ">"
+    value        = 1
+  }
+}`,
+		PlanOnly: true,
 	},
 }
 
