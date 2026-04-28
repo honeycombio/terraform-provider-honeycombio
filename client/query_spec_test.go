@@ -131,10 +131,10 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			false,
 		},
 		{
-			"default w/ column is not equivalent to empty",
+			"non-COUNT default is not equivalent to empty",
 			client.QuerySpec{
 				Calculations: []client.CalculationSpec{
-					{Op: "COUNT_DATAPOINTS", Column: client.ToPtr("http.client.request.duration")},
+					{Op: "COUNT_DATAPOINTS"},
 				},
 				TimeRange:   client.ToPtr(client.DefaultQueryTimeRange),
 				Granularity: client.ToPtr(0),

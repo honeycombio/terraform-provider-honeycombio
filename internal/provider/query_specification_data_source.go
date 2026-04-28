@@ -421,8 +421,9 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 		calculations = append(calculations, calculation)
 	}
 
-	// none have been provided. As this can potentially cause an infinite diff
-	// we'll set the default here if we haven't parsed any
+	// For non-metrics datasets, COUNT is the default calculation and will be returned
+	// by the API if none have been provided. As this can potentially cause an infinite
+	// diff we'll set the COUNT default here if we haven't parsed any
 	if len(calculations) == 0 {
 		calculations = []client.CalculationSpec{{Op: client.CalculationOpCount}}
 	}
