@@ -225,6 +225,20 @@ func TestAcc_QueryResourceWithMetrics(t *testing.T) {
 		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
+				// query_spec form rejects COUNT default
+				Config:      testAccConfigQuery(dataset),
+				ExpectError: regexp.MustCompile(`(?i)operation not allowed in metrics dataset: COUNT`),
+			},
+			{
+				// query_json form rejects empty calculation
+				Config: fmt.Sprintf(`
+resource "honeycombio_query" "test" {
+	dataset    = "%s"
+	query_json = "{}"
+}`, dataset),
+				ExpectError: regexp.MustCompile(`(?i)metrics datasets require at least one calculation`),
+			},
+			{
 				// COUNT_DATAPOINTS with no column (dataset-level default form)
 				Config: testAccConfigQuery(dataset, calculationBlock("COUNT_DATAPOINTS", "")),
 				Check: resource.ComposeAggregateTestCheckFunc(

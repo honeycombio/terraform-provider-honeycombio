@@ -123,7 +123,7 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 			// the dataset, otherwise we'll incorrectly assume that empty and COUNT are
 			// the same for metrics (which doesn't have a default).
 			//
-			// We're ignoring this problem for now since COUNT is strongly discouraged
+			// We're ignoring this problem for now since COUNT is disallowed
 			// for use by metrics queries, and often isn't what users actually want.
 			// See https://docs.honeycomb.io/investigate/query/examples-metrics#common-select-operations
 			return c.Op == CalculationOpCount
