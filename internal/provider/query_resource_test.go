@@ -217,7 +217,7 @@ resource "honeycombio_query" "test" {
 	})
 }
 
-func TestAcc_QueryResourceWith_Metrics(t *testing.T) {
+func TestAcc_QueryResourceWithMetrics(t *testing.T) {
 	dataset := testAccMetricsDataset(t)
 
 	resource.Test(t, resource.TestCase{
