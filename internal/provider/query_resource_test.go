@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -216,25 +217,133 @@ resource "honeycombio_query" "test" {
 	})
 }
 
+func TestAcc_QueryResourceWithMetrics(t *testing.T) {
+	dataset := testAccMetricsDataset(t)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				// query_spec form rejects COUNT default
+				Config:      testAccConfigQuery(dataset),
+				ExpectError: regexp.MustCompile(`(?i)operation not allowed in metrics dataset: COUNT`),
+			},
+			{
+				// query_json form rejects empty calculation
+				Config: fmt.Sprintf(`
+resource "honeycombio_query" "test" {
+	dataset    = "%s"
+	query_json = "{}"
+}`, dataset),
+				ExpectError: regexp.MustCompile(`(?i)metrics datasets require at least one calculation`),
+			},
+			{
+				// COUNT_DATAPOINTS with no column (dataset-level default form)
+				Config: testAccConfigQuery(dataset, calculationBlock("COUNT_DATAPOINTS", "")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureQueryExists(t, "honeycombio_query.test"),
+					resource.TestCheckResourceAttrWith("honeycombio_query.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if len(q.Calculations) != 1 {
+							return fmt.Errorf("expected 1 calculation, got %d", len(q.Calculations))
+						}
+						if q.Calculations[0].Op != client.CalculationOpCountDatapoints {
+							return fmt.Errorf("expected COUNT_DATAPOINTS, got %s", q.Calculations[0].Op)
+						}
+						if q.Calculations[0].Column != nil {
+							return fmt.Errorf("expected no column on COUNT_DATAPOINTS, got %q", *q.Calculations[0].Column)
+						}
+						return nil
+					})),
+				),
+			},
+			{
+				Config: testAccConfigQuery(dataset, calculationBlock("COUNT_DATAPOINTS", "app.cumulative")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureQueryExists(t, "honeycombio_query.test"),
+					resource.TestCheckResourceAttrWith("honeycombio_query.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if len(q.Calculations) != 1 {
+							return fmt.Errorf("expected 1 calculation, got %d", len(q.Calculations))
+						}
+						if q.Calculations[0].Op != client.CalculationOpCountDatapoints {
+							return fmt.Errorf("expected COUNT_DATAPOINTS, got %s", q.Calculations[0].Op)
+						}
+						if q.Calculations[0].Column == nil || *q.Calculations[0].Column != "app.cumulative" {
+							return fmt.Errorf("expected column app.cumulative, got %v", q.Calculations[0].Column)
+						}
+						return nil
+					})),
+				),
+			},
+			{
+				// HISTOGRAM_COUNT requires a histogram-typed column. The
+				// metrics dataset seeded by scripts/setup-metrics is expected
+				// to include a histogram column named `app.histogram`.
+				Config: testAccConfigQuery(dataset, calculationBlock("HISTOGRAM_COUNT", "app.histogram")),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureQueryExists(t, "honeycombio_query.test"),
+					resource.TestCheckResourceAttrWith("honeycombio_query.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if len(q.Calculations) != 1 {
+							return fmt.Errorf("expected 1 calculation, got %d", len(q.Calculations))
+						}
+						if q.Calculations[0].Op != client.CalculationOpHistogramCount {
+							return fmt.Errorf("expected HISTOGRAM_COUNT, got %s", q.Calculations[0].Op)
+						}
+						if q.Calculations[0].Column == nil || *q.Calculations[0].Column != "app.histogram" {
+							return fmt.Errorf("expected column app.histogram, got %v", q.Calculations[0].Column)
+						}
+						return nil
+					})),
+				),
+			},
+		},
+	})
+}
+
+func calculationBlock(op, column string) string {
+	if column == "" {
+		return fmt.Sprintf(`
+calculation {
+  op = "%s"
+}`, op)
+	}
+
+	return fmt.Sprintf(`
+calculation {
+	op = "%s"
+	column = "%s"
+}`, op, column)
+}
+
+func filterBlock(column, op string, value float64) string {
+	return fmt.Sprintf(`
+filter {
+	column = "%s"
+	op     = "%s"
+	value  = %f
+}`, column, op, value)
+}
+
 func testAccConfigBasicQueryTest(dataset, column string, value float64) string {
+	return testAccConfigQuery(dataset,
+		calculationBlock("AVG", column),
+		filterBlock(column, ">", value),
+	)
+}
+
+func testAccConfigQuery(dataset string, blocks ...string) string {
+	allBlocks := strings.Join(blocks, "\n")
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {
-  calculation {
-    op     = "AVG"
-    column = "%[2]s"
-  }
+	%[2]s
 
-  filter {
-    column = "%[2]s"
-    op     = ">"
-    value  = %[3]f
-  }
+  time_range = 1800
 }
 
 resource "honeycombio_query" "test" {
   dataset    = "%[1]s"
   query_json = data.honeycombio_query_specification.test.json
-}`, dataset, column, value)
+}`, dataset, allBlocks)
 }
 
 func testAccEnsureQueryExists(t *testing.T, name string) resource.TestCheckFunc {

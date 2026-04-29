@@ -26,8 +26,20 @@ func Test_QuerySpecValidator(t *testing.T) {
 		"null": {
 			val: types.StringNull(),
 		},
-		"valid query spec": {
+		"valid COUNT without column": {
 			val: types.StringValue(`{"calculations": [{"op": "COUNT"}]}`),
+		},
+		"valid COUNT with column": {
+			val: types.StringValue(`{"calculations": [{"op": "COUNT", "column": "app.cumulative"}]}`),
+		},
+		"valid COUNT_DATAPOINTS without column": {
+			val: types.StringValue(`{"calculations": [{"op": "COUNT_DATAPOINTS"}]}`),
+		},
+		"valid COUNT_DATAPOINTS with column": {
+			val: types.StringValue(`{"calculations": [{"op": "COUNT_DATAPOINTS", "column": "app.cumulative"}]}`),
+		},
+		"valid HISTOGRAM_COUNT": {
+			val: types.StringValue(`{"calculations": [{"op": "HISTOGRAM_COUNT", "column": "request.duration"}]}`),
 		},
 		"invalid json": {
 			val:         types.StringValue("whoop"),

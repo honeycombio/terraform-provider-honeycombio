@@ -102,9 +102,7 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			"Empty Defaults",
 			client.QuerySpec{
 				Calculations: []client.CalculationSpec{
-					{
-						Op: "COUNT",
-					},
+					{Op: "COUNT"},
 				},
 				FilterCombination: "AND",
 				TimeRange:         client.ToPtr(client.DefaultQueryTimeRange),
@@ -116,6 +114,36 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			},
 			client.QuerySpec{},
 			true,
+		},
+		{
+			"default w/ column is not equivalent to empty",
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{Op: "COUNT", Column: client.ToPtr("name")},
+				},
+				TimeRange:   client.ToPtr(client.DefaultQueryTimeRange),
+				Granularity: client.ToPtr(0),
+				Breakdowns:  []string{},
+				Orders:      []client.OrderSpec{},
+				Limit:       client.ToPtr(client.DefaultQueryLimit),
+			},
+			client.QuerySpec{},
+			false,
+		},
+		{
+			"non-COUNT default is not equivalent to empty",
+			client.QuerySpec{
+				Calculations: []client.CalculationSpec{
+					{Op: "COUNT_DATAPOINTS"},
+				},
+				TimeRange:   client.ToPtr(client.DefaultQueryTimeRange),
+				Granularity: client.ToPtr(0),
+				Breakdowns:  []string{},
+				Orders:      []client.OrderSpec{},
+				Limit:       client.ToPtr(client.DefaultQueryLimit),
+			},
+			client.QuerySpec{},
+			false,
 		},
 		{
 			"Equivalent but shuffled",
@@ -533,6 +561,28 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			assert.Equal(t, tt.want, tt.a.EquivalentTo(tt.b))
+		})
+	}
+}
+
+func TestCalculationOp_ColumnCategories(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		op                    client.CalculationOp
+		wantUnary             bool
+		wantAllowsOptionalCol bool
+	}{
+		{client.CalculationOpCount, false, true},
+		{client.CalculationOpCountDatapoints, false, true},
+		{client.CalculationOpConcurrency, true, false},
+		{client.CalculationOpAvg, false, false},
+		{client.CalculationOpHistogramCount, false, false},
+	}
+	for _, tt := range tests {
+		t.Run(string(tt.op), func(t *testing.T) {
+			assert.Equal(t, tt.wantUnary, tt.op.IsUnaryOp())
+			assert.Equal(t, tt.wantAllowsOptionalCol, tt.op.AllowsOptionalColumn())
 		})
 	}
 }
