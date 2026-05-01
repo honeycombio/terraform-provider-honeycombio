@@ -1,3 +1,13 @@
+# 0.49.0 (May 1, 2026)
+
+## Enhancements
+
+- feat(d/query_specification): Expanded calculation support (#846)
+
+## Housekeeping
+
+- maint(deps): bump the hashicorp group across 1 directory with 2 updates (#848)
+
 # 0.48.0 (Apr 23, 2026)
 
 ## Notes
