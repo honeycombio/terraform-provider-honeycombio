@@ -220,22 +220,63 @@ var testStepsQueryValidationChecks_calculation = []resource.TestStep{
 		Config: `
 data "honeycombio_query_specification" "test" {
   calculation {
-    op     = "COUNT"
-    column = "we-should-not-specify-a-column-with-COUNT"
-  }
-}`,
-		PlanOnly:    true,
-		ExpectError: regexp.MustCompile("column is not allowed with operator COUNT"),
-	},
-	{
-		Config: `
-data "honeycombio_query_specification" "test" {
-  calculation {
     op     = "AVG"
   }
 }`,
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("AVG requires a colum"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "HISTOGRAM_COUNT"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("HISTOGRAM_COUNT requires a column"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT"
+    column = "*"
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		// COUNT_DATAPOINTS accepts no column (metrics datasets)
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT_DATAPOINTS"
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		// COUNT_DATAPOINTS also accepts a column (metrics datasets)
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT_DATAPOINTS"
+    column = "app.cumulative"
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		// HISTOGRAM_COUNT accepts a column
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "HISTOGRAM_COUNT"
+    column = "request.duration"
+  }
+}`,
+		PlanOnly: true,
 	},
 	{
 		Config: `
@@ -389,19 +430,6 @@ var testStepsQueryValidationChecks_having = []resource.TestStep{
 		Config: `
 data "honeycombio_query_specification" "test" {
   having {
-    calculate_op = "COUNT"
-    column       = "we-should-not-specify-a-column-with-COUNT"
-    op           = ">"
-    value        = 1
-  }
-}`,
-		PlanOnly:    true,
-		ExpectError: regexp.MustCompile("COUNT should not have an accompanying column"),
-	},
-	{
-		Config: `
-data "honeycombio_query_specification" "test" {
-  having {
     calculate_op = "CONCURRENCY"
     column       = "we-should-not-specify-a-column-with-CONCURRENCY"
     op           = ">"
@@ -435,6 +463,66 @@ data "honeycombio_query_specification" "test" {
 }`,
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("P95 missing matching calculation"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  having {
+    calculate_op = "HISTOGRAM_COUNT"
+    op           = ">"
+    value        = 1
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("HISTOGRAM_COUNT requires a column"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+		column = "*"
+  }
+  having {
+    calculate_op = "COUNT"
+    column       = "*"
+    op           = ">"
+    value        = 1
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT_DATAPOINTS"
+  }
+
+  having {
+    calculate_op = "COUNT_DATAPOINTS"
+    op           = ">"
+    value        = 1
+  }
+}`,
+		PlanOnly: true,
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "COUNT_DATAPOINTS"
+    column = "app.cumulative"
+  }
+
+  having {
+    calculate_op = "COUNT_DATAPOINTS"
+    column       = "app.cumulative"
+    op           = ">"
+    value        = 1
+  }
+}`,
+		PlanOnly: true,
 	},
 }
 

@@ -31,8 +31,9 @@ type QuerySpec struct {
 	// API. This value should not be set when creating or updating queries.
 	ID *string `json:"id,omitempty"`
 
-	// The calculations to return as a time series and summary table. If no
-	// calculations are provided, COUNT is applied.
+	// The calculations to return as a time series and summary table. For
+	// non-metrics datasets, COUNT is applied if no calculations are provided.
+	// Metrics datasets require at least one explicit calculation.
 	Calculations []CalculationSpec `json:"calculations,omitempty"`
 	// CalculatedFields are temporary Calculated Fields that are
 	// created for the query.
@@ -106,23 +107,31 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 			}
 		}
 	}
+
 	if !calcMatch {
-		// 'COUNT' is the default Calculation and equivalent to an empty Calculations -- check that before we give up
-		defaultCalc := []CalculationSpec{{Op: CalculationOpCount}}
-		qsC, oC := defaultCalc, defaultCalc
-		if len(qs.Calculations) != 0 {
-			qsC = qs.Calculations
-		}
-		if len(other.Calculations) != 0 {
-			oC = other.Calculations
-		}
-		if len(qsC) != len(oC) {
-			return false
-		}
-		for i := range qsC {
-			if !qsC[i].EquivalentTo(oC[i]) {
+		// isDefaultBareCalc reports whether calcs matches dataset-level defaults filled in by the API.
+		isDefaultBareCalc := func(calcs []CalculationSpec) bool {
+			if len(calcs) != 1 {
 				return false
 			}
+			c := calcs[0]
+			if c.Column != nil || c.Name != nil || len(c.Filters) != 0 {
+				return false
+			}
+
+			// We _should_ check that the default matches the expected default from the
+			// the dataset, otherwise we'll incorrectly assume that empty and COUNT are
+			// the same for metrics (which doesn't have a default).
+			//
+			// We're ignoring this problem for now since COUNT is disallowed
+			// for use by metrics queries, and often isn't what users actually want.
+			// See https://docs.honeycomb.io/investigate/query/examples-metrics#common-select-operations
+			return c.Op == CalculationOpCount
+		}
+
+		if !isDefaultBareCalc(qs.Calculations) && len(qs.Calculations) != 0 ||
+			!isDefaultBareCalc(other.Calculations) && len(other.Calculations) != 0 {
+			return false
 		}
 	}
 
@@ -193,7 +202,7 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 // CalculationSpec represents a calculation within a query.
 type CalculationSpec struct {
 	Op CalculationOp `json:"op"`
-	// Column to perform the operation on. Not needed with COUNT or CONCURRENCY
+	// Column to perform the operation on. Not relevant or optional for some calculations.
 	Column *string `json:"column,omitempty"`
 	// Name is an optional identifier for the calculation.
 	// Required when using calculation filters or when referencing the calculation in a formula.
@@ -267,10 +276,20 @@ const (
 	CalculationOpRateAvg       CalculationOp = "RATE_AVG"
 	CalculationOpRateSum       CalculationOp = "RATE_SUM"
 	CalculationOpRateMax       CalculationOp = "RATE_MAX"
+
+	// The below calculations are only applicable for the metrics dataset
+	// Right now, this is only validated at apply-time.
+	CalculationOpCountDatapoints CalculationOp = "COUNT_DATAPOINTS"
+	CalculationOpHistogramCount  CalculationOp = "HISTOGRAM_COUNT"
 )
 
 func (c CalculationOp) IsUnaryOp() bool {
-	return c == CalculationOpCount || c == CalculationOpConcurrency
+	return c == CalculationOpConcurrency
+}
+
+// AllowsOptionalColumn returns true for ops where `column` need not be supplied
+func (c CalculationOp) AllowsOptionalColumn() bool {
+	return c == CalculationOpCountDatapoints || c == CalculationOpCount
 }
 
 // CalculationOps returns an exhaustive list of Calculation Operators.
@@ -305,6 +324,8 @@ func HavingCalculationOps() []CalculationOp {
 		CalculationOpRateAvg,
 		CalculationOpRateSum,
 		CalculationOpRateMax,
+		CalculationOpCountDatapoints,
+		CalculationOpHistogramCount,
 	}
 }
 
