@@ -117,7 +117,8 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 		Blocks: map[string]schema.Block{
 			"calculation": schema.ListNestedBlock{
 				Description: "Zero or more configuration blocks describing the calculations to return as a time series and summary table. " +
-					"If no calculations are provided, \"COUNT\" is assumed.",
+					"If no calculations are provided, \"COUNT\" is assumed for non-metrics datasets. " +
+					"Explicit calculations are strongly encouraged.",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"op": schema.StringAttribute{
@@ -130,7 +131,7 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 						},
 						"column": schema.StringAttribute{
 							Description: "The column to apply the operator on. " +
-								"Not allowed with \"COUNT\" or \"CONCURRENCY\", required for all other operators.",
+								"Not allowed with \"CONCURRENCY\", optional for \"COUNT\" and \"COUNT_DATAPOINTS\", required for all other operators.",
 							Optional: true,
 						},
 						"name": schema.StringAttribute{
@@ -246,7 +247,7 @@ func (d *querySpecDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							},
 						},
 						"column": schema.StringAttribute{
-							Description: "The column to filter on. Not allowed with \"COUNT\".",
+							Description: "The column to filter on.",
 							Optional:    true,
 						},
 						"op": schema.StringAttribute{
@@ -319,13 +320,16 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 			Name:   c.Name.ValueStringPointer(),
 		}
 
-		if calculation.Op.IsUnaryOp() && calculation.Column != nil {
+		switch {
+		case calculation.Op.AllowsOptionalColumn():
+			// column may be present or absent; no validation needed
+		case calculation.Op.IsUnaryOp() && calculation.Column != nil:
 			resp.Diagnostics.AddAttributeError(
 				path.Root("calculation").AtListIndex(i).AtName("column"),
 				"column is not allowed with operator "+c.Op.ValueString(),
 				"",
 			)
-		} else if !calculation.Op.IsUnaryOp() && calculation.Column == nil {
+		case !calculation.Op.IsUnaryOp() && calculation.Column == nil:
 			resp.Diagnostics.AddAttributeError(
 				path.Root("calculation").AtListIndex(i).AtName("op"),
 				c.Op.ValueString()+" requires a column",
@@ -416,9 +420,10 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 		calculations = append(calculations, calculation)
 	}
-	// 'COUNT' is the default calculation and will be returned by the API if
-	// none have been provided. As this can potentially cause an infinite diff
-	// we'll set the default here if we haven't parsed any
+
+	// For non-metrics datasets, COUNT is the default calculation and will be returned
+	// by the API if none have been provided. As this can potentially cause an infinite
+	// diff we'll set the COUNT default here if we haven't parsed any
 	if len(calculations) == 0 {
 		calculations = []client.CalculationSpec{{Op: client.CalculationOpCount}}
 	}
@@ -527,14 +532,16 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 			Value:       h.Value.ValueFloat64(),
 		}
 
-		if having.CalculateOp.IsUnaryOp() && having.Column != nil {
+		switch {
+		case having.CalculateOp.AllowsOptionalColumn():
+			// column may be present or absent; no validation needed
+		case having.CalculateOp.IsUnaryOp() && having.Column != nil:
 			resp.Diagnostics.AddAttributeError(
 				path.Root("having").AtListIndex(i).AtName("calculate_op"),
 				h.CalculateOp.ValueString()+" should not have an accompanying column",
 				"",
 			)
-		}
-		if !having.CalculateOp.IsUnaryOp() && having.Column == nil {
+		case !having.CalculateOp.IsUnaryOp() && having.Column == nil:
 			resp.Diagnostics.AddAttributeError(
 				path.Root("having").AtListIndex(i).AtName("calculate_op"),
 				h.CalculateOp.ValueString()+" requires a column",
