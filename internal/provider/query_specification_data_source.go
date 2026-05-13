@@ -400,13 +400,15 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 				}
 
 				if !f.Value.IsNull() {
-					if filter.Op == client.FilterOpIn || filter.Op == client.FilterOpNotIn {
+					if filter.Op.IsArray() {
 						values := strings.Split(f.Value.ValueString(), ",")
 						result := make([]any, len(values))
 						for k, value := range values {
 							result[k] = coerce.ValueToType(value)
 						}
 						filter.Value = result
+					} else if filter.Op.IsString() {
+						filter.Value = f.Value.ValueString()
 					} else {
 						filter.Value = coerce.ValueToType(f.Value.ValueString())
 					}
@@ -488,15 +490,15 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 		// TODO: replace with DynamicAttribute
 		if !f.Value.IsNull() {
-			if filter.Op == client.FilterOpIn || filter.Op == client.FilterOpNotIn {
-				// if the filter operation is 'in' or 'not-in' we expect the value
-				// to be a CSV string so we build it into a slice
+			if filter.Op.IsArray() {
 				values := strings.Split(f.Value.ValueString(), ",")
 				result := make([]any, len(values))
-				for i, value := range values {
-					result[i] = coerce.ValueToType(value)
+				for k, value := range values {
+					result[k] = coerce.ValueToType(value)
 				}
 				filter.Value = result
+			} else if filter.Op.IsString() {
+				filter.Value = f.Value.ValueString()
 			} else {
 				filter.Value = coerce.ValueToType(f.Value.ValueString())
 			}
