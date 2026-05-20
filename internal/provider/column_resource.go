@@ -233,6 +233,14 @@ func (r *columnResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
 	err := r.client.Columns.Delete(ctx, state.Dataset.ValueString(), state.ID.ValueString())
 	if err != nil {
+		var detailedErr client.DetailedError
+		if errors.As(err, &detailedErr) && detailedErr.IsConflict() && strings.Contains(detailedErr.Message, "in use by dataset definition") {
+			// This column is a dataset definition column (e.g. timestamp, duration).
+			// The API blocks individual deletion while the parent dataset exists, but
+			// dataset deletion cleans up columns automatically. If the dataset is also
+			// being destroyed, Terraform will delete it next and the column will be gone.
+			return
+		}
 		resp.Diagnostics.AddError("Error deleting Column", err.Error())
 		return
 	}
