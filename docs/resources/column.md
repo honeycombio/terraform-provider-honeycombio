@@ -5,7 +5,9 @@ This can be used to create, update, and delete columns in a dataset.
 
 ~> **Warning** Deleting a column is a destructive and irreversible operation which also removes the data in the column.
 
--> **Note** Some columns (such as `timestamp` and `duration_ms`) are used as dataset definitions and cannot be deleted independently while the parent dataset exists. When running `terraform destroy`, the provider will skip the individual column delete for these columns and allow the dataset deletion to clean them up. If you remove only a definition column from your configuration without also removing the dataset, Terraform will consider the deletion successful but the column will remain in Honeycomb until the dataset is deleted.
+-> **Note** Some columns (such as `timestamp` and `duration_ms`) are used as dataset definitions and cannot be deleted independently while the parent dataset exists. 
+When running `terraform destroy`, the provider will skip the individual column delete for these columns and allow the dataset deletion to clean them up. 
+If you remove a definition column from your configuration without also removing the dataset, Terraform will consider the deletion successful but the column will remain in Honeycomb until the dataset is deleted.
 
 -> Version 0.38 and later of the Honeycomb Provider include a Feature Toggle which allows the column to be imported and updated automatically if there is a conflict during create instead of throwing an error.
   This is potentially dangerous if the type changes on the update -- switching from `string` to `boolean` and causing dataloss, for example -- and should be used with caution.
