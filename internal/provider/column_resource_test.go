@@ -215,7 +215,7 @@ type mockColumns struct {
 	deleteErr error
 }
 
-func (m mockColumns) List(_ context.Context, _ string) ([]client.Column, error) { return nil, nil }
+func (m mockColumns) List(_ context.Context, _ string) ([]client.Column, error)  { return nil, nil }
 func (m mockColumns) Get(_ context.Context, _, _ string) (*client.Column, error) { return nil, nil }
 func (m mockColumns) GetByKeyName(_ context.Context, _, _ string) (*client.Column, error) {
 	return nil, nil
