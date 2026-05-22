@@ -239,6 +239,9 @@ func (r *columnResource) Delete(ctx context.Context, req resource.DeleteRequest,
 			// The API blocks individual deletion while the parent dataset exists, but
 			// dataset deletion cleans up columns automatically. If the dataset is also
 			// being destroyed, Terraform will delete it next and the column will be gone.
+			resp.Diagnostics.AddWarning("Column in use by dataset definition",
+				"Column \""+state.Name.ValueString()+"\" was not deleted because it is in use by a dataset definition. "+
+					"Please delete the parent dataset to remove this column.")
 			return
 		}
 		resp.Diagnostics.AddError("Error deleting Column", err.Error())
