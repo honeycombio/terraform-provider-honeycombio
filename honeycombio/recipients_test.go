@@ -17,7 +17,7 @@ func TestAccHoneycombMSTeamsRecipient(t *testing.T) {
 	t.Run("workflow recipient works", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -33,7 +33,7 @@ resource "honeycombio_msteams_workflow_recipient" "test" {
 	t.Run("new webhook recipient fails creation", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: `

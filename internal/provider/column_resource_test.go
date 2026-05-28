@@ -27,7 +27,7 @@ func TestAcc_ColumnResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -113,7 +113,7 @@ resource "honeycombio_column" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{ // explicitly set import_on_conflict to false to ensure it fails
 					Config: fmt.Sprintf(`
@@ -194,7 +194,7 @@ resource "honeycombio_column" "test" {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+				ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 				Config:                   config,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{

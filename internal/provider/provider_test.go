@@ -2,13 +2,15 @@ package provider
 
 import (
 	"context"
+	"log"
 	"os"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
-	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/require"
@@ -26,24 +28,47 @@ func init() {
 }
 
 // used by tests which only use the Framework-based datasources or resources
-var testAccProtoV5ProviderFactory = map[string]func() (tfprotov5.ProviderServer, error){
-	"honeycombio": providerserver.NewProtocol5WithError(New("test")),
+var testAccProtoV6ProviderFactory = map[string]func() (tfprotov6.ProviderServer, error){
+	"honeycombio": func() (tfprotov6.ProviderServer, error) {
+		return tf5to6server.UpgradeServer(
+			context.Background(),
+			providerserver.NewProtocol5(New("test")),
+		)
+	},
 }
 
 // used by tests which use a mix of Framework and SDK-based datasources or resources
 //
 // n.b. will continue to be used until the SDK-based provider is removed
-var testAccProtoV5MuxServerFactory = map[string]func() (tfprotov5.ProviderServer, error){
-	"honeycombio": func() (tfprotov5.ProviderServer, error) {
+var testAccProtoV6MuxServerFactory = map[string]func() (tfprotov6.ProviderServer, error){
+	"honeycombio": func() (tfprotov6.ProviderServer, error) {
 		ctx := context.Background()
-		providers := []func() tfprotov5.ProviderServer{
-			// modern terraform-plugin-framework provider
-			providerserver.NewProtocol5(New("test")),
-			// legacy terraform-plugin-sdk provider
-			honeycombio.Provider("test").GRPCProvider,
+		providers := []func() tfprotov6.ProviderServer{
+			func() tfprotov6.ProviderServer {
+				upgradedFrameworkServer, err := tf5to6server.UpgradeServer(
+					context.Background(),
+					providerserver.NewProtocol5(New("test")),
+				)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				return upgradedFrameworkServer
+			},
+			func() tfprotov6.ProviderServer {
+				upgradedSDKServer, err := tf5to6server.UpgradeServer(
+					context.Background(),
+					honeycombio.Provider("test").GRPCProvider,
+				)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				return upgradedSDKServer
+			},
 		}
 
-		muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
+		muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
 		if err != nil {
 			return nil, err
 		}
@@ -139,7 +164,7 @@ func testAccV2Client(t *testing.T) *v2client.Client {
 func TestAcc_Configuration(t *testing.T) {
 	t.Run("v1 and v2 clients", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: `
@@ -155,7 +180,7 @@ data "honeycombio_environments" "all" {}
 
 	t.Run("v1 client only", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					PreConfig: func() {
@@ -171,7 +196,7 @@ data "honeycombio_environments" "all" {}
 
 	t.Run("v2 client only", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					PreConfig: func() {
@@ -186,7 +211,7 @@ data "honeycombio_environments" "all" {}
 
 	t.Run("fails when only half of v2 configuration is set", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					PreConfig: func() {
@@ -203,7 +228,7 @@ data "honeycombio_environments" "all" {}
 
 	t.Run("fails when no clients configured", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					PreConfig: func() {
@@ -221,7 +246,7 @@ data "honeycombio_environments" "all" {}
 
 	t.Run("fails v1-only config using v2 resource", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					PreConfig: func() {
@@ -237,7 +262,7 @@ data "honeycombio_environments" "all" {}
 
 	t.Run("fails v2-only config using v1 resource", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					PreConfig: func() {

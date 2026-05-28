@@ -44,7 +44,7 @@ resource "honeycombio_query_annotation" "test" {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(config, dataset, dataset, firstName, "Test query annotation description"),
@@ -76,7 +76,7 @@ resource "honeycombio_query_annotation" "test" {
 	t.Run("empty description works", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -158,7 +158,7 @@ func TestAcc_HoneycombioQueryAnnotation_AllToUnset(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -224,7 +224,7 @@ resource "honeycombio_query_annotation" "test" {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: config,
@@ -268,7 +268,7 @@ resource "honeycombio_query_annotation" "test" {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: config,
@@ -337,7 +337,7 @@ resource "honeycombio_query_annotation" "test" {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 				Config:                   config,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("honeycombio_query_annotation.test", "id"),

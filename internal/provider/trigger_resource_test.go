@@ -25,7 +25,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 	t.Run("trigger resource with Query ID", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: testAccConfigBasicTriggerTest(dataset, name, "info"),
@@ -55,7 +55,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 	t.Run("trigger resource with Query JSON", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: testAccConfigBasicTriggerTest_QuerySpec(dataset, name, "info"),
@@ -87,7 +87,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: testAccConfigBasicTriggerTestWithWebhookRecip(dataset, name, rcptName, rcptURL, "info"),
@@ -148,7 +148,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 	t.Run("duplicate variable on custom webhook recipient", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config:      testAccConfigBasicTriggerTestWithWebhookRecipAndDuplicateVar(dataset, name),
@@ -161,7 +161,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 	t.Run("trigger resource with baseline_details", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				// create a trigger with baseline_details
 				{
@@ -197,7 +197,7 @@ func TestAcc_TriggerResource(t *testing.T) {
 	t.Run("trigger with baseline_details validates", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config:      testAccConfigBasicTriggerWithBaselineDetailsTest(dataset, name, true, true),
@@ -347,7 +347,7 @@ resource "honeycombio_trigger" "test" {
 	t.Run("trigger resource with tags", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: testAccConfigTriggerWithTags(dataset, name, map[string]string{
@@ -397,7 +397,7 @@ resource "honeycombio_trigger" "test" {
 	t.Run("trigger resource with invalid tags", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					// invalid tag key - uppercase letters
@@ -427,7 +427,7 @@ resource "honeycombio_trigger" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: testAccConfigEnvironmentWideTrigger(name),
@@ -499,7 +499,7 @@ func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
 				},
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+				ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 				Config:                   config,
 			},
 		},
@@ -542,7 +542,7 @@ func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigTriggerRecipientByID(dataset, name, testRecipients[0].ID, 3),
@@ -571,7 +571,7 @@ func TestAcc_TriggerResourceRecipientOrderingStable(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -688,7 +688,7 @@ func TestAcc_TriggerResourceEvaluationWindow(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -793,7 +793,7 @@ resource "honeycombio_trigger" "test" {
 	t.Run("handles dynamic evaluation schedule block", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -853,7 +853,7 @@ func TestAcc_TriggerResourcePagerDutyUnsetSeverity(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -920,7 +920,7 @@ func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigTriggerWithSlackRecipient(dataset, channel),
@@ -942,7 +942,7 @@ func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing
 func TestAcc_TriggerResourceValidatesQueryJSON(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -1191,7 +1191,7 @@ func TestAcc_TriggerResource_HavingScenarios(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -1272,7 +1272,7 @@ func TestAcc_TriggerResource_QueryJSONHandlesEquivQuerySpecs(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -1310,7 +1310,7 @@ func TestAcc_TriggerResource_autoInvestigate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigTriggerAutoInvestigate(dataset, name, true),
@@ -1388,7 +1388,7 @@ func TestAcc_TriggerResource_autoInvestigateNoDiffOnUpgrade(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigTriggerWithoutAutoInvestigate(dataset, name),
@@ -1987,7 +1987,7 @@ resource "honeycombio_trigger" "test" {
 func TestAcc_TriggerResourceValidatesFormulaQueryJSON(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				// more than 1 having clause
@@ -2171,7 +2171,7 @@ func TestAcc_TriggerResourceWithFormula(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigTriggerWithFormula(dataset, name),
@@ -2262,7 +2262,7 @@ func TestAcc_TriggerResourceWithMetrics(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigTriggerMetricsSimple(dataset, name),

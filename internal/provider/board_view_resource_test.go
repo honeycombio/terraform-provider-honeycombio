@@ -31,7 +31,7 @@ func TestAccHoneycombioBoardView(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testBoardViewConfigBasic(board.ID),
@@ -155,7 +155,7 @@ func TestAccHoneycombioBoardView_validation(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config:      testBoardViewConfigNoFilters(board.ID),
@@ -201,7 +201,7 @@ func TestAccHoneycombioBoardView_emptyStringInArrayFilter(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				// Test with empty strings in comma-separated list - should fail validation
@@ -308,7 +308,7 @@ func TestAccHoneycombioBoardView_boardIdRequiresReplace(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				// Create board view on board1
