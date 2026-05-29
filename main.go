@@ -31,17 +31,7 @@ func main() {
 	// as we've not fully upgraded to the framework server yet when we were using v5, so there might
 	// still be some risk of version incompatibilities.
 	providers := []func() tfprotov6.ProviderServer{
-		func() tfprotov6.ProviderServer {
-			upgradedFrameworkServer, err := tf5to6server.UpgradeServer(
-				context.Background(),
-				providerserver.NewProtocol5(provider.New(providerVersion)),
-			)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			return upgradedFrameworkServer
-		},
+		providerserver.NewProtocol6(provider.New(providerVersion)),
 		func() tfprotov6.ProviderServer {
 			upgradedSDKServer, err := tf5to6server.UpgradeServer(
 				context.Background(),

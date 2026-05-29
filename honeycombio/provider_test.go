@@ -39,17 +39,7 @@ var testAccProtoV6ProviderFactory = map[string]func() (tfprotov6.ProviderServer,
 	"honeycombio": func() (tfprotov6.ProviderServer, error) {
 		ctx := context.Background()
 		providers := []func() tfprotov6.ProviderServer{
-			func() tfprotov6.ProviderServer {
-				upgradedFrameworkServer, err := tf5to6server.UpgradeServer(
-					ctx,
-					providerserver.NewProtocol5(frameworkProvider.New("test")),
-				)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				return upgradedFrameworkServer
-			},
+			providerserver.NewProtocol6(frameworkProvider.New("test")),
 			func() tfprotov6.ProviderServer {
 				upgradedSDKServer, err := tf5to6server.UpgradeServer(
 					ctx,

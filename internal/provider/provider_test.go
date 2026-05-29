@@ -29,12 +29,7 @@ func init() {
 
 // used by tests which only use the Framework-based datasources or resources
 var testAccProtoV6ProviderFactory = map[string]func() (tfprotov6.ProviderServer, error){
-	"honeycombio": func() (tfprotov6.ProviderServer, error) {
-		return tf5to6server.UpgradeServer(
-			context.Background(),
-			providerserver.NewProtocol5(New("test")),
-		)
-	},
+	"honeycombio": providerserver.NewProtocol6WithError(New("test")),
 }
 
 // used by tests which use a mix of Framework and SDK-based datasources or resources
@@ -44,17 +39,7 @@ var testAccProtoV6MuxServerFactory = map[string]func() (tfprotov6.ProviderServer
 	"honeycombio": func() (tfprotov6.ProviderServer, error) {
 		ctx := context.Background()
 		providers := []func() tfprotov6.ProviderServer{
-			func() tfprotov6.ProviderServer {
-				upgradedFrameworkServer, err := tf5to6server.UpgradeServer(
-					context.Background(),
-					providerserver.NewProtocol5(New("test")),
-				)
-				if err != nil {
-					log.Fatal(err)
-				}
-
-				return upgradedFrameworkServer
-			},
+			providerserver.NewProtocol6(New("test")),
 			func() tfprotov6.ProviderServer {
 				upgradedSDKServer, err := tf5to6server.UpgradeServer(
 					context.Background(),
