@@ -762,7 +762,7 @@ func TestAcc_QuerySpecificationDataSource_stringcoercion(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
