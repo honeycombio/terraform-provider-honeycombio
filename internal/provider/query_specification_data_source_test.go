@@ -738,6 +738,59 @@ output "query_json" {
 	})
 }
 
+// Check that string ops cause integer-like string values to be treated
+// as strings instead of being converted to integers
+func TestAcc_QuerySpecificationDataSource_stringcoercion(t *testing.T) {
+	expected, err := test.MinifyJSON(`
+{
+  "calculations": [
+    {
+      "op": "COUNT"
+    }
+  ],
+  "filters": [
+    {
+      "column": "status_code",
+      "op": "starts-with",
+      "value": "4"
+    }
+  ],
+  "time_range": 7200,
+  "granularity": 0
+}`)
+	require.NoError(t, err)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  filter {
+    column = "status_code"
+    op     = "starts-with"
+    value  = "4"
+  }
+
+  granularity = 0
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.test.json
+}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("query_json", expected),
+				),
+			},
+		},
+	})
+}
+
 func TestAcc_QuerySpecificationDataSource_CompareTimeOffsetSecondsValid(t *testing.T) {
 	expected, err := test.MinifyJSON(`
 {

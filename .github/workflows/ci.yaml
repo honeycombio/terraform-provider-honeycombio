@@ -27,7 +27,7 @@ jobs:
         run: echo "lint-version=$(make lint-version)" >> "$GITHUB_OUTPUT"
 
       - name: Lint
-        uses: golangci/golangci-lint-action@v9.2.0
+        uses: golangci/golangci-lint-action@v9.2.1
         with:
           version: ${{ steps.versions.outputs.lint-version }}
 
@@ -103,7 +103,7 @@ jobs:
       - name: Notify if scheduled run fails
         id: slack-notify
         if: ${{ failure() && github.event_name == 'schedule' }}
-        uses: slackapi/slack-github-action@v3.0.1
+        uses: slackapi/slack-github-action@v3.0.2
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
@@ -197,7 +197,7 @@ jobs:
       - name: Notify if scheduled run fails
         id: slack-notify
         if: ${{ failure() && github.event_name == 'schedule' }}
-        uses: slackapi/slack-github-action@v3.0.1
+        uses: slackapi/slack-github-action@v3.0.2
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook

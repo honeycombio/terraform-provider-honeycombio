@@ -409,6 +409,18 @@ func (f FilterOp) IsArray() bool {
 	return f == FilterOpIn || f == FilterOpNotIn
 }
 
+// IsString returns true if the filter operation acts on strings.
+// String operations are "starts-with", "does-not-start-with", "ends-with",
+// "does-not-end-with", "contains", "does-not-contain"
+func (f FilterOp) IsString() bool {
+	return f == FilterOpStartsWith ||
+		f == FilterOpDoesNotStartWith ||
+		f == FilterOpEndsWith ||
+		f == FilterOpDoesNotEndWith ||
+		f == FilterOpContains ||
+		f == FilterOpDoesNotContain
+}
+
 // FilterCombination describes how the filters of a query should be combined.
 type FilterCombination string
 
