@@ -41,7 +41,7 @@ resource "honeycombio_marker" "hello" {
 }
 ```
 
-More advanced examples can be found in the [example directory](https://github.com/honeycombio/terraform-provider-honeycombio/tree/main/example).
+More advanced examples can be found in the [examples directory](https://github.com/honeycombio/terraform-provider-honeycombio/tree/main/examples).
 
 ## A note on "Datasets"
 
