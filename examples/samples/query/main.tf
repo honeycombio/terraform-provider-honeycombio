@@ -14,7 +14,7 @@ variable "dataset" {
 # Create a query specification with compare_time_offset_seconds
 data "honeycombio_query_specification" "comparison_query" {
   calculation {
-    op = "AVG"
+    op     = "AVG"
     column = "duration_ms"
   }
 

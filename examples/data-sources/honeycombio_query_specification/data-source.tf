@@ -18,7 +18,7 @@ data "honeycombio_query_specification" "example" {
   filter {
     column = "app.tenant"
     op     = "="
-    value  = "ThatSpecialTenant" 
+    value  = "ThatSpecialTenant"
   }
 
   filter {
@@ -30,12 +30,12 @@ data "honeycombio_query_specification" "example" {
   filter_combination = "AND"
 
   breakdowns = ["app.tenant"]
-    
+
   time_range = 28800 // in seconds, 8 hours
-  
+
   compare_time_offset = 86400 // in seconds, compare with data from 1 day ago
 }
 
 output "json_query" {
-    value = data.honeycombio_query_specification.example.json
+  value = data.honeycombio_query_specification.example.json
 }

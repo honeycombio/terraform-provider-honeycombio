@@ -21,8 +21,8 @@ resource "honeycombio_query" "test_query" {
 }
 
 resource "honeycombio_query_annotation" "test_annotation" {
-	dataset     = var.dataset
-	query_id    = honeycombio_query.test_query.id
-	name        = "My Cool Query"
-	description = "Describes my cool query (optional)"
+  dataset     = var.dataset
+  query_id    = honeycombio_query.test_query.id
+  name        = "My Cool Query"
+  description = "Describes my cool query (optional)"
 }

@@ -17,7 +17,7 @@ data "honeycombio_query_specification" "example" {
 }
 
 resource "honeycombio_trigger" "example" {
-  name        = "Requests are slower than usual"
+  name = "Requests are slower than usual"
 
   query_json = data.honeycombio_query_specification.example.json
   dataset    = var.dataset

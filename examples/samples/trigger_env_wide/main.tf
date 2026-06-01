@@ -13,7 +13,7 @@ data "honeycombio_query_specification" "query" {
   }
 
   time_range = 900 // in seconds, 15 minutes
-  
+
 }
 
 

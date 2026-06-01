@@ -10,5 +10,5 @@ resource "honeycombio_api_key" "prod_ingest" {
 }
 
 output "ingest_key" {
-  value = "${honeycomb_api_key.prod_ingest.key}"
+  value = honeycomb_api_key.prod_ingest.key
 }

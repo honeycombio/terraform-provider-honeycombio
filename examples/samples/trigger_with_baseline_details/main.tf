@@ -13,7 +13,7 @@ data "honeycombio_query_specification" "query" {
   }
 
   time_range = 900 // in seconds, 15 minutes
-  
+
 }
 
 variable "dataset" {
@@ -47,7 +47,7 @@ resource "honeycombio_trigger" "trigger" {
   }
 
   baseline_details {
-    type = "percentage"
+    type           = "percentage"
     offset_minutes = 1440
   }
 

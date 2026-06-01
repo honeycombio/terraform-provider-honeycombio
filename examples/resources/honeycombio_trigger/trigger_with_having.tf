@@ -13,21 +13,21 @@ data "honeycombio_query_specification" "query" {
   // be used for the threshold. To use a `having` to restrict the trigger's
   // threshold, omit the second (different) `calculation`.
   calculation {
-    op = "MAX"
+    op     = "MAX"
     column = "retries"
   }
 
   filter {
     column = "error.type"
-    op = "exists"
+    op     = "exists"
   }
 
   // Only returns results with at least one retry
   having {
     calculate_op = "MAX"
-    column = "retries"
-    op = ">"
-    value = 0
+    column       = "retries"
+    op           = ">"
+    value        = 0
   }
 
   time_range = 900 // in seconds, 15 minutes

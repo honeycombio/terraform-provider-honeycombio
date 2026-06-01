@@ -38,6 +38,7 @@ type apiKeyResource struct {
 	client *v2client.Client
 }
 
+// test
 func NewAPIKeyResource() resource.Resource {
 	return &apiKeyResource{}
 }

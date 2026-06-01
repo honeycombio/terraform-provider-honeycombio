@@ -19,7 +19,7 @@ variable "color" {
 }
 
 resource "honeycombio_marker_setting" "markerSetting" {
-  type  = var.type
-  color = var.color
+  type    = var.type
+  color   = var.color
   dataset = var.dataset
 }

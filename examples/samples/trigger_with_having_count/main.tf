@@ -25,8 +25,8 @@ data "honeycombio_query_specification" "query" {
   // "ok"
   having {
     calculate_op = "COUNT"
-    op = ">"
-    value = 100
+    op           = ">"
+    value        = 100
   }
 
   time_range = 900 // in seconds, 15 minutes

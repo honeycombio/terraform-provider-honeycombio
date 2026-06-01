@@ -9,7 +9,7 @@ data "honeycombio_slos" "all" {
 
 # only returns the SLOs starting with 'foo_'
 data "honeycombio_slos" "foo" {
-  dataset     = var.dataset
+  dataset = var.dataset
 
   detail_filter {
     name        = "name"

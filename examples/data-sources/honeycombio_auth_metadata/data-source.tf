@@ -6,7 +6,7 @@ output "team_name" {
 
 output "environment_slug" {
   value = data.honeycombio_auth_metadata.current.environment.slug
-} 
+}
 
 output "slo_management_access" {
   value = data.honeycombio_auth_metadata.current.api_key_access.slos
