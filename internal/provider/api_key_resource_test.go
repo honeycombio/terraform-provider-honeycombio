@@ -17,7 +17,7 @@ func TestAcc_APIKeyResource(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheckV2API(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: testAccConfigBasicAPIKeyTest("test key", "false", env.ID),
@@ -54,7 +54,7 @@ func TestAcc_APIKeyResource(t *testing.T) {
 	t.Run("default values", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheckV2API(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`

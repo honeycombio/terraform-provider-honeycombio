@@ -2,12 +2,14 @@ package honeycombio
 
 import (
 	"context"
+	"log"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
-	"github.com/hashicorp/terraform-plugin-mux/tf5muxserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-mux/tf5to6server"
+	"github.com/hashicorp/terraform-plugin-mux/tf6muxserver"
 	"github.com/joho/godotenv"
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
@@ -33,17 +35,25 @@ func testAccPreCheck(t *testing.T) func() {
 // used by tests which use a mix of Framework and SDK-based datasources or resources
 //
 // n.b. will continue to be used until the SDK-based provider is removed
-var testAccProtoV5ProviderFactory = map[string]func() (tfprotov5.ProviderServer, error){
-	"honeycombio": func() (tfprotov5.ProviderServer, error) {
+var testAccProtoV6ProviderFactory = map[string]func() (tfprotov6.ProviderServer, error){
+	"honeycombio": func() (tfprotov6.ProviderServer, error) {
 		ctx := context.Background()
-		providers := []func() tfprotov5.ProviderServer{
-			// modern terraform-plugin-framework provider
-			providerserver.NewProtocol5(frameworkProvider.New("test")),
-			// legacy terraform-plugin-sdk provider
-			Provider("test").GRPCProvider,
+		providers := []func() tfprotov6.ProviderServer{
+			providerserver.NewProtocol6(frameworkProvider.New("test")),
+			func() tfprotov6.ProviderServer {
+				upgradedSDKServer, err := tf5to6server.UpgradeServer(
+					ctx,
+					Provider("test").GRPCProvider,
+				)
+				if err != nil {
+					log.Fatal(err)
+				}
+
+				return upgradedSDKServer
+			},
 		}
 
-		muxServer, err := tf5muxserver.NewMuxServer(ctx, providers...)
+		muxServer, err := tf6muxserver.NewMuxServer(ctx, providers...)
 		if err != nil {
 			return nil, err
 		}

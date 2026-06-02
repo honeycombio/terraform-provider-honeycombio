@@ -36,7 +36,7 @@ func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			// Create - basic
@@ -99,7 +99,7 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			// Create - basic
@@ -143,7 +143,7 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasicWebhookRecipient(t *testing.T)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			// Create - basic
@@ -188,7 +188,7 @@ func TestAcc_BurnAlertResource_budgetRateBasic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			// Create - basic
@@ -233,7 +233,7 @@ func TestAcc_BurnAlertResource_budgetRateBasicWebhookRecipient(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			// Create - basic
@@ -277,7 +277,7 @@ func TestAcc_BurnAlertResource_budgetRateTrailingZeros(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			// Create - trailing zeros on budget_rate_decrease_percent
@@ -336,7 +336,7 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 				},
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+				ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 				Config:                   config,
 			},
 		},
@@ -348,7 +348,7 @@ func TestAcc_BurnAlertResource_validateDefault(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			{
@@ -376,7 +376,7 @@ func TestAcc_BurnAlertResource_validateExhaustionTime(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			{
@@ -411,7 +411,7 @@ func TestAcc_BurnAlertResource_validateBudgetRate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			{
@@ -456,7 +456,7 @@ func TestAcc_BurnAlertResource_validateUnknownOrVariableAttributesExhaustionTime
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			{
@@ -477,7 +477,7 @@ func TestAcc_BurnAlertResource_recreateOnNotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigBurnAlertExhaustionTime_basic(exhaustionMinutes, dataset, sloID, "info"),
@@ -519,7 +519,7 @@ func TestAcc_BurnAlertResource_HandlesRecipientChangedOutsideOfTerraform(t *test
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigBurnAlertWithSlackRecipient(dataset, sloID, channel),
@@ -544,7 +544,7 @@ func TestAcc_BurnAlertResource_HandlesDynamicRecipientBlock(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigBurnAlertWithDynamicRecipient(dataset, sloID),
@@ -576,7 +576,7 @@ resource "honeycombio_burn_alert" "test" {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: config,
@@ -861,7 +861,7 @@ func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			// Create - basic
@@ -972,7 +972,7 @@ func TestAcc_BurnAlertResource_autoInvestigate(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			{
@@ -1029,7 +1029,7 @@ func TestAcc_BurnAlertResource_autoInvestigateNoDiffOnUpgrade(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
 			{
