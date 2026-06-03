@@ -630,7 +630,7 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			false,
 		},
 		{
-			"Reordered calculated fields are not equivalent",
+			"Reordered calculated fields are equivalent",
 			client.QuerySpec{
 				CalculatedFields: []client.CalculatedFieldSpec{
 					{Name: "is_error", Expression: "GTE($status_code, 500)"},
@@ -643,7 +643,7 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 					{Name: "is_error", Expression: "GTE($status_code, 500)"},
 				},
 			},
-			false,
+			true,
 		},
 	}
 	for _, tt := range tests {

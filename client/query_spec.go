@@ -135,10 +135,8 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 		}
 	}
 
-	if !reflect.DeepEqual(qs.CalculatedFields, other.CalculatedFields) &&
-		// an empty CalculatedFields is equivalent to a nil CalculatedFields
-		((qs.CalculatedFields != nil || len(other.CalculatedFields) != 0) &&
-			(len(qs.CalculatedFields) != 0 || other.CalculatedFields != nil)) {
+	// the exact order of calculated fields does not matter, but their equivalence does
+	if !Equivalent(qs.CalculatedFields, other.CalculatedFields) {
 		return false
 	}
 
