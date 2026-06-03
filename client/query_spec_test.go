@@ -557,6 +557,94 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			},
 			true,
 		},
+		{
+			"Equivalent calculated fields",
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 500)"},
+				},
+			},
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 500)"},
+				},
+			},
+			true,
+		},
+		{
+			"Empty calculated fields equivalent to nil",
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{},
+			},
+			client.QuerySpec{
+				CalculatedFields: nil,
+			},
+			true,
+		},
+		{
+			"Added calculated field is not equivalent",
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 500)"},
+				},
+			},
+			client.QuerySpec{},
+			false,
+		},
+		{
+			"Removed calculated field is not equivalent",
+			client.QuerySpec{},
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 500)"},
+				},
+			},
+			false,
+		},
+		{
+			"Different calculated field expression is not equivalent",
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 500)"},
+				},
+			},
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 400)"},
+				},
+			},
+			false,
+		},
+		{
+			"Different calculated field name is not equivalent",
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 500)"},
+				},
+			},
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "error", Expression: "GTE($status_code, 500)"},
+				},
+			},
+			false,
+		},
+		{
+			"Reordered calculated fields are not equivalent",
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 500)"},
+					{Name: "is_slow", Expression: "GTE($duration_ms, 500)"},
+				},
+			},
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_slow", Expression: "GTE($duration_ms, 500)"},
+					{Name: "is_error", Expression: "GTE($status_code, 500)"},
+				},
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

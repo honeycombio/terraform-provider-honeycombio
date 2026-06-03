@@ -135,6 +135,13 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 		}
 	}
 
+	if !reflect.DeepEqual(qs.CalculatedFields, other.CalculatedFields) &&
+		// an empty CalculatedFields is equivalent to a nil CalculatedFields
+		((qs.CalculatedFields != nil || len(other.CalculatedFields) != 0) &&
+			(len(qs.CalculatedFields) != 0 || other.CalculatedFields != nil)) {
+		return false
+	}
+
 	// The order of Formulas is important for visualization rendering
 	if !reflect.DeepEqual(qs.Formulas, other.Formulas) &&
 		// an empty Formulas is equivalent to a nil Formulas
