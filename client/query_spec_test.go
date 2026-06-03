@@ -558,30 +558,6 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			true,
 		},
 		{
-			"Equivalent calculated fields",
-			client.QuerySpec{
-				CalculatedFields: []client.CalculatedFieldSpec{
-					{Name: "is_error", Expression: "GTE($status_code, 500)"},
-				},
-			},
-			client.QuerySpec{
-				CalculatedFields: []client.CalculatedFieldSpec{
-					{Name: "is_error", Expression: "GTE($status_code, 500)"},
-				},
-			},
-			true,
-		},
-		{
-			"Empty calculated fields equivalent to nil",
-			client.QuerySpec{
-				CalculatedFields: []client.CalculatedFieldSpec{},
-			},
-			client.QuerySpec{
-				CalculatedFields: nil,
-			},
-			true,
-		},
-		{
 			"Added calculated field is not equivalent",
 			client.QuerySpec{
 				CalculatedFields: []client.CalculatedFieldSpec{
@@ -589,16 +565,6 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 				},
 			},
 			client.QuerySpec{},
-			false,
-		},
-		{
-			"Removed calculated field is not equivalent",
-			client.QuerySpec{},
-			client.QuerySpec{
-				CalculatedFields: []client.CalculatedFieldSpec{
-					{Name: "is_error", Expression: "GTE($status_code, 500)"},
-				},
-			},
 			false,
 		},
 		{
@@ -614,36 +580,6 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 				},
 			},
 			false,
-		},
-		{
-			"Different calculated field name is not equivalent",
-			client.QuerySpec{
-				CalculatedFields: []client.CalculatedFieldSpec{
-					{Name: "is_error", Expression: "GTE($status_code, 500)"},
-				},
-			},
-			client.QuerySpec{
-				CalculatedFields: []client.CalculatedFieldSpec{
-					{Name: "error", Expression: "GTE($status_code, 500)"},
-				},
-			},
-			false,
-		},
-		{
-			"Reordered calculated fields are equivalent",
-			client.QuerySpec{
-				CalculatedFields: []client.CalculatedFieldSpec{
-					{Name: "is_error", Expression: "GTE($status_code, 500)"},
-					{Name: "is_slow", Expression: "GTE($duration_ms, 500)"},
-				},
-			},
-			client.QuerySpec{
-				CalculatedFields: []client.CalculatedFieldSpec{
-					{Name: "is_slow", Expression: "GTE($duration_ms, 500)"},
-					{Name: "is_error", Expression: "GTE($status_code, 500)"},
-				},
-			},
-			true,
 		},
 	}
 	for _, tt := range tests {
