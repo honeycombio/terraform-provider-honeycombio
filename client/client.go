@@ -139,7 +139,7 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 		HTTPClient:   cfg.HTTPClient,
 		RetryWaitMin: 200 * time.Millisecond,
 		RetryWaitMax: time.Minute,
-		RetryMax:     10,
+		RetryMax:     30,
 	}
 
 	if config.Debug {
