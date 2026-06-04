@@ -2256,6 +2256,90 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, name)
 }
 
+func TestAcc_TriggerResourceWithCalculatedField(t *testing.T) {
+	dataset := testAccDataset()
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerWithCalculatedField(dataset, name, "IF(GT($duration_ms, 500), 1, 0)"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttrWith("honeycombio_trigger.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if len(q.CalculatedFields) != 1 {
+							return fmt.Errorf("expected 1 calculated field, got %d", len(q.CalculatedFields))
+						}
+						if q.CalculatedFields[0].Expression != "IF(GT($duration_ms, 500), 1, 0)" {
+							return fmt.Errorf("unexpected calculated field expression: %q", q.CalculatedFields[0].Expression)
+						}
+						return nil
+					})),
+				),
+			},
+			{
+				// update only the calculated_field expression
+				Config: testAccConfigTriggerWithCalculatedField(dataset, name, "IF(GT($duration_ms, 1000), 1, 0)"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttrWith("honeycombio_trigger.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+						if len(q.CalculatedFields) != 1 {
+							return fmt.Errorf("expected 1 calculated field, got %d", len(q.CalculatedFields))
+						}
+						if q.CalculatedFields[0].Expression != "IF(GT($duration_ms, 1000), 1, 0)" {
+							return fmt.Errorf("calculated field expression was not updated, got %q", q.CalculatedFields[0].Expression)
+						}
+						return nil
+					})),
+				),
+			},
+			{
+				ResourceName:        "honeycombio_trigger.test",
+				ImportStateIdPrefix: fmt.Sprintf("%v/", dataset),
+				ImportState:         true,
+			},
+		},
+	})
+}
+
+func testAccConfigTriggerWithCalculatedField(dataset, name, expression string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculated_field {
+    name       = "is_slow"
+    expression = %[3]q
+  }
+
+  calculation {
+    op     = "SUM"
+    column = "is_slow"
+  }
+
+  time_range = 900
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  frequency = 900
+
+  threshold {
+    op    = ">"
+    value = 0
+  }
+
+  recipient {
+    type   = "marker"
+    target = "Calculated field trigger fired"
+  }
+}`, dataset, name, expression)
+}
+
 func TestAcc_TriggerResourceWithMetrics(t *testing.T) {
 	dataset := testAccMetricsDataset(t)
 	name := test.RandomStringWithPrefix("test.", 20)

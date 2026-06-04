@@ -557,6 +557,30 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			},
 			true,
 		},
+		{
+			"Added calculated field is not equivalent",
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 500)"},
+				},
+			},
+			client.QuerySpec{},
+			false,
+		},
+		{
+			"Different calculated field expression is not equivalent",
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 500)"},
+				},
+			},
+			client.QuerySpec{
+				CalculatedFields: []client.CalculatedFieldSpec{
+					{Name: "is_error", Expression: "GTE($status_code, 400)"},
+				},
+			},
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
