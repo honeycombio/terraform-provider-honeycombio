@@ -97,6 +97,19 @@ The key pair can be set with the `api_key_id` and `api_key_secret` arguments, or
 
 ~> **Note** Hard-coding API keys in any Terraform configuration is not recommended. Consider using the one of the environment variable options.
 
+## Rate Limiting
+
+The Honeycomb API enforces per-team rate limits, scoped per-resource and per-action (for example, reads of triggers are limited independently of reads of SLOs).
+Each limit is a fixed budget of requests per minute that is replenished at the start of each minute.
+
+The provider paces itself to stay within these limits automatically — no configuration is required.
+It reads the rate limit reported on each API response and, when a resource's budget for the current window is exhausted, briefly pauses requests to that resource until the window resets, then resumes.
+Workloads that fit within the limit are unaffected; large plans, applies, or refreshes are smoothed out rather than failing with `HTTP 429` errors.
+
+Because the limits are enforced **per-team**, all Environments managed under the same team share a budget.
+If you run several `terraform` operations against the same team concurrently, they share that budget and may still encounter rate limiting; reducing `-parallelism` or the number of concurrent runs can help.
+If you consistently hit rate limits, contact Honeycomb Support to discuss raising your team's limits.
+
 ## Argument Reference
 
 Arguments accepted by this provider include:

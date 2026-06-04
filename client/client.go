@@ -132,6 +132,11 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 		headers: make(http.Header),
 	}
 
+	// Proactively pace requests to stay within the API's advertised rate
+	// limits, falling back to the reactive backoff below for anything the
+	// gate cannot foresee.
+	cfg.HTTPClient.Transport = limits.NewRateLimitingTransport(cfg.HTTPClient.Transport)
+
 	client.httpClient = &retryablehttp.Client{
 		Backoff:      limits.RetryHTTPBackoff,
 		CheckRetry:   limits.RetryHTTPCheck,

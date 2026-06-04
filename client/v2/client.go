@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/jsonapi"
 
@@ -116,11 +117,20 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 			"User-Agent":    {config.UserAgent},
 		},
 	}
+	// Proactively pace requests to stay within the API's advertised rate
+	// limits, falling back to the reactive backoff below for anything the
+	// gate cannot foresee.
+	httpClient := config.HTTPClient
+	if httpClient == nil {
+		httpClient = cleanhttp.DefaultPooledClient()
+	}
+	httpClient.Transport = limits.NewRateLimitingTransport(httpClient.Transport)
+
 	client.http = &retryablehttp.Client{
 		Backoff:      limits.RetryHTTPBackoff,
 		CheckRetry:   limits.RetryHTTPCheck,
 		ErrorHandler: retryablehttp.PassthroughErrorHandler,
-		HTTPClient:   config.HTTPClient,
+		HTTPClient:   httpClient,
 		RetryWaitMin: 200 * time.Millisecond,
 		RetryWaitMax: time.Minute,
 		RetryMax:     10,
