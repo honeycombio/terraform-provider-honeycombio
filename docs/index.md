@@ -100,10 +100,10 @@ The key pair can be set with the `api_key_id` and `api_key_secret` arguments, or
 ## Rate Limiting
 
 The Honeycomb API enforces per-team rate limits, scoped per-resource and per-action (for example, reads of triggers are limited independently of reads of SLOs).
-Each limit is a fixed budget of requests per minute that is replenished at the start of each minute.
+Each limit is a fixed budget of requests per window — one minute — refilled in full when the window resets.
 
 The provider paces itself to stay within these limits automatically — no configuration is required.
-It reads the rate limit reported on each API response and, when a resource's budget for the current window is exhausted, pauses requests to that resource until the window resets, then resumes.
+It reads the rate limit headers returned on each API response, and when a resource's budget for the current window is exhausted it pauses requests to that resource until the window resets, then resumes.
 Workloads that fit within the limit are unaffected.
 
 If a request is rate limited anyway, the provider treats the `HTTP 429` as "try again when the window resets" rather than as a failure: it waits out the window and replays the request, up to `rate_limit_retries` times (default `10`).
