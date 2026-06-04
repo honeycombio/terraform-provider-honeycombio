@@ -163,7 +163,7 @@ func (s *fakeFixedWindow) RoundTrip(req *http.Request) (*http.Response, error) {
 // newTestTransport wraps base in a RateLimitingTransport driven by a virtual
 // clock that only advances when the gate sleeps, making pacing deterministic.
 func newTestTransport(base http.RoundTripper, now *time.Time) *RateLimitingTransport {
-	tr := NewRateLimitingTransport(base)
+	tr := NewRateLimitingTransport(base, DefaultRateLimitRetries)
 	tr.clock = func() time.Time { return *now }
 	tr.sleep = func(_ context.Context, d time.Duration) error {
 		*now = now.Add(d)
@@ -256,7 +256,7 @@ func TestRateLimitingTransport_ContextCancelledWhileWaiting(t *testing.T) {
 	now := start
 
 	srv := &fakeFixedWindow{limit: 1, window: time.Minute, clock: func() time.Time { return now }}
-	tr := NewRateLimitingTransport(srv)
+	tr := NewRateLimitingTransport(srv, DefaultRateLimitRetries)
 	tr.clock = func() time.Time { return now }
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -277,4 +277,70 @@ func TestRateLimitingTransport_ContextCancelledWhileWaiting(t *testing.T) {
 	require.NoError(t, err)
 	_, err = tr.RoundTrip(req2)
 	assert.ErrorIs(t, err, context.Canceled)
+}
+
+// roundTripFunc adapts a function to an http.RoundTripper.
+type roundTripFunc func(*http.Request) (*http.Response, error)
+
+func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { return f(r) }
+
+func TestRateLimitingTransport_Absorbs429(t *testing.T) {
+	t.Parallel()
+
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	now := start
+
+	// First call is rate limited; the retry succeeds.
+	calls := 0
+	base := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		calls++
+		h := make(http.Header)
+		h.Set(HeaderRateLimitPolicy, "120;w=60")
+		if calls == 1 {
+			h.Set(HeaderRateLimit, "limit=120, remaining=0, reset=30")
+			return &http.Response{StatusCode: http.StatusTooManyRequests, Header: h, Body: http.NoBody, Request: r}, nil
+		}
+		h.Set(HeaderRateLimit, "limit=120, remaining=119, reset=60")
+		return &http.Response{StatusCode: http.StatusOK, Header: h, Body: http.NoBody, Request: r}, nil
+	})
+
+	tr := newTestTransport(base, &now)
+
+	req, err := http.NewRequest(http.MethodGet, "https://api.honeycomb.io/1/triggers/x", nil)
+	require.NoError(t, err)
+	resp, err := tr.RoundTrip(req)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "the 429 should be absorbed and the request retried")
+	assert.Equal(t, 2, calls)
+	assert.GreaterOrEqual(t, now.Sub(start), 30*time.Second, "should have waited out the window before retrying")
+}
+
+func TestRateLimitingTransport_AbsorbRespectsMax(t *testing.T) {
+	t.Parallel()
+
+	start := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	now := start
+
+	// Always rate limited: the transport should give up after maxRetries and
+	// surface the 429 rather than looping forever.
+	calls := 0
+	base := roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		calls++
+		h := make(http.Header)
+		h.Set(HeaderRateLimitPolicy, "120;w=60")
+		h.Set(HeaderRateLimit, "limit=120, remaining=0, reset=1")
+		return &http.Response{StatusCode: http.StatusTooManyRequests, Header: h, Body: http.NoBody, Request: r}, nil
+	})
+
+	tr := newTestTransport(base, &now)
+	tr.maxRetries = 2
+
+	req, err := http.NewRequest(http.MethodGet, "https://api.honeycomb.io/1/triggers/x", nil)
+	require.NoError(t, err)
+	resp, err := tr.RoundTrip(req)
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusTooManyRequests, resp.StatusCode, "after maxRetries the 429 should surface")
+	assert.Equal(t, 3, calls, "1 initial attempt + 2 retries")
 }

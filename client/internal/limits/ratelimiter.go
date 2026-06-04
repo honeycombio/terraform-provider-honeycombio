@@ -1,8 +1,10 @@
 package limits
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"net/http"
 	"strings"
 	"sync"
@@ -31,6 +33,13 @@ const (
 	// true boundary can be up to a second later than reported; padding avoids
 	// waking early and immediately drawing a 429.
 	resetPadding = time.Second
+
+	// DefaultRateLimitRetries is the default number of times a rate-limited
+	// (HTTP 429) request is replayed — waiting out the window each time —
+	// before the 429 is surfaced. It matches the prior reactive retry budget so
+	// the default behaviour is unchanged; raise it (via the provider's
+	// rate_limit_retries) to ride out more contention without failing.
+	DefaultRateLimitRetries = 10
 )
 
 // RateLimitingTransport is an http.RoundTripper that proactively keeps the
@@ -51,14 +60,20 @@ const (
 // large plan, apply, or refresh from a burst of HTTP 429s and retry-backoff
 // into smooth, predictable throughput.
 //
-// It complements rather than replaces the reactive RetryHTTPBackoff: the gate
-// prevents the 429s it can foresee, and the backoff remains the safety net for
-// the first request to a bucket (before any limit is known) and for budget
-// shared with other clients.
+// The gate prevents the 429s it can foresee. For those it cannot — the first
+// request to a bucket before any limit is known, or budget shared with other
+// concurrent clients — the transport treats a 429 not as a failure but as the
+// server saying "come back when the window resets": it waits out the window and
+// replays the request, up to maxRetries times. Because a rate-limited request
+// is retried rather than failed, contention slows a run down instead of
+// breaking it. maxRetries bounds this so a pathologically starved request still
+// eventually surfaces the 429 (real, non-rate-limit errors and 5xx remain the
+// job of the reactive RetryHTTPBackoff).
 type RateLimitingTransport struct {
-	base  http.RoundTripper
-	clock func() time.Time
-	sleep func(context.Context, time.Duration) error
+	base       http.RoundTripper
+	clock      func() time.Time
+	sleep      func(context.Context, time.Duration) error
+	maxRetries int
 
 	mu      sync.Mutex
 	buckets map[string]*bucket
@@ -77,35 +92,71 @@ type bucket struct {
 }
 
 // NewRateLimitingTransport wraps base with proactive client-side rate limiting.
-// If base is nil, http.DefaultTransport is used.
-func NewRateLimitingTransport(base http.RoundTripper) *RateLimitingTransport {
+// If base is nil, http.DefaultTransport is used. maxRetries bounds how many
+// times a 429'd request is replayed (waiting out the window each time) before
+// the 429 is surfaced; values <= 0 fall back to DefaultRateLimitRetries.
+func NewRateLimitingTransport(base http.RoundTripper, maxRetries int) *RateLimitingTransport {
 	if base == nil {
 		base = http.DefaultTransport
 	}
+	if maxRetries <= 0 {
+		maxRetries = DefaultRateLimitRetries
+	}
 	return &RateLimitingTransport{
-		base:    base,
-		clock:   time.Now,
-		sleep:   sleepFor,
-		buckets: make(map[string]*bucket),
+		base:       base,
+		clock:      time.Now,
+		sleep:      sleepFor,
+		maxRetries: maxRetries,
+		buckets:    make(map[string]*bucket),
 	}
 }
 
-// RoundTrip waits until the bucket for this request has budget, performs the
-// request, and updates the bucket from the response's rate limit headers.
+// RoundTrip paces the request against its bucket, performs it, and updates the
+// bucket from the response headers. A 429 is absorbed — the window is waited
+// out and the request replayed — up to maxRetries times before being surfaced.
 func (t *RateLimitingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	b := t.bucketFor(bucketKey(req.Method, req.URL.Path))
 
-	if err := t.acquire(req.Context(), b); err != nil {
-		return nil, err
+	// Buffer the body so the request can be replayed across rate-limit waits.
+	// Request bodies here are small JSON payloads.
+	var body []byte
+	if req.Body != nil && req.Body != http.NoBody {
+		var err error
+		if body, err = io.ReadAll(req.Body); err != nil {
+			_ = req.Body.Close()
+			return nil, err
+		}
+		_ = req.Body.Close()
 	}
-
-	resp, err := t.base.RoundTrip(req)
-	if err != nil {
-		return resp, err
+	rewind := func() {
+		if body != nil {
+			req.Body = io.NopCloser(bytes.NewReader(body))
+		}
 	}
+	rewind()
 
-	b.observe(resp.Header, t.clock())
-	return resp, nil
+	for attempt := 0; ; attempt++ {
+		if err := t.acquire(req.Context(), b); err != nil {
+			return nil, err
+		}
+
+		resp, err := t.base.RoundTrip(req)
+		if err != nil {
+			return resp, err
+		}
+		b.observe(resp.Header, t.clock())
+
+		if resp.StatusCode != http.StatusTooManyRequests || attempt >= t.maxRetries {
+			return resp, nil
+		}
+
+		// Absorb the 429: make sure the bucket will block until the window
+		// resets (observe has normally recorded it; ensureBlocked is a guard for
+		// a 429 that arrives without usable headers), then replay the request.
+		b.ensureBlocked(resp.Header, t.clock())
+		drainClose(resp.Body)
+		rewind()
+	}
 }
 
 func (t *RateLimitingTransport) bucketFor(key string) *bucket {
@@ -187,6 +238,35 @@ func (b *bucket) observe(h http.Header, now time.Time) {
 	b.mu.Unlock()
 }
 
+// ensureBlocked guarantees the bucket will make the next acquire wait, so a 429
+// is never replayed in a hot loop. Normally observe has already recorded a
+// future reset from the RateLimit header; this only acts when a 429 arrived
+// without usable headers, falling back to the Retry-After value or one window.
+func (b *bucket) ensureBlocked(h http.Header, now time.Time) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.known && b.remaining <= 0 && b.resetAt.After(now) {
+		return
+	}
+
+	wait := defaultWindow
+	if ra := h.Get(HeaderRetryAfter); ra != "" {
+		if when, err := time.Parse(http.TimeFormat, ra); err == nil {
+			if d := when.Sub(now); d > 0 {
+				wait = d
+			}
+		}
+	}
+
+	b.known = true
+	b.remaining = 0
+	if b.window == 0 {
+		b.window = defaultWindow
+	}
+	b.resetAt = now.Add(wait)
+}
+
 // bucketKey derives a rate limit bucket from the request method and path.
 //
 // Honeycomb scopes its limits per-resource, so the API version and resource
@@ -260,5 +340,14 @@ func sleepFor(ctx context.Context, d time.Duration) error {
 		return ctx.Err()
 	case <-timer.C:
 		return nil
+	}
+}
+
+// drainClose drains and closes a response body so its connection can be reused
+// before the request is replayed.
+func drainClose(rc io.ReadCloser) {
+	if rc != nil {
+		_, _ = io.Copy(io.Discard, rc)
+		_ = rc.Close()
 	}
 }
