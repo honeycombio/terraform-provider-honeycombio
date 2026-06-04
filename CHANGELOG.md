@@ -1,3 +1,26 @@
+# 0.50.0 (June 4, 2026)
+
+## Notes
+
+- **The minimum supported Terraform version is now 1.0.** This release upgrades the
+  provider to Terraform Plugin Protocol V6. Existing configurations require no changes,
+  but Terraform versions prior to 1.0 are no longer supported. (#861)
+
+## Enhancements
+
+- feat: increase maximum retry attempts (#866)
+
+## Bugfixes
+
+- fix: detect calculated_fields changes when diffing trigger/query query_json (#864)
+- fix: always treat query filter values as strings for string ops (#854)
+
+## Housekeeping
+
+- maint: Update the provider proto version to V6 (#861)
+- docs: fix broken link to examples directory (#855)
+- maint(deps): bump golang.org/x/net from 0.53.0 to 0.55.0 (#858)
+
 # 0.49.0 (May 1, 2026)
 
 ## Enhancements
