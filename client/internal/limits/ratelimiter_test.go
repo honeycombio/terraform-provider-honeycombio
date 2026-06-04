@@ -3,8 +3,10 @@ package limits
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -343,4 +345,168 @@ func TestRateLimitingTransport_AbsorbRespectsMax(t *testing.T) {
 
 	assert.Equal(t, http.StatusTooManyRequests, resp.StatusCode, "after maxRetries the 429 should surface")
 	assert.Equal(t, 3, calls, "1 initial attempt + 2 retries")
+}
+
+// reorderingTransport delays each response by a small random amount *after* the
+// inner transport has produced it. The fake server stamps each response's
+// "remaining" count at processing time, so delaying delivery shuffles the order
+// in which the gate observes those counts relative to the order they were
+// produced. That reproduces the real-world condition — stale, out-of-order
+// rate limit observations — that stresses the gate's bookkeeping under
+// concurrency, rather than relying on incidental goroutine scheduling.
+type reorderingTransport struct {
+	inner http.RoundTripper
+	max   time.Duration
+}
+
+func (r *reorderingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	resp, err := r.inner.RoundTrip(req)
+	if err == nil && r.max > 0 {
+		//nolint:gosec // non-cryptographic jitter is fine for a test
+		time.Sleep(time.Duration(rand.Int63n(int64(r.max))))
+	}
+	return resp, err
+}
+
+// scaledClock reports a simulated time that advances at a fixed multiple of
+// real time. It lets the test use a realistic minute-long window — so the
+// integer-second RateLimit/reset headers stay meaningful, exactly as in
+// production — while the whole test still completes in milliseconds. It is safe
+// for concurrent use: Now derives purely from the (immutable) real start time,
+// with no shared mutable state.
+type scaledClock struct {
+	realStart time.Time
+	simStart  time.Time
+	scale     int64 // simulated nanoseconds per real nanosecond
+}
+
+func newScaledClock(scale int64) *scaledClock {
+	return &scaledClock{
+		realStart: time.Now(),
+		simStart:  time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC),
+		scale:     scale,
+	}
+}
+
+func (c *scaledClock) Now() time.Time {
+	return c.simStart.Add(time.Since(c.realStart) * time.Duration(c.scale))
+}
+
+// sleep blocks for the real-time equivalent of a simulated duration.
+func (c *scaledClock) sleep(ctx context.Context, sim time.Duration) error {
+	return sleepFor(ctx, sim/time.Duration(c.scale))
+}
+
+// TestRateLimitingTransport_ConcurrentLoad drives the gate the way Terraform
+// does: many goroutines hammering a single bucket at once (mirroring
+// -parallelism) with out-of-order rate limit observations.
+//
+// Under concurrency the gate's view is approximate, so the server will reject
+// some requests — that is expected and acceptable. What this test guarantees is
+// that those 429s are absorbed and replayed, so no job fails. (That the gate
+// *prevents* 429s in the first place is shown by
+// TestRateLimitingTransport_GateAvoidsBurstRejections.)
+func TestRateLimitingTransport_ConcurrentLoad(t *testing.T) {
+	t.Parallel()
+
+	const (
+		limit   = 30          // per-window server budget
+		window  = time.Minute // realistic window; integer-second headers stay meaningful
+		workers = 10          // < limit, mirrors Terraform parallelism below the budget
+		jobs    = 150         // > limit, forces pacing across several windows
+	)
+
+	clk := newScaledClock(1000) // 1ms real == 1s simulated: a 60s window elapses in 60ms
+	srv := &fakeFixedWindow{limit: limit, window: window, clock: clk.Now}
+	base := &reorderingTransport{inner: srv, max: 200 * time.Microsecond}
+	tr := NewRateLimitingTransport(base, DefaultRateLimitRetries)
+	tr.clock = clk.Now
+	tr.sleep = clk.sleep
+
+	work := make(chan int, jobs)
+	for i := range jobs {
+		work <- i
+	}
+	close(work)
+
+	var wg sync.WaitGroup
+	var got200, got429 int64
+	for range workers {
+		wg.Go(func() {
+			for range work {
+				req, err := http.NewRequest(http.MethodGet, "https://api.honeycomb.io/1/triggers/__all__", nil)
+				if err != nil {
+					t.Errorf("building request: %v", err)
+					return
+				}
+				resp, err := tr.RoundTrip(req)
+				if err != nil {
+					t.Errorf("RoundTrip: %v", err)
+					return
+				}
+				switch resp.StatusCode {
+				case http.StatusOK:
+					atomic.AddInt64(&got200, 1)
+				case http.StatusTooManyRequests:
+					atomic.AddInt64(&got429, 1)
+				}
+			}
+		})
+	}
+	wg.Wait()
+
+	require.Equal(t, int64(jobs), got200+got429, "every job should produce a response")
+	assert.Zerof(t, got429,
+		"client saw %d unrecovered HTTP 429(s): a job failed under concurrency instead of being retried", got429)
+
+	// Server-side rejections are expected here and are not a failure: they were
+	// absorbed and replayed. Logged for visibility into how much the gate
+	// over-issued under this load.
+	srv.mu.Lock()
+	rejected := srv.rejected
+	srv.mu.Unlock()
+	t.Logf("server rejected %d/%d request(s) under concurrency; all were absorbed", rejected, jobs)
+}
+
+// TestRateLimitingTransport_GateAvoidsBurstRejections shows the gate doing its
+// job. Given a burst that oversubscribes a window's budget, the gate paces the
+// requests across windows so the server rejects none — whereas the same burst
+// sent without the gate piles into a single window and most are rejected. This
+// is the proactive value the gate adds on top of the (reactive) 429 absorb.
+func TestRateLimitingTransport_GateAvoidsBurstRejections(t *testing.T) {
+	t.Parallel()
+
+	const (
+		limit  = 20
+		window = time.Minute
+		jobs   = 100
+	)
+
+	sendAll := func(rt http.RoundTripper) {
+		for range jobs {
+			req, err := http.NewRequest(http.MethodGet, "https://api.honeycomb.io/1/triggers/__all__", nil)
+			require.NoError(t, err)
+			resp, err := rt.RoundTrip(req)
+			require.NoError(t, err)
+			_ = resp.Body.Close()
+		}
+	}
+
+	// Without the gate: a fast burst with no pacing. Time is frozen, modelling
+	// every request landing within a single window — so only one window's budget
+	// succeeds and the rest are rejected.
+	frozen := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	naive := &fakeFixedWindow{limit: limit, window: window, clock: func() time.Time { return frozen }}
+	sendAll(naive)
+
+	// With the gate: the same load, paced. A virtual clock advances only when the
+	// gate sleeps, so the burst is spread across windows and nothing is rejected.
+	now := frozen
+	gated := &fakeFixedWindow{limit: limit, window: window, clock: func() time.Time { return now }}
+	sendAll(newTestTransport(gated, &now))
+
+	assert.Equal(t, jobs-limit, naive.rejected,
+		"without the gate, every request beyond the first window's budget is rejected")
+	assert.Zero(t, gated.rejected,
+		"with the gate, the burst is paced across windows and the server rejects nothing")
 }

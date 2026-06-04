@@ -210,10 +210,13 @@ func (t *RateLimitingTransport) acquire(ctx context.Context, b *bucket) error {
 // observe updates the bucket from a response's rate limit headers. Responses
 // without usable headers leave the bucket unchanged.
 //
-// The server's remaining count is authoritative and overwrites our local
-// estimate. Requests still in flight when this response was produced are not
-// yet reflected in it, so the estimate can run briefly optimistic under high
-// concurrency; the reactive backoff absorbs the occasional resulting 429.
+// The server's reported remaining count is taken as the latest truth. Under
+// concurrency, responses arrive out of order and several requests are in flight
+// at once, so the gate's view is necessarily approximate and it can admit a
+// little more than a window strictly allows. That is fine by design: the
+// resulting 429s are absorbed (see RoundTrip), so over-issuing costs some extra
+// waiting, never a failure. The gate keeps the common case smooth; it is not a
+// perfect distributed counter.
 func (b *bucket) observe(h http.Header, now time.Time) {
 	v := h.Get(HeaderRateLimit)
 	if v == "" {
