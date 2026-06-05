@@ -31,12 +31,13 @@ output "ingest_key" {
 
 - `environment_id` (String) The Environment ID the API key is scoped to.
 - `name` (String) The name of the API key.
-- `type` (String) The type of API key. Currently only `ingest` is supported.
+- `type` (String) The type of API key. Currently only `ingest` and `configuration` is supported.
 
 ### Optional
 
 - `disabled` (Boolean) Whether the API key is disabled. Defaults to `false`.
 - `permissions` (Block List) A configuration block setting what actions the API key can perform. (see [below for nested schema](#nestedblock--permissions))
+- `visible_to_members` (Boolean) Whether the key can be viewed by members and read-only users, or only owners.
 
 ### Read-Only
 
@@ -49,7 +50,17 @@ output "ingest_key" {
 
 Optional:
 
-- `create_datasets` (Boolean) Allow this key to create missing datasets when sending telemetry. Defaults to `false`.
+- `create_datasets` (Boolean) Allow this ingest or configuration key to create missing datasets when sending telemetry. Defaults to `false`.
+- `manage_markers` (Boolean) Allow this configuration key to manage Markers. Defaults to `false`.
+- `manage_private_boards` (Boolean) Allow this configuration key to manage public boards. Defaults to `false`.
+- `manage_public_boards` (Boolean) Allow this configuration key to manage public boards. Defaults to `false`.
+- `manage_queries` (Boolean) Allow this configuration key to manage queries and columns. Defaults to `false`.
+- `manage_recipients` (Boolean) Allow this configuration key to manage Recipients. Defaults to `false`.
+- `manage_slos` (Boolean) Allow this configuration key to manage SLOs. Defaults to `false`.
+- `manage_triggers` (Boolean) Allow this configuration key to manage Triggers. Defaults to `false`.
+- `read_service_maps` (Boolean) Allow this configuration key to read service maps. This feature is only for enterprise users. Defaults to `false`.
+- `run_queries` (Boolean) Allow this configuration key run queries. Defaults to `false`.
+- `send_events` (Boolean) Allow this configuration key to send events to Honeycomb. Defaults to `false`.
 
 ## Import
 
