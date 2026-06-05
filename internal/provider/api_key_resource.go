@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -21,6 +23,7 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
@@ -82,9 +85,9 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 			},
 			"type": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "The type of API key. Currently only `ingest` is supported.",
+				MarkdownDescription: "The type of API key. Currently only `ingest` and `configuration` is supported.",
 				Validators: []validator.String{
-					stringvalidator.OneOf("ingest"),
+					stringvalidator.OneOf("ingest", "configuration"),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -101,6 +104,12 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				Optional:            true,
 				Computed:            true,
 				MarkdownDescription: "Whether the API key is disabled. Defaults to `false`.",
+				Default:             booldefault.StaticBool(false),
+			},
+			"visible_to_members": schema.BoolAttribute{
+				Optional:            true,
+				Computed:            true,
+				MarkdownDescription: "Whether the key can be viewed by members and read-only users, or only owners.",
 				Default:             booldefault.StaticBool(false),
 			},
 			"key": schema.StringAttribute{
@@ -129,13 +138,169 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				},
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
+						"send_events": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this configuration key to send events to Honeycomb. Defaults to `false`.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.RequiresReplace(),
+							},
+							Validators: []validator.Bool{
+								boolvalidator.Any(
+									validation.ParentValueValidator{
+										Expression: path.MatchRoot("type"),
+										Value:      types.DynamicValue(types.StringValue("configuration")),
+									},
+								),
+							},
+						},
 						"create_datasets": schema.BoolAttribute{
 							Optional:            true,
 							Computed:            true,
 							Default:             booldefault.StaticBool(false),
-							MarkdownDescription: "Allow this key to create missing datasets when sending telemetry. Defaults to `false`.",
+							MarkdownDescription: "Allow this ingest or configuration key to create missing datasets when sending telemetry. Defaults to `false`.",
 							PlanModifiers: []planmodifier.Bool{
 								boolplanmodifier.RequiresReplace(),
+							},
+						},
+						"manage_queries": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this configuration key to manage queries and columns. Defaults to `false`.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.RequiresReplace(),
+							},
+							Validators: []validator.Bool{
+								validation.ParentValueValidator{
+									Expression: path.MatchRoot("type"),
+									Value:      types.DynamicValue(types.StringValue("configuration")),
+								},
+							},
+						},
+						"run_queries": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this configuration key run queries. Defaults to `false`.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.RequiresReplace(),
+							},
+							Validators: []validator.Bool{
+								validation.ParentValueValidator{
+									Expression: path.MatchRoot("type"),
+									Value:      types.DynamicValue(types.StringValue("configuration")),
+								},
+							},
+						},
+						"read_service_maps": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this configuration key to read service maps. This feature is only for enterprise users. Defaults to `false`.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.RequiresReplace(),
+							},
+							Validators: []validator.Bool{
+								validation.ParentValueValidator{
+									Expression: path.MatchRoot("type"),
+									Value:      types.DynamicValue(types.StringValue("configuration")),
+								},
+							},
+						},
+						"manage_public_boards": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this configuration key to manage public boards. Defaults to `false`.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.RequiresReplace(),
+							},
+							Validators: []validator.Bool{
+								validation.ParentValueValidator{
+									Expression: path.MatchRoot("type"),
+									Value:      types.DynamicValue(types.StringValue("configuration")),
+								},
+							},
+						},
+						"manage_private_boards": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this configuration key to manage public boards. Defaults to `false`.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.RequiresReplace(),
+							},
+							Validators: []validator.Bool{
+								validation.ParentValueValidator{
+									Expression: path.MatchRoot("type"),
+									Value:      types.DynamicValue(types.StringValue("configuration")),
+								},
+								validation.ParentValueValidator{
+									Expression: path.MatchRoot("visible_to_members"),
+									Value:      types.DynamicValue(types.BoolValue(false)),
+								},
+							},
+						},
+						"manage_slos": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this configuration key to manage SLOs. Defaults to `false`.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.RequiresReplace(),
+							},
+							Validators: []validator.Bool{
+								validation.ParentValueValidator{
+									Expression: path.MatchRoot("type"),
+									Value:      types.DynamicValue(types.StringValue("configuration")),
+								},
+							},
+						},
+						"manage_triggers": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this configuration key to manage Triggers. Defaults to `false`.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.RequiresReplace(),
+							},
+							Validators: []validator.Bool{
+								validation.ParentValueValidator{
+									Expression: path.MatchRoot("type"),
+									Value:      types.DynamicValue(types.StringValue("configuration")),
+								},
+							},
+						},
+						"manage_recipients": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this configuration key to manage Recipients. Defaults to `false`.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.RequiresReplace(),
+							},
+							Validators: []validator.Bool{
+								validation.ParentValueValidator{
+									Expression: path.MatchRoot("type"),
+									Value:      types.DynamicValue(types.StringValue("configuration")),
+								},
+							},
+						},
+						"manage_markers": schema.BoolAttribute{
+							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(false),
+							MarkdownDescription: "Allow this configuration key to manage Markers. Defaults to `false`.",
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.RequiresReplace(),
+							},
+							Validators: []validator.Bool{
+								validation.ParentValueValidator{
+									Expression: path.MatchRoot("type"),
+									Value:      types.DynamicValue(types.StringValue("configuration")),
+								},
 							},
 						},
 					},
@@ -152,12 +317,17 @@ func (r *apiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
+	apiPermissions := expandAPIKeyPermissions(ctx, plan.Permissions, &resp.Diagnostics)
+	if apiPermissions != nil {
+		apiPermissions.VisibleToMembers = plan.VisibleToMembers.ValueBool()
+	}
+
 	newKey := &v2client.APIKey{
 		Name:        plan.Name.ValueStringPointer(),
 		KeyType:     plan.Type.ValueString(),
 		Environment: &v2client.Environment{ID: plan.EnvironmentID.ValueString()},
 		Disabled:    plan.Disabled.ValueBoolPointer(),
-		Permissions: expandAPIKeyPermissions(ctx, plan.Permissions, &resp.Diagnostics),
+		Permissions: apiPermissions,
 	}
 
 	key, err := r.client.APIKeys.Create(ctx, newKey)
@@ -172,6 +342,7 @@ func (r *apiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 	state.EnvironmentID = types.StringValue(key.Environment.ID)
 	state.Disabled = types.BoolValue(*key.Disabled)
 	state.Secret = types.StringValue(key.Secret)
+	state.VisibleToMembers = types.BoolValue(key.Permissions.VisibleToMembers)
 
 	if !plan.Permissions.IsNull() {
 		state.Permissions = flattenAPIKeyPermissions(ctx, key.Permissions, &resp.Diagnostics)
@@ -182,6 +353,8 @@ func (r *apiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 	switch key.KeyType {
 	case "ingest":
 		state.Key = types.StringValue(key.ID + key.Secret)
+	case "configuration":
+		state.Key = types.StringValue(key.Secret)
 	default:
 		resp.Diagnostics.AddError(
 			"Unknown API Key Type",
@@ -227,6 +400,7 @@ func (r *apiKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.Type = types.StringValue(key.KeyType)
 	state.Disabled = types.BoolValue(*key.Disabled)
 	state.EnvironmentID = types.StringValue(key.Environment.ID)
+	state.VisibleToMembers = types.BoolValue(key.Permissions.VisibleToMembers)
 
 	if !state.Permissions.IsNull() {
 		state.Permissions = flattenAPIKeyPermissions(ctx, key.Permissions, &resp.Diagnostics)
@@ -266,6 +440,8 @@ func (r *apiKeyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	state.Type = types.StringValue(key.KeyType)
 	state.Disabled = types.BoolValue(*key.Disabled)
 	state.EnvironmentID = types.StringValue(key.Environment.ID)
+	state.VisibleToMembers = types.BoolValue(key.Permissions.VisibleToMembers)
+
 	if !state.Permissions.IsNull() {
 		state.Permissions = flattenAPIKeyPermissions(ctx, key.Permissions, &resp.Diagnostics)
 	} else {
@@ -314,7 +490,17 @@ func expandAPIKeyPermissions(ctx context.Context, list types.List, diags *diag.D
 	}
 
 	return &v2client.APIKeyPermissions{
-		CreateDatasets: permissions[0].CreateDatasets.ValueBool(),
+		SendEvents:          permissions[0].SendEvents.ValueBool(),
+		CreateDatasets:      permissions[0].CreateDatasets.ValueBool(),
+		ManageQueries:       permissions[0].ManageQueries.ValueBool(),
+		RunQueries:          permissions[0].RunQueries.ValueBool(),
+		ReadServiceMaps:     permissions[0].ReadServiceMaps.ValueBool(),
+		ManagePublicBoards:  permissions[0].ManagePublicBoards.ValueBool(),
+		ManagePrivateBoards: permissions[0].ManagePrivateBoards.ValueBool(),
+		ManageSLOs:          permissions[0].ManageSLOs.ValueBool(),
+		ManageTriggers:      permissions[0].ManageTriggers.ValueBool(),
+		ManageRecipients:    permissions[0].ManageRecipients.ValueBool(),
+		ManageMarkers:       permissions[0].ManageMarkers.ValueBool(),
 	}
 }
 
@@ -324,7 +510,17 @@ func flattenAPIKeyPermissions(ctx context.Context, p *v2client.APIKeyPermissions
 	}
 
 	obj, d := types.ObjectValue(models.APIKeyPermissionsAttrType, map[string]attr.Value{
-		"create_datasets": types.BoolValue(p.CreateDatasets),
+		"send_events":           types.BoolValue(p.SendEvents),
+		"create_datasets":       types.BoolValue(p.CreateDatasets),
+		"manage_queries":        types.BoolValue(p.ManageQueries),
+		"run_queries":           types.BoolValue(p.RunQueries),
+		"read_service_maps":     types.BoolValue(p.ReadServiceMaps),
+		"manage_public_boards":  types.BoolValue(p.ManagePublicBoards),
+		"manage_private_boards": types.BoolValue(p.ManagePrivateBoards),
+		"manage_slos":           types.BoolValue(p.ManageSLOs),
+		"manage_triggers":       types.BoolValue(p.ManageTriggers),
+		"manage_recipients":     types.BoolValue(p.ManageRecipients),
+		"manage_markers":        types.BoolValue(p.ManageMarkers),
 	})
 	diags.Append(d...)
 
