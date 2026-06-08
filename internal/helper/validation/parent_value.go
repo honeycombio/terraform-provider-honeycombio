@@ -69,7 +69,7 @@ func (v ParentValueValidator) ValidateBool(ctx context.Context, req validator.Bo
 			resp.Diagnostics.AddAttributeError(
 				matchedPath,
 				"Invalid Attribute Value",
-				fmt.Sprintf("Must equal to %s's Value: %s", req.Path, v.Value.String()),
+				fmt.Sprintf("%s must be equal to Value: %s", req.Path, v.Value.String()),
 			)
 		}
 	}

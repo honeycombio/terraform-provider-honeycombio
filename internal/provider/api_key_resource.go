@@ -237,10 +237,13 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 									Expression: path.MatchRoot("type"),
 									Value:      types.DynamicValue(types.StringValue("configuration")),
 								},
-								validation.ParentValueValidator{
-									Expression: path.MatchRoot("visible_to_members"),
-									Value:      types.DynamicValue(types.BoolValue(false)),
-								},
+								boolvalidator.Any(
+									boolvalidator.Equals(false),
+									validation.ParentValueValidator{
+										Expression: path.MatchRoot("visible_to_members"),
+										Value:      types.DynamicValue(types.BoolValue(false)),
+									},
+								),
 							},
 						},
 						"manage_slos": schema.BoolAttribute{

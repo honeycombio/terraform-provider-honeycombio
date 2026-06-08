@@ -56,7 +56,7 @@ type APIKeyPermissions struct {
 	RunQueries          bool `json:"run_queries,omitempty" jsonapi:"attr,run_queries,omitempty"`
 	ReadServiceMaps     bool `json:"read_service_maps,omitempty" jsonapi:"attr,read_service_maps,omitempty"`
 	ManagePublicBoards  bool `json:"manage_boards,omitempty" jsonapi:"attr,manage_boards,omitempty"`
-	ManagePrivateBoards bool `json:"manage_private_boards,omitempty" jsonapi:"attr,manage_private_boards,omitempty"`
+	ManagePrivateBoards bool `json:"manage_privateBoards,omitempty" jsonapi:"attr,manage_privateBoards,omitempty"`
 	ManageSLOs          bool `json:"manage_slos,omitempty" jsonapi:"attr,manage_slos,omitempty"`
 	ManageTriggers      bool `json:"manage_triggers,omitempty" jsonapi:"attr,manage_triggers,omitempty"`
 	ManageRecipients    bool `json:"manage_recipients,omitempty" jsonapi:"attr,manage_recipients,omitempty"`
