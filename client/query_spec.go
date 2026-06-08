@@ -135,6 +135,11 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 		}
 	}
 
+	// the exact order of calculated fields does not matter, but their equivalence does
+	if !Equivalent(qs.CalculatedFields, other.CalculatedFields) {
+		return false
+	}
+
 	// The order of Formulas is important for visualization rendering
 	if !reflect.DeepEqual(qs.Formulas, other.Formulas) &&
 		// an empty Formulas is equivalent to a nil Formulas

@@ -3,19 +3,23 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"testing"
 	"time"
 
+	tfresource "github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	fwtypes "github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
-
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
 func TestAcc_ColumnResource(t *testing.T) {
@@ -204,6 +208,95 @@ resource "honeycombio_column" "test" {
 			},
 		},
 	})
+}
+
+// mockColumns is a minimal stub of client.Columns for unit tests.
+type mockColumns struct {
+	deleteErr error
+}
+
+func (m mockColumns) List(_ context.Context, _ string) ([]client.Column, error)  { return nil, nil }
+func (m mockColumns) Get(_ context.Context, _, _ string) (*client.Column, error) { return nil, nil }
+func (m mockColumns) GetByKeyName(_ context.Context, _, _ string) (*client.Column, error) {
+	return nil, nil
+}
+func (m mockColumns) Create(_ context.Context, _ string, c *client.Column) (*client.Column, error) {
+	return c, nil
+}
+func (m mockColumns) Update(_ context.Context, _ string, c *client.Column) (*client.Column, error) {
+	return c, nil
+}
+func (m mockColumns) Delete(_ context.Context, _, _ string) error { return m.deleteErr }
+
+func Test_columnResource_Delete(t *testing.T) {
+	ctx := context.Background()
+
+	cr := &columnResource{}
+	var schemaResp tfresource.SchemaResponse
+	cr.Schema(ctx, tfresource.SchemaRequest{}, &schemaResp)
+
+	state := tfsdk.State{Schema: schemaResp.Schema}
+	diags := state.Set(ctx, models.ColumnResourceModel{
+		ID:            fwtypes.StringValue("col-123"),
+		Dataset:       fwtypes.StringValue("my-dataset"),
+		Name:          fwtypes.StringValue("duration_ms"),
+		Hidden:        fwtypes.BoolValue(false),
+		Description:   fwtypes.StringValue(""),
+		Type:          fwtypes.StringValue("float"),
+		CreatedAt:     fwtypes.StringValue(""),
+		UpdatedAt:     fwtypes.StringValue(""),
+		LastWrittenAt: fwtypes.StringValue(""),
+	})
+	require.False(t, diags.HasError(), "state setup failed: %v", diags)
+
+	tests := []struct {
+		name        string
+		deleteErr   error
+		wantErrDiag bool
+	}{
+		{
+			name: "succeeds when column is in use by dataset definition",
+			deleteErr: client.DetailedError{
+				Status:  http.StatusConflict,
+				Message: "Column is in use by dataset definition - duration_ms",
+			},
+			wantErrDiag: false,
+		},
+		{
+			name:        "succeeds when delete succeeds",
+			deleteErr:   nil,
+			wantErrDiag: false,
+		},
+		{
+			name: "errors on other conflicts (e.g. in use by derived column)",
+			deleteErr: client.DetailedError{
+				Status:  http.StatusConflict,
+				Message: "Column is in use by 1 derived columns: 'my_dc'",
+			},
+			wantErrDiag: true,
+		},
+		{
+			name: "errors on non-conflict API errors",
+			deleteErr: client.DetailedError{
+				Status:  http.StatusInternalServerError,
+				Message: "internal server error",
+			},
+			wantErrDiag: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &columnResource{
+				client: &client.Client{
+					Columns: mockColumns{deleteErr: tt.deleteErr},
+				},
+			}
+			var resp tfresource.DeleteResponse
+			r.Delete(ctx, tfresource.DeleteRequest{State: state}, &resp)
+			assert.Equal(t, tt.wantErrDiag, resp.Diagnostics.HasError())
+		})
+	}
 }
 
 func testAccEnsureColumnExists(t *testing.T, resource, name string) resource.TestCheckFunc {
