@@ -103,7 +103,6 @@ func (*sloResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *re
 				},
 				Validators: []validator.Set{
 					setvalidator.SizeAtLeast(1),
-					setvalidator.SizeAtMost(10),
 					setvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("dataset")),
 					setvalidator.ExactlyOneOf(path.MatchRelative().AtParent().AtName("dataset"), path.MatchRelative().AtParent().AtName("datasets")),
 				},
