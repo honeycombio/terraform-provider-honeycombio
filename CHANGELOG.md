@@ -1,3 +1,14 @@
+# 0.51.0 (June 11, 2026)
+
+## Enhancements
+
+- feat: Add configuration key support to the provider (#868)
+
+## Bugfixes
+
+- fix: make it possible to delete a dataset (#856)
+- fix(slos): remove dataset restriction (#870)
+
 # 0.50.0 (June 4, 2026)
 
 ## Notes
