@@ -107,6 +107,7 @@ Arguments accepted by this provider include:
 * `api_url` - (Optional) Override the URL of the Honeycomb.io API. It can also be set using `HONEYCOMB_API_ENDPOINT`. Defaults to `https://api.honeycomb.io`.
 * `debug` - (Optional) Enable to log additional debug information. To view the logs, set `TF_LOG` to at least debug.
 * `features` - (Optional) The features block allows customization of the behavior of the Honeycomb Provider. Full details documented below.
+* `default_tags` - (Optional) A `default_tags` block as defined below. Applies a common set of tags to all supported resources.
 
 At least one of `api_key`, or the `api_key_id` and `api_key_secret` pair must be configured.
 
@@ -160,3 +161,28 @@ The `intelligence` block supports the following:
 * `enabled` - (Optional) Set to `true` to enable intelligence features such as `auto_investigate` on triggers and burn alerts. Defaults to `false`.
 
 ~> **Note** [Honeycomb Intelligence](https://docs.honeycomb.io/security-compliance/honeycomb-intelligence) must first be enabled for your team in the Honeycomb UI before using this block. The `intelligence` feature block in the provider tells Terraform that your team has Honeycomb Intelligence enabled and unlocks related attributes like `auto_investigate`.
+
+## Default Tags
+
+The `default_tags` block applies a common set of tags to every resource that supports tags (`honeycombio_slo`, `honeycombio_flexible_board`, and `honeycombio_trigger`).
+A tag set directly on a resource takes precedence over a default tag with the same key.
+Each resource exposes a computed `tags_all` attribute showing the effective set of tags after the defaults are merged in.
+
+### Example Usage
+
+```hcl
+provider "honeycombio" {
+  default_tags {
+    tags = {
+      team = "sre"
+      env  = "prod"
+    }
+  }
+}
+```
+
+### Arguments Reference
+
+The `default_tags` block supports the following:
+
+* `tags` - (Optional) A map of tags to apply to all supported resources.

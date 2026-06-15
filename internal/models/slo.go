@@ -16,6 +16,7 @@ type SLOResourceModel struct {
 	TargetPercentage types.Float64 `tfsdk:"target_percentage"`
 	TimePeriod       types.Int64   `tfsdk:"time_period"`
 	Tags             types.Map     `tfsdk:"tags"`
+	TagsAll          types.Map     `tfsdk:"tags_all"`
 }
 
 type SLOsDataSourceModel struct {

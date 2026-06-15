@@ -113,6 +113,59 @@ resource "honeycombio_slo" "test" {
 	})
 }
 
+func TestAccHoneycombioSLO_defaultTags(t *testing.T) {
+	dataset, sliAlias := sloAccTestSetup(t)
+
+	config := fmt.Sprintf(`
+provider "honeycombio" {
+  default_tags {
+    tags = {
+      team = "sre"
+      env  = "prod"
+    }
+  }
+}
+
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO default_tags"
+  dataset           = "%s"
+  sli               = "%s"
+  target_percentage = 99.9
+  time_period       = 30
+
+  tags = {
+    team = "platform"
+  }
+}`, dataset, sliAlias)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeTestCheckFunc(
+					// tags holds only the resource-owned tags
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.%", "1"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags.team", "platform"),
+					// tags_all is the effective set, with the resource winning on `team`
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags_all.%", "2"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags_all.team", "platform"),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "tags_all.env", "prod"),
+				),
+			},
+			{ // re-applying the same config must produce no diff
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+		},
+	})
+}
+
 // Checks to ensure that if an SLO was removed from Honeycomb outside of Terraform (UI or API)
 // that it is detected and planned for recreation.
 func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {

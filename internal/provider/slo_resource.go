@@ -29,10 +29,12 @@ var (
 	_ resource.Resource                = &sloResource{}
 	_ resource.ResourceWithConfigure   = &sloResource{}
 	_ resource.ResourceWithImportState = &sloResource{}
+	_ resource.ResourceWithModifyPlan  = &sloResource{}
 )
 
 type sloResource struct {
-	client *client.Client
+	client      *client.Client
+	defaultTags map[string]string
 }
 
 func NewSLOResource() resource.Resource {
@@ -55,6 +57,7 @@ func (r *sloResource) Configure(_ context.Context, req resource.ConfigureRequest
 		return
 	}
 	r.client = c
+	r.defaultTags = w.DefaultTags()
 }
 
 func (*sloResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -127,9 +130,14 @@ the column evaluation should consistently return nil, true, or false, as these a
 					int64validator.AtLeast(1),
 				},
 			},
-			"tags": tagsSchema(),
+			"tags":     tagsSchema(),
+			"tags_all": tagsAllSchema(),
 		},
 	}
+}
+
+func (r *sloResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	modifyPlanForDefaultTags(ctx, r.defaultTags, req, resp)
 }
 
 func (r *sloResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -150,6 +158,7 @@ func (r *sloResource) ImportState(ctx context.Context, req resource.ImportStateR
 		Dataset:  dsValue,
 		Datasets: types.SetUnknown(types.StringType),
 		Tags:     types.MapUnknown(types.StringType),
+		TagsAll:  types.MapUnknown(types.StringType),
 	})...)
 }
 
@@ -194,12 +203,13 @@ func (r *sloResource) Create(ctx context.Context, req resource.CreateRequest, re
 	}
 	state.Datasets = datasetsSet
 
-	tags, diags := helper.TagsToMap(ctx, slo.Tags)
+	tagsAll, diags := helper.TagsToMap(ctx, slo.Tags)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	state.Tags = tags
+	state.Tags = plan.Tags
+	state.TagsAll = tagsAll
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
@@ -255,12 +265,19 @@ func (r *sloResource) Read(ctx context.Context, req resource.ReadRequest, resp *
 	}
 	state.Datasets = datasetsSet
 
-	tags, diags := helper.TagsToMap(ctx, slo.Tags)
+	tagsAll, diags := helper.TagsToMap(ctx, slo.Tags)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	state.Tags = tags
+	state.TagsAll = tagsAll
+
+	ownedTags, diags := helper.RemoveDefaultTags(ctx, slo.Tags, r.defaultTags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = ownedTags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
@@ -309,12 +326,13 @@ func (r *sloResource) Update(ctx context.Context, req resource.UpdateRequest, re
 	}
 	state.Datasets = datasetsSet
 
-	tags, diags := helper.TagsToMap(ctx, slo.Tags)
+	tagsAll, diags := helper.TagsToMap(ctx, slo.Tags)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	state.Tags = tags
+	state.Tags = plan.Tags
+	state.TagsAll = tagsAll
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 	if resp.Diagnostics.HasError() {
@@ -367,7 +385,7 @@ func expandSLO(ctx context.Context, plan models.SLOResourceModel) (*client.SLO, 
 		}
 	}
 
-	tags, diags := helper.MapToTags(ctx, plan.Tags)
+	tags, diags := helper.MapToTags(ctx, plan.TagsAll)
 	if diags.HasError() {
 		return nil, fmt.Errorf("error extracting tags: %v", diags)
 	}
