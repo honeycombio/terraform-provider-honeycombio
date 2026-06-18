@@ -28,10 +28,22 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
-func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.SetNestedBlock {
+func notificationRecipientSchema(
+	allowedTypes []client.RecipientType,
+	minRecipients int,
+) schema.SetNestedBlock {
+
+	description := "Zero or more recipients to notify when the resource fires."
+	var validators []validator.Set
+	if minRecipients > 0 {
+		description = "One or more recipients to notify when the resource fires."
+		validators = append(validators, setvalidator.SizeAtLeast(minRecipients))
+	}
+
 	return schema.SetNestedBlock{
-		Description:   "Zero or more recipients to notify when the resource fires.",
+		Description:   description,
 		PlanModifiers: []planmodifier.Set{modifiers.NotificationRecipients()},
+		Validators:    validators,
 		NestedObject: schema.NestedBlockObject{
 			Validators: []validator.Object{
 				objectvalidator.AtLeastOneOf(

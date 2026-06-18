@@ -161,7 +161,7 @@ resource "honeycombio_burn_alert" "example_alert" {
 - `dataset` (String) The dataset this Burn Alert is associated with. Will be deprecated in a future release.
 - `description` (String) A description for this Burn Alert.
 - `exhaustion_minutes` (Number) The amount of time, in minutes, remaining before the SLO's error budget will be exhausted and the alert will fire.
-- `recipient` (Block Set) Zero or more recipients to notify when the resource fires. (see [below for nested schema](#nestedblock--recipient))
+- `recipient` (Block Set) One or more recipients to notify when the resource fires. (see [below for nested schema](#nestedblock--recipient))
 
 ### Read-Only
 

@@ -146,7 +146,8 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"recipient": notificationRecipientSchema(client.RecipientTypes()),
+			// Burn Alerts require at least one recipient
+			"recipient": notificationRecipientSchema(client.RecipientTypes(), 1),
 		},
 	}
 }
