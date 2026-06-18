@@ -223,7 +223,7 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					},
 				},
 			},
-			"recipient": notificationRecipientSchema(client.TriggerRecipientTypes(), 0),
+			"recipient": notificationRecipientSchema(client.TriggerRecipientTypes(), false),
 			"baseline_details": schema.ListNestedBlock{
 				Description: "A configuration block that allows you to receive notifications when the delta between values in your data, " +
 					"compared to a previous time period, cross thresholds you configure.",

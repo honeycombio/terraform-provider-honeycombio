@@ -30,20 +30,19 @@ import (
 
 func notificationRecipientSchema(
 	allowedTypes []client.RecipientType,
-	minRecipients int,
+	requireRecipient bool,
 ) schema.SetNestedBlock {
-
+	// The requirement is enforced by each resource's ValidateConfig (a block-level
+	// SizeAtLeast validator does not fire on an omitted/null block); this only sets
+	// the documented description to match.
 	description := "Zero or more recipients to notify when the resource fires."
-	var validators []validator.Set
-	if minRecipients > 0 {
+	if requireRecipient {
 		description = "One or more recipients to notify when the resource fires."
-		validators = append(validators, setvalidator.SizeAtLeast(minRecipients))
 	}
 
 	return schema.SetNestedBlock{
 		Description:   description,
 		PlanModifiers: []planmodifier.Set{modifiers.NotificationRecipients()},
-		Validators:    validators,
 		NestedObject: schema.NestedBlockObject{
 			Validators: []validator.Object{
 				objectvalidator.AtLeastOneOf(

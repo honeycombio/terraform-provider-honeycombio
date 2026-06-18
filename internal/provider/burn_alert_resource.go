@@ -146,8 +146,8 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 		},
 		Blocks: map[string]schema.Block{
-			// Burn Alerts require at least one recipient
-			"recipient": notificationRecipientSchema(client.RecipientTypes(), 1),
+			// Burn Alerts require at least one recipient (enforced in ValidateConfig)
+			"recipient": notificationRecipientSchema(client.RecipientTypes(), true),
 		},
 	}
 }
@@ -223,6 +223,16 @@ func (r *burnAlertResource) ValidateConfig(ctx context.Context, req resource.Val
 
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// A burn alert requires at least one recipient; we need additional validation from
+	// the schema set validation to ensure the set is actually provided.
+	if !data.Recipients.IsUnknown() && len(data.Recipients.Elements()) == 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("recipient"),
+			"Missing required argument",
+			`At least one "recipient" block is required for a burn alert.`,
+		)
 	}
 
 	// When alert_type is exhaustion_time, check that exhaustion_minutes

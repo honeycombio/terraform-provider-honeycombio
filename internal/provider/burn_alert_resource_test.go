@@ -461,9 +461,15 @@ func TestAcc_BurnAlertResource_validateRequiresRecipient(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
 		Steps: []resource.TestStep{
+			// no recipient block at all (null set)
 			{
 				Config:      testAccConfigBurnAlertBudgetRate_noRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID),
-				ExpectError: regexp.MustCompile(`set must contain at least 1 element`),
+				ExpectError: regexp.MustCompile(`At least one "recipient" block is required`),
+			},
+			// an explicitly empty set (dynamic block with an empty for_each)
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_emptyRecipientSet(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID),
+				ExpectError: regexp.MustCompile(`At least one "recipient" block is required`),
 			},
 		},
 	})
@@ -1390,6 +1396,28 @@ resource "honeycombio_burn_alert" "test" {
 
   dataset = "%[3]s"
   slo_id  = "%[4]s"
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription)
+}
+
+func testAccConfigBurnAlertBudgetRate_emptyRecipientSet(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  description                  = "%[5]s"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  dataset = "%[3]s"
+  slo_id  = "%[4]s"
+
+  dynamic "recipient" {
+    for_each = []
+
+    content {
+      type   = recipient.value.type
+      target = recipient.value.target
+    }
+  }
 }`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription)
 }
 
