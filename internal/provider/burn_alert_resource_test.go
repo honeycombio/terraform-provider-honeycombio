@@ -450,6 +450,31 @@ func TestAcc_BurnAlertResource_validateBudgetRate(t *testing.T) {
 	})
 }
 
+func TestAcc_BurnAlertResource_validateRequiresRecipient(t *testing.T) {
+	dataset, sloID := burnAlertAccTestSetup(t)
+
+	budgetRateWindowMinutes := 60
+	budgetRateDecreasePercent := float64(5)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		CheckDestroy:             testAccEnsureBurnAlertDestroyed(t),
+		Steps: []resource.TestStep{
+			// no recipient block at all (null set)
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_noRecipient(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID),
+				ExpectError: regexp.MustCompile(`At least one "recipient" block is required`),
+			},
+			// an explicitly empty set (dynamic block with an empty for_each)
+			{
+				Config:      testAccConfigBurnAlertBudgetRate_emptyRecipientSet(budgetRateWindowMinutes, budgetRateDecreasePercent, dataset, sloID),
+				ExpectError: regexp.MustCompile(`At least one "recipient" block is required`),
+			},
+		},
+	})
+}
+
 func TestAcc_BurnAlertResource_validateUnknownOrVariableAttributesExhaustionTime(t *testing.T) {
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
@@ -1103,7 +1128,7 @@ resource "honeycombio_burn_alert" "test" {
   dataset            = "%[2]s"
   slo_id             = "%[3]s"
   description        = "%[5]s"
-  
+
   recipient {
     id = honeycombio_pagerduty_recipient.test.id
 
@@ -1126,7 +1151,7 @@ resource "honeycombio_burn_alert" "test" {
 
   slo_id             = "%[2]s"
   description        = "%[4]s"
-  
+
   recipient {
     id = honeycombio_pagerduty_recipient.test.id
 
@@ -1212,7 +1237,7 @@ resource "honeycombio_burn_alert" "test" {
   recipient {
 	id = honeycombio_webhook_recipient.test.id
 
-	notification_details {	
+	notification_details {
  		variable {
  			name = "severity"
  			value = "%[6]s"
@@ -1262,7 +1287,7 @@ resource "honeycombio_burn_alert" "test" {
   recipient {
 	id = honeycombio_webhook_recipient.test.id
 
-	notification_details {	
+	notification_details {
  		variable {
  			name = "severity"
  			value = "info"
@@ -1359,6 +1384,41 @@ resource "honeycombio_burn_alert" "test" {
     }
   }
 }`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, pdseverity, testBADescription)
+}
+
+func testAccConfigBurnAlertBudgetRate_noRecipient(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  description                  = "%[5]s"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  dataset = "%[3]s"
+  slo_id  = "%[4]s"
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription)
+}
+
+func testAccConfigBurnAlertBudgetRate_emptyRecipientSet(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_burn_alert" "test" {
+  alert_type                   = "budget_rate"
+  description                  = "%[5]s"
+  budget_rate_window_minutes   = %[1]d
+  budget_rate_decrease_percent = %[2]s
+
+  dataset = "%[3]s"
+  slo_id  = "%[4]s"
+
+  dynamic "recipient" {
+    for_each = []
+
+    content {
+      type   = recipient.value.type
+      target = recipient.value.target
+    }
+  }
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, testBADescription)
 }
 
 func testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, sloID, pdseverity string) string {
@@ -1489,8 +1549,8 @@ resource "honeycombio_burn_alert" "test" {
 
   recipient {
 	id = honeycombio_webhook_recipient.test.id
-	
-	notification_details {	
+
+	notification_details {
 		variable {
 			name = "severity"
 			value = "%[7]s"
@@ -1541,8 +1601,8 @@ resource "honeycombio_burn_alert" "test" {
 
   recipient {
 	id = honeycombio_webhook_recipient.test.id
-	
-	notification_details {	
+
+	notification_details {
 		variable {
 			name = "severity"
 			value = "info"

@@ -28,9 +28,20 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
-func notificationRecipientSchema(allowedTypes []client.RecipientType) schema.SetNestedBlock {
+func notificationRecipientSchema(
+	allowedTypes []client.RecipientType,
+	requireRecipient bool,
+) schema.SetNestedBlock {
+	// The requirement is enforced by each resource's ValidateConfig (a block-level
+	// SizeAtLeast validator does not fire on an omitted/null block); this only sets
+	// the documented description to match.
+	description := "Zero or more recipients to notify when the resource fires."
+	if requireRecipient {
+		description = "One or more recipients to notify when the resource fires."
+	}
+
 	return schema.SetNestedBlock{
-		Description:   "Zero or more recipients to notify when the resource fires.",
+		Description:   description,
 		PlanModifiers: []planmodifier.Set{modifiers.NotificationRecipients()},
 		NestedObject: schema.NestedBlockObject{
 			Validators: []validator.Object{
