@@ -2,6 +2,7 @@ package helper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -33,4 +34,50 @@ func MapToTags(ctx context.Context, tagsMap types.Map) ([]client.Tag, diag.Diagn
 	}
 
 	return tags, nil
+}
+
+// MergeTags overlays the resource's tags onto the provider defaults, with the resource winning on a key collision.
+func MergeTags(ctx context.Context, defaults map[string]string, resourceTags types.Map) (types.Map, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	if resourceTags.IsUnknown() {
+		return types.MapUnknown(types.StringType), diags
+	}
+
+	merged := make(map[string]string, len(defaults))
+	for k, v := range defaults {
+		merged[k] = v
+	}
+	if !resourceTags.IsNull() {
+		var rt map[string]string
+		diags.Append(resourceTags.ElementsAs(ctx, &rt, false)...)
+		if diags.HasError() {
+			return types.MapNull(types.StringType), diags
+		}
+		for k, v := range rt {
+			merged[k] = v
+		}
+	}
+
+	if len(merged) > client.MaxTagsPerResource {
+		diags.AddError(
+			"Too many tags",
+			fmt.Sprintf("Merging default_tags with the resource's tags results in %d tags, which exceeds the maximum of %d per resource.",
+				len(merged), client.MaxTagsPerResource),
+		)
+		return types.MapNull(types.StringType), diags
+	}
+
+	return types.MapValueFrom(ctx, types.StringType, merged)
+}
+
+// RemoveDefaultTags drops any tag whose key and value match a provider default.
+func RemoveDefaultTags(ctx context.Context, tags []client.Tag, defaults map[string]string) (types.Map, diag.Diagnostics) {
+	owned := make(map[string]string, len(tags))
+	for _, tag := range tags {
+		if v, ok := defaults[tag.Key]; ok && v == tag.Value {
+			continue
+		}
+		owned[tag.Key] = tag.Value
+	}
+	return types.MapValueFrom(ctx, types.StringType, owned)
 }

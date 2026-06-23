@@ -6,11 +6,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
@@ -32,12 +36,17 @@ type HoneycombioProvider struct {
 
 // HoneycombioProviderModel describes the provider data model.
 type HoneycombioProviderModel struct {
-	APIKey    types.String     `tfsdk:"api_key"`
-	KeyID     types.String     `tfsdk:"api_key_id"`
-	KeySecret types.String     `tfsdk:"api_key_secret"`
-	APIUrl    types.String     `tfsdk:"api_url"`
-	Debug     types.Bool       `tfsdk:"debug"`
-	Features  []features.Model `tfsdk:"features"`
+	APIKey      types.String       `tfsdk:"api_key"`
+	KeyID       types.String       `tfsdk:"api_key_id"`
+	KeySecret   types.String       `tfsdk:"api_key_secret"`
+	APIUrl      types.String       `tfsdk:"api_url"`
+	Debug       types.Bool         `tfsdk:"debug"`
+	Features    []features.Model   `tfsdk:"features"`
+	DefaultTags []defaultTagsModel `tfsdk:"default_tags"`
+}
+
+type defaultTagsModel struct {
+	Tags types.Map `tfsdk:"tags"`
 }
 
 func New(version string) provider.Provider {
@@ -75,6 +84,36 @@ func (p *HoneycombioProvider) Schema(_ context.Context, _ provider.SchemaRequest
 		},
 		Blocks: map[string]schema.Block{
 			"features": features.GetFeaturesBlock(),
+			"default_tags": schema.ListNestedBlock{
+				MarkdownDescription: "Default tags to apply to all supported resources. A tag set on an individual resource takes precedence over a default tag with the same key.",
+				Validators: []validator.List{
+					listvalidator.SizeAtMost(1),
+				},
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"tags": schema.MapAttribute{
+							MarkdownDescription: "A map of tags to apply to all supported resources.",
+							Optional:            true,
+							ElementType:         types.StringType,
+							Validators: []validator.Map{
+								mapvalidator.SizeAtMost(client.MaxTagsPerResource),
+								mapvalidator.KeysAre(
+									stringvalidator.RegexMatches(
+										client.TagKeyValidationRegex,
+										"must only contain lowercase letters, and be 1-32 characters long",
+									),
+								),
+								mapvalidator.ValueStringsAre(
+									stringvalidator.RegexMatches(
+										client.TagValueValidationRegex,
+										"must begin with a lowercase letter, be between 1-128 characters long, and only contain lowercase alphanumeric characters, -, or /",
+									),
+								),
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -208,6 +247,15 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 		features: parsedFeatures,
 	}
 
+	defaultTags := map[string]string{}
+	if len(config.DefaultTags) > 0 && !config.DefaultTags[0].Tags.IsNull() && !config.DefaultTags[0].Tags.IsUnknown() {
+		resp.Diagnostics.Append(config.DefaultTags[0].Tags.ElementsAs(ctx, &defaultTags, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+	cc.defaultTags = defaultTags
+
 	debug := log.IsDebugOrHigher()
 	if !config.Debug.IsNull() {
 		debug = config.Debug.ValueBool()
@@ -251,9 +299,14 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 
 // ConfiguredClient is a wrapper around the configured Honeycomb API clients.
 type ConfiguredClient struct {
-	v1client *client.Client
-	v2client *v2client.Client
-	features *features.Features
+	v1client    *client.Client
+	v2client    *v2client.Client
+	features    *features.Features
+	defaultTags map[string]string
+}
+
+func (c *ConfiguredClient) DefaultTags() map[string]string {
+	return c.defaultTags
 }
 
 func (c *ConfiguredClient) V1Client() (*client.Client, error) {
