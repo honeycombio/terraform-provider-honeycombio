@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -50,6 +51,11 @@ func Provider(version string) *schema.Provider {
 				Optional:    true,
 				Description: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
 			},
+			"rate_limit_retries": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The number of times a rate-limited (`HTTP 429`) request is replayed — waiting out the rate limit window each time — before the error is surfaced. Increase this to ride out heavier rate-limit contention (for example, many concurrent runs against the same team) without failing, at the cost of slower runs. It can also be set via the `HONEYCOMB_RATE_LIMIT_RETRIES` environment variable. Defaults to `10`. Values below `1` use the default.",
+			},
 			"features": features.GetPluginSDKFeaturesSchema(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
@@ -88,14 +94,25 @@ func Provider(version string) *schema.Provider {
 			debug = v.(bool)
 		}
 
+		rateLimitRetries := 0
+		if v := os.Getenv("HONEYCOMB_RATE_LIMIT_RETRIES"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil {
+				rateLimitRetries = n
+			}
+		}
+		if v, ok := d.GetOk("rate_limit_retries"); ok {
+			rateLimitRetries = v.(int)
+		}
+
 		// if the API key is set, use it to create the client
 		// we now rely on the Framework version of the provider to validate the configuration
 		if apiKey != "" {
 			config := &honeycombio.Config{
-				APIKey:    apiKey,
-				APIUrl:    d.Get("api_url").(string),
-				UserAgent: provider.UserAgent("terraform-provider-honeycombio", version),
-				Debug:     debug,
+				APIKey:           apiKey,
+				APIUrl:           d.Get("api_url").(string),
+				UserAgent:        provider.UserAgent("terraform-provider-honeycombio", version),
+				Debug:            debug,
+				RateLimitRetries: rateLimitRetries,
 			}
 			c, err := honeycombio.NewClientWithConfig(config)
 			if err != nil {
