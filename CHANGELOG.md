@@ -1,3 +1,16 @@
+# 0.51.1 (July 2, 2026)
+
+## Bugfixes
+
+- fix(r/burn_alerts): Enforce single recipient requirement (#876)
+
+## Housekeeping
+
+- maint(deps): bump actions/checkout from 6 to 7 (#877)
+- maint(deps): bump golang.org/x/net from 0.55.0 to 0.56.0 (#869)
+- maint(deps): bump golangci/golangci-lint-action from 9.2.1 to 9.3.0 (#879)
+- maint(deps): bump goreleaser/goreleaser-action from 7.2.2 to 7.2.3 (#880)
+
 # 0.51.0 (June 11, 2026)
 
 ## Enhancements
