@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/hashcode"
 )
 
@@ -30,6 +31,13 @@ func dataSourceHoneycombioColumns() *schema.Resource {
 				Computed: true,
 				Optional: false,
 				Required: false,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"column_types": {
+				Type:     schema.TypeMap,
+				Computed: true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -57,13 +65,21 @@ func dataSourceHoneycombioColumnsRead(ctx context.Context, d *schema.ResourceDat
 	}
 
 	names := make([]string, 0, len(columns))
+	columnTypes := make(map[string]string, len(columns))
 	for _, column := range columns {
 		if startsWith != "" && !strings.HasPrefix(column.KeyName, startsWith) {
 			continue
 		}
 		names = append(names, column.KeyName)
+
+		columnType := honeycombio.ColumnTypeString
+		if column.Type != nil {
+			columnType = *column.Type
+		}
+		columnTypes[column.KeyName] = string(columnType)
 	}
 	d.Set("names", names)
+	d.Set("column_types", columnTypes)
 
 	d.SetId(strconv.Itoa(hashcode.String(strings.Join(names, ","))))
 	return nil

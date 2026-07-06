@@ -34,5 +34,6 @@ data "honeycombio_columns" "foo" {
 
 ### Read-Only
 
+- `column_types` (Map of String)
 - `id` (String) The ID of this resource.
 - `names` (List of String)
