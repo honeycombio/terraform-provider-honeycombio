@@ -81,6 +81,26 @@ func TestListCache(t *testing.T) {
 		assert.Equal(t, 2, fetches)
 	})
 
+	t.Run("invalidate all drops every key", func(t *testing.T) {
+		c := NewListCache[string](time.Minute)
+		var fetches int
+		fetch := func(context.Context) ([]string, error) {
+			fetches++
+			return []string{"a"}, nil
+		}
+
+		_, err := c.Get(ctx, "one", fetch)
+		require.NoError(t, err)
+		_, err = c.Get(ctx, "two", fetch)
+		require.NoError(t, err)
+		c.InvalidateAll()
+		_, err = c.Get(ctx, "one", fetch)
+		require.NoError(t, err)
+		_, err = c.Get(ctx, "two", fetch)
+		require.NoError(t, err)
+		assert.Equal(t, 4, fetches)
+	})
+
 	t.Run("errors are returned and not cached", func(t *testing.T) {
 		c := NewListCache[string](time.Minute)
 		var fetches int

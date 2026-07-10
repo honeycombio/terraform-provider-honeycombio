@@ -109,19 +109,31 @@ func (s *derivedColumns) GetByAlias(ctx context.Context, dataset string, alias s
 func (s *derivedColumns) Create(ctx context.Context, dataset string, data *DerivedColumn) (*DerivedColumn, error) {
 	var d DerivedColumn
 	err := s.client.Do(ctx, "POST", fmt.Sprintf("/1/derived_columns/%s", urlEncodeDataset(dataset)), data, &d)
-	s.cache.Invalidate(urlEncodeDataset(dataset))
+	s.invalidateCache(dataset)
 	return &d, err
 }
 
 func (s *derivedColumns) Update(ctx context.Context, dataset string, data *DerivedColumn) (*DerivedColumn, error) {
 	var d DerivedColumn
 	err := s.client.Do(ctx, "PUT", fmt.Sprintf("/1/derived_columns/%s/%s", urlEncodeDataset(dataset), data.ID), data, &d)
-	s.cache.Invalidate(urlEncodeDataset(dataset))
+	s.invalidateCache(dataset)
 	return &d, err
 }
 
 func (s *derivedColumns) Delete(ctx context.Context, dataset string, id string) error {
 	err := s.client.Do(ctx, "DELETE", fmt.Sprintf("/1/derived_columns/%s/%s", urlEncodeDataset(dataset), id), nil, nil)
-	s.cache.Invalidate(urlEncodeDataset(dataset))
+	s.invalidateCache(dataset)
 	return err
+}
+
+// invalidateCache drops the cached column list a write may have made
+// stale. A write to an environment-wide column is visible in every
+// dataset's view, so those drop everything rather than just the
+// environment-wide list.
+func (s *derivedColumns) invalidateCache(dataset string) {
+	if dataset == EnvironmentWideSlug {
+		s.cache.InvalidateAll()
+		return
+	}
+	s.cache.Invalidate(urlEncodeDataset(dataset))
 }

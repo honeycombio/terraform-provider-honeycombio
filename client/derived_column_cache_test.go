@@ -164,6 +164,36 @@ func TestDerivedColumns_WritesInvalidateTheCache(t *testing.T) {
 	assert.Zero(t, api.aliasRequests.Load())
 }
 
+func TestDerivedColumns_EnvironmentWideWritesInvalidateAllDatasets(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	api := &derivedColumnTestAPI{
+		columns: map[string][]client.DerivedColumn{
+			"test-dataset":             {{ID: "id-1", Alias: "dc.one", Expression: "BOOL(1)"}},
+			client.EnvironmentWideSlug: {},
+		},
+	}
+	c := newDerivedColumnTestClient(t, api)
+
+	// prime the dataset-scoped cache
+	_, err := c.DerivedColumns.List(ctx, "test-dataset")
+	require.NoError(t, err)
+	assert.Equal(t, int64(1), api.listRequests.Load())
+
+	// an environment-wide write may be visible in every dataset's view,
+	// so it drops the dataset-scoped cache too
+	_, err = c.DerivedColumns.Create(ctx, client.EnvironmentWideSlug, &client.DerivedColumn{
+		Alias:      "dc.env_wide",
+		Expression: "BOOL(1)",
+	})
+	require.NoError(t, err)
+
+	_, err = c.DerivedColumns.List(ctx, "test-dataset")
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), api.listRequests.Load(), "expected the dataset list to be refetched after an env-wide write")
+}
+
 func TestDerivedColumns_ListErrorFallsBackToDirectLookup(t *testing.T) {
 	t.Parallel()
 
