@@ -132,6 +132,10 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 		headers: make(http.Header),
 	}
 
+	// proactively throttle requests when the API reports the rate limit
+	// budget is nearly or fully exhausted
+	cfg.HTTPClient.Transport = limits.NewThrottledTransport(cfg.HTTPClient.Transport)
+
 	client.httpClient = &retryablehttp.Client{
 		Backoff:      limits.RetryHTTPBackoff,
 		CheckRetry:   limits.RetryHTTPCheck,
