@@ -20,6 +20,7 @@ import (
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 
+	"github.com/honeycombio/terraform-provider-honeycombio/client/internal/cache"
 	"github.com/honeycombio/terraform-provider-honeycombio/client/internal/limits"
 )
 
@@ -160,7 +161,10 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	client.Columns = &columns{client: client}
 	client.Datasets = &datasets{client: client}
 	client.DatasetDefinitions = &datasetDefinitions{client: client}
-	client.DerivedColumns = &derivedColumns{client: client}
+	client.DerivedColumns = &derivedColumns{
+		client: client,
+		cache:  cache.NewListCache[DerivedColumn](derivedColumnCacheTTL),
+	}
 	client.Markers = &markers{client: client}
 	client.MarkerSettings = &markerSettings{client: client}
 	client.Queries = &queries{client: client}
