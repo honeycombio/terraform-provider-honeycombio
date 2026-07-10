@@ -77,7 +77,25 @@ func (c *ListCache[T]) Invalidate(key string) {
 	if !ok {
 		return
 	}
+	invalidate(e)
+}
 
+// InvalidateAll drops every cached collection. Writers should call this
+// after a mutation which may be visible under other keys too.
+func (c *ListCache[T]) InvalidateAll() {
+	c.mu.Lock()
+	entries := make([]*listEntry[T], 0, len(c.entries))
+	for _, e := range c.entries {
+		entries = append(entries, e)
+	}
+	c.mu.Unlock()
+
+	for _, e := range entries {
+		invalidate(e)
+	}
+}
+
+func invalidate[T any](e *listEntry[T]) {
 	e.mu.Lock()
 	e.valid = false
 	e.items = nil
