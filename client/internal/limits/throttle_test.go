@@ -105,7 +105,9 @@ func TestThrottle_observe(t *testing.T) {
 	now := time.Now()
 
 	newTransport := func() *ThrottledTransport {
-		return NewThrottledTransport(nil).(*ThrottledTransport)
+		tt, ok := NewThrottledTransport(nil).(*ThrottledTransport)
+		require.True(t, ok)
+		return tt
 	}
 	response := func(status int, headers map[string]string) *http.Response {
 		w := httptest.NewRecorder()
