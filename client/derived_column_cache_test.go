@@ -3,7 +3,6 @@ package client_test
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -200,5 +199,5 @@ func TestDerivedColumns_ListErrorFallsBackToDirectLookup(t *testing.T) {
 	_, err = c.DerivedColumns.List(ctx, "test-dataset")
 	require.Error(t, err)
 	var detailedErr client.DetailedError
-	require.True(t, errors.As(err, &detailedErr))
+	require.ErrorAs(t, err, &detailedErr)
 }
