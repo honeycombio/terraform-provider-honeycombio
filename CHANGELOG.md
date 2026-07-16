@@ -1,3 +1,20 @@
+# 0.52.0 (July 16, 2026)
+
+## Notes:
+
+- Expands the marker resource to support time-range markers
+- Exposes column types in the GET columns call
+
+## Enhancements
+
+- feat(d/columns): expose column_types map (#883)
+- feat(r/marker): support start and end time (#882)
+
+## Housekeeping
+- maint(deps): bump slackapi/slack-github-action from 3.0.5 to 4.0.0 (#888)
+- maint(deps): bump slackapi/slack-github-action from 3.0.3 to 3.0.5 (#887)
+- maint(deps): bump golang.org/x/net from 0.56.0 to 0.57.0 (#884)
+
 # 0.51.1 (July 2, 2026)
 
 ## Bugfixes
