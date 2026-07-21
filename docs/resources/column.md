@@ -40,7 +40,7 @@ resource "honeycombio_column" "duration_ms" {
 
 - `description` (String) The Column's description.
 - `hidden` (Boolean) Whether the Column is hidden or not.
-- `type` (String) The Column's type. Valid values are `string`, `integer`, `float`, `boolean`.
+- `type` (String) The Column's type. Valid values are `string`, `integer`, `float`, `boolean`, and `histogram`. `histogram` applies only to metrics datasets.
 
 ### Read-Only
 

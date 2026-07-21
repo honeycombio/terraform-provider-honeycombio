@@ -167,6 +167,66 @@ resource "honeycombio_column" "test" {
 	})
 }
 
+func TestAcc_ColumnResourceHistogram(t *testing.T) {
+	// histogram columns are only valid on metrics datasets; skips unless
+	// HONEYCOMB_METRICS_DATASET is set (metrics acc tests don't run in CI).
+	dataset := testAccMetricsDataset(t)
+	ctx := context.Background()
+
+	c := testAccClient(t)
+	// The API only permits histogram-typed columns on metrics datasets. Create a
+	// throwaway one so we can adopt and manage it without mutating the shared
+	// `app.histogram` fixture other metrics tests rely on.
+	column, err := c.Columns.Create(ctx, dataset, &client.Column{
+		KeyName: test.RandomStringWithPrefix("test.", 10),
+		Type:    client.ToPtr(client.ColumnTypeHistogram),
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		c.Columns.Delete(ctx, dataset, column.ID)
+	})
+
+	// give the backend a chance to catch up
+	time.Sleep(31 * time.Second)
+	assert.Eventually(t, func() bool {
+		_, err := c.Columns.GetByKeyName(ctx, dataset, column.KeyName)
+		return err == nil
+	}, 5*time.Second, 200*time.Millisecond)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				// Adopt the existing histogram column and set a description — the
+				// operation meta_columns performs. Proves the resource accepts a
+				// `histogram` type and the API allows a description update on a
+				// metrics/histogram column.
+				Config: fmt.Sprintf(`
+provider "honeycombio" {
+  features {
+    column {
+      import_on_conflict = true
+    }
+  }
+}
+
+resource "honeycombio_column" "hist" {
+  name        = "%s"
+  dataset     = "%s"
+  type        = "histogram"
+  description = "Managed by acceptance test"
+}`, column.KeyName, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					testAccEnsureColumnExists(t, "honeycombio_column.hist", column.KeyName),
+					resource.TestCheckResourceAttr("honeycombio_column.hist", "type", "histogram"),
+					resource.TestCheckResourceAttr("honeycombio_column.hist", "description", "Managed by acceptance test"),
+				),
+			},
+		},
+	})
+}
+
 // TestAcc_ColumnResourceUpgradeFromVersion037 is intended to test the migration
 // case from the last SDK-based version of the Column resource to the current Framework-based
 // version.

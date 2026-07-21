@@ -72,6 +72,8 @@ const (
 	ColumnTypeFloat   ColumnType = "float"
 	ColumnTypeInteger ColumnType = "integer"
 	ColumnTypeBoolean ColumnType = "boolean"
+	// ColumnTypeHistogram applies only to metrics datasets.
+	ColumnTypeHistogram ColumnType = "histogram"
 )
 
 // ColumnTypes returns an exhaustive list of column types.
@@ -81,6 +83,7 @@ func ColumnTypes() []ColumnType {
 		ColumnTypeFloat,
 		ColumnTypeInteger,
 		ColumnTypeBoolean,
+		ColumnTypeHistogram,
 	}
 }
 

@@ -11,6 +11,22 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
+func TestColumnTypes(t *testing.T) {
+	t.Parallel()
+
+	// The resource's `type` validator is driven by ColumnTypes(); histogram must
+	// be present so metrics columns (which the API reports as histogram) can be
+	// managed for description updates.
+	assert.Contains(t, client.ColumnTypes(), client.ColumnTypeHistogram)
+	assert.ElementsMatch(t, client.ColumnTypes(), []client.ColumnType{
+		client.ColumnTypeString,
+		client.ColumnTypeFloat,
+		client.ColumnTypeInteger,
+		client.ColumnTypeBoolean,
+		client.ColumnTypeHistogram,
+	})
+}
+
 func TestColumns(t *testing.T) {
 	t.Parallel()
 
