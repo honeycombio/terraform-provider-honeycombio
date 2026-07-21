@@ -109,7 +109,7 @@ func (*columnResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				Default: stringdefault.StaticString(""),
 			},
 			"type": schema.StringAttribute{
-				Description: "The Column's type. Valid values are `string`, `integer`, `float`, `boolean`.",
+				Description: "The Column's type. Valid values are `string`, `integer`, `float`, `boolean`, and `histogram`. `histogram` applies only to metrics datasets.",
 				Optional:    true,
 				Computed:    true,
 				Default:     stringdefault.StaticString("string"),
