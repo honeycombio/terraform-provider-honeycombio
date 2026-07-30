@@ -1,3 +1,14 @@
+# 0.53.0 (July 30, 2026)
+
+## Enhancements
+
+- feat(r/column): support histogram column type (#891)
+
+## Housekeeping
+
+- maint(deps): bump google.golang.org/grpc from 1.79.3 to 1.82.1 (#892)
+- maint(deps): bump actions/setup-go from 6 to 7 (#890)
+
 # 0.52.0 (July 16, 2026)
 
 ## Notes:
