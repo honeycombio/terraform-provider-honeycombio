@@ -4,9 +4,23 @@ import "github.com/hashicorp/terraform-plugin-framework/types"
 
 // Features represents provider-level features.
 type Features struct {
+	Client       FeaturesClient
 	Column       FeaturesColumn
 	Dataset      FeaturesDataset
 	Intelligence FeaturesIntelligence
+}
+
+// FeaturesClient represents API client-specific features.
+type FeaturesClient struct {
+	// ProactiveThrottling controls whether the API clients proactively
+	// throttle requests when the API reports the rate limit budget as
+	// nearly or fully exhausted, rather than only reactively retrying.
+	ProactiveThrottling bool
+}
+
+// FeaturesClientModel represents API client-specific features for Terraform schema.
+type FeaturesClientModel struct {
+	ProactiveThrottling types.Bool `tfsdk:"proactive_throttling"`
 }
 
 // FeaturesColumn represents column-specific features.
@@ -45,6 +59,7 @@ type FeaturesIntelligenceModel struct {
 }
 
 type Model struct {
+	Client       []FeaturesClientModel       `tfsdk:"client"`
 	Column       []FeaturesColumnModel       `tfsdk:"column"`
 	Dataset      []FeaturesDatasetModel      `tfsdk:"dataset"`
 	Intelligence []FeaturesIntelligenceModel `tfsdk:"intelligence"`
@@ -58,6 +73,14 @@ func Parse(m []Model) *Features {
 		return result
 	}
 	features := m[0]
+
+	// parse client features
+	if len(features.Client) > 0 {
+		clientFeatures := features.Client[0]
+		if !clientFeatures.ProactiveThrottling.IsNull() && !clientFeatures.ProactiveThrottling.IsUnknown() {
+			result.Client.ProactiveThrottling = clientFeatures.ProactiveThrottling.ValueBool()
+		}
+	}
 
 	// parse column features
 	if len(features.Column) > 0 {
@@ -80,6 +103,35 @@ func Parse(m []Model) *Features {
 		intelligenceFeatures := features.Intelligence[0]
 		if !intelligenceFeatures.Enabled.IsNull() && !intelligenceFeatures.Enabled.IsUnknown() {
 			result.Intelligence.Enabled = intelligenceFeatures.Enabled.ValueBool()
+		}
+	}
+
+	return result
+}
+
+// ParsePluginSDK converts the raw features list from the PluginSDK-based
+// provider's configuration to the internal Features representation while
+// handling default values.
+//
+// Only client-level features are parsed: resource-level features are
+// consumed by Framework-based resources, which receive their features via
+// Parse.
+func ParsePluginSDK(raw []any) *Features {
+	result := DefaultFeatures()
+	if len(raw) == 0 {
+		return result
+	}
+	features, ok := raw[0].(map[string]any)
+	if !ok {
+		return result
+	}
+
+	// parse client features
+	if clientBlock, ok := features["client"].([]any); ok && len(clientBlock) > 0 {
+		if clientFeatures, ok := clientBlock[0].(map[string]any); ok {
+			if v, ok := clientFeatures["proactive_throttling"].(bool); ok {
+				result.Client.ProactiveThrottling = v
+			}
 		}
 	}
 
