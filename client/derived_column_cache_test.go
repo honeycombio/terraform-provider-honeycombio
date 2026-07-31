@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -31,8 +32,7 @@ func (a *derivedColumnTestAPI) handler(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	var dataset string
-	fmt.Sscanf(r.URL.Path, "/1/derived_columns/%s", &dataset)
+	dataset, id, _ := strings.Cut(strings.TrimPrefix(r.URL.Path, "/1/derived_columns/"), "/")
 
 	switch {
 	case r.Method == http.MethodGet && r.URL.Query().Has("alias"):
@@ -56,21 +56,57 @@ func (a *derivedColumnTestAPI) handler(w http.ResponseWriter, r *http.Request) {
 		a.columns[dataset] = append(a.columns[dataset], c)
 		w.WriteHeader(http.StatusCreated)
 		_ = json.NewEncoder(w).Encode(c)
+	case r.Method == http.MethodPut:
+		a.writeRequests.Add(1)
+		var c client.DerivedColumn
+		_ = json.NewDecoder(r.Body).Decode(&c)
+		c.ID = id
+		for i := range a.columns[dataset] {
+			if a.columns[dataset][i].ID == id {
+				a.columns[dataset][i] = c
+				_ = json.NewEncoder(w).Encode(c)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"error":"derived column not found"}`))
+	case r.Method == http.MethodDelete:
+		a.writeRequests.Add(1)
+		for i, c := range a.columns[dataset] {
+			if c.ID == id {
+				a.columns[dataset] = append(a.columns[dataset][:i:i], a.columns[dataset][i+1:]...)
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"error":"derived column not found"}`))
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 
-func newDerivedColumnTestClient(t *testing.T, api *derivedColumnTestAPI) *client.Client {
+// testClientOption customizes the config of a test client.
+type testClientOption func(*client.Config)
+
+// withReadCaching enables read caching on a test client.
+func withReadCaching(cfg *client.Config) { cfg.ReadCaching = true }
+
+func newDerivedColumnTestClient(t *testing.T, api *derivedColumnTestAPI, opts ...testClientOption) *client.Client {
 	t.Helper()
 
 	server := httptest.NewServer(http.HandlerFunc(api.handler))
 	t.Cleanup(server.Close)
 
-	c, err := client.NewClientWithConfig(&client.Config{
+	cfg := &client.Config{
 		APIKey: "test-key",
 		APIUrl: server.URL,
-	})
+	}
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
+	c, err := client.NewClientWithConfig(cfg)
 	require.NoError(t, err)
 	return c
 }
@@ -87,7 +123,7 @@ func TestDerivedColumns_ReadsAreServedFromCache(t *testing.T) {
 			},
 		},
 	}
-	c := newDerivedColumnTestClient(t, api)
+	c := newDerivedColumnTestClient(t, api, withReadCaching)
 
 	// a burst of concurrent alias reads — as a refresh of many
 	// honeycombio_derived_column resources produces — collapses into a
@@ -125,7 +161,7 @@ func TestDerivedColumns_MissingAliasFallsBackToDirectLookup(t *testing.T) {
 	api := &derivedColumnTestAPI{
 		columns: map[string][]client.DerivedColumn{"test-dataset": {}},
 	}
-	c := newDerivedColumnTestClient(t, api)
+	c := newDerivedColumnTestClient(t, api, withReadCaching)
 
 	_, err := c.DerivedColumns.GetByAlias(ctx, "test-dataset", "dc.gone")
 
@@ -142,26 +178,65 @@ func TestDerivedColumns_WritesInvalidateTheCache(t *testing.T) {
 	api := &derivedColumnTestAPI{
 		columns: map[string][]client.DerivedColumn{"test-dataset": {}},
 	}
-	c := newDerivedColumnTestClient(t, api)
+	c := newDerivedColumnTestClient(t, api, withReadCaching)
 
 	// prime the cache with the empty dataset
 	columns, err := c.DerivedColumns.List(ctx, "test-dataset")
 	require.NoError(t, err)
 	assert.Empty(t, columns)
 
-	_, err = c.DerivedColumns.Create(ctx, "test-dataset", &client.DerivedColumn{
+	created, err := c.DerivedColumns.Create(ctx, "test-dataset", &client.DerivedColumn{
 		Alias:      "dc.new",
 		Expression: "BOOL(1)",
 	})
 	require.NoError(t, err)
 
 	// the create invalidated the cached list, so the new column is
-	// visible without a per-alias lookup
+	// visible via a fresh list, without a per-alias lookup
 	dc, err := c.DerivedColumns.GetByAlias(ctx, "test-dataset", "dc.new")
 	require.NoError(t, err)
 	assert.Equal(t, "dc.new", dc.Alias)
 	assert.Equal(t, int64(2), api.listRequests.Load(), "expected the list to be refetched after the write")
 	assert.Zero(t, api.aliasRequests.Load())
+
+	// a delete also invalidates: the deleted column is gone from the
+	// fresh list and the miss is confirmed with a direct lookup
+	require.NoError(t, c.DerivedColumns.Delete(ctx, "test-dataset", created.ID))
+
+	_, err = c.DerivedColumns.GetByAlias(ctx, "test-dataset", "dc.new")
+	var detailedErr client.DetailedError
+	require.ErrorAs(t, err, &detailedErr)
+	assert.True(t, detailedErr.IsNotFound())
+	assert.Equal(t, int64(3), api.listRequests.Load(), "expected the list to be refetched after the delete")
+	assert.Equal(t, int64(1), api.aliasRequests.Load(), "expected the post-delete miss to be confirmed directly")
+}
+
+func TestDerivedColumns_CachingIsDisabledByDefault(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	api := &derivedColumnTestAPI{
+		columns: map[string][]client.DerivedColumn{
+			"test-dataset": {{ID: "id-1", Alias: "dc.one", Expression: "BOOL(1)"}},
+		},
+	}
+	c := newDerivedColumnTestClient(t, api)
+
+	// without read caching every alias read is its own direct lookup
+	for range 2 {
+		dc, err := c.DerivedColumns.GetByAlias(ctx, "test-dataset", "dc.one")
+		require.NoError(t, err)
+		assert.Equal(t, "dc.one", dc.Alias)
+	}
+	assert.Equal(t, int64(2), api.aliasRequests.Load(), "expected one direct lookup per read")
+	assert.Zero(t, api.listRequests.Load(), "expected no list requests when caching is disabled")
+
+	// and every list call hits the API
+	for range 2 {
+		_, err := c.DerivedColumns.List(ctx, "test-dataset")
+		require.NoError(t, err)
+	}
+	assert.Equal(t, int64(2), api.listRequests.Load())
 }
 
 func TestDerivedColumns_EnvironmentWideWritesInvalidateAllDatasets(t *testing.T) {
@@ -174,7 +249,7 @@ func TestDerivedColumns_EnvironmentWideWritesInvalidateAllDatasets(t *testing.T)
 			client.EnvironmentWideSlug: {},
 		},
 	}
-	c := newDerivedColumnTestClient(t, api)
+	c := newDerivedColumnTestClient(t, api, withReadCaching)
 
 	// prime the dataset-scoped cache
 	_, err := c.DerivedColumns.List(ctx, "test-dataset")
@@ -215,8 +290,9 @@ func TestDerivedColumns_ListErrorFallsBackToDirectLookup(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	c, err := client.NewClientWithConfig(&client.Config{
-		APIKey: "test-key",
-		APIUrl: server.URL,
+		APIKey:      "test-key",
+		APIUrl:      server.URL,
+		ReadCaching: true,
 	})
 	require.NoError(t, err)
 
