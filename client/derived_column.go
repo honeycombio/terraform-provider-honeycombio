@@ -42,13 +42,14 @@ type DerivedColumns interface {
 
 // derivedColumns implements DerivedColumns.
 //
-// Reads are served from a short-lived per-dataset cache of the full
-// column list so that large plans, refreshes, and applies don't issue
-// one API request per managed derived column. Writes invalidate the
-// dataset's cached list.
+// When read caching is enabled (Config.ReadCaching) reads are served
+// from a short-lived per-dataset cache of the full column list so that
+// large plans, refreshes, and applies don't issue one API request per
+// managed derived column. Writes invalidate the dataset's cached list.
 type derivedColumns struct {
 	client *Client
-	cache  *cache.ListCache[DerivedColumn]
+	// cache is nil unless read caching is enabled.
+	cache *cache.Cache[DerivedColumn]
 }
 
 // Compile-time proof of interface implementation by type derivedColumns.
@@ -71,11 +72,15 @@ type DerivedColumn struct {
 }
 
 func (s *derivedColumns) List(ctx context.Context, dataset string) ([]DerivedColumn, error) {
-	return s.cache.Get(ctx, urlEncodeDataset(dataset), func(ctx context.Context) ([]DerivedColumn, error) {
+	fetch := func(ctx context.Context) ([]DerivedColumn, error) {
 		var c []DerivedColumn
 		err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s", urlEncodeDataset(dataset)), nil, &c)
 		return c, err
-	})
+	}
+	if s.cache == nil {
+		return fetch(ctx)
+	}
+	return s.cache.Get(ctx, urlEncodeDataset(dataset), fetch)
 }
 
 func (s *derivedColumns) Get(ctx context.Context, dataset string, id string) (*DerivedColumn, error) {
@@ -85,21 +90,24 @@ func (s *derivedColumns) Get(ctx context.Context, dataset string, id string) (*D
 }
 
 func (s *derivedColumns) GetByAlias(ctx context.Context, dataset string, alias string) (*DerivedColumn, error) {
-	columns, err := s.List(ctx, dataset)
-	if err == nil {
-		for i := range columns {
-			if columns[i].Alias == alias {
-				return &columns[i], nil
+	if s.cache != nil {
+		columns, err := s.List(ctx, dataset)
+		if err == nil {
+			for i := range columns {
+				if columns[i].Alias == alias {
+					return &columns[i], nil
+				}
 			}
 		}
 	}
 
-	// fall back to a direct lookup: the alias may be resolvable
+	// direct lookup: the only path when read caching is disabled, and
+	// the fallback for a cache miss — the alias may be resolvable
 	// server-side even when absent from the dataset's cached list, and
 	// this preserves the API's error responses (e.g. a 404 for a column
 	// which truly doesn't exist) exactly as they were
 	var c DerivedColumn
-	err = s.client.Do(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s?alias=%s", urlEncodeDataset(dataset), url.QueryEscape(alias)), nil, &c)
+	err := s.client.Do(ctx, "GET", fmt.Sprintf("/1/derived_columns/%s?alias=%s", urlEncodeDataset(dataset), url.QueryEscape(alias)), nil, &c)
 	if err != nil {
 		return nil, err
 	}
@@ -127,10 +135,13 @@ func (s *derivedColumns) Delete(ctx context.Context, dataset string, id string) 
 }
 
 // invalidateCache drops the cached column list a write may have made
-// stale. A write to an environment-wide column is visible in every
-// dataset's view, so those drop everything rather than just the
-// environment-wide list.
+// stale; the next read fetches a fresh list. A write to an
+// environment-wide column is visible in every dataset's view, so those
+// drop everything rather than just the environment-wide list.
 func (s *derivedColumns) invalidateCache(dataset string) {
+	if s.cache == nil {
+		return
+	}
 	if dataset == EnvironmentWideSlug {
 		s.cache.InvalidateAll()
 		return

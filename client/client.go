@@ -47,6 +47,11 @@ type Config struct {
 	HTTPClient *http.Client
 	// Optionally set the user agent to send with all requests, defaults to "go-honeycombio".
 	UserAgent string
+	// With read caching enabled, reads of supported resource types are
+	// served from a short-lived cache of the containing collection, so
+	// large fleets don't issue one API request per resource read.
+	// Currently supported: derived columns.
+	ReadCaching bool
 }
 
 // Client to interact with Honeycomb.
@@ -118,6 +123,7 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	if config.HTTPClient != nil {
 		cfg.HTTPClient = config.HTTPClient
 	}
+	cfg.ReadCaching = config.ReadCaching
 
 	if cfg.APIKey == "" {
 		return nil, errors.New("APIKey must be configured")
@@ -161,10 +167,11 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	client.Columns = &columns{client: client}
 	client.Datasets = &datasets{client: client}
 	client.DatasetDefinitions = &datasetDefinitions{client: client}
-	client.DerivedColumns = &derivedColumns{
-		client: client,
-		cache:  cache.NewListCache[DerivedColumn](derivedColumnCacheTTL),
+	derivedColumns := &derivedColumns{client: client}
+	if cfg.ReadCaching {
+		derivedColumns.cache = cache.New[DerivedColumn](derivedColumnCacheTTL)
 	}
+	client.DerivedColumns = derivedColumns
 	client.Markers = &markers{client: client}
 	client.MarkerSettings = &markerSettings{client: client}
 	client.Queries = &queries{client: client}

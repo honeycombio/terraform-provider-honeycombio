@@ -125,6 +125,9 @@ Each of the blocks defined below can be optionally specified to configure the be
 ```hcl
 provider "honeycombio" {
   features {
+    client {
+      read_caching = true
+    }
     column {
       import_on_conflict = true
     }
@@ -142,9 +145,16 @@ provider "honeycombio" {
 
 The `features` block supports the following:
 
+* `client` - (Optional) A `client` block as defined below.
 * `column` - (Optional) A `column` block as defined below.
 * `dataset` - (Optional) A `dataset` block as defined below.
 * `intelligence` - (Optional) An `intelligence` block as defined below.
+
+---
+The `client` block supports the following:
+* `read_caching` - (Optional) Set to `true` to serve reads of supported resource types from a short-lived (60 second) cache of the containing collection, so configurations managing many resources of the same type don't issue one API request per resource read. Defaults to `false`.
+    Reads confirm not-found results directly against the API, so drift is still detected. The trade-off is that a resource changed outside of Terraform within the cache window may be read stale for up to 60 seconds.
+    Currently supported resource types: derived columns.
 
 ---
 The `column` block supports the following:

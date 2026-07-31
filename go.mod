@@ -7,6 +7,7 @@ require (
 	github.com/google/go-querystring v1.2.0
 	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
+	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/hashicorp/jsonapi v1.5.0
 	github.com/hashicorp/terraform-plugin-docs v0.25.0
 	github.com/hashicorp/terraform-plugin-framework v1.19.0
@@ -17,6 +18,7 @@ require (
 	github.com/honeycombio/honeycomb-derived-column-validator v0.2.0
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.11.1
+	golang.org/x/sync v0.22.0
 )
 
 require (
@@ -45,7 +47,6 @@ require (
 	github.com/yuin/goldmark-meta v1.1.0 // indirect
 	go.abhg.dev/goldmark/frontmatter v0.2.0 // indirect
 	golang.org/x/exp v0.0.0-20250215185904-eff6e970281f // indirect
-	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/tools v0.47.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
