@@ -1,3 +1,78 @@
+# 0.53.0 (July 30, 2026)
+
+## Enhancements
+
+- feat(r/column): support histogram column type (#891)
+
+## Housekeeping
+
+- maint(deps): bump google.golang.org/grpc from 1.79.3 to 1.82.1 (#892)
+- maint(deps): bump actions/setup-go from 6 to 7 (#890)
+
+# 0.52.0 (July 16, 2026)
+
+## Notes:
+
+- Expands the marker resource to support time-range markers
+- Exposes column types in the GET columns call
+
+## Enhancements
+
+- feat(d/columns): expose column_types map (#883)
+- feat(r/marker): support start and end time (#882)
+
+## Housekeeping
+- maint(deps): bump slackapi/slack-github-action from 3.0.5 to 4.0.0 (#888)
+- maint(deps): bump slackapi/slack-github-action from 3.0.3 to 3.0.5 (#887)
+- maint(deps): bump golang.org/x/net from 0.56.0 to 0.57.0 (#884)
+
+# 0.51.1 (July 2, 2026)
+
+## Bugfixes
+
+- fix(r/burn_alerts): Enforce single recipient requirement (#876)
+
+## Housekeeping
+
+- maint(deps): bump actions/checkout from 6 to 7 (#877)
+- maint(deps): bump golang.org/x/net from 0.55.0 to 0.56.0 (#869)
+- maint(deps): bump golangci/golangci-lint-action from 9.2.1 to 9.3.0 (#879)
+- maint(deps): bump goreleaser/goreleaser-action from 7.2.2 to 7.2.3 (#880)
+
+# 0.51.0 (June 11, 2026)
+
+## Enhancements
+
+- feat: Add configuration key support to the provider (#868)
+
+## Bugfixes
+
+- fix: make it possible to delete a dataset (#856)
+- fix(slos): remove dataset restriction (#870)
+
+# 0.50.0 (June 4, 2026)
+
+## Notes
+
+- **The minimum supported Terraform version is now 1.0.** This release upgrades the
+  provider to Terraform Plugin Protocol V6. Existing configurations require no changes,
+  but Terraform versions prior to 1.0 are no longer supported. (#861)
+
+## Enhancements
+
+- feat: increase maximum retry attempts (#866)
+
+## Bugfixes
+
+- fix: detect calculated_fields changes when diffing trigger/query query_json (#864)
+- fix: always treat query filter values as strings for string ops (#854)
+
+## Housekeeping
+
+- maint: Update the provider proto version to V6 (#861)
+- docs: fix broken link to examples directory (#855)
+- maint(deps): bump golang.org/x/net from 0.53.0 to 0.55.0 (#858)
+
 # 0.49.0 (May 1, 2026)
 
 ## Enhancements

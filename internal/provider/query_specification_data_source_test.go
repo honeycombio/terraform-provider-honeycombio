@@ -14,7 +14,7 @@ import (
 func TestAcc_QuerySpecificationDataSource_EmptyDefaults(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -112,7 +112,7 @@ func TestAcc_QuerySpecificationDataSource_basic(t *testing.T) {
 	require.NoError(t, err)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -201,7 +201,7 @@ output "query_json" {
 func TestAcc_QuerySpecificationDataSource_validationChecks(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: appendAllTestSteps(
 			testStepsQueryValidationChecks_calculation,
 			testStepsQueryValidationChecks_calculationFilters,
@@ -659,7 +659,7 @@ func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {
 func TestAcc_QuerySpecificationDataSource_filterOpInAndNotIn(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -709,7 +709,7 @@ func TestAcc_QuerySpecificationDataSource_zerovalue(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -722,6 +722,59 @@ data "honeycombio_query_specification" "test" {
     column = "duration_ms"
     op     = ">"
     value  = 0
+  }
+
+  granularity = 0
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.test.json
+}`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("query_json", expected),
+				),
+			},
+		},
+	})
+}
+
+// Check that string ops cause integer-like string values to be treated
+// as strings instead of being converted to integers
+func TestAcc_QuerySpecificationDataSource_stringcoercion(t *testing.T) {
+	expected, err := test.MinifyJSON(`
+{
+  "calculations": [
+    {
+      "op": "COUNT"
+    }
+  ],
+  "filters": [
+    {
+      "column": "status_code",
+      "op": "starts-with",
+      "value": "4"
+    }
+  ],
+  "time_range": 7200,
+  "granularity": 0
+}`)
+	require.NoError(t, err)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  filter {
+    column = "status_code"
+    op     = "starts-with"
+    value  = "4"
   }
 
   granularity = 0
@@ -766,7 +819,7 @@ func TestAcc_QuerySpecificationDataSource_CompareTimeOffsetSecondsValid(t *testi
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -811,7 +864,7 @@ func TestAcc_QuerySpecificationDataSource_dynamicFilter(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -859,7 +912,7 @@ func TestAcc_QuerySpecificationDataSource_dynamicCalculationFilterForEach(t *tes
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -905,7 +958,7 @@ func TestAcc_QuerySpecificationDataSource_formulas(t *testing.T) {
 	require.NoError(t, err)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -960,7 +1013,7 @@ func TestAcc_QuerySpecificationDataSource_calculationFilters(t *testing.T) {
 	require.NoError(t, err)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -997,7 +1050,7 @@ output "query_json" {
 func TestAcc_QuerySpecificationDataSource_orderByFormula(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -1028,7 +1081,7 @@ data "honeycombio_query_specification" "test" {
 func TestAcc_QuerySpecificationDataSource_orderByNamedCalculation(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -1307,7 +1360,7 @@ data "honeycombio_query_specification" "test" {
 func TestAcc_QuerySpecificationDataSource_TimeRange_CompareTimeOffsetInvalid(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -1336,7 +1389,7 @@ output "query_json" {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `

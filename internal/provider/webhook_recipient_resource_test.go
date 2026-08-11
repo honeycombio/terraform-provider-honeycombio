@@ -19,7 +19,7 @@ func TestAcc_WebhookRecipientResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
@@ -82,7 +82,7 @@ resource "honeycombio_webhook_recipient" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
@@ -180,7 +180,7 @@ resource "honeycombio_webhook_recipient" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
@@ -241,7 +241,7 @@ resource "honeycombio_webhook_recipient" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
@@ -317,7 +317,7 @@ resource "honeycombio_webhook_recipient" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
@@ -407,7 +407,7 @@ resource "honeycombio_webhook_recipient" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
@@ -498,7 +498,7 @@ resource "honeycombio_webhook_recipient" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
@@ -540,7 +540,7 @@ func TestAcc_WebhookRecipientResource_validateDuplicateTemplateType(t *testing.T
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 		Steps: []resource.TestStep{
 			{
@@ -571,7 +571,7 @@ func TestAcc_WebhookRecipientResource_validateDuplicateVariableName(t *testing.T
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 		Steps: []resource.TestStep{
 			{
@@ -608,7 +608,7 @@ func TestAcc_WebhookRecipientResource_validateVariableMustHaveTemplate(t *testin
 	t.Run("validation on create", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 			Steps: []resource.TestStep{
 				{
@@ -651,7 +651,7 @@ resource "honeycombio_webhook_recipient" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -720,7 +720,7 @@ func TestAcc_WebhookRecipientResource_validateInvalidWebhookHeader(t *testing.T)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureRecipientDestroyed(t),
 		Steps: []resource.TestStep{
 			{
@@ -780,7 +780,7 @@ resource "honeycombio_webhook_recipient" "test" {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+				ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 				Config:                   config,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("honeycombio_webhook_recipient.test", "id"),

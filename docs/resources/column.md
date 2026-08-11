@@ -5,6 +5,10 @@ This can be used to create, update, and delete columns in a dataset.
 
 ~> **Warning** Deleting a column is a destructive and irreversible operation which also removes the data in the column.
 
+-> **Note** Some columns (such as `timestamp` and `duration_ms`) are used as dataset definitions and cannot be deleted independently while the parent dataset exists. 
+When running `terraform destroy`, the provider will skip the individual column delete for these columns and allow the dataset deletion to clean them up. 
+If you remove a definition column from your configuration without also removing the dataset, Terraform will consider the deletion successful but the column will remain in Honeycomb until the dataset is deleted.
+
 -> Version 0.38 and later of the Honeycomb Provider include a Feature Toggle which allows the column to be imported and updated automatically if there is a conflict during create instead of throwing an error.
   This is potentially dangerous if the type changes on the update -- switching from `string` to `boolean` and causing dataloss, for example -- and should be used with caution.
 
@@ -36,7 +40,7 @@ resource "honeycombio_column" "duration_ms" {
 
 - `description` (String) The Column's description.
 - `hidden` (Boolean) Whether the Column is hidden or not.
-- `type` (String) The Column's type. Valid values are `string`, `integer`, `float`, `boolean`.
+- `type` (String) The Column's type. Valid values are `string`, `integer`, `float`, `boolean`, and `histogram`. `histogram` applies only to metrics datasets.
 
 ### Read-Only
 

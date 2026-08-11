@@ -15,7 +15,7 @@ func TestAcc_EnvironmentResource(t *testing.T) {
 	t.Run("happy path", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheckV2API(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: testAccConfigBasicEnvironmentTest("test environment", "test description", "blue", true),
@@ -57,7 +57,7 @@ func TestAcc_EnvironmentResource(t *testing.T) {
 	t.Run("default values", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheckV2API(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: `
@@ -88,7 +88,7 @@ resource "honeycombio_environment" "test" {
 	t.Run("fails to create environment with delete protection disabled", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheckV2API(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config:      testAccConfigBasicEnvironmentTest("nope", "", "red", false),

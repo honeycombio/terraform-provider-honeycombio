@@ -12,3 +12,6 @@ terraform-provider-honeycombio*
 
 .idea
 .env
+
+.envrc
+.tool-versions

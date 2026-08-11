@@ -417,6 +417,8 @@ func expandBoardViewFilters(
 					// Only set filter.Value if validation passed (no empty strings)
 					filter.Value = result
 				}
+			} else if filterOp.IsString() {
+				filter.Value = f.Value.ValueString()
 			} else {
 				// For scalar operations, convert string to appropriate type
 				filter.Value = coerce.ValueToType(f.Value.ValueString())

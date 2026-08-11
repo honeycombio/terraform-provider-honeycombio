@@ -50,5 +50,16 @@ type APIKey struct {
 }
 
 type APIKeyPermissions struct {
-	CreateDatasets bool `json:"create_datasets" jsonapi:"attr,create_datasets"`
+	SendEvents          bool `json:"send_events,omitempty" jsonapi:"attr,send_events,omitempty"`
+	CreateDatasets      bool `json:"create_datasets,omitempty" jsonapi:"attr,create_datasets,omitempty"`
+	ManageQueries       bool `json:"manage_columns,omitempty" jsonapi:"attr,manage_columns,omitempty"`
+	RunQueries          bool `json:"run_queries,omitempty" jsonapi:"attr,run_queries,omitempty"`
+	ReadServiceMaps     bool `json:"read_service_maps,omitempty" jsonapi:"attr,read_service_maps,omitempty"`
+	ManagePublicBoards  bool `json:"manage_boards,omitempty" jsonapi:"attr,manage_boards,omitempty"`
+	ManagePrivateBoards bool `json:"manage_privateBoards,omitempty" jsonapi:"attr,manage_privateBoards,omitempty"`
+	ManageSLOs          bool `json:"manage_slos,omitempty" jsonapi:"attr,manage_slos,omitempty"`
+	ManageTriggers      bool `json:"manage_triggers,omitempty" jsonapi:"attr,manage_triggers,omitempty"`
+	ManageRecipients    bool `json:"manage_recipients,omitempty" jsonapi:"attr,manage_recipients,omitempty"`
+	ManageMarkers       bool `json:"manage_markers,omitempty" jsonapi:"attr,manage_markers,omitempty"`
+	VisibleToMembers    bool `json:"visible_team_members,omitempty" jsonapi:"attr,visible_team_members,omitempty"`
 }

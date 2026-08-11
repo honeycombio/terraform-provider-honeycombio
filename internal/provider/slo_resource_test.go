@@ -24,7 +24,7 @@ func TestAccHoneycombioSLO_basic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -121,7 +121,7 @@ func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigSLO_basic(dataset, sliAlias),
@@ -149,7 +149,7 @@ func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigSLO_basic(dataset, sliAlias),
@@ -188,7 +188,7 @@ func TestAccHoneycombSLO_MD(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigSLO_md(dataset1.Slug, dataset2.Slug, mdSLI.Alias),
@@ -255,7 +255,7 @@ func TestAccHoneycombioSLO_UpgradeFromSDK(t *testing.T) {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 				Config: fmt.Sprintf(`
 					resource "honeycombio_slo" "test" {
 						name              = "TestAcc SLO Upgrade" 
@@ -286,7 +286,7 @@ func TestAccHoneycombioSLO_DatasetConstraint(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -330,7 +330,7 @@ func TestAccHoneycombioSLO_Update(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`

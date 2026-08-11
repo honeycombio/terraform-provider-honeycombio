@@ -30,7 +30,7 @@ func TestAcc_QueryResource(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccConfigBasicQueryTest(dataset, col.KeyName, 1),
@@ -62,7 +62,7 @@ func TestAcc_QueryResource(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -131,7 +131,7 @@ func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+				ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 				Config:                   config,
 				PlanOnly:                 true,
 				ExpectNonEmptyPlan:       false,
@@ -147,7 +147,7 @@ func TestAcc_QueryResourceEquivalentQuerySpecSupressed(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -195,7 +195,7 @@ func TestAcc_QueryAllToUnset(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: `
@@ -222,7 +222,7 @@ func TestAcc_QueryResourceWithMetrics(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				// query_spec form rejects COUNT default

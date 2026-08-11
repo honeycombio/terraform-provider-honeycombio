@@ -24,7 +24,7 @@ func TestAcc_EnvironmentsDatasource(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheckV2API(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`

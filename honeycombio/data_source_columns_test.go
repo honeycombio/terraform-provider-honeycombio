@@ -39,7 +39,7 @@ func TestAccDataSourceHoneycombioColumns_basic(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: fmt.Sprintf(`
@@ -70,8 +70,20 @@ output "all" {
 						"names.#",
 						fmt.Sprintf("%d", numColumns),
 					),
+					resource.TestCheckResourceAttr("data.honeycombio_columns.filtered",
+						"column_types.%",
+						fmt.Sprintf("%d", numColumns),
+					),
+					resource.TestCheckResourceAttr("data.honeycombio_columns.filtered",
+						fmt.Sprintf("column_types.%s", testColumns[0].KeyName),
+						string(honeycombio.ColumnTypeFloat),
+					),
 					resource.TestCheckResourceAttr("data.honeycombio_columns.none",
 						"names.#",
+						"0",
+					),
+					resource.TestCheckResourceAttr("data.honeycombio_columns.none",
+						"column_types.%",
 						"0",
 					),
 				),

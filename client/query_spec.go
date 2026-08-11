@@ -135,6 +135,11 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 		}
 	}
 
+	// the exact order of calculated fields does not matter, but their equivalence does
+	if !Equivalent(qs.CalculatedFields, other.CalculatedFields) {
+		return false
+	}
+
 	// The order of Formulas is important for visualization rendering
 	if !reflect.DeepEqual(qs.Formulas, other.Formulas) &&
 		// an empty Formulas is equivalent to a nil Formulas
@@ -407,6 +412,18 @@ func (f FilterOp) IsUnary() bool {
 // Array operations are "in" and "not-in".
 func (f FilterOp) IsArray() bool {
 	return f == FilterOpIn || f == FilterOpNotIn
+}
+
+// IsString returns true if the filter operation acts on strings.
+// String operations are "starts-with", "does-not-start-with", "ends-with",
+// "does-not-end-with", "contains", "does-not-contain"
+func (f FilterOp) IsString() bool {
+	return f == FilterOpStartsWith ||
+		f == FilterOpDoesNotStartWith ||
+		f == FilterOpEndsWith ||
+		f == FilterOpDoesNotEndWith ||
+		f == FilterOpContains ||
+		f == FilterOpDoesNotContain
 }
 
 // FilterCombination describes how the filters of a query should be combined.

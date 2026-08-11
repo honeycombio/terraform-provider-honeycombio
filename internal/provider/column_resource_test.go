@@ -3,19 +3,23 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"testing"
 	"time"
 
+	tfresource "github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	fwtypes "github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
-
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
 func TestAcc_ColumnResource(t *testing.T) {
@@ -27,7 +31,7 @@ func TestAcc_ColumnResource(t *testing.T) {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -113,7 +117,7 @@ resource "honeycombio_column" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{ // explicitly set import_on_conflict to false to ensure it fails
 					Config: fmt.Sprintf(`
@@ -163,6 +167,66 @@ resource "honeycombio_column" "test" {
 	})
 }
 
+func TestAcc_ColumnResourceHistogram(t *testing.T) {
+	// histogram columns are only valid on metrics datasets; skips unless
+	// HONEYCOMB_METRICS_DATASET is set (metrics acc tests don't run in CI).
+	dataset := testAccMetricsDataset(t)
+	ctx := context.Background()
+
+	c := testAccClient(t)
+	// The API only permits histogram-typed columns on metrics datasets. Create a
+	// throwaway one so we can adopt and manage it without mutating the shared
+	// `app.histogram` fixture other metrics tests rely on.
+	column, err := c.Columns.Create(ctx, dataset, &client.Column{
+		KeyName: test.RandomStringWithPrefix("test.", 10),
+		Type:    client.ToPtr(client.ColumnTypeHistogram),
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		c.Columns.Delete(ctx, dataset, column.ID)
+	})
+
+	// give the backend a chance to catch up
+	time.Sleep(31 * time.Second)
+	assert.Eventually(t, func() bool {
+		_, err := c.Columns.GetByKeyName(ctx, dataset, column.KeyName)
+		return err == nil
+	}, 5*time.Second, 200*time.Millisecond)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				// Adopt the existing histogram column and set a description — the
+				// operation meta_columns performs. Proves the resource accepts a
+				// `histogram` type and the API allows a description update on a
+				// metrics/histogram column.
+				Config: fmt.Sprintf(`
+provider "honeycombio" {
+  features {
+    column {
+      import_on_conflict = true
+    }
+  }
+}
+
+resource "honeycombio_column" "hist" {
+  name        = "%s"
+  dataset     = "%s"
+  type        = "histogram"
+  description = "Managed by acceptance test"
+}`, column.KeyName, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					testAccEnsureColumnExists(t, "honeycombio_column.hist", column.KeyName),
+					resource.TestCheckResourceAttr("honeycombio_column.hist", "type", "histogram"),
+					resource.TestCheckResourceAttr("honeycombio_column.hist", "description", "Managed by acceptance test"),
+				),
+			},
+		},
+	})
+}
+
 // TestAcc_ColumnResourceUpgradeFromVersion037 is intended to test the migration
 // case from the last SDK-based version of the Column resource to the current Framework-based
 // version.
@@ -194,7 +258,7 @@ resource "honeycombio_column" "test" {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+				ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 				Config:                   config,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
@@ -204,6 +268,95 @@ resource "honeycombio_column" "test" {
 			},
 		},
 	})
+}
+
+// mockColumns is a minimal stub of client.Columns for unit tests.
+type mockColumns struct {
+	deleteErr error
+}
+
+func (m mockColumns) List(_ context.Context, _ string) ([]client.Column, error)  { return nil, nil }
+func (m mockColumns) Get(_ context.Context, _, _ string) (*client.Column, error) { return nil, nil }
+func (m mockColumns) GetByKeyName(_ context.Context, _, _ string) (*client.Column, error) {
+	return nil, nil
+}
+func (m mockColumns) Create(_ context.Context, _ string, c *client.Column) (*client.Column, error) {
+	return c, nil
+}
+func (m mockColumns) Update(_ context.Context, _ string, c *client.Column) (*client.Column, error) {
+	return c, nil
+}
+func (m mockColumns) Delete(_ context.Context, _, _ string) error { return m.deleteErr }
+
+func Test_columnResource_Delete(t *testing.T) {
+	ctx := context.Background()
+
+	cr := &columnResource{}
+	var schemaResp tfresource.SchemaResponse
+	cr.Schema(ctx, tfresource.SchemaRequest{}, &schemaResp)
+
+	state := tfsdk.State{Schema: schemaResp.Schema}
+	diags := state.Set(ctx, models.ColumnResourceModel{
+		ID:            fwtypes.StringValue("col-123"),
+		Dataset:       fwtypes.StringValue("my-dataset"),
+		Name:          fwtypes.StringValue("duration_ms"),
+		Hidden:        fwtypes.BoolValue(false),
+		Description:   fwtypes.StringValue(""),
+		Type:          fwtypes.StringValue("float"),
+		CreatedAt:     fwtypes.StringValue(""),
+		UpdatedAt:     fwtypes.StringValue(""),
+		LastWrittenAt: fwtypes.StringValue(""),
+	})
+	require.False(t, diags.HasError(), "state setup failed: %v", diags)
+
+	tests := []struct {
+		name        string
+		deleteErr   error
+		wantErrDiag bool
+	}{
+		{
+			name: "succeeds when column is in use by dataset definition",
+			deleteErr: client.DetailedError{
+				Status:  http.StatusConflict,
+				Message: "Column is in use by dataset definition - duration_ms",
+			},
+			wantErrDiag: false,
+		},
+		{
+			name:        "succeeds when delete succeeds",
+			deleteErr:   nil,
+			wantErrDiag: false,
+		},
+		{
+			name: "errors on other conflicts (e.g. in use by derived column)",
+			deleteErr: client.DetailedError{
+				Status:  http.StatusConflict,
+				Message: "Column is in use by 1 derived columns: 'my_dc'",
+			},
+			wantErrDiag: true,
+		},
+		{
+			name: "errors on non-conflict API errors",
+			deleteErr: client.DetailedError{
+				Status:  http.StatusInternalServerError,
+				Message: "internal server error",
+			},
+			wantErrDiag: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &columnResource{
+				client: &client.Client{
+					Columns: mockColumns{deleteErr: tt.deleteErr},
+				},
+			}
+			var resp tfresource.DeleteResponse
+			r.Delete(ctx, tfresource.DeleteRequest{State: state}, &resp)
+			assert.Equal(t, tt.wantErrDiag, resp.Diagnostics.HasError())
+		})
+	}
 }
 
 func testAccEnsureColumnExists(t *testing.T, resource, name string) resource.TestCheckFunc {

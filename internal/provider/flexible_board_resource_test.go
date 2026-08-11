@@ -42,7 +42,7 @@ func TestAccHoneycombioFlexibleBoard(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: testFlexibleBoardConfig(dataset, slo.ID),
@@ -674,7 +674,7 @@ func TestAccHoneycombioFlexibleBoard_presetFilters(t *testing.T) {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			// create board with preset filters
 			{
@@ -784,7 +784,7 @@ resource "honeycombio_flexible_board" "test" {
 func TestAccHoneycombioFlexibleBoard_presetFilterLimit(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				// Test that 6 preset filters is rejected during plan
@@ -869,7 +869,7 @@ func TestAccHoneycombioFlexibleBoard_upgradeFromVersion036_2(t *testing.T) {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+				ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 				Config:                   config,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
@@ -922,7 +922,7 @@ func TestAccHoneycombioFlexibleBoard_upgradeFromVersion043_0(t *testing.T) {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+				ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 				Config:                   config,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
@@ -1111,7 +1111,7 @@ resource "honeycombio_flexible_board" "test" {
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
-		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: []resource.TestStep{
 			{
 				Config: config,

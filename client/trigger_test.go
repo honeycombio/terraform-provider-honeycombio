@@ -74,6 +74,7 @@ func TestTriggers(t *testing.T) {
 		data.ID = trigger.ID
 		data.QueryID = trigger.QueryID
 		data.AlertType = trigger.AlertType
+		data.AutoInvestigate = trigger.AutoInvestigate
 		data.Recipients[0].ID = trigger.Recipients[0].ID
 		// set default time range
 		data.Query.TimeRange = client.ToPtr(300)
@@ -333,6 +334,7 @@ func TestTriggersWithBaselineDetails(t *testing.T) {
 		data.ID = trigger.ID
 		data.QueryID = trigger.QueryID
 		data.AlertType = trigger.AlertType
+		data.AutoInvestigate = trigger.AutoInvestigate
 		data.Recipients[0].ID = trigger.Recipients[0].ID
 		// set default time range
 		data.Query.TimeRange = client.ToPtr(900)

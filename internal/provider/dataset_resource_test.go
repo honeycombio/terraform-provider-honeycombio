@@ -21,7 +21,7 @@ func TestAcc_DatasetResource(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: testAccConfigBasicDatasetTest(name, "test description", 0, true),
@@ -68,7 +68,7 @@ func TestAcc_DatasetResource(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config: fmt.Sprintf(`
@@ -101,7 +101,7 @@ resource "honeycombio_dataset" "test" {
 	t.Run("fails to create dataset with delete protection disabled", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config:      testAccConfigBasicDatasetTest("nope", "", 0, false),
@@ -133,7 +133,7 @@ resource "honeycombio_dataset" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheckV2API(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{
 					Config:      testAccConfigBasicDatasetTest(ds.Name, "", 0, true),
@@ -166,7 +166,7 @@ resource "honeycombio_dataset" "test" {
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
-			ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 			Steps: []resource.TestStep{
 				{ // explicitly set import_on_conflict to false to ensure it fails
 					Config: fmt.Sprintf(`
@@ -251,7 +251,7 @@ resource "honeycombio_dataset" "test" {
 				),
 			},
 			{
-				ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 				Config: fmt.Sprintf(`
 resource "honeycombio_dataset" "test" {
   name = "%s"
@@ -268,7 +268,7 @@ resource "honeycombio_dataset" "test" {
 				),
 			},
 			{ // disable delete protection to allow cleanup
-				ProtoV5ProviderFactories: testAccProtoV5ProviderFactory,
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 				Config: fmt.Sprintf(`
 resource "honeycombio_dataset" "test" {
   name             = "%s"

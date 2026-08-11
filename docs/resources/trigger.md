@@ -605,7 +605,7 @@ Optional:
 - `exceeded_limit` (Number) The number of times the threshold is met before an alert is sent. Defaults to 1.
 
 -> **NOTE** The query used in a Trigger must follow a strict subset. It supports two query shapes:
-**Standard:** The query must contain *exactly one* non-having calculation (without names or aggregate filters) and may only contain `calculation`, `filter`, `filter_combination`, `having` (at most 1), and `breakdowns` fields.
+**Standard:** The query must contain *exactly one* non-having calculation (without names or aggregate filters) and may only contain `calculation`, `calculated_field`, `filter`, `filter_combination`, `having` (at most 1), and `breakdowns` fields.
 **Formula:** The query must contain *exactly one* formula with up to 100 named calculations. When calculations use names or aggregate-level filters, global filters cannot be used — use calculation-level filters instead.
 The query's duration cannot be more than four times the trigger frequency (i.e. `duration <= frequency*4`).
 See [A Caveat on Time](https://docs.honeycomb.io/working-with-your-data/query-specification/#a-caveat-on-time)) for more information on specifying a query's duration.
