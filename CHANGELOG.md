@@ -1,3 +1,9 @@
+# Unreleased
+
+## Bugfixes
+
+- fix: avoid perpetual diff when `granularity` is omitted on metrics queries/triggers (#896)
+
 # 0.51.0 (June 11, 2026)
 
 ## Enhancements

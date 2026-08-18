@@ -2397,6 +2397,67 @@ func TestAcc_TriggerResourceWithMetrics(t *testing.T) {
 	})
 }
 
+// TestAcc_TriggerResourceWithMetricsOmittedGranularity is a regression test for
+// https://github.com/honeycombio/terraform-provider-honeycombio/issues/896: when a
+// metrics trigger's query spec omits granularity, the API fills in its own non-zero
+// default, which used to cause a perpetual diff on every subsequent plan.
+func TestAcc_TriggerResourceWithMetricsOmittedGranularity(t *testing.T) {
+	dataset := testAccMetricsDataset(t)
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerMetricsOmittedGranularity(dataset, name),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "name", name),
+				),
+			},
+			{
+				// re-applying the same config that omits granularity should never show a diff,
+				// even though the API has filled in its own default granularity in state.
+				Config:             testAccConfigTriggerMetricsOmittedGranularity(dataset, name),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: false,
+			},
+		},
+	})
+}
+
+func testAccConfigTriggerMetricsOmittedGranularity(dataset, name string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op     = "AVG"
+    column = "app.cumulative"
+  }
+
+  time_range = 1800
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  frequency = 900
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  recipient {
+    type   = "marker"
+    target = "Metrics trigger fired"
+  }
+}`, dataset, name)
+}
+
 func testAccConfigTriggerMetricsCustom(dataset, name string) string {
 	return fmt.Sprintf(`
 data "honeycombio_query_specification" "test" {

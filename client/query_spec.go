@@ -193,8 +193,11 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 	if !reflect.DeepEqual(qs.StartTime, other.StartTime) || !reflect.DeepEqual(qs.EndTime, other.EndTime) {
 		return false
 	}
-	// Granularity may be exported out of the Query Builder as '0' when not provided
-	if PtrValueOrDefault(qs.Granularity, 0) != PtrValueOrDefault(other.Granularity, 0) {
+	// Granularity: if the config doesn't specify a granularity, accept whatever value
+	// the API has settled on (e.g. metrics datasets default to a non-zero granularity,
+	// while other datasets default to 0/auto, and the Query Builder may export it as
+	// literal '0' when not provided). Only compare when config sets one explicitly.
+	if other.Granularity != nil && PtrValueOrDefault(qs.Granularity, 0) != *other.Granularity {
 		return false
 	}
 	if !reflect.DeepEqual(qs.CompareTimeOffsetSeconds, other.CompareTimeOffsetSeconds) {

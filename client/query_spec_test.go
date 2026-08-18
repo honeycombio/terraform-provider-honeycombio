@@ -116,6 +116,27 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			true,
 		},
 		{
+			// Metrics datasets have the API compute and persist a non-zero default
+			// granularity when the config doesn't specify one. Config omitting
+			// granularity should be considered equivalent to any state value.
+			"omitted granularity is equivalent to API-defaulted state value",
+			client.QuerySpec{
+				Granularity: client.ToPtr(30),
+			},
+			client.QuerySpec{},
+			true,
+		},
+		{
+			"explicit granularity mismatch is not equivalent",
+			client.QuerySpec{
+				Granularity: client.ToPtr(60),
+			},
+			client.QuerySpec{
+				Granularity: client.ToPtr(300),
+			},
+			false,
+		},
+		{
 			"default w/ column is not equivalent to empty",
 			client.QuerySpec{
 				Calculations: []client.CalculationSpec{
