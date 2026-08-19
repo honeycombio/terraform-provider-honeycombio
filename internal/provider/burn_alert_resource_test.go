@@ -151,6 +151,26 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasicWebhookRecipient(t *testing.T)
 				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, rcptName, rcptURL, "warning"),
 				Check:  testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t, burnAlert, exhaustionMinutes, sloID, "warning"),
 			},
+			// Refresh - detect a notification variable changed outside of Terraform
+			{
+				PreConfig: func() {
+					require.Len(t, burnAlert.Recipients, 1)
+					require.NotNil(t, burnAlert.Recipients[0].Details)
+					require.Len(t, burnAlert.Recipients[0].Details.Variables, 1)
+
+					burnAlert.Recipients[0].Details.Variables[0].Value = "critical"
+					_, err := testAccClient(t).BurnAlerts.Update(context.Background(), dataset, burnAlert)
+					require.NoError(t, err, "failed to update notification variable outside Terraform")
+				},
+				Config:             testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, rcptName, rcptURL, "warning"),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+			},
+			// Apply - restore the configured notification variable
+			{
+				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, rcptName, rcptURL, "warning"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t, burnAlert, exhaustionMinutes, sloID, "warning"),
+			},
 			// Update - change variable value
 			{
 				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, rcptName, rcptURL, "info"),
@@ -161,6 +181,11 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasicWebhookRecipient(t *testing.T)
 				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, rcptName, rcptURL, ""),
 				Check:  testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t, burnAlert, exhaustionMinutes, sloID, ""),
 			},
+			// Update - restore variables so import can verify notification details
+			{
+				Config: testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes, dataset, sloID, rcptName, rcptURL, "warning"),
+				Check:  testAccEnsureSuccessExhaustionTimeAlertWithWebhookRecip(t, burnAlert, exhaustionMinutes, sloID, "warning"),
+			},
 			// Import
 			{
 				ResourceName:            "honeycombio_burn_alert.test",
@@ -168,6 +193,29 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasicWebhookRecipient(t *testing.T)
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"recipient"},
+				ImportStateCheck: func(states []*terraform.InstanceState) error {
+					if len(states) != 1 {
+						return fmt.Errorf("expected 1 imported state, got %d", len(states))
+					}
+
+					expected := map[string]string{
+						"recipient.0.notification_details.#":                  "1",
+						"recipient.0.notification_details.0.variable.#":       "1",
+						"recipient.0.notification_details.0.variable.0.name":  "severity",
+						"recipient.0.notification_details.0.variable.0.value": "warning",
+					}
+					for attribute, want := range expected {
+						got, ok := states[0].Attributes[attribute]
+						if !ok {
+							return fmt.Errorf("expected imported state to contain %q", attribute)
+						}
+						if got != want {
+							return fmt.Errorf("expected imported %s to be %q, got %q", attribute, want, got)
+						}
+					}
+
+					return nil
+				},
 			},
 		},
 	})
