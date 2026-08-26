@@ -16,6 +16,17 @@ func GetFeaturesBlock() schema.Block {
 		},
 		NestedObject: schema.NestedBlockObject{
 			Blocks: map[string]schema.Block{
+				"client": schema.ListNestedBlock{
+					MarkdownDescription: "API client features.",
+					NestedObject: schema.NestedBlockObject{
+						Attributes: map[string]schema.Attribute{
+							"proactive_throttling": schema.BoolAttribute{
+								MarkdownDescription: "Set to true to proactively throttle API requests when the API reports the rate limit budget as nearly or fully exhausted, rather than only reactively retrying.",
+								Optional:            true,
+							},
+						},
+					},
+				},
 				"column": schema.ListNestedBlock{
 					MarkdownDescription: "Column resource features.",
 					NestedObject: schema.NestedBlockObject{
@@ -63,6 +74,21 @@ func GetPluginSDKFeaturesSchema() *pluginsdk.Schema {
 		Description: "The features block allows customization of the behavior of the Honeycomb Provider.",
 		Elem: &pluginsdk.Resource{
 			Schema: map[string]*pluginsdk.Schema{
+				"client": {
+					Type:        pluginsdk.TypeList,
+					Optional:    true,
+					MaxItems:    1,
+					Description: "API client features.",
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
+							"proactive_throttling": {
+								Type:        pluginsdk.TypeBool,
+								Optional:    true,
+								Description: "Set to true to proactively throttle API requests when the API reports the rate limit budget as nearly or fully exhausted, rather than only reactively retrying.",
+							},
+						},
+					},
+				},
 				"column": {
 					Type:        pluginsdk.TypeList,
 					Optional:    true,

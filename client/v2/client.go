@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/jsonapi"
 
@@ -36,6 +37,10 @@ type Config struct {
 	Debug        bool
 	HTTPClient   *http.Client
 	UserAgent    string
+	// With proactive throttling enabled the client throttles its requests
+	// when the API reports the rate limit budget as nearly or fully
+	// exhausted, rather than only reactively retrying.
+	ProactiveThrottling bool
 }
 
 type Client struct {
@@ -116,6 +121,15 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 			"User-Agent":    {config.UserAgent},
 		},
 	}
+	if config.HTTPClient == nil {
+		config.HTTPClient = cleanhttp.DefaultPooledClient()
+	}
+	if config.ProactiveThrottling {
+		// proactively throttle requests when the API reports the rate limit
+		// budget is nearly or fully exhausted
+		config.HTTPClient.Transport = limits.NewThrottledTransport(config.HTTPClient.Transport)
+	}
+
 	client.http = &retryablehttp.Client{
 		Backoff:      limits.RetryHTTPBackoff,
 		CheckRetry:   limits.RetryHTTPCheck,

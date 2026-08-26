@@ -125,6 +125,9 @@ Each of the blocks defined below can be optionally specified to configure the be
 ```hcl
 provider "honeycombio" {
   features {
+    client {
+      proactive_throttling = true
+    }
     column {
       import_on_conflict = true
     }
@@ -142,9 +145,15 @@ provider "honeycombio" {
 
 The `features` block supports the following:
 
+* `client` - (Optional) A `client` block as defined below.
 * `column` - (Optional) A `column` block as defined below.
 * `dataset` - (Optional) A `dataset` block as defined below.
 * `intelligence` - (Optional) An `intelligence` block as defined below.
+
+---
+The `client` block supports the following:
+* `proactive_throttling` - (Optional) Set to `true` to have the API clients proactively throttle their requests when the API reports the rate limit budget as nearly or fully exhausted, rather than only reactively retrying after receiving rate limit (HTTP 429) errors. Defaults to `false`.
+    This can significantly reduce rate limit errors for large workspaces, but may cause runs to take longer as requests are paced to stay within the API's budget.
 
 ---
 The `column` block supports the following:

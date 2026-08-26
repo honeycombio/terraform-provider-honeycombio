@@ -88,14 +88,17 @@ func Provider(version string) *schema.Provider {
 			debug = v.(bool)
 		}
 
+		parsedFeatures := features.ParsePluginSDK(d.Get("features").([]any))
+
 		// if the API key is set, use it to create the client
 		// we now rely on the Framework version of the provider to validate the configuration
 		if apiKey != "" {
 			config := &honeycombio.Config{
-				APIKey:    apiKey,
-				APIUrl:    d.Get("api_url").(string),
-				UserAgent: provider.UserAgent("terraform-provider-honeycombio", version),
-				Debug:     debug,
+				APIKey:              apiKey,
+				APIUrl:              d.Get("api_url").(string),
+				UserAgent:           provider.UserAgent("terraform-provider-honeycombio", version),
+				Debug:               debug,
+				ProactiveThrottling: parsedFeatures.Client.ProactiveThrottling,
 			}
 			c, err := honeycombio.NewClientWithConfig(config)
 			if err != nil {

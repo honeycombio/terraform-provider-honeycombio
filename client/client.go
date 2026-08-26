@@ -46,6 +46,10 @@ type Config struct {
 	HTTPClient *http.Client
 	// Optionally set the user agent to send with all requests, defaults to "go-honeycombio".
 	UserAgent string
+	// With proactive throttling enabled the client throttles its requests
+	// when the API reports the rate limit budget as nearly or fully
+	// exhausted, rather than only reactively retrying.
+	ProactiveThrottling bool
 }
 
 // Client to interact with Honeycomb.
@@ -117,6 +121,7 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	if config.HTTPClient != nil {
 		cfg.HTTPClient = config.HTTPClient
 	}
+	cfg.ProactiveThrottling = config.ProactiveThrottling
 
 	if cfg.APIKey == "" {
 		return nil, errors.New("APIKey must be configured")
@@ -130,6 +135,12 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 		apiKey:  cfg.APIKey,
 		apiURL:  apiURL,
 		headers: make(http.Header),
+	}
+
+	if cfg.ProactiveThrottling {
+		// proactively throttle requests when the API reports the rate limit
+		// budget is nearly or fully exhausted
+		cfg.HTTPClient.Transport = limits.NewThrottledTransport(cfg.HTTPClient.Transport)
 	}
 
 	client.httpClient = &retryablehttp.Client{
