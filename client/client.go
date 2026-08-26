@@ -46,6 +46,10 @@ type Config struct {
 	HTTPClient *http.Client
 	// Optionally set the user agent to send with all requests, defaults to "go-honeycombio".
 	UserAgent string
+	// Optionally set the number of times a rate-limited (HTTP 429) request is
+	// replayed — waiting out the rate limit window each time — before the 429
+	// is surfaced. Defaults to limits.DefaultRateLimitRetries.
+	RateLimitRetries int
 }
 
 // Client to interact with Honeycomb.
@@ -76,11 +80,12 @@ type Client struct {
 // DefaultConfig returns a Config initilized with default values.
 func DefaultConfig() *Config {
 	c := &Config{
-		APIKey:     os.Getenv(DefaultAPIKeyEnv),
-		APIUrl:     os.Getenv(DefaultAPIEndpointEnv),
-		Debug:      false,
-		HTTPClient: cleanhttp.DefaultPooledClient(),
-		UserAgent:  defaultUserAgent,
+		APIKey:           os.Getenv(DefaultAPIKeyEnv),
+		APIUrl:           os.Getenv(DefaultAPIEndpointEnv),
+		Debug:            false,
+		HTTPClient:       cleanhttp.DefaultPooledClient(),
+		UserAgent:        defaultUserAgent,
+		RateLimitRetries: limits.DefaultRateLimitRetries,
 	}
 
 	// if API Key is still unset, try using the legacy environment variable
@@ -117,6 +122,9 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	if config.HTTPClient != nil {
 		cfg.HTTPClient = config.HTTPClient
 	}
+	if config.RateLimitRetries != 0 {
+		cfg.RateLimitRetries = config.RateLimitRetries
+	}
 
 	if cfg.APIKey == "" {
 		return nil, errors.New("APIKey must be configured")
@@ -131,6 +139,12 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 		apiURL:  apiURL,
 		headers: make(http.Header),
 	}
+
+	// Proactively pace requests to stay within the API's advertised rate
+	// limits and absorb 429s (up to RateLimitRetries) by waiting out the
+	// window, falling back to the reactive backoff below for 5xx/transport
+	// errors.
+	cfg.HTTPClient.Transport = limits.NewRateLimitingTransport(cfg.HTTPClient.Transport, cfg.RateLimitRetries)
 
 	client.httpClient = &retryablehttp.Client{
 		Backoff:      limits.RetryHTTPBackoff,

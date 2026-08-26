@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -32,12 +33,13 @@ type HoneycombioProvider struct {
 
 // HoneycombioProviderModel describes the provider data model.
 type HoneycombioProviderModel struct {
-	APIKey    types.String     `tfsdk:"api_key"`
-	KeyID     types.String     `tfsdk:"api_key_id"`
-	KeySecret types.String     `tfsdk:"api_key_secret"`
-	APIUrl    types.String     `tfsdk:"api_url"`
-	Debug     types.Bool       `tfsdk:"debug"`
-	Features  []features.Model `tfsdk:"features"`
+	APIKey           types.String     `tfsdk:"api_key"`
+	KeyID            types.String     `tfsdk:"api_key_id"`
+	KeySecret        types.String     `tfsdk:"api_key_secret"`
+	APIUrl           types.String     `tfsdk:"api_url"`
+	Debug            types.Bool       `tfsdk:"debug"`
+	RateLimitRetries types.Int64      `tfsdk:"rate_limit_retries"`
+	Features         []features.Model `tfsdk:"features"`
 }
 
 func New(version string) provider.Provider {
@@ -71,6 +73,12 @@ func (p *HoneycombioProvider) Schema(_ context.Context, _ provider.SchemaRequest
 			"debug": schema.BoolAttribute{
 				MarkdownDescription: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
 				Optional:            true,
+			},
+			"rate_limit_retries": schema.Int64Attribute{
+				MarkdownDescription: "The number of times a rate-limited (`HTTP 429`) request is replayed — waiting out the rate limit window each time — before the error is surfaced. " +
+					"Increase this to ride out heavier rate-limit contention (for example, many concurrent runs against the same team) without failing, at the cost of slower runs. " +
+					"It can also be set via the `HONEYCOMB_RATE_LIMIT_RETRIES` environment variable. Defaults to `10`. Values below `1` use the default.",
+				Optional: true,
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -170,6 +178,17 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 		keySecret = config.KeySecret.ValueString()
 	}
 
+	// 0 leaves the client at its default (limits.DefaultRateLimitRetries).
+	rateLimitRetries := 0
+	if v := os.Getenv("HONEYCOMB_RATE_LIMIT_RETRIES"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			rateLimitRetries = n
+		}
+	}
+	if !config.RateLimitRetries.IsNull() && !config.RateLimitRetries.IsUnknown() {
+		rateLimitRetries = int(config.RateLimitRetries.ValueInt64())
+	}
+
 	initv1Client, initv2Client := false, false
 	if apiKey != "" {
 		initv1Client = true
@@ -220,10 +239,11 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 
 	if initv1Client {
 		client, err := client.NewClientWithConfig(&client.Config{
-			APIKey:    apiKey,
-			APIUrl:    config.APIUrl.ValueString(),
-			Debug:     debug,
-			UserAgent: userAgent,
+			APIKey:           apiKey,
+			APIUrl:           config.APIUrl.ValueString(),
+			Debug:            debug,
+			UserAgent:        userAgent,
+			RateLimitRetries: rateLimitRetries,
 		})
 		if helper.AddDiagnosticOnError(&resp.Diagnostics, "Unable to create Honeycomb API V1 Client", err) {
 			return
@@ -233,11 +253,12 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 
 	if initv2Client {
 		v2client, err := v2client.NewClientWithConfig(&v2client.Config{
-			APIKeyID:     keyID,
-			APIKeySecret: keySecret,
-			BaseURL:      config.APIUrl.ValueString(),
-			Debug:        debug,
-			UserAgent:    userAgent,
+			APIKeyID:         keyID,
+			APIKeySecret:     keySecret,
+			BaseURL:          config.APIUrl.ValueString(),
+			Debug:            debug,
+			UserAgent:        userAgent,
+			RateLimitRetries: rateLimitRetries,
 		})
 		if helper.AddDiagnosticOnError(&resp.Diagnostics, "Unable to create Honeycomb API V2 Client", err) {
 			return

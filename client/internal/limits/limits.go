@@ -85,8 +85,14 @@ func rateLimitBackoff(mini, maxi time.Duration, r *http.Response) time.Duration 
 	return mini + jitter
 }
 
-// retryHTTPCheck is a retryablehttp.CheckRetry function that will
-// retry on a 429 or any 5xx status code
+// RetryHTTPCheck is a retryablehttp.CheckRetry function that retries on
+// transport errors and any 5xx status code.
+//
+// HTTP 429s are deliberately not retried here: the RateLimitingTransport sits
+// below retryablehttp and absorbs rate limiting itself (waiting out the window
+// and replaying the request up to its configured limit), so by the time a 429
+// reaches this check that budget is already spent and the response should be
+// surfaced rather than retried again.
 func RetryHTTPCheck(
 	ctx context.Context,
 	r *http.Response,
@@ -99,7 +105,7 @@ func RetryHTTPCheck(
 		return true, err
 	}
 	if r != nil {
-		if r.StatusCode == http.StatusTooManyRequests || r.StatusCode >= 500 {
+		if r.StatusCode >= 500 {
 			return true, nil
 		}
 	}

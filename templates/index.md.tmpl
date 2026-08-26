@@ -97,6 +97,22 @@ The key pair can be set with the `api_key_id` and `api_key_secret` arguments, or
 
 ~> **Note** Hard-coding API keys in any Terraform configuration is not recommended. Consider using the one of the environment variable options.
 
+## Rate Limiting
+
+The Honeycomb API enforces per-team rate limits, scoped per-resource and per-action (for example, reads of triggers are limited independently of reads of SLOs).
+Each limit is a fixed budget of requests per window — one minute — refilled in full when the window resets.
+
+The provider paces itself to stay within these limits automatically — no configuration is required.
+It reads the rate limit headers returned on each API response, and when a resource's budget for the current window is exhausted it pauses requests to that resource until the window resets, then resumes.
+Workloads that fit within the limit are unaffected.
+
+If a request is rate limited anyway, the provider treats the `HTTP 429` as "try again when the window resets" rather than as a failure: it waits out the window and replays the request, up to `rate_limit_retries` times (default `10`).
+This means rate limiting slows a run down instead of failing it.
+
+Because the limits are enforced **per-team**, all Environments managed under the same team share a budget.
+If you run several `terraform` operations against the same team concurrently, they share that budget — each run paces itself, but collectively they can still exceed the limit and spend longer retrying.
+For that case, raising `rate_limit_retries` keeps runs from failing (at the cost of slower runs); reducing `-parallelism` or the number of concurrent runs reduces the contention; and if you consistently hit limits, contact Honeycomb Support to discuss raising your team's limits.
+
 ## Argument Reference
 
 Arguments accepted by this provider include:
@@ -106,6 +122,7 @@ Arguments accepted by this provider include:
 * `api_key_secret` - (Optional) The secret portion of the Honeycomb Management API key to use. It can also be set via the `HONEYCOMB_KEY_SECRET` environment variable.
 * `api_url` - (Optional) Override the URL of the Honeycomb.io API. It can also be set using `HONEYCOMB_API_ENDPOINT`. Defaults to `https://api.honeycomb.io`.
 * `debug` - (Optional) Enable to log additional debug information. To view the logs, set `TF_LOG` to at least debug.
+* `rate_limit_retries` - (Optional) The number of times a rate-limited (`HTTP 429`) request is replayed — waiting out the rate limit window each time — before the error is surfaced. Increase this to ride out heavier rate-limit contention without failing, at the cost of slower runs. It can also be set using `HONEYCOMB_RATE_LIMIT_RETRIES`. Defaults to `10`.
 * `features` - (Optional) The features block allows customization of the behavior of the Honeycomb Provider. Full details documented below.
 
 At least one of `api_key`, or the `api_key_id` and `api_key_secret` pair must be configured.
