@@ -1138,3 +1138,298 @@ resource "honeycombio_flexible_board" "test" {
 		},
 	})
 }
+
+func TestAccHoneycombioFlexibleBoard_thresholds(t *testing.T) {
+	dataset := testAccDataset()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_flexible_board" "test" {
+  name = "Test board with thresholds"
+
+  panel {
+    type = "query"
+    query_panel {
+      query_id    = honeycombio_query.test.id
+      query_style = "graph"
+      visualization_settings {
+        chart {
+          chart_index = 0
+          threshold {
+            value      = 100
+            label      = "critical"
+            color      = "red"
+            operation  = "gt"
+            line_style = "solid"
+          }
+        }
+      }
+    }
+  }
+}
+				`, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.0.value", "100"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.0.label", "critical"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.0.color", "red"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.0.operation", "gt"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.0.line_style", "solid"),
+				),
+			},
+			// update threshold: change value, label, color, operation, and line_style
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_flexible_board" "test" {
+  name = "Test board with thresholds"
+
+  panel {
+    type = "query"
+    query_panel {
+      query_id    = honeycombio_query.test.id
+      query_style = "graph"
+      visualization_settings {
+        chart {
+          chart_index = 0
+          threshold {
+            value      = 200
+            label      = "updated critical"
+            color      = "purple"
+            operation  = "lt"
+            line_style = "filled-solid"
+          }
+        }
+      }
+    }
+  }
+}
+				`, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.0.value", "200"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.0.label", "updated critical"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.0.color", "purple"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.0.operation", "lt"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.0.line_style", "filled-solid"),
+				),
+			},
+			// remove all thresholds
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+}
+
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+
+resource "honeycombio_flexible_board" "test" {
+  name = "Test board with thresholds"
+
+  panel {
+    type = "query"
+    query_panel {
+      query_id    = honeycombio_query.test.id
+      query_style = "graph"
+      visualization_settings {
+        chart {
+          chart_index = 0
+        }
+      }
+    }
+  }
+}
+				`, dataset),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckBoardExists(t, "honeycombio_flexible_board.test"),
+					resource.TestCheckResourceAttr("honeycombio_flexible_board.test", "panel.0.query_panel.0.visualization_settings.0.chart.0.threshold.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccHoneycombioFlexibleBoard_thresholdValidation(t *testing.T) {
+	dataset := testAccDataset()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV5ProviderFactories: testAccProtoV5MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation { op = "COUNT" }
+}
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+resource "honeycombio_flexible_board" "test" {
+  name = "invalid color"
+  panel {
+    type = "query"
+    query_panel {
+      query_id    = honeycombio_query.test.id
+      query_style = "graph"
+      visualization_settings {
+        chart {
+          chart_index = 0
+          threshold {
+            value      = 100
+            color      = "orange"
+            operation  = "gt"
+            line_style = "solid"
+          }
+        }
+      }
+    }
+  }
+}
+				`, dataset),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?i)orange`),
+			},
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation { op = "COUNT" }
+}
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+resource "honeycombio_flexible_board" "test" {
+  name = "invalid operation"
+  panel {
+    type = "query"
+    query_panel {
+      query_id    = honeycombio_query.test.id
+      query_style = "graph"
+      visualization_settings {
+        chart {
+          chart_index = 0
+          threshold {
+            value      = 100
+            color      = "red"
+            operation  = "gte"
+            line_style = "solid"
+          }
+        }
+      }
+    }
+  }
+}
+				`, dataset),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?i)gte`),
+			},
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation { op = "COUNT" }
+}
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+resource "honeycombio_flexible_board" "test" {
+  name = "invalid line_style"
+  panel {
+    type = "query"
+    query_panel {
+      query_id    = honeycombio_query.test.id
+      query_style = "graph"
+      visualization_settings {
+        chart {
+          chart_index = 0
+          threshold {
+            value      = 100
+            color      = "red"
+            operation  = "gt"
+            line_style = "dashed"
+          }
+        }
+      }
+    }
+  }
+}
+				`, dataset),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?i)dashed`),
+			},
+			{
+				Config: fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation { op = "COUNT" }
+}
+resource "honeycombio_query" "test" {
+  dataset    = "%s"
+  query_json = data.honeycombio_query_specification.test.json
+}
+resource "honeycombio_flexible_board" "test" {
+  name = "too many thresholds"
+  panel {
+    type = "query"
+    query_panel {
+      query_id    = honeycombio_query.test.id
+      query_style = "graph"
+      visualization_settings {
+        chart {
+          chart_index = 0
+          threshold {
+            value      = 100
+            color      = "red"
+            operation  = "gt"
+            line_style = "solid"
+          }
+          threshold {
+            value      = 50
+            color      = "yellow"
+            operation  = "gt"
+            line_style = "dotted"
+          }
+        }
+      }
+    }
+  }
+}
+				`, dataset),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`(?i)at most 1`),
+			},
+		},
+	})
+}
