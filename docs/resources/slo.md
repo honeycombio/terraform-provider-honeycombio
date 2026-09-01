@@ -90,6 +90,7 @@ the column evaluation should consistently return nil, true, or false, as these a
 ### Read-Only
 
 - `id` (String) The ID of the SLO.
+- `tags_all` (Map of String) The effective tags on the resource: the provider's `default_tags` merged with the resource's `tags` (resource tags win on a key collision).
 
 ~> **Note** `dataset` will be deprecated in a future release. One of `dataset` or `datasets` is required. In the meantime, you can swap `dataset` with a single value array for `datasets` to effectively evaluate to the same configuration.
 

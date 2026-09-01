@@ -540,6 +540,7 @@ resource "honeycombio_trigger" "metrics" {
 ### Read-Only
 
 - `id` (String) The unique identifier for this Trigger.
+- `tags_all` (Map of String) The effective tags on the resource: the provider's `default_tags` merged with the resource's `tags` (resource tags win on a key collision).
 
 <a id="nestedblock--baseline_details"></a>
 ### Nested Schema for `baseline_details`

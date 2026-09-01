@@ -31,11 +31,13 @@ var (
 	_ resource.Resource                 = &flexibleBoardResource{}
 	_ resource.ResourceWithConfigure    = &flexibleBoardResource{}
 	_ resource.ResourceWithImportState  = &flexibleBoardResource{}
+	_ resource.ResourceWithModifyPlan   = &flexibleBoardResource{}
 	_ resource.ResourceWithUpgradeState = &flexibleBoardResource{}
 )
 
 type flexibleBoardResource struct {
-	client *client.Client
+	client      *client.Client
+	defaultTags map[string]string
 }
 
 func NewFlexibleBoardResource() resource.Resource {
@@ -58,6 +60,11 @@ func (r *flexibleBoardResource) Configure(_ context.Context, req resource.Config
 		return
 	}
 	r.client = c
+	r.defaultTags = w.DefaultTags()
+}
+
+func (r *flexibleBoardResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	modifyPlanForDefaultTags(ctx, r.defaultTags, req, resp)
 }
 
 func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -99,7 +106,8 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"tags": tagsSchema(),
+			"tags":     tagsSchema(),
+			"tags_all": tagsAllSchema(),
 		},
 		Blocks: map[string]schema.Block{
 			"panel": schema.ListNestedBlock{
@@ -619,6 +627,7 @@ func (*flexibleBoardResource) UpgradeState(ctx context.Context) map[int64]resour
 					URL:           oldState.URL,
 					Panels:        finalPanels,
 					Tags:          oldState.Tags,
+					TagsAll:       oldState.Tags,
 					PresetFilters: types.ListNull(types.ObjectType{AttrTypes: models.PresetFilterModelAttrType}),
 				}
 				resp.Diagnostics.Append(resp.State.Set(ctx, newState)...)
@@ -635,7 +644,7 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 		return
 	}
 
-	planTags, diags := helper.MapToTags(ctx, plan.Tags)
+	planTags, diags := helper.MapToTags(ctx, plan.TagsAll)
 	if diags.HasError() {
 		return
 	}
@@ -692,12 +701,13 @@ func (r *flexibleBoardResource) Create(ctx context.Context, req resource.CreateR
 		state.Panels = panels
 	}
 
-	tags, diags := helper.TagsToMap(ctx, board.Tags)
+	tagsAll, diags := helper.TagsToMap(ctx, board.Tags)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	state.Tags = tags
+	state.Tags = plan.Tags
+	state.TagsAll = tagsAll
 
 	state.PresetFilters = flattenPresetFilters(ctx, board.PresetFilters, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
@@ -779,12 +789,19 @@ func (r *flexibleBoardResource) Read(ctx context.Context, req resource.ReadReque
 		resp.Diagnostics.Append(diag...)
 		state.Panels = panels
 	}
-	tags, diags := helper.TagsToMap(ctx, board.Tags)
+	tagsAll, diags := helper.TagsToMap(ctx, board.Tags)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	state.Tags = tags
+	state.TagsAll = tagsAll
+
+	ownedTags, diags := helper.RemoveDefaultTags(ctx, board.Tags, r.defaultTags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = ownedTags
 
 	state.PresetFilters = flattenPresetFilters(ctx, board.PresetFilters, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
@@ -803,7 +820,7 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 		return
 	}
 
-	planTags, diags := helper.MapToTags(ctx, plan.Tags)
+	planTags, diags := helper.MapToTags(ctx, plan.TagsAll)
 	if diags.HasError() {
 		return
 	}
@@ -866,12 +883,13 @@ func (r *flexibleBoardResource) Update(ctx context.Context, req resource.UpdateR
 		state.Panels = panels
 	}
 
-	tags, diags := helper.TagsToMap(ctx, board.Tags)
+	tagsAll, diags := helper.TagsToMap(ctx, board.Tags)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	state.Tags = tags
+	state.Tags = plan.Tags
+	state.TagsAll = tagsAll
 
 	state.PresetFilters = flattenPresetFilters(ctx, board.PresetFilters, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {

@@ -38,6 +38,7 @@ var (
 	_ resource.Resource                   = &triggerResource{}
 	_ resource.ResourceWithConfigure      = &triggerResource{}
 	_ resource.ResourceWithImportState    = &triggerResource{}
+	_ resource.ResourceWithModifyPlan     = &triggerResource{}
 	_ resource.ResourceWithValidateConfig = &triggerResource{}
 )
 
@@ -46,8 +47,9 @@ func NewTriggerResource() resource.Resource {
 }
 
 type triggerResource struct {
-	client  *client.Client
-	feature features.FeaturesIntelligence
+	client      *client.Client
+	feature     features.FeaturesIntelligence
+	defaultTags map[string]string
 }
 
 // matches HH:mm timestamps with optional leading 0
@@ -152,7 +154,8 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					),
 				},
 			},
-			"tags": tagsSchema(),
+			"tags":     tagsSchema(),
+			"tags_all": tagsAllSchema(),
 		},
 		Blocks: map[string]schema.Block{
 			"threshold": schema.ListNestedBlock{
@@ -272,6 +275,11 @@ func (r *triggerResource) Configure(_ context.Context, req resource.ConfigureReq
 		return
 	}
 	r.feature = f.Intelligence
+	r.defaultTags = w.DefaultTags()
+}
+
+func (r *triggerResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	modifyPlanForDefaultTags(ctx, r.defaultTags, req, resp)
 }
 
 func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -292,7 +300,7 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	planTags, diags := helper.MapToTags(ctx, plan.Tags)
+	planTags, diags := helper.MapToTags(ctx, plan.TagsAll)
 	if diags.HasError() {
 		return
 	}
@@ -379,7 +387,8 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	state.Tags = stateTags
+	state.Tags = plan.Tags
+	state.TagsAll = stateTags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -451,12 +460,19 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 		}
 	}
 
-	tags, diags := helper.TagsToMap(ctx, trigger.Tags)
+	tagsAll, diags := helper.TagsToMap(ctx, trigger.Tags)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	state.Tags = tags
+	state.TagsAll = tagsAll
+
+	ownedTags, diags := helper.RemoveDefaultTags(ctx, trigger.Tags, r.defaultTags)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	state.Tags = ownedTags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -479,7 +495,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	planTags, diags := helper.MapToTags(ctx, plan.Tags)
+	planTags, diags := helper.MapToTags(ctx, plan.TagsAll)
 	if diags.HasError() {
 		return
 	}
@@ -574,7 +590,8 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	state.Tags = stateTags
+	state.Tags = plan.Tags
+	state.TagsAll = stateTags
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }

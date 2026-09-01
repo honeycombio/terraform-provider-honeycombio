@@ -21,6 +21,7 @@ type TriggerResourceModel struct {
 	EvaluationSchedule types.List   `tfsdk:"evaluation_schedule"` // TriggerEvaluationScheduleModel
 	BaselineDetails    types.List   `tfsdk:"baseline_details"`
 	Tags               types.Map    `tfsdk:"tags"`
+	TagsAll            types.Map    `tfsdk:"tags_all"`
 }
 
 type TriggerBaselineDetailsModel struct {
