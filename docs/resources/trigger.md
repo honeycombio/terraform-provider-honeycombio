@@ -195,6 +195,86 @@ resource "honeycombio_trigger" "example" {
 }
 ```
 
+### Trigger with Per-Group Recipient Routing
+
+```terraform
+variable "dataset" {
+  type = string
+}
+
+data "honeycombio_recipient" "pd_checkout" {
+  type = "pagerduty"
+
+  detail_filter {
+    name  = "integration_name"
+    value = "Checkout On-Call"
+  }
+}
+
+data "honeycombio_recipient" "slack_oncall" {
+  type = "slack"
+
+  detail_filter {
+    name  = "channel"
+    value = "#oncall"
+  }
+}
+
+data "honeycombio_query_specification" "errors_by_service" {
+  calculation {
+    op = "COUNT"
+  }
+
+  filter {
+    column = "error"
+    op     = "="
+    value  = "true"
+  }
+
+  # per-group routing requires the query to group by at least one column
+  breakdowns = ["service.name"]
+
+  time_range = 1800
+}
+
+resource "honeycombio_trigger" "errors_by_service" {
+  name        = "Errors by service"
+  description = "Routes each service's errors to the team which owns it."
+
+  query_json = data.honeycombio_query_specification.errors_by_service.json
+  dataset    = var.dataset
+
+  # required for any per-group recipient routing: it is what makes Honeycomb
+  # evaluate and resolve each group's state independently
+  alert_type = "on_group_change"
+
+  frequency = 1800
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  # the checkout team only hears about its own services, and gets a separate
+  # PagerDuty incident per service so they can be resolved independently
+  recipient {
+    id = data.honeycombio_recipient.pd_checkout.id
+
+    group_filter = {
+      "service.name" = ["checkout", "cart"]
+    }
+
+    pagerduty_per_group_incidents = true
+  }
+
+  # a recipient with no group_filter is a catch-all: it is notified about every
+  # group which crosses the threshold
+  recipient {
+    id = data.honeycombio_recipient.slack_oncall.id
+  }
+}
+```
+
 ### Baseline Trigger
 
 ```terraform
@@ -565,8 +645,10 @@ Required:
 
 Optional:
 
+- `group_filter` (Map of Set of String) Only notify this recipient about the query groups matching this filter. Maps a group by column of the Trigger's query to the values which route to this recipient. Omit for a catch-all recipient which is notified about every group. Requires an `alert_type` of `on_group_change` and a query with at least one group by. Only one routing rule is allowed per recipient.
 - `id` (String) The ID of an existing recipient.
 - `notification_details` (Block List) Additional details to send along with the notification. (see [below for nested schema](#nestedblock--recipient--notification_details))
+- `pagerduty_per_group_incidents` (Boolean) Open and resolve one PagerDuty incident per triggered group instead of one incident per Trigger. Only supported for PagerDuty recipients, and requires an `alert_type` of `on_group_change` and a query with at least one group by.
 - `target` (String) Target of the notification, this has another meaning depending on the type of recipient.
 - `type` (String) The type of the notification recipient.
 
@@ -622,6 +704,32 @@ To retrieve the ID of an existing recipient, refer to the [`honeycombio_recipien
 | pagerduty | _N/A_               |
 | slack     | name of the channel |
 | webhook   | name of the webhook |
+
+### Per-Group Recipient Routing
+
+A Trigger whose query groups by one or more columns can route each group to a different
+recipient with `group_filter`, and open one PagerDuty incident per group with
+`pagerduty_per_group_incidents`. Both require an `alert_type` of `on_group_change`, and are
+available to teams with grouped resolution alerts enabled.
+
+A recipient with no `group_filter` is a catch-all: it is notified about every group.
+
+-> **NOTE** Only one routing rule is allowed per recipient, so a recipient may appear in at
+most one `recipient` block. To route several sets of values to the same recipient, combine
+them into a single `group_filter` — it accepts multiple values per column, and multiple
+columns.
+
+A few caveats apply:
+
+* `group_filter` may only name columns the Trigger's query groups by. When the query is
+  given inline with `query_json` this is checked at plan time; when using `query_id` the
+  query is not visible to Terraform, so an invalid column is only reported by the API.
+* `pagerduty_per_group_incidents` is only supported for PagerDuty recipients. When the
+  recipient is specified by `id` its type is not known at plan time, so this too is only
+  reported by the API.
+* On `terraform import` the routing attributes are not populated, in the same way as
+  `type`, `target` and `notification_details`. The first plan after an import will show the
+  routing from your configuration as being applied.
 
 ## Import
 

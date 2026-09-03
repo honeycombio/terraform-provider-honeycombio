@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"maps"
 	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -24,13 +25,23 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/modifiers"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
+// notificationRecipientSchema returns the `recipient` block shared by honeycombio_trigger
+// and honeycombio_burn_alert.
+//
+// extraAttrs are merged into the nested object. Triggers use this for the per-group routing
+// attributes, which the Triggers API accepts and the Burn Alerts API rejects (its JSON
+// decoder disallows unknown fields). Pass nil for the base block.
+//
+// setModifier differs per resource because the element model does: a modifier decoding into
+// the wrong model errors at runtime.
 func notificationRecipientSchema(
 	allowedTypes []client.RecipientType,
 	requireRecipient bool,
+	extraAttrs map[string]schema.Attribute,
+	setModifier planmodifier.Set,
 ) schema.SetNestedBlock {
 	// The requirement is enforced by each resource's ValidateConfig (a block-level
 	// SizeAtLeast validator does not fire on an omitted/null block); this only sets
@@ -40,9 +51,38 @@ func notificationRecipientSchema(
 		description = "One or more recipients to notify when the resource fires."
 	}
 
+	attributes := map[string]schema.Attribute{
+		"id": schema.StringAttribute{
+			Optional:    true,
+			Computed:    true,
+			Description: "The ID of an existing recipient.",
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("type")),
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("target")),
+			},
+		},
+		"type": schema.StringAttribute{
+			Optional:    true,
+			Computed:    true,
+			Description: "The type of the notification recipient.",
+			Validators: []validator.String{
+				stringvalidator.OneOf(helper.AsStringSlice(allowedTypes)...),
+			},
+		},
+		"target": schema.StringAttribute{
+			Optional:    true,
+			Computed:    true,
+			Description: "Target of the notification, this has another meaning depending on the type of recipient.",
+			Validators: []validator.String{
+				stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("type")),
+			},
+		},
+	}
+	maps.Copy(attributes, extraAttrs)
+
 	return schema.SetNestedBlock{
 		Description:   description,
-		PlanModifiers: []planmodifier.Set{modifiers.NotificationRecipients()},
+		PlanModifiers: []planmodifier.Set{setModifier},
 		NestedObject: schema.NestedBlockObject{
 			Validators: []validator.Object{
 				objectvalidator.AtLeastOneOf(
@@ -50,33 +90,7 @@ func notificationRecipientSchema(
 					path.MatchRelative().AtName("type"),
 				),
 			},
-			Attributes: map[string]schema.Attribute{
-				"id": schema.StringAttribute{
-					Optional:    true,
-					Computed:    true,
-					Description: "The ID of an existing recipient.",
-					Validators: []validator.String{
-						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("type")),
-						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("target")),
-					},
-				},
-				"type": schema.StringAttribute{
-					Optional:    true,
-					Computed:    true,
-					Description: "The type of the notification recipient.",
-					Validators: []validator.String{
-						stringvalidator.OneOf(helper.AsStringSlice(allowedTypes)...),
-					},
-				},
-				"target": schema.StringAttribute{
-					Optional:    true,
-					Computed:    true,
-					Description: "Target of the notification, this has another meaning depending on the type of recipient.",
-					Validators: []validator.String{
-						stringvalidator.AlsoRequires(path.MatchRelative().AtParent().AtName("type")),
-					},
-				},
-			},
+			Attributes: attributes,
 			Blocks: map[string]schema.Block{
 				"notification_details": schema.ListNestedBlock{
 					Description: "Additional details to send along with the notification.",
@@ -209,27 +223,38 @@ func expandNotificationRecipients(ctx context.Context, set types.Set, diags *dia
 
 	clientRecips := make([]client.NotificationRecipient, len(recipients))
 	for i, r := range recipients {
-		rcpt := client.NotificationRecipient{
-			ID:     r.ID.ValueString(),
-			Type:   client.RecipientType(r.Type.ValueString()),
-			Target: r.Target.ValueString(),
+		clientRecips[i] = expandNotificationRecipient(ctx, r, diags)
+		if diags.HasError() {
+			return nil
 		}
-		if !r.Details.IsNull() && !r.Details.IsUnknown() {
-			var details []models.NotificationRecipientDetailsModel
-			diags.Append(r.Details.ElementsAs(ctx, &details, false)...)
-			if diags.HasError() {
-				return nil
-			}
-
-			rcpt.Details = &client.NotificationRecipientDetails{
-				PDSeverity: client.PagerDutySeverity(details[0].PDSeverity.ValueString()),
-				Variables:  expandNotificationVariables(ctx, details[0].Variables, diags),
-			}
-		}
-		clientRecips[i] = rcpt
 	}
 
 	return clientRecips
+}
+
+// expandNotificationRecipient converts a single recipient model to its client type. It is
+// shared with the Trigger-specific expansion, which wraps the result to add the per-group
+// routing fields.
+func expandNotificationRecipient(ctx context.Context, r models.NotificationRecipientModel, diags *diag.Diagnostics) client.NotificationRecipient {
+	rcpt := client.NotificationRecipient{
+		ID:     r.ID.ValueString(),
+		Type:   client.RecipientType(r.Type.ValueString()),
+		Target: r.Target.ValueString(),
+	}
+	if !r.Details.IsNull() && !r.Details.IsUnknown() {
+		var details []models.NotificationRecipientDetailsModel
+		diags.Append(r.Details.ElementsAs(ctx, &details, false)...)
+		if diags.HasError() {
+			return rcpt
+		}
+
+		rcpt.Details = &client.NotificationRecipientDetails{
+			PDSeverity: client.PagerDutySeverity(details[0].PDSeverity.ValueString()),
+			Variables:  expandNotificationVariables(ctx, details[0].Variables, diags),
+		}
+	}
+
+	return rcpt
 }
 func notificationRecipientModelToObjectValue(ctx context.Context, r models.NotificationRecipientModel, diags *diag.Diagnostics) basetypes.ObjectValue {
 	recipObj := map[string]attr.Value{
@@ -307,7 +332,7 @@ func flattenNotificationVariables(ctx context.Context, vars []client.Notificatio
 	for _, v := range vars {
 		notifVarValues = append(notifVarValues, notificationVariableToObjectValue(v, diags))
 	}
-	notifVarResult, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.WebhookHeaderAttrType}, notifVarValues)
+	notifVarResult, d := types.SetValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationVariableAttrType}, notifVarValues)
 	diags.Append(d...)
 
 	return notifVarResult
