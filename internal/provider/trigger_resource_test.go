@@ -1336,10 +1336,11 @@ func TestAcc_TriggerResource_groupedRecipientRouting(t *testing.T) {
 					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "alert_type", "on_group_change"),
 					resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
-					// the filtered PagerDuty recipient
+					// The routed recipient. It is specified by id, so `type` is null in
+					// state -- the routing attributes identify it well enough.
 					resource.TestCheckTypeSetElemNestedAttrs("honeycombio_trigger.test", "recipient.*", map[string]string{
-						"type":                                  "pagerduty",
 						"pagerduty_per_group_incidents":         "true",
+						"group_filter.%":                        "1",
 						"group_filter." + column.KeyName + ".#": "2",
 					}),
 				),
@@ -1355,13 +1356,14 @@ func TestAcc_TriggerResource_groupedRecipientRouting(t *testing.T) {
 				Config: testAccConfigTriggerGroupedRouting(dataset, name, column.KeyName, false),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
-					resource.TestCheckTypeSetElemNestedAttrs("honeycombio_trigger.test", "recipient.*", map[string]string{
-						"type": "pagerduty",
-					}),
-					// neither recipient is routed now. A map attribute is flattened as
-					// `group_filter.%`, so asserting on the bare name would always pass.
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
+					// Neither recipient is routed now. A map attribute is flattened as
+					// `group_filter.%`, so asserting on the bare name would always pass;
+					// a null attribute is absent from the flatmap entirely.
 					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.0.group_filter.%"),
 					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.1.group_filter.%"),
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.0.pagerduty_per_group_incidents"),
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.1.pagerduty_per_group_incidents"),
 				),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
