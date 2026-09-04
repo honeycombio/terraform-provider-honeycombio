@@ -41,7 +41,8 @@ func triggerRecipientRoutingAttributes() map[string]schema.Attribute {
 				"Maps a group by column of the Trigger's query to the values which route to this recipient. " +
 				"Omit for a catch-all recipient which is notified about every group. " +
 				"Requires an `alert_type` of `on_group_change` and a query with at least one group by. " +
-				"Only one routing rule is allowed per recipient.",
+				"Only one routing rule is allowed per recipient. " +
+				"Available to teams with grouped resolution alerts enabled.",
 			Validators: []validator.Map{
 				mapvalidator.SizeAtLeast(1),
 				mapvalidator.KeysAre(stringvalidator.LengthAtLeast(1)),
@@ -55,7 +56,8 @@ func triggerRecipientRoutingAttributes() map[string]schema.Attribute {
 			Optional: true,
 			Description: "Open and resolve one PagerDuty incident per triggered group instead of one " +
 				"incident per Trigger. Only supported for PagerDuty recipients, and requires an " +
-				"`alert_type` of `on_group_change` and a query with at least one group by.",
+				"`alert_type` of `on_group_change` and a query with at least one group by. " +
+				"Available to teams with grouped resolution alerts enabled.",
 		},
 	}
 }

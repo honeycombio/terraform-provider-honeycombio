@@ -132,7 +132,8 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Computed: true,
 				Description: "Control when the Trigger will send a notification. " +
 					"`on_group_change` additionally resolves each group of a grouped query " +
-					"independently, and is required for per-group recipient routing.",
+					"independently, and is required for per-group recipient routing. " +
+					"It is available to teams with grouped resolution alerts enabled.",
 				Default: stringdefault.StaticString(string(client.TriggerAlertTypeOnChange)),
 				Validators: []validator.String{
 					stringvalidator.OneOf(

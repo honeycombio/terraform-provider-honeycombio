@@ -603,7 +603,7 @@ resource "honeycombio_trigger" "metrics" {
 
 ### Optional
 
-- `alert_type` (String) Control when the Trigger will send a notification. `on_group_change` additionally resolves each group of a grouped query independently, and is required for per-group recipient routing.
+- `alert_type` (String) Control when the Trigger will send a notification. `on_group_change` additionally resolves each group of a grouped query independently, and is required for per-group recipient routing. It is available to teams with grouped resolution alerts enabled.
 - `auto_investigate` (Boolean) Whether to automatically investigate when this Trigger fires. Requires Honeycomb Intelligence to be enabled for your team in the Honeycomb UI and the intelligence feature block to be set in the provider configuration.
 - `baseline_details` (Block List) A configuration block that allows you to receive notifications when the delta between values in your data, compared to a previous time period, cross thresholds you configure. (see [below for nested schema](#nestedblock--baseline_details))
 - `dataset` (String) The dataset this Trigger is associated with.
@@ -645,10 +645,10 @@ Required:
 
 Optional:
 
-- `group_filter` (Map of Set of String) Only notify this recipient about the query groups matching this filter. Maps a group by column of the Trigger's query to the values which route to this recipient. Omit for a catch-all recipient which is notified about every group. Requires an `alert_type` of `on_group_change` and a query with at least one group by. Only one routing rule is allowed per recipient.
+- `group_filter` (Map of Set of String) Only notify this recipient about the query groups matching this filter. Maps a group by column of the Trigger's query to the values which route to this recipient. Omit for a catch-all recipient which is notified about every group. Requires an `alert_type` of `on_group_change` and a query with at least one group by. Only one routing rule is allowed per recipient. Available to teams with grouped resolution alerts enabled.
 - `id` (String) The ID of an existing recipient.
 - `notification_details` (Block List) Additional details to send along with the notification. (see [below for nested schema](#nestedblock--recipient--notification_details))
-- `pagerduty_per_group_incidents` (Boolean) Open and resolve one PagerDuty incident per triggered group instead of one incident per Trigger. Only supported for PagerDuty recipients, and requires an `alert_type` of `on_group_change` and a query with at least one group by.
+- `pagerduty_per_group_incidents` (Boolean) Open and resolve one PagerDuty incident per triggered group instead of one incident per Trigger. Only supported for PagerDuty recipients, and requires an `alert_type` of `on_group_change` and a query with at least one group by. Available to teams with grouped resolution alerts enabled.
 - `target` (String) Target of the notification, this has another meaning depending on the type of recipient.
 - `type` (String) The type of the notification recipient.
 
