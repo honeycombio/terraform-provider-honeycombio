@@ -128,10 +128,12 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"alert_type": schema.StringAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Control when the Trigger will send a notification.",
-				Default:     stringdefault.StaticString(string(client.TriggerAlertTypeOnChange)),
+				Optional: true,
+				Computed: true,
+				Description: "Control when the Trigger will send a notification. " +
+					"`on_group_change` additionally resolves each group of a grouped query " +
+					"independently, and is required for per-group recipient routing.",
+				Default: stringdefault.StaticString(string(client.TriggerAlertTypeOnChange)),
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						string(client.TriggerAlertTypeOnChange),

@@ -603,7 +603,7 @@ resource "honeycombio_trigger" "metrics" {
 
 ### Optional
 
-- `alert_type` (String) Control when the Trigger will send a notification.
+- `alert_type` (String) Control when the Trigger will send a notification. `on_group_change` additionally resolves each group of a grouped query independently, and is required for per-group recipient routing.
 - `auto_investigate` (Boolean) Whether to automatically investigate when this Trigger fires. Requires Honeycomb Intelligence to be enabled for your team in the Honeycomb UI and the intelligence feature block to be set in the provider configuration.
 - `baseline_details` (Block List) A configuration block that allows you to receive notifications when the delta between values in your data, compared to a previous time period, cross thresholds you configure. (see [below for nested schema](#nestedblock--baseline_details))
 - `dataset` (String) The dataset this Trigger is associated with.
@@ -730,6 +730,11 @@ A few caveats apply:
 * On `terraform import` the routing attributes are not populated, in the same way as
   `type`, `target` and `notification_details`. The first plan after an import will show the
   routing from your configuration as being applied.
+* Routing changes made outside Terraform are not detected, in the same way as
+  `notification_details`. Note that Honeycomb itself discards a recipient's routing if the
+  Trigger stops qualifying for it — for example if `alert_type` is changed away from
+  `on_group_change`, or the query's group by is removed — and Terraform will not show that
+  as drift. Re-applying restores it.
 
 ## Import
 

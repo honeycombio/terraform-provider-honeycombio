@@ -38,6 +38,11 @@ func (m triggerNotificationRecipientsModifier) PlanModifySet(ctx context.Context
 	if req.StateValue.IsNull() {
 		return
 	}
+	// An unknown set (a dynamic block over an unknown for_each, say) has no elements to
+	// normalize, and decoding one into the model is an error.
+	if req.PlanValue.IsUnknown() {
+		return
+	}
 
 	var rcpts []models.TriggerNotificationRecipientModel
 	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("recipient"), &rcpts)...)

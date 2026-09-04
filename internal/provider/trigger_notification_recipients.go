@@ -91,41 +91,47 @@ func validateGroupedRecipientRouting(
 	}
 
 	// alert_type is Optional and Computed with a static default, so it is null in config
-	// when unset. Treat that as the default rather than as "no opinion".
+	// when unset -- treat that as the default. Unknown means "cannot tell yet", which is
+	// not the same thing, so the rules which depend on it are skipped entirely.
+	alertTypeKnown := !data.AlertType.IsUnknown()
 	alertType := client.TriggerAlertTypeOnChange
-	if !data.AlertType.IsNull() && !data.AlertType.IsUnknown() {
+	if alertTypeKnown && !data.AlertType.IsNull() {
 		alertType = client.TriggerAlertType(data.AlertType.ValueString())
 	}
 	groupedAlerts := alertType == client.TriggerAlertTypeOnGroupChange
 
-	seenIDs := make(map[string]int, len(rcpts))
-	seenTargets := make(map[string]int, len(rcpts))
+	elements := data.Recipients.Elements()
+	seenIDs := make(map[string]struct{}, len(rcpts))
+	seenTargets := make(map[string]struct{}, len(rcpts))
 
 	for i, rcpt := range rcpts {
-		recipPath := path.Root("recipient").AtListIndex(i)
-		hasGroupFilter := !rcpt.GroupFilter.IsNull() && !rcpt.GroupFilter.IsUnknown()
-		// An unknown value still means the argument was configured.
-		hasPerGroupIncidents := !rcpt.PDPerGroupIncidents.IsNull()
+		recipPath := path.Root("recipient").AtSetValue(elements[i])
+
+		// Honeycomb ignores an empty filter and a false per-group flag, so only routing
+		// which is actually switched on is worth reporting. Unknown values are skipped:
+		// they may well resolve to something inert.
+		groupFilterSet := !rcpt.GroupFilter.IsNull() && !rcpt.GroupFilter.IsUnknown() &&
+			len(rcpt.GroupFilter.Elements()) > 0
+		perGroupIncidentsSet := !rcpt.PDPerGroupIncidents.IsNull() &&
+			!rcpt.PDPerGroupIncidents.IsUnknown() && rcpt.PDPerGroupIncidents.ValueBool()
 
 		// per-group routing requires the grouped resolution alert type
-		if (hasGroupFilter || hasPerGroupIncidents) && !groupedAlerts {
-			attr := "group_filter"
-			if !hasGroupFilter {
-				attr = "pagerduty_per_group_incidents"
+		if alertTypeKnown && !groupedAlerts {
+			for _, attr := range routingAttributesInUse(groupFilterSet, perGroupIncidentsSet) {
+				resp.Diagnostics.AddAttributeError(
+					recipPath.AtName(attr),
+					"Trigger validation error",
+					`Per-group recipient routing requires an "alert_type" of "on_group_change". `+
+						"Honeycomb only evaluates per-group state for that alert type, and will "+
+						"otherwise discard the routing configured here.",
+				)
 			}
-			resp.Diagnostics.AddAttributeError(
-				recipPath.AtName(attr),
-				"Trigger validation error",
-				`Per-group recipient routing requires an "alert_type" of "on_group_change". `+
-					"Honeycomb only evaluates per-group state for that alert type, and will "+
-					"otherwise discard the routing configured here.",
-			)
 		}
 
 		// pagerduty_per_group_incidents is only supported for PagerDuty recipients.
-		// A recipient given by ID has an unknown type, so it can only be checked when the
-		// type was configured explicitly.
-		if hasPerGroupIncidents && !rcpt.Type.IsNull() && !rcpt.Type.IsUnknown() &&
+		// A recipient given by ID has an unknown type, so this can only be checked when
+		// the type was configured explicitly.
+		if perGroupIncidentsSet && !rcpt.Type.IsNull() && !rcpt.Type.IsUnknown() &&
 			rcpt.Type.ValueString() != string(client.RecipientTypePagerDuty) {
 			resp.Diagnostics.AddAttributeError(
 				recipPath.AtName("pagerduty_per_group_incidents"),
@@ -135,36 +141,40 @@ func validateGroupedRecipientRouting(
 			)
 		}
 
-		// only one routing rule is allowed per recipient
-		if !rcpt.ID.IsNull() && !rcpt.ID.IsUnknown() {
-			id := rcpt.ID.ValueString()
-			if _, ok := seenIDs[id]; ok {
-				resp.Diagnostics.AddAttributeError(
-					recipPath.AtName("id"),
-					"Conflicting configuration arguments",
-					"Only one routing rule is allowed per recipient, but recipient "+id+
-						" is also configured earlier in this Trigger. Combine the rules into a "+
-						"single \"recipient\" block: a group_filter can list several values, and "+
-						"several columns.",
-				)
+		// Only one routing rule is allowed per recipient. Scoped to recipients which
+		// actually configure routing so that configurations which repeated a recipient
+		// before this feature existed keep whatever behaviour the API gave them.
+		if groupFilterSet || perGroupIncidentsSet {
+			switch {
+			case !rcpt.ID.IsNull() && !rcpt.ID.IsUnknown():
+				id := rcpt.ID.ValueString()
+				if _, seen := seenIDs[id]; seen {
+					resp.Diagnostics.AddAttributeError(
+						recipPath.AtName("id"),
+						"Conflicting configuration arguments",
+						"Only one routing rule is allowed per recipient, but recipient "+id+
+							" is configured more than once in this Trigger. Combine the rules "+
+							`into a single "recipient" block: a group_filter can list several `+
+							"values, and several columns.",
+					)
+				}
+				seenIDs[id] = struct{}{}
+			case !rcpt.Type.IsNull() && !rcpt.Type.IsUnknown() && !rcpt.Target.IsUnknown():
+				key := rcpt.Type.ValueString() + "\x00" + rcpt.Target.ValueString()
+				if _, seen := seenTargets[key]; seen {
+					resp.Diagnostics.AddAttributeError(
+						recipPath.AtName("target"),
+						"Conflicting configuration arguments",
+						"Only one routing rule is allowed per recipient, but this "+
+							rcpt.Type.ValueString()+" recipient is configured more than once in "+
+							`this Trigger. Combine the rules into a single "recipient" block.`,
+					)
+				}
+				seenTargets[key] = struct{}{}
 			}
-			seenIDs[id] = i
-		} else if !rcpt.Type.IsNull() && !rcpt.Type.IsUnknown() &&
-			!rcpt.Target.IsUnknown() {
-			key := rcpt.Type.ValueString() + "\x00" + rcpt.Target.ValueString()
-			if _, ok := seenTargets[key]; ok {
-				resp.Diagnostics.AddAttributeError(
-					recipPath.AtName("target"),
-					"Conflicting configuration arguments",
-					"Only one routing rule is allowed per recipient, but this "+
-						rcpt.Type.ValueString()+" recipient is also configured earlier in this "+
-						"Trigger. Combine the rules into a single \"recipient\" block.",
-				)
-			}
-			seenTargets[key] = i
 		}
 
-		if q == nil || !hasGroupFilter {
+		if q == nil || !groupFilterSet {
 			continue
 		}
 
@@ -179,13 +189,10 @@ func validateGroupedRecipientRouting(
 			continue
 		}
 
-		// a group_filter can only name columns the query groups by
-		var filter map[string][]string
-		resp.Diagnostics.Append(rcpt.GroupFilter.ElementsAs(ctx, &filter, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		for column := range filter {
+		// A group_filter can only name columns the query groups by. Only the keys matter,
+		// and the keys of a known map are always known -- so iterate the elements rather
+		// than decoding into a Go map, which cannot represent an unknown filter value.
+		for column := range rcpt.GroupFilter.Elements() {
 			if !slices.Contains(q.Breakdowns, column) {
 				resp.Diagnostics.AddAttributeError(
 					recipPath.AtName("group_filter"),
@@ -197,6 +204,20 @@ func validateGroupedRecipientRouting(
 			}
 		}
 	}
+}
+
+// routingAttributesInUse names the per-group routing attributes which are switched on, so
+// a diagnostic can be attached to each of them.
+func routingAttributesInUse(groupFilter, perGroupIncidents bool) []string {
+	var attrs []string
+	if groupFilter {
+		attrs = append(attrs, "group_filter")
+	}
+	if perGroupIncidents {
+		attrs = append(attrs, "pagerduty_per_group_incidents")
+	}
+
+	return attrs
 }
 
 // expandTriggerNotificationRecipients is the honeycombio_trigger counterpart of

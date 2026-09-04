@@ -94,6 +94,11 @@ A few caveats apply:
 * On `terraform import` the routing attributes are not populated, in the same way as
   `type`, `target` and `notification_details`. The first plan after an import will show the
   routing from your configuration as being applied.
+* Routing changes made outside Terraform are not detected, in the same way as
+  `notification_details`. Note that Honeycomb itself discards a recipient's routing if the
+  Trigger stops qualifying for it — for example if `alert_type` is changed away from
+  `on_group_change`, or the query's group by is removed — and Terraform will not show that
+  as drift. Re-applying restores it.
 
 ## Import
 

@@ -1343,14 +1343,11 @@ func TestAcc_TriggerResource_groupedRecipientRouting(t *testing.T) {
 						"group_filter." + column.KeyName + ".#": "2",
 					}),
 				),
-			},
-			{
-				// the same config must not re-plan: this is the regression test for the
-				// routing attributes being Optional rather than Optional+Computed
-				Config:   testAccConfigTriggerGroupedRouting(dataset, name, column.KeyName, true),
-				PlanOnly: true,
+				// re-planning the same config after apply and refresh must be a no-op.
+				// This is the regression test for the routing attributes being Optional
+				// rather than Optional+Computed.
 				ConfigPlanChecks: resource.ConfigPlanChecks{
-					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
 				},
 			},
 			{
@@ -1361,8 +1358,14 @@ func TestAcc_TriggerResource_groupedRecipientRouting(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs("honeycombio_trigger.test", "recipient.*", map[string]string{
 						"type": "pagerduty",
 					}),
-					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.0.group_filter"),
+					// neither recipient is routed now. A map attribute is flattened as
+					// `group_filter.%`, so asserting on the bare name would always pass.
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.0.group_filter.%"),
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.1.group_filter.%"),
 				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
 			},
 		},
 	})

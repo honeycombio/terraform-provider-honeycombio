@@ -6,8 +6,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
@@ -189,6 +191,228 @@ func Test_reconcileReadTriggerNotificationRecipientState(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+// Test_validateGroupedRecipientRouting_toleratesUnknowns covers the values that are not
+// yet known at `terraform validate` / plan time. None of these may produce a diagnostic:
+// an unknown may still resolve to something perfectly valid, and refusing to plan a
+// configuration which merely references a variable would be a bad regression.
+func Test_validateGroupedRecipientRouting_toleratesUnknowns(t *testing.T) {
+	t.Parallel()
+
+	query := &client.QuerySpec{Breakdowns: []string{"app.tenant"}}
+	groupedAlerts := types.StringValue(string(client.TriggerAlertTypeOnGroupChange))
+
+	tests := map[string]struct {
+		alertType types.String
+		recipient models.TriggerNotificationRecipientModel
+		query     *client.QuerySpec
+	}{
+		// group_filter = { "app.tenant" = [var.tenant] }
+		"an unknown value inside a known group_filter": {
+			alertType: groupedAlerts,
+			recipient: models.TriggerNotificationRecipientModel{
+				NotificationRecipientModel: models.NotificationRecipientModel{
+					ID: types.StringValue("abcd12345"),
+				},
+				GroupFilter: types.MapValueMust(models.GroupFilterValueType, map[string]attr.Value{
+					"app.tenant": types.SetValueMust(types.StringType, []attr.Value{types.StringUnknown()}),
+				}),
+			},
+			query: query,
+		},
+		// group_filter = var.filters
+		"a wholly unknown group_filter": {
+			alertType: groupedAlerts,
+			recipient: models.TriggerNotificationRecipientModel{
+				NotificationRecipientModel: models.NotificationRecipientModel{
+					ID: types.StringValue("abcd12345"),
+				},
+				GroupFilter: types.MapUnknown(models.GroupFilterValueType),
+			},
+			query: query,
+		},
+		// alert_type = var.alert_type, with routing configured
+		"an unknown alert_type must not be assumed to be the default": {
+			alertType: types.StringUnknown(),
+			recipient: models.TriggerNotificationRecipientModel{
+				NotificationRecipientModel: models.NotificationRecipientModel{
+					ID: types.StringValue("abcd12345"),
+				},
+				GroupFilter: groupFilterValue(map[string][]string{"app.tenant": {"acme"}}),
+			},
+			query: query,
+		},
+		// pagerduty_per_group_incidents = var.per_group, under a non-grouped alert type
+		"an unknown per-group flag is not yet 'configured'": {
+			alertType: types.StringValue(string(client.TriggerAlertTypeOnChange)),
+			recipient: models.TriggerNotificationRecipientModel{
+				NotificationRecipientModel: models.NotificationRecipientModel{
+					Type:   types.StringValue("email"),
+					Target: types.StringValue("test@example.com"),
+				},
+				PDPerGroupIncidents: types.BoolUnknown(),
+			},
+			query: query,
+		},
+		// an explicit false is inert, so it is not routing and needs no alert type
+		"an explicitly false per-group flag is inert": {
+			alertType: types.StringValue(string(client.TriggerAlertTypeOnChange)),
+			recipient: models.TriggerNotificationRecipientModel{
+				NotificationRecipientModel: models.NotificationRecipientModel{
+					Type:   types.StringValue("email"),
+					Target: types.StringValue("test@example.com"),
+				},
+				PDPerGroupIncidents: types.BoolValue(false),
+			},
+			query: query,
+		},
+		// a query_id Trigger: the group by columns are not visible to the provider
+		"no query spec to check the filter columns against": {
+			alertType: groupedAlerts,
+			recipient: models.TriggerNotificationRecipientModel{
+				NotificationRecipientModel: models.NotificationRecipientModel{
+					ID: types.StringValue("abcd12345"),
+				},
+				GroupFilter: groupFilterValue(map[string][]string{"anything.at.all": {"acme"}}),
+			},
+			query: nil,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			data := models.TriggerResourceModel{
+				AlertType:  tt.alertType,
+				Recipients: triggerNotificationRecipientModelsToSet([]models.TriggerNotificationRecipientModel{tt.recipient}),
+			}
+			resp := &resource.ValidateConfigResponse{}
+			validateGroupedRecipientRouting(context.Background(), data, tt.query, resp)
+
+			assert.False(t, resp.Diagnostics.HasError(),
+				"expected no error, got: %v", resp.Diagnostics.Errors())
+		})
+	}
+}
+
+// Test_validateGroupedRecipientRouting_reportsRealProblems is the positive control for the
+// unknown-tolerance above: the rules must still fire on known-bad configuration.
+func Test_validateGroupedRecipientRouting_reportsRealProblems(t *testing.T) {
+	t.Parallel()
+
+	query := &client.QuerySpec{Breakdowns: []string{"app.tenant"}}
+
+	tests := map[string]struct {
+		alertType  types.String
+		recipients []models.TriggerNotificationRecipientModel
+		query      *client.QuerySpec
+		wantErr    string
+	}{
+		"routing without on_group_change": {
+			alertType: types.StringValue(string(client.TriggerAlertTypeOnTrue)),
+			recipients: []models.TriggerNotificationRecipientModel{{
+				NotificationRecipientModel: models.NotificationRecipientModel{ID: types.StringValue("abcd12345")},
+				GroupFilter:                groupFilterValue(map[string][]string{"app.tenant": {"acme"}}),
+			}},
+			query:   query,
+			wantErr: `requires an "alert_type" of "on_group_change"`,
+		},
+		"a filter column the query does not group by": {
+			alertType: types.StringValue(string(client.TriggerAlertTypeOnGroupChange)),
+			recipients: []models.TriggerNotificationRecipientModel{{
+				NotificationRecipientModel: models.NotificationRecipientModel{ID: types.StringValue("abcd12345")},
+				GroupFilter:                groupFilterValue(map[string][]string{"not.a.breakdown": {"acme"}}),
+			}},
+			query:   query,
+			wantErr: "is not one of the Trigger query's group by columns",
+		},
+		"per-group incidents on a non-PagerDuty recipient": {
+			alertType: types.StringValue(string(client.TriggerAlertTypeOnGroupChange)),
+			recipients: []models.TriggerNotificationRecipientModel{{
+				NotificationRecipientModel: models.NotificationRecipientModel{
+					Type:   types.StringValue("email"),
+					Target: types.StringValue("test@example.com"),
+				},
+				PDPerGroupIncidents: types.BoolValue(true),
+			}},
+			query:   query,
+			wantErr: "only supported for PagerDuty recipients",
+		},
+		"the same recipient routed twice": {
+			alertType: types.StringValue(string(client.TriggerAlertTypeOnGroupChange)),
+			recipients: []models.TriggerNotificationRecipientModel{
+				{
+					NotificationRecipientModel: models.NotificationRecipientModel{ID: types.StringValue("abcd12345")},
+					GroupFilter:                groupFilterValue(map[string][]string{"app.tenant": {"acme"}}),
+				},
+				{
+					NotificationRecipientModel: models.NotificationRecipientModel{ID: types.StringValue("abcd12345")},
+					GroupFilter:                groupFilterValue(map[string][]string{"app.tenant": {"globex"}}),
+				},
+			},
+			query:   query,
+			wantErr: "Only one routing rule is allowed per recipient",
+		},
+		"routing on a query with no group by": {
+			alertType: types.StringValue(string(client.TriggerAlertTypeOnGroupChange)),
+			recipients: []models.TriggerNotificationRecipientModel{{
+				NotificationRecipientModel: models.NotificationRecipientModel{ID: types.StringValue("abcd12345")},
+				GroupFilter:                groupFilterValue(map[string][]string{"app.tenant": {"acme"}}),
+			}},
+			query:   &client.QuerySpec{},
+			wantErr: "group by at least one column",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			data := models.TriggerResourceModel{
+				AlertType:  tt.alertType,
+				Recipients: triggerNotificationRecipientModelsToSet(tt.recipients),
+			}
+			resp := &resource.ValidateConfigResponse{}
+			validateGroupedRecipientRouting(context.Background(), data, tt.query, resp)
+
+			require.True(t, resp.Diagnostics.HasError(), "expected an error, got none")
+			assert.Contains(t, resp.Diagnostics.Errors().Errors()[0].Detail(), tt.wantErr)
+		})
+	}
+}
+
+// Test_recipientSchemasMatchAttrTypes guards the drift that actually bites: an attribute
+// added to notificationRecipientSchema but not to the corresponding AttrType map. That is
+// not a compile error -- it surfaces at runtime, on every Read, as an object type mismatch.
+//
+// The models package has the complementary check that the two AttrType maps agree with each
+// other and with the Trigger model's tfsdk tags.
+func Test_recipientSchemasMatchAttrTypes(t *testing.T) {
+	t.Parallel()
+
+	t.Run("burn alert recipient block", func(t *testing.T) {
+		t.Parallel()
+
+		block := notificationRecipientSchema(client.RecipientTypes(), true, nil, nil)
+		assert.Equal(t,
+			types.ObjectType{AttrTypes: models.NotificationRecipientAttrType},
+			block.NestedObject.Type(),
+		)
+	})
+
+	t.Run("trigger recipient block", func(t *testing.T) {
+		t.Parallel()
+
+		block := notificationRecipientSchema(
+			client.TriggerRecipientTypes(), false, triggerRecipientRoutingAttributes(), nil,
+		)
+		assert.Equal(t,
+			types.ObjectType{AttrTypes: models.TriggerNotificationRecipientAttrType},
+			block.NestedObject.Type(),
+		)
+	})
 }
 
 func Test_flattenGroupFilter(t *testing.T) {
