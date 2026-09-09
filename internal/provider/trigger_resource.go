@@ -369,6 +369,9 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
+	// the response is the only place a recipient's real type is visible, so check it
+	// before the config -- not the response -- becomes state
+	warnOnIgnoredPerGroupIncidents(ctx, trigger.Recipients, config.Recipients, &resp.Diagnostics)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
 	state.BaselineDetails = flattenBaselineDetails(ctx, trigger.BaselineDetails, &resp.Diagnostics)
@@ -564,6 +567,9 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
+	// the response is the only place a recipient's real type is visible, so check it
+	// before the config -- not the response -- becomes state
+	warnOnIgnoredPerGroupIncidents(ctx, trigger.Recipients, config.Recipients, &resp.Diagnostics)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
 	state.BaselineDetails = flattenBaselineDetails(ctx, trigger.BaselineDetails, &resp.Diagnostics)

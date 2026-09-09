@@ -1452,7 +1452,26 @@ func TestAcc_TriggerResource_groupedRecipientRoutingValidation(t *testing.T) {
     group_filter = { "app.tenant" = ["globex"] }
   }
 `),
-				ExpectError: regexp.MustCompile(`Only one routing rule is allowed per recipient`),
+				ExpectError: regexp.MustCompile(`A recipient may only appear once in a Trigger`),
+			},
+			{
+				// the same recipient routed once and listed again as a catch-all: still
+				// two blocks for one recipient, which Honeycomb rejects
+				Config: testAccConfigTriggerRoutingInvalid(dataset, name, `
+  alert_type = "on_group_change"
+
+  recipient {
+    type         = "email"
+    target       = "test@example.com"
+    group_filter = { "app.tenant" = ["acme"] }
+  }
+
+  recipient {
+    type   = "email"
+    target = "test@example.com"
+  }
+`),
+				ExpectError: regexp.MustCompile(`A recipient may only appear once in a Trigger`),
 			},
 			{
 				// an empty group_filter is meaningless; omit the attribute for a catch-all

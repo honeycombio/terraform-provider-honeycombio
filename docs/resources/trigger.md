@@ -645,7 +645,7 @@ Required:
 
 Optional:
 
-- `group_filter` (Map of Set of String) Only notify this recipient about the query groups matching this filter. Maps a group by column of the Trigger's query to the values which route to this recipient. Omit for a catch-all recipient which is notified about every group. Requires an `alert_type` of `on_group_change` and a query with at least one group by. Only one routing rule is allowed per recipient. Available to teams with grouped resolution alerts enabled.
+- `group_filter` (Map of Set of String) Only notify this recipient about the query groups matching this filter. Maps a group by column of the Trigger's query to the values which route to this recipient. Omit for a catch-all recipient which is notified about every group. Requires an `alert_type` of `on_group_change` and a query with at least one group by. A recipient may only appear once in a Trigger, so all of its routing must go in one block. Available to teams with grouped resolution alerts enabled.
 - `id` (String) The ID of an existing recipient.
 - `notification_details` (Block List) Additional details to send along with the notification. (see [below for nested schema](#nestedblock--recipient--notification_details))
 - `pagerduty_per_group_incidents` (Boolean) Open and resolve one PagerDuty incident per triggered group instead of one incident per Trigger. Only supported for PagerDuty recipients, and requires an `alert_type` of `on_group_change` and a query with at least one group by. Available to teams with grouped resolution alerts enabled.
@@ -714,10 +714,10 @@ available to teams with grouped resolution alerts enabled.
 
 A recipient with no `group_filter` is a catch-all: it is notified about every group.
 
--> **NOTE** Only one routing rule is allowed per recipient, so a recipient may appear in at
-most one `recipient` block. To route several sets of values to the same recipient, combine
-them into a single `group_filter` — it accepts multiple values per column, and multiple
-columns.
+-> **NOTE** A recipient may appear in at most one `recipient` block, whether or not it
+configures routing — Honeycomb rejects a Trigger which lists the same recipient twice. To
+route several sets of values to the same recipient, combine them into a single
+`group_filter` — it accepts multiple values per column, and multiple columns.
 
 A few caveats apply:
 
@@ -725,8 +725,14 @@ A few caveats apply:
   given inline with `query_json` this is checked at plan time; when using `query_id` the
   query is not visible to Terraform, so an invalid column is only reported by the API.
 * `pagerduty_per_group_incidents` is only supported for PagerDuty recipients. When the
-  recipient is specified by `id` its type is not known at plan time, so this too is only
-  reported by the API.
+  recipient is specified by `id` its type is not known at plan time, so this cannot be
+  checked then. Honeycomb ignores the setting for other recipient types rather than
+  rejecting it, so Terraform reports a warning after the apply — state still records the
+  value you configured.
+* A recipient may appear in at most one `recipient` block. A repeat of the same `id`, or of
+  the same `type` and `target`, is caught at plan time; one block naming a recipient by
+  `id` and another naming it by `type` and `target` only resolve to the same recipient on
+  the server, so that combination is reported by the API.
 * On `terraform import` the routing attributes are not populated, in the same way as
   `type`, `target` and `notification_details`. The first plan after an import will show the
   routing from your configuration as being applied.

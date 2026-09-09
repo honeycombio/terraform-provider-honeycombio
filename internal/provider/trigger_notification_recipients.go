@@ -41,7 +41,7 @@ func triggerRecipientRoutingAttributes() map[string]schema.Attribute {
 				"Maps a group by column of the Trigger's query to the values which route to this recipient. " +
 				"Omit for a catch-all recipient which is notified about every group. " +
 				"Requires an `alert_type` of `on_group_change` and a query with at least one group by. " +
-				"Only one routing rule is allowed per recipient. " +
+				"A recipient may only appear once in a Trigger, so all of its routing must go in one block. " +
 				"Available to teams with grouped resolution alerts enabled.",
 			Validators: []validator.Map{
 				mapvalidator.SizeAtLeast(1),
@@ -143,37 +143,40 @@ func validateGroupedRecipientRouting(
 			)
 		}
 
-		// Only one routing rule is allowed per recipient. Scoped to recipients which
-		// actually configure routing so that configurations which repeated a recipient
-		// before this feature existed keep whatever behaviour the API gave them.
-		if groupFilterSet || perGroupIncidentsSet {
-			switch {
-			case !rcpt.ID.IsNull() && !rcpt.ID.IsUnknown():
-				id := rcpt.ID.ValueString()
-				if _, seen := seenIDs[id]; seen {
-					resp.Diagnostics.AddAttributeError(
-						recipPath.AtName("id"),
-						"Conflicting configuration arguments",
-						"Only one routing rule is allowed per recipient, but recipient "+id+
-							" is configured more than once in this Trigger. Combine the rules "+
-							`into a single "recipient" block: a group_filter can list several `+
-							"values, and several columns.",
-					)
-				}
-				seenIDs[id] = struct{}{}
-			case !rcpt.Type.IsNull() && !rcpt.Type.IsUnknown() && !rcpt.Target.IsUnknown():
-				key := rcpt.Type.ValueString() + "\x00" + rcpt.Target.ValueString()
-				if _, seen := seenTargets[key]; seen {
-					resp.Diagnostics.AddAttributeError(
-						recipPath.AtName("target"),
-						"Conflicting configuration arguments",
-						"Only one routing rule is allowed per recipient, but this "+
-							rcpt.Type.ValueString()+" recipient is configured more than once in "+
-							`this Trigger. Combine the rules into a single "recipient" block.`,
-					)
-				}
-				seenTargets[key] = struct{}{}
+		// A recipient may only appear once in a Trigger. Honeycomb stores one row per
+		// (trigger, recipient) and rejects a repeat with a 422, whether or not the
+		// repeated block configures routing -- so this is not scoped to routing.
+		//
+		// Not caught here: one block given by `id` and another by type+target which
+		// resolve to the same recipient. The provider cannot resolve a target to an ID at
+		// plan time, so the API reports that one.
+		switch {
+		case !rcpt.ID.IsNull() && !rcpt.ID.IsUnknown():
+			id := rcpt.ID.ValueString()
+			if _, seen := seenIDs[id]; seen {
+				resp.Diagnostics.AddAttributeError(
+					recipPath.AtName("id"),
+					"Conflicting configuration arguments",
+					"A recipient may only appear once in a Trigger, but recipient "+id+
+						" is configured more than once. If you are routing groups to it, "+
+						`combine the rules into a single "recipient" block: a group_filter `+
+						"can list several values, and several columns.",
+				)
 			}
+			seenIDs[id] = struct{}{}
+		case !rcpt.Type.IsNull() && !rcpt.Type.IsUnknown() && !rcpt.Target.IsUnknown():
+			key := rcpt.Type.ValueString() + "\x00" + rcpt.Target.ValueString()
+			if _, seen := seenTargets[key]; seen {
+				resp.Diagnostics.AddAttributeError(
+					recipPath.AtName("target"),
+					"Conflicting configuration arguments",
+					"A recipient may only appear once in a Trigger, but this "+
+						rcpt.Type.ValueString()+" recipient is configured more than once. "+
+						"If you are routing groups to it, combine the rules into a single "+
+						`"recipient" block.`,
+				)
+			}
+			seenTargets[key] = struct{}{}
 		}
 
 		if q == nil || !groupFilterSet {
@@ -410,4 +413,58 @@ func flattenPerGroupIncidents(perGroup *bool) types.Bool {
 	}
 
 	return types.BoolValue(true)
+}
+
+// warnOnIgnoredPerGroupIncidents reports recipients whose pagerduty_per_group_incidents
+// Honeycomb dropped. A recipient given by `id` has no type in the config, so ValidateConfig
+// cannot tell whether it is a PagerDuty recipient; the API's response can.
+//
+// This is the only chance to say so. The Trigger writes config straight back to state, and
+// the attribute is Optional rather than Computed, so state must keep the value the config
+// asked for -- writing the API's value instead would break the plan/apply contract for a
+// non-computed attribute. A warning is all that is left.
+func warnOnIgnoredPerGroupIncidents(
+	ctx context.Context,
+	remote []client.TriggerNotificationRecipient,
+	config types.Set,
+	diags *diag.Diagnostics,
+) {
+	if config.IsNull() || config.IsUnknown() {
+		return
+	}
+
+	var rcpts []models.TriggerNotificationRecipientModel
+	diags.Append(config.ElementsAs(ctx, &rcpts, false)...)
+	if diags.HasError() {
+		return
+	}
+
+	elements := config.Elements()
+	for i, rcpt := range rcpts {
+		if !rcpt.PDPerGroupIncidents.ValueBool() {
+			continue
+		}
+
+		// matched as in mapTriggerNotificationRecipientToState: by ID when the recipient
+		// was authored that way, by type+target otherwise
+		idx := slices.IndexFunc(remote, func(r client.TriggerNotificationRecipient) bool {
+			if !rcpt.ID.IsNull() {
+				return rcpt.ID.ValueString() == r.ID
+			}
+			return rcpt.Type.ValueString() == string(r.Type) && rcpt.Target.ValueString() == r.Target
+		})
+		// an unmatched recipient gives us nothing to compare against
+		if idx < 0 || (remote[idx].PDPerGroupIncidents != nil && *remote[idx].PDPerGroupIncidents) {
+			continue
+		}
+
+		diags.AddAttributeWarning(
+			path.Root("recipient").AtSetValue(elements[i]).AtName("pagerduty_per_group_incidents"),
+			`Honeycomb ignored "pagerduty_per_group_incidents"`,
+			`"pagerduty_per_group_incidents" is only supported for PagerDuty recipients, `+
+				"but this recipient is of type "+string(remote[idx].Type)+". Honeycomb has "+
+				"not enabled per-group incidents for it; Terraform state will still record "+
+				"the value you configured.",
+		)
+	}
 }

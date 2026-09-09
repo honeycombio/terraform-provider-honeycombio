@@ -353,7 +353,46 @@ func Test_validateGroupedRecipientRouting_reportsRealProblems(t *testing.T) {
 				},
 			},
 			query:   query,
-			wantErr: "Only one routing rule is allowed per recipient",
+			wantErr: "A recipient may only appear once in a Trigger",
+		},
+		// Honeycomb stores one row per (trigger, recipient), so a repeat is rejected
+		// whether or not the second block configures routing.
+		"a routed recipient repeated as a catch-all": {
+			alertType: types.StringValue(string(client.TriggerAlertTypeOnGroupChange)),
+			recipients: []models.TriggerNotificationRecipientModel{
+				{
+					NotificationRecipientModel: models.NotificationRecipientModel{ID: types.StringValue("abcd12345")},
+					GroupFilter:                groupFilterValue(map[string][]string{"app.tenant": {"acme"}}),
+				},
+				{
+					NotificationRecipientModel: models.NotificationRecipientModel{ID: types.StringValue("abcd12345")},
+				},
+			},
+			query:   query,
+			wantErr: "A recipient may only appear once in a Trigger",
+		},
+		"the same recipient repeated with no routing at all": {
+			alertType: types.StringValue(string(client.TriggerAlertTypeOnChange)),
+			recipients: []models.TriggerNotificationRecipientModel{
+				{
+					NotificationRecipientModel: models.NotificationRecipientModel{
+						Type:   types.StringValue("email"),
+						Target: types.StringValue("test@example.com"),
+						Details: types.ListValueMust(
+							types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType},
+							notificationRecipientDetailsToValue("critical"),
+						),
+					},
+				},
+				{
+					NotificationRecipientModel: models.NotificationRecipientModel{
+						Type:   types.StringValue("email"),
+						Target: types.StringValue("test@example.com"),
+					},
+				},
+			},
+			query:   query,
+			wantErr: "A recipient may only appear once in a Trigger",
 		},
 		"routing on a query with no group by": {
 			alertType: types.StringValue(string(client.TriggerAlertTypeOnGroupChange)),
@@ -379,6 +418,98 @@ func Test_validateGroupedRecipientRouting_reportsRealProblems(t *testing.T) {
 
 			require.True(t, resp.Diagnostics.HasError(), "expected an error, got none")
 			assert.Contains(t, resp.Diagnostics.Errors().Errors()[0].Detail(), tt.wantErr)
+		})
+	}
+}
+
+// Test_warnOnIgnoredPerGroupIncidents covers the one routing rule the provider cannot check
+// at plan time: a recipient given by `id` has no type in config, so ValidateConfig cannot
+// tell whether it is a PagerDuty recipient. The API response can, and this is the only
+// chance to say so -- the Trigger writes config straight back to state.
+func Test_warnOnIgnoredPerGroupIncidents(t *testing.T) {
+	t.Parallel()
+
+	byID := func(id string, perGroup bool) models.TriggerNotificationRecipientModel {
+		return models.TriggerNotificationRecipientModel{
+			NotificationRecipientModel: models.NotificationRecipientModel{ID: types.StringValue(id)},
+			PDPerGroupIncidents:        types.BoolValue(perGroup),
+		}
+	}
+
+	tests := map[string]struct {
+		config      []models.TriggerNotificationRecipientModel
+		remote      []client.TriggerNotificationRecipient
+		wantWarning string
+	}{
+		"the API kept the flag for a PagerDuty recipient": {
+			config: []models.TriggerNotificationRecipientModel{byID("abcd12345", true)},
+			remote: []client.TriggerNotificationRecipient{{
+				NotificationRecipient: client.NotificationRecipient{
+					ID: "abcd12345", Type: client.RecipientTypePagerDuty,
+				},
+				PDPerGroupIncidents: client.ToPtr(true),
+			}},
+		},
+		"the API dropped the flag for a non-PagerDuty recipient": {
+			config: []models.TriggerNotificationRecipientModel{byID("abcd12345", true)},
+			remote: []client.TriggerNotificationRecipient{{
+				NotificationRecipient: client.NotificationRecipient{
+					ID: "abcd12345", Type: client.RecipientTypeSlack, Target: "#oncall",
+				},
+			}},
+			wantWarning: "only supported for PagerDuty recipients",
+		},
+		"a recipient authored by type and target": {
+			config: []models.TriggerNotificationRecipientModel{{
+				NotificationRecipientModel: models.NotificationRecipientModel{
+					Type:   types.StringValue("email"),
+					Target: types.StringValue("test@example.com"),
+				},
+				PDPerGroupIncidents: types.BoolValue(true),
+			}},
+			remote: []client.TriggerNotificationRecipient{{
+				NotificationRecipient: client.NotificationRecipient{
+					ID: "abcd12345", Type: client.RecipientTypeEmail, Target: "test@example.com",
+				},
+			}},
+			wantWarning: "only supported for PagerDuty recipients",
+		},
+		"the config never asked for per-group incidents": {
+			config: []models.TriggerNotificationRecipientModel{byID("abcd12345", false)},
+			remote: []client.TriggerNotificationRecipient{{
+				NotificationRecipient: client.NotificationRecipient{
+					ID: "abcd12345", Type: client.RecipientTypeSlack,
+				},
+			}},
+		},
+		// nothing to compare against, so nothing to say
+		"no matching recipient in the response": {
+			config: []models.TriggerNotificationRecipientModel{byID("abcd12345", true)},
+			remote: []client.TriggerNotificationRecipient{{
+				NotificationRecipient: client.NotificationRecipient{ID: "efgh67890"},
+			}},
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			var diags diag.Diagnostics
+			warnOnIgnoredPerGroupIncidents(
+				context.Background(),
+				tt.remote,
+				triggerNotificationRecipientModelsToSet(tt.config),
+				&diags,
+			)
+
+			assert.False(t, diags.HasError(), "expected no errors, got: %v", diags.Errors())
+			if tt.wantWarning == "" {
+				assert.Empty(t, diags.Warnings(), "expected no warning")
+				return
+			}
+			require.Len(t, diags.Warnings(), 1)
+			assert.Contains(t, diags.Warnings()[0].Detail(), tt.wantWarning)
 		})
 	}
 }
