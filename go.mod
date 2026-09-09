@@ -1,6 +1,6 @@
 module github.com/honeycombio/terraform-provider-honeycombio
 
-go 1.25.9
+go 1.26.0
 
 require (
 	github.com/dunglas/httpsfv v1.1.1
@@ -18,7 +18,7 @@ require (
 	github.com/honeycombio/honeycomb-derived-column-validator v0.2.0
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/sync v0.22.0
+	golang.org/x/sync v0.23.0
 )
 
 require (
