@@ -77,14 +77,35 @@ type Trigger struct {
 	// divisible by 60 and between 60 and 86400 (between 1 minute and 1 day).
 	Frequency int `json:"frequency,omitempty"`
 	// Recipients are notified when the trigger fires.
-	Recipients      []NotificationRecipient `json:"recipients,omitempty"`
-	BaselineDetails *TriggerBaselineDetails `json:"baseline_details,omitempty"`
+	Recipients      []TriggerNotificationRecipient `json:"recipients,omitempty"`
+	BaselineDetails *TriggerBaselineDetails        `json:"baseline_details,omitempty"`
 	// AutoInvestigate enables automatic investigation when this trigger fires.
 	// Requires Honeycomb Intelligence to be enabled on the team.
 	AutoInvestigate *bool `json:"auto_investigate,omitempty"`
 	// Tags are used to categorize triggers. They can be used to filtering triggers
 	// and are useful for grouping triggers together.
 	Tags []Tag `json:"tags"`
+}
+
+// TriggerNotificationRecipient is a Recipient attached to a Trigger. It extends
+// NotificationRecipient with the per-group routing settings, which are accepted by the
+// Triggers API only -- the Burn Alerts API rejects unknown fields.
+//
+// NotificationRecipient is embedded by value and has no MarshalJSON of its own, so its
+// fields are promoted into a flat JSON object. Adding a MarshalJSON to
+// NotificationRecipient would silently hijack marshalling of this type.
+type TriggerNotificationRecipient struct {
+	NotificationRecipient
+
+	// GroupFilter maps a group by column of the Trigger's query to the values which
+	// route to this Recipient. Empty or absent means this Recipient is notified about
+	// every group. Requires the Trigger's AlertType to be
+	// [TriggerAlertTypeOnGroupChange] and its query to have at least one group by.
+	GroupFilter map[string][]string `json:"group_filter,omitempty"`
+	// PDPerGroupIncidents opens and resolves one PagerDuty incident per triggered
+	// group instead of one per Trigger. PagerDuty Recipients only: the API returns
+	// null for every other Recipient type.
+	PDPerGroupIncidents *bool `json:"pagerduty_per_group_incidents,omitempty"`
 }
 
 type TriggerBaselineDetails struct {
@@ -102,7 +123,8 @@ type TriggerThreshold struct {
 // TriggerThresholdOp the operator of the trigger threshold.
 type TriggerThresholdOp string
 
-// TriggerAlertType determines the alert type of a trigger. Valid values are 'on_change' or 'on_true'
+// TriggerAlertType determines the alert type of a trigger.
+// Valid values are 'on_change', 'on_true', or 'on_group_change'
 type TriggerAlertType string
 
 // TriggerEvaluationScheduleType determines the evaluation schedule type of a trigger. Valid values are 'frequency' or 'window'
@@ -130,6 +152,11 @@ const (
 	// Trigger alert types
 	TriggerAlertTypeOnChange TriggerAlertType = "on_change"
 	TriggerAlertTypeOnTrue   TriggerAlertType = "on_true"
+	// TriggerAlertTypeOnGroupChange behaves like TriggerAlertTypeOnChange, but for a
+	// Trigger whose query has a group by it also notifies when an individual group
+	// drops below the threshold, without waiting for every group to clear.
+	// Required for any per-group recipient routing.
+	TriggerAlertTypeOnGroupChange TriggerAlertType = "on_group_change"
 	// Trigger evaluation schedule types
 	TriggerEvaluationScheduleFrequency TriggerEvaluationScheduleType = "frequency"
 	TriggerEvaluationScheduleWindow    TriggerEvaluationScheduleType = "window"

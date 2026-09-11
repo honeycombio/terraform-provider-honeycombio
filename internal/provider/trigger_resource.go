@@ -128,14 +128,18 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"alert_type": schema.StringAttribute{
-				Optional:    true,
-				Computed:    true,
-				Description: "Control when the Trigger will send a notification.",
-				Default:     stringdefault.StaticString(string(client.TriggerAlertTypeOnChange)),
+				Optional: true,
+				Computed: true,
+				Description: "Control when the Trigger will send a notification. " +
+					"`on_group_change` additionally resolves each group of a grouped query " +
+					"independently, and is required for per-group recipient routing. " +
+					"It is available to teams with grouped resolution alerts enabled.",
+				Default: stringdefault.StaticString(string(client.TriggerAlertTypeOnChange)),
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						string(client.TriggerAlertTypeOnChange),
 						string(client.TriggerAlertTypeOnTrue),
+						string(client.TriggerAlertTypeOnGroupChange),
 					),
 				},
 			},
@@ -223,7 +227,12 @@ func (r *triggerResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					},
 				},
 			},
-			"recipient": notificationRecipientSchema(client.TriggerRecipientTypes(), false),
+			"recipient": notificationRecipientSchema(
+				client.TriggerRecipientTypes(),
+				false,
+				triggerRecipientRoutingAttributes(),
+				modifiers.TriggerNotificationRecipients(),
+			),
 			"baseline_details": schema.ListNestedBlock{
 				Description: "A configuration block that allows you to receive notifications when the delta between values in your data, " +
 					"compared to a previous time period, cross thresholds you configure.",
@@ -304,7 +313,7 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 		AlertType:          client.TriggerAlertType(plan.AlertType.ValueString()),
 		Threshold:          expandTriggerThreshold(ctx, plan.Threshold, &resp.Diagnostics),
 		Frequency:          int(plan.Frequency.ValueInt64()),
-		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
+		Recipients:         expandTriggerNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
 		BaselineDetails:    expandBaselineDetails(ctx, plan.BaselineDetails, &resp.Diagnostics),
 		Tags:               planTags,
@@ -360,6 +369,9 @@ func (r *triggerResource) Create(ctx context.Context, req resource.CreateRequest
 	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
+	// the response is the only place a recipient's real type is visible, so check it
+	// before the config -- not the response -- becomes state
+	warnOnIgnoredPerGroupIncidents(ctx, trigger.Recipients, config.Recipients, &resp.Diagnostics)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
 	state.BaselineDetails = flattenBaselineDetails(ctx, trigger.BaselineDetails, &resp.Diagnostics)
@@ -429,7 +441,7 @@ func (r *triggerResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
-	state.Recipients = reconcileReadNotificationRecipientState(ctx, trigger.Recipients, state.Recipients, &resp.Diagnostics)
+	state.Recipients = reconcileReadTriggerNotificationRecipientState(ctx, trigger.Recipients, state.Recipients, &resp.Diagnostics)
 	state.BaselineDetails = flattenBaselineDetails(ctx, trigger.BaselineDetails, &resp.Diagnostics)
 
 	specifiedByID := !state.QueryID.IsNull()
@@ -492,7 +504,7 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 		AlertType:          client.TriggerAlertType(plan.AlertType.ValueString()),
 		Frequency:          int(plan.Frequency.ValueInt64()),
 		Threshold:          expandTriggerThreshold(ctx, plan.Threshold, &resp.Diagnostics),
-		Recipients:         expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
+		Recipients:         expandTriggerNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
 		EvaluationSchedule: expandTriggerEvaluationSchedule(ctx, plan.EvaluationSchedule, &resp.Diagnostics),
 		BaselineDetails:    expandBaselineDetails(ctx, plan.BaselineDetails, &resp.Diagnostics),
 		Tags:               planTags,
@@ -555,6 +567,9 @@ func (r *triggerResource) Update(ctx context.Context, req resource.UpdateRequest
 	state.Frequency = types.Int64Value(int64(trigger.Frequency))
 	state.Threshold = flattenTriggerThreshold(ctx, trigger.Threshold, &resp.Diagnostics)
 	state.EvaluationSchedule = flattenTriggerEvaluationSchedule(ctx, trigger.EvaluationSchedule, &resp.Diagnostics)
+	// the response is the only place a recipient's real type is visible, so check it
+	// before the config -- not the response -- becomes state
+	warnOnIgnoredPerGroupIncidents(ctx, trigger.Recipients, config.Recipients, &resp.Diagnostics)
 	// we created them as authored so to avoid matching type-target or ID we can just use the same value
 	state.Recipients = config.Recipients
 	state.BaselineDetails = flattenBaselineDetails(ctx, trigger.BaselineDetails, &resp.Diagnostics)
@@ -635,18 +650,28 @@ func (r *triggerResource) ValidateConfig(ctx context.Context, req resource.Valid
 		return
 	}
 
-	// exit early if we don't have QueryJSON
-	if data.QueryJson.IsNull() || data.QueryJson.IsUnknown() {
-		return
+	// The query is only available to validate against when specified inline; a Trigger
+	// using query_id references a query this provider cannot see from the config.
+	var q *client.QuerySpec
+	if !data.QueryJson.IsNull() && !data.QueryJson.IsUnknown() {
+		var parsed client.QuerySpec
+		if err := json.Unmarshal([]byte(data.QueryJson.ValueString()), &parsed); err != nil {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("query_json"),
+				"Failed to unmarshal JSON",
+				err.Error(),
+			)
+			return
+		}
+		q = &parsed
 	}
 
-	var q client.QuerySpec
-	if err := json.Unmarshal([]byte(data.QueryJson.ValueString()), &q); err != nil {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("query_json"),
-			"Failed to unmarshal JSON",
-			err.Error(),
-		)
+	// Per-group recipient routing. Runs before the query check below because most of its
+	// rules do not need the query, and so hold for query_id Triggers too.
+	validateGroupedRecipientRouting(ctx, data, q, resp)
+
+	// everything below needs the query spec
+	if q == nil {
 		return
 	}
 
