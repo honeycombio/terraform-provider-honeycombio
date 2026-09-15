@@ -33,7 +33,7 @@ var (
 	_ resource.ResourceWithImportState    = &webhookRecipientResource{}
 	_ resource.ResourceWithValidateConfig = &webhookRecipientResource{}
 
-	webhookTemplateTypes     = []string{"trigger", "exhaustion_time", "budget_rate"}
+	webhookTemplateTypes     = []string{"trigger", "exhaustion_time", "budget_rate", "anomaly"}
 	webhookHeaderDefaults    = []string{"Content-Type", "User-Agent", "X-Honeycomb-Webhook-Token"}
 	webhookTemplateNameRegex = regexp.MustCompile(`^[a-z](?:[a-zA-Z0-9]+$)?$`)
 )
@@ -213,8 +213,9 @@ func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resou
 	triggerTmplExists := false
 	budgetRateTmplExists := false
 	exhaustionTimeTmplExists := false
+	anomalyTmplExists := false
 	for i, t := range templates {
-		// only allow one template of each type (trigger, budget_rate, exhaustion_time)
+		// only allow one template of each type
 		switch t.Type {
 		case types.StringValue("trigger"):
 			if triggerTmplExists {
@@ -243,6 +244,15 @@ func (r *webhookRecipientResource) ValidateConfig(ctx context.Context, req resou
 				)
 			}
 			budgetRateTmplExists = true
+		case types.StringValue("anomaly"):
+			if anomalyTmplExists {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("template").AtListIndex(i).AtName("type"),
+					"Conflicting configuration arguments",
+					"cannot have more than one \"template\" of type \"anomaly\"",
+				)
+			}
+			anomalyTmplExists = true
 		}
 	}
 
@@ -512,6 +522,10 @@ func webhookTemplatesToClientPayloads(ctx context.Context, templateSet types.Set
 			clientWebhookPayloads.PayloadTemplates.BudgetRate = &client.PayloadTemplate{
 				Body: t.Body.ValueString(),
 			}
+		case types.StringValue("anomaly"):
+			clientWebhookPayloads.PayloadTemplates.Anomaly = &client.PayloadTemplate{
+				Body: t.Body.ValueString(),
+			}
 		}
 	}
 
@@ -573,6 +587,15 @@ func webhookTemplatesToObjectValues(templates client.PayloadTemplates, diags *di
 		templateObjVal, d := types.ObjectValue(models.WebhookTemplateAttrType, map[string]attr.Value{
 			"type": types.StringValue("exhaustion_time"),
 			"body": types.StringValue(templates.ExhaustionTime.Body),
+		})
+		templateObjs = append(templateObjs, templateObjVal)
+		diags.Append(d...)
+	}
+
+	if templates.Anomaly != nil {
+		templateObjVal, d := types.ObjectValue(models.WebhookTemplateAttrType, map[string]attr.Value{
+			"type": types.StringValue("anomaly"),
+			"body": types.StringValue(templates.Anomaly.Body),
 		})
 		templateObjs = append(templateObjs, templateObjVal)
 		diags.Append(d...)
