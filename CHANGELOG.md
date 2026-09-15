@@ -1,3 +1,23 @@
+# 0.54.0 (September 15, 2026)
+
+## Notes
+- Adds support for "Group resolution alerts" trigger type
+- Serves derived column reads from a cached list
+
+## Enhancements
+ - feat(r/trigger): support grouped recipient routing (#906)
+ - feat(client): serve derived column reads from a cached list (#886)
+
+## Housekeeping
+- maint(deps): bump golang.org/x/net from 0.57.0 to 0.58.0 (#897)
+- maint(deps): bump github.com/dunglas/httpsfv from 1.1.0 to 1.1.1 (#898)
+- maint(deps): bump github.com/stretchr/testify from 1.11.1 to 1.12.0 (#899)
+- maint(deps): bump github.com/stretchr/testify from 1.12.0 to 1.12.1 (#903)
+- maint(deps): bump google.golang.org/grpc from 1.82.1 to 1.83.1 (#905)
+- maint(deps): bump google.golang.org/grpc from 1.83.1 to 1.83.2 (#907)
+- maint(deps): bump golang.org/x/sync from 0.22.0 to 0.23.0 (#908)
+- maint(deps): bump golang.org/x/net from 0.58.0 to 0.59.0 (#909)
+
 # 0.53.0 (July 30, 2026)
 
 ## Enhancements
