@@ -51,6 +51,22 @@ func Provider(version string) *schema.Provider {
 				Description: "Enable the API client's debug logs. By default, a `TF_LOG` setting of debug or higher will enable this.",
 			},
 			"features": features.GetPluginSDKFeaturesSchema(),
+			"default_tags": { // unused in this provider but required to match the Framework provider for the MuxServer
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				Description: "Default tags to apply to all supported resources. A tag set on an individual resource takes precedence over a default tag with the same key.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"tags": {
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Description: "A map of tags to apply to all supported resources.",
+						},
+					},
+				},
+			},
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"honeycombio_column":            dataSourceHoneycombioColumn(),

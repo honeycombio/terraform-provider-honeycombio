@@ -160,6 +160,7 @@ EOF
 
 - `board_url` (String) The URL of the Board in the Honeycomb UI.
 - `id` (String) The ID of the Board.
+- `tags_all` (Map of String) The effective tags on the resource: the provider's `default_tags` merged with the resource's `tags` (resource tags win on a key collision).
 
 <a id="nestedblock--panel"></a>
 ### Nested Schema for `panel`

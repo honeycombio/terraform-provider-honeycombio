@@ -12,6 +12,7 @@ type FlexibleBoardResourceModel struct {
 	URL           types.String `tfsdk:"board_url"`
 	Panels        types.List   `tfsdk:"panel"`
 	Tags          types.Map    `tfsdk:"tags"`
+	TagsAll       types.Map    `tfsdk:"tags_all"`
 	PresetFilters types.List   `tfsdk:"preset_filter"`
 }
 
