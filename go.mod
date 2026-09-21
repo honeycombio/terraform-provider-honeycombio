@@ -3,7 +3,7 @@ module github.com/honeycombio/terraform-provider-honeycombio
 go 1.26.0
 
 require (
-	github.com/dunglas/httpsfv v1.1.1
+	github.com/dunglas/httpsfv v1.1.2
 	github.com/google/go-querystring v1.2.0
 	github.com/hashicorp/go-cty v1.5.0
 	github.com/hashicorp/go-retryablehttp v0.7.8
