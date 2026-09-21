@@ -1,6 +1,6 @@
 # Resource: honeycombio_webhook_recipient
 
-`honeycombio_webhook_recipient` allows you to define and manage a Webhook recipient that can be used by Triggers or BurnAlerts notifications.
+`honeycombio_webhook_recipient` allows you to define and manage a Webhook recipient that can be used by Trigger, BurnAlert, or Anomaly Detection notifications.
 
 ## Example Usage
 
@@ -42,6 +42,19 @@ resource "honeycombio_webhook_recipient" "prod" {
 		EOT
   }
     
+  template {
+    type = "anomaly"
+    body = <<EOT
+		{
+			"service": "{{ .ServiceName }}",
+			"signal": "{{ .SignalType }}",
+			"status": "{{ .Alert.Status }}",
+			"peak": {{ toJson .Anomaly.PeakValue }},
+			"duration": {{ toJson .Anomaly.Duration }}
+		}
+		EOT
+  }
+
   variable {
       name          = "severity"
       default_value = "critical"
