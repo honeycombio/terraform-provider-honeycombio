@@ -413,6 +413,28 @@ resource "honeycombio_trigger" "test" {
 					}),
 					ExpectError: regexp.MustCompile(`must begin with a lowercase letter`),
 				},
+				{
+					// invalid tag value - too many tags
+					Config: testAccConfigTriggerWithTags(dataset, name, map[string]string{
+						"tag1":  "1",
+						"tag2":  "2",
+						"tag3":  "3",
+						"tag4":  "4",
+						"tag5":  "5",
+						"tag6":  "6",
+						"tag7":  "7",
+						"tag8":  "8",
+						"tag9":  "9",
+						"tag10": "10",
+						"tag11": "11",
+						"tag12": "12",
+						"tag13": "13",
+						"tag14": "14",
+						"tag15": "15",
+						"tag16": "16",
+					}),
+					ExpectError: regexp.MustCompile(`map must contain at most 15 elements`),
+				},
 			},
 		})
 	})
