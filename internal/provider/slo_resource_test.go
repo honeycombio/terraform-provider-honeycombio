@@ -113,6 +113,71 @@ resource "honeycombio_slo" "test" {
 	})
 }
 
+func TestAccHoneycombioSLO_EmptyDescription(t *testing.T) {
+	dataset, sliAlias := sloAccTestSetup(t)
+	slo := &client.SLO{}
+
+	config := func(description string) string {
+		return fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO"
+  %s
+  dataset           = "%s"
+  sli               = "%s"
+  target_percentage = 99.95
+  time_period       = 30
+}`, description, dataset, sliAlias)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		Steps: []resource.TestStep{
+			{ // create without a description
+				Config: config(""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", ""),
+				),
+			},
+			{ // add a description
+				Config: config(`description = "integration test SLO"`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", "integration test SLO"),
+				),
+			},
+			{ // remove the description
+				Config: config(""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", ""),
+					func(_ *terraform.State) error {
+						if slo.Description != "" {
+							return fmt.Errorf("expected remote description to be cleared, got %q", slo.Description)
+						}
+						return nil
+					},
+				),
+			},
+			{ // an explicit empty description is equivalent to omitting it
+				Config: config(`description = ""`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			{
+				ResourceName:        "honeycombio_slo.test",
+				ImportStateIdPrefix: fmt.Sprintf("%s/", dataset),
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+		},
+	})
+}
+
 // Checks to ensure that if an SLO was removed from Honeycomb outside of Terraform (UI or API)
 // that it is detected and planned for recreation.
 func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {

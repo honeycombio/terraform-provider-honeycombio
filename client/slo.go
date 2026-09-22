@@ -42,7 +42,7 @@ type SLIRef struct {
 type SLO struct {
 	ID               string    `json:"id,omitempty"`
 	Name             string    `json:"name"`
-	Description      string    `json:"description,omitempty"`
+	Description      string    `json:"description"`
 	TimePeriodDays   int       `json:"time_period_days"`
 	TargetPerMillion int       `json:"target_per_million"`
 	DatasetSlugs     []string  `json:"dataset_slugs,omitempty"`
