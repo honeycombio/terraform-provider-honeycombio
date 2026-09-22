@@ -346,6 +346,45 @@ func TestAccHoneycombioSLO_UpgradeFromSDK(t *testing.T) {
 	})
 }
 
+// Versions up to 0.54.0 failed to apply an SLO without a description (#902).
+// Ensures the state left behind by that failure converges after upgrading.
+func TestAccHoneycombioSLO_UpgradeFromEmptyDescriptionBug(t *testing.T) {
+	dataset, sliAlias := sloAccTestSetup(t)
+	config := fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO Upgrade"
+  dataset           = "%s"
+  sli               = "%s"
+  target_percentage = 99.95
+  time_period       = 30
+}`, dataset, sliAlias)
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"honeycombio": {
+						VersionConstraint: "0.54.0",
+						Source:            "honeycombio/honeycombio",
+					},
+				},
+				Config:      config,
+				ExpectError: regexp.MustCompile(`inconsistent result after apply`),
+			},
+			{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+				Config:                   config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("honeycombio_slo.test", plancheck.ResourceActionNoop),
+					},
+				},
+				Check: resource.TestCheckResourceAttr("honeycombio_slo.test", "description", ""),
+			},
+		},
+	})
+}
+
 func TestAccHoneycombioSLO_DatasetConstraint(t *testing.T) {
 	dataset, sliAlias := sloAccTestSetup(t)
 
