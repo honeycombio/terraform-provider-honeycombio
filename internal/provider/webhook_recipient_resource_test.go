@@ -565,6 +565,76 @@ resource "honeycombio_webhook_recipient" "test" {
 	})
 }
 
+func TestAcc_WebhookRecipientResource_anomalyTemplate(t *testing.T) {
+	name := test.RandomStringWithPrefix("test.", 20)
+	url := test.RandomURL()
+	body := `<<EOT
+		{
+			"service": " {{ .Anomaly.ServiceName }}"
+		}
+		EOT`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	template {
+	  type   = "anomaly"
+      body = %s
+    }
+}`, name, url, body),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureRecipientExists(t, "honeycombio_webhook_recipient.test"),
+					resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.#", "1"),
+					resource.TestCheckResourceAttr("honeycombio_webhook_recipient.test", "template.0.type", "anomaly"),
+				),
+			},
+			{
+				ResourceName: "honeycombio_webhook_recipient.test",
+				ImportState:  true,
+			},
+		},
+	})
+}
+
+func TestAcc_WebhookRecipientResource_validateDuplicateAnomalyTemplateType(t *testing.T) {
+	name := test.RandomStringWithPrefix("test.", 20)
+	url := test.RandomURL()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		CheckDestroy:             testAccEnsureRecipientDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "honeycombio_webhook_recipient" "test" {
+  name = "%s"
+	url  = "%s"
+
+	template {
+	  type   = "anomaly"
+      body = "body"
+    }
+
+	template {
+	  type   = "anomaly"
+      body = "another body"
+    }
+}`, name, url),
+				ExpectError: regexp.MustCompile(`cannot have more than one "template" of type "anomaly"`),
+			},
+		},
+	})
+}
+
 func TestAcc_WebhookRecipientResource_validateDuplicateVariableName(t *testing.T) {
 	name := test.RandomStringWithPrefix("test.", 20)
 	url := test.RandomURL()

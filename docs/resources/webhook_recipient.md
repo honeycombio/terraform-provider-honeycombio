@@ -1,6 +1,6 @@
 # Resource: honeycombio_webhook_recipient
 
-`honeycombio_webhook_recipient` allows you to define and manage a Webhook recipient that can be used by Triggers or BurnAlerts notifications.
+`honeycombio_webhook_recipient` allows you to define and manage a Webhook recipient that can be used by Trigger, BurnAlert, or Anomaly Detection notifications.
 
 ## Example Usage
 
@@ -42,6 +42,19 @@ resource "honeycombio_webhook_recipient" "prod" {
 		EOT
   }
     
+  template {
+    type = "anomaly"
+    body = <<EOT
+		{
+			"service": "{{ .ServiceName }}",
+			"signal": "{{ .SignalType }}",
+			"status": "{{ .Alert.Status }}",
+			"peak": {{ toJson .Anomaly.PeakValue }},
+			"duration": {{ toJson .Anomaly.Duration }}
+		}
+		EOT
+  }
+
   variable {
       name          = "severity"
       default_value = "critical"
@@ -100,7 +113,7 @@ Optional:
 
 - `default_value` (String) An optional default value for the variable
 
-When configuring custom webhook payloads, use the `template` block. The `type` attribute can be `trigger`, `exhaustion_time`, or `budget_rate`. Only one template block of each type is allowed on a single recipient.
+When configuring custom webhook payloads, use the `template` block. The `type` attribute can be `trigger`, `exhaustion_time`, `budget_rate`, or `anomaly`. Only one template block of each type is allowed on a single recipient.
 
 The `variable` block creates custom variables that can be interpolated in a template. To configure a variable, at least one `template` block must also be configured.
 
