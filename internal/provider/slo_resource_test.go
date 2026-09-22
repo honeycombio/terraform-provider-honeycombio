@@ -347,7 +347,8 @@ func TestAccHoneycombioSLO_UpgradeFromSDK(t *testing.T) {
 }
 
 // Versions up to 0.54.0 failed to apply an SLO without a description (#902).
-// Ensures the state left behind by that failure converges after upgrading.
+// That failure leaves the SLO tainted in state, so the first apply after
+// upgrading replaces it once and then converges.
 func TestAccHoneycombioSLO_UpgradeFromEmptyDescriptionBug(t *testing.T) {
 	dataset, sliAlias := sloAccTestSetup(t)
 	config := fmt.Sprintf(`
@@ -376,7 +377,7 @@ resource "honeycombio_slo" "test" {
 				Config:                   config,
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: []plancheck.PlanCheck{
-						plancheck.ExpectResourceAction("honeycombio_slo.test", plancheck.ResourceActionNoop),
+						plancheck.ExpectResourceAction("honeycombio_slo.test", plancheck.ResourceActionReplace),
 					},
 				},
 				Check: resource.TestCheckResourceAttr("honeycombio_slo.test", "description", ""),
