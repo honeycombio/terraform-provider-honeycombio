@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -78,8 +79,10 @@ func (*sloResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *re
 			"description": schema.StringAttribute{
 				Description: "A description of the SLO's intent and context.",
 				Optional:    true,
+				Computed:    true,
+				Default:     stringdefault.StaticString(""),
 				Validators: []validator.String{
-					stringvalidator.LengthBetween(1, 1023),
+					stringvalidator.LengthAtMost(1023),
 				},
 			},
 			"dataset": schema.StringAttribute{
