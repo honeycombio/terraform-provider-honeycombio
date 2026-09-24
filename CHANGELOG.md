@@ -1,3 +1,14 @@
+# 0.55.0 (September 24, 2026)
+
+## Enhancements
+
+- feat(notify): [AD] Anomaly support in terraform (#910)
+- feat(provider): Increase the tag limit per-resource to 15 (#914)
+
+## Bugfixes
+
+- fix(r/slo): Accept empty descriptions (#915)
+
 # 0.54.0 (September 15, 2026)
 
 ## Notes
