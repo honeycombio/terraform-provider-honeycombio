@@ -69,6 +69,53 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 			}),
 		},
 		{
+			name: "remote notification details replace state details",
+			args: args{
+				remote: []client.NotificationRecipient{
+					{
+						ID:   "abcd12345",
+						Type: client.RecipientTypeWebhook,
+						Details: &client.NotificationRecipientDetails{
+							Variables: []client.NotificationVariable{{Name: "severity", Value: "critical"}},
+						},
+					},
+				},
+				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+					{
+						ID:      types.StringValue("abcd12345"),
+						Details: notificationRecipientDetailsWithVariablesToList(client.NotificationVariable{Name: "severity", Value: "warning"}),
+					},
+				}),
+			},
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+				{
+					ID:      types.StringValue("abcd12345"),
+					Details: notificationRecipientDetailsWithVariablesToList(client.NotificationVariable{Name: "severity", Value: "critical"}),
+				},
+			}),
+		},
+		{
+			name: "import includes remote notification details",
+			args: args{
+				remote: []client.NotificationRecipient{
+					{
+						ID:   "abcd12345",
+						Type: client.RecipientTypeWebhook,
+						Details: &client.NotificationRecipientDetails{
+							Variables: []client.NotificationVariable{{Name: "severity", Value: "warning"}},
+						},
+					},
+				},
+				state: types.SetNull(elemType),
+			},
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+				{
+					ID:      types.StringValue("abcd12345"),
+					Details: notificationRecipientDetailsWithVariablesToList(client.NotificationVariable{Name: "severity", Value: "warning"}),
+				},
+			}),
+		},
+		{
 			name: "remote has additional recipients",
 			args: args{
 				remote: []client.NotificationRecipient{
@@ -136,7 +183,11 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, reconcileReadNotificationRecipientState(context.Background(), tt.args.remote, tt.args.state, &diag.Diagnostics{}))
+			var diags diag.Diagnostics
+			got := reconcileReadNotificationRecipientState(context.Background(), tt.args.remote, tt.args.state, &diags)
+
+			assert.Empty(t, diags)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -151,4 +202,22 @@ func notificationRecipientModelsToSet(n []models.NotificationRecipientModel) typ
 
 func notificationRecipientDetailsToValue(s string) []attr.Value {
 	return []attr.Value{types.ObjectValueMust(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{"pagerduty_severity": types.StringValue(s), "variable": types.SetNull(types.ObjectType{AttrTypes: models.NotificationVariableAttrType})})}
+}
+
+func notificationRecipientDetailsWithVariablesToList(variables ...client.NotificationVariable) types.List {
+	variableValues := make([]attr.Value, 0, len(variables))
+	for _, variable := range variables {
+		variableValues = append(variableValues, types.ObjectValueMust(models.NotificationVariableAttrType, map[string]attr.Value{
+			"name":  types.StringValue(variable.Name),
+			"value": types.StringValue(variable.Value),
+		}))
+	}
+
+	variableSet := types.SetValueMust(types.ObjectType{AttrTypes: models.NotificationVariableAttrType}, variableValues)
+	details := types.ObjectValueMust(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{
+		"pagerduty_severity": types.StringValue(""),
+		"variable":           variableSet,
+	})
+
+	return types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, []attr.Value{details})
 }
