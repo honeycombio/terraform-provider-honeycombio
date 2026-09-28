@@ -33,8 +33,9 @@ import (
 // won't give us the secret portion of the key which is arguably the whole reason
 // for the resource.
 var (
-	_ resource.Resource              = &apiKeyResource{}
-	_ resource.ResourceWithConfigure = &apiKeyResource{}
+	_ resource.Resource                 = &apiKeyResource{}
+	_ resource.ResourceWithConfigure    = &apiKeyResource{}
+	_ resource.ResourceWithUpgradeState = &apiKeyResource{}
 )
 
 type apiKeyResource struct {
@@ -66,6 +67,7 @@ func (r *apiKeyResource) Configure(_ context.Context, req resource.ConfigureRequ
 func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "API keys are used to authenticate the Honeycomb API.",
+		Version:     1,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The ID of the API Key.",
@@ -308,6 +310,64 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 						},
 					},
 				},
+			},
+		},
+	}
+}
+
+func (*apiKeyResource) UpgradeState(_ context.Context) map[int64]resource.StateUpgrader {
+	return map[int64]resource.StateUpgrader{
+		0: {
+			PriorSchema: &schema.Schema{
+				Attributes: map[string]schema.Attribute{
+					"id":                 schema.StringAttribute{Computed: true},
+					"name":               schema.StringAttribute{Required: true},
+					"type":               schema.StringAttribute{Required: true},
+					"environment_id":     schema.StringAttribute{Required: true},
+					"disabled":           schema.BoolAttribute{Optional: true, Computed: true},
+					"visible_to_members": schema.BoolAttribute{Optional: true, Computed: true},
+					"key":                schema.StringAttribute{Computed: true, Sensitive: true},
+					"secret":             schema.StringAttribute{Computed: true, Sensitive: true},
+				},
+				Blocks: map[string]schema.Block{
+					"permissions": schema.ListNestedBlock{
+						NestedObject: schema.NestedBlockObject{
+							Attributes: map[string]schema.Attribute{
+								"send_events":           schema.BoolAttribute{Optional: true, Computed: true},
+								"create_datasets":       schema.BoolAttribute{Optional: true, Computed: true},
+								"manage_queries":        schema.BoolAttribute{Optional: true, Computed: true},
+								"run_queries":           schema.BoolAttribute{Optional: true, Computed: true},
+								"read_service_maps":     schema.BoolAttribute{Optional: true, Computed: true},
+								"manage_public_boards":  schema.BoolAttribute{Optional: true, Computed: true},
+								"manage_private_boards": schema.BoolAttribute{Optional: true, Computed: true},
+								"manage_slos":           schema.BoolAttribute{Optional: true, Computed: true},
+								"manage_triggers":       schema.BoolAttribute{Optional: true, Computed: true},
+								"manage_recipients":     schema.BoolAttribute{Optional: true, Computed: true},
+								"manage_markers":        schema.BoolAttribute{Optional: true, Computed: true},
+							},
+						},
+					},
+				},
+			},
+			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				var state models.APIKeyResourceModel
+				resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+				if resp.Diagnostics.HasError() {
+					return
+				}
+
+				if state.VisibleToMembers.IsNull() {
+					state.VisibleToMembers = types.BoolValue(false)
+				}
+				if len(state.Permissions.Elements()) > 0 {
+					permissions := expandAPIKeyPermissions(ctx, state.Permissions, &resp.Diagnostics)
+					state.Permissions = flattenAPIKeyPermissions(ctx, permissions, &resp.Diagnostics)
+				}
+				if resp.Diagnostics.HasError() {
+					return
+				}
+
+				resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 			},
 		},
 	}
