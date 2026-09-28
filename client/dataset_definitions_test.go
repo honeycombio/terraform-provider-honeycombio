@@ -9,6 +9,7 @@ import (
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test/fixture"
 )
 
 func TestDatasetDefinitions(t *testing.T) {
@@ -17,36 +18,11 @@ func TestDatasetDefinitions(t *testing.T) {
 	ctx := context.Background()
 
 	c := newTestClient(t)
-	dataset := testDataset(t)
+	// definitions are per-dataset state, so don't clobber the shared dataset's
+	dataset := fixture.NewDataset(ctx, t, c, fixture.DefinitionDefaultColumns()...)
 	definitionDefaults := client.DatasetDefinitionDefaults()
 
-	// ensure default definition columns exist -- create any which may be missing.
-	// we leave these behind at the end of the test run
-	// as they can't be deleted while being used as a definition column
-	for _, col := range []client.Column{
-		{KeyName: "duration_ms", Type: client.ToPtr(client.ColumnTypeFloat)},
-		{KeyName: "error", Type: client.ToPtr(client.ColumnTypeBoolean)},
-		{KeyName: "name", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "trace.parent_id", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "http.route", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "service.name", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "trace.span_id", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "meta.span_type", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "meta.annotation_type", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "http.status_code", Type: client.ToPtr(client.ColumnTypeInteger)},
-		{KeyName: "trace.trace_id", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "request.user.id", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "request.user.username", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "trace.link.trace_id", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "trace.link.span_id", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "body", Type: client.ToPtr(client.ColumnTypeString)},
-		{KeyName: "severity", Type: client.ToPtr(client.ColumnTypeString)},
-	} {
-		// ignore errors, we don't care if the column already exists
-		c.Columns.Create(ctx, dataset, &col)
-	}
-
-	// create some new columns to assign as definitions -- we will clean these up at the end of the test run
+	// create some new columns to assign as definitions -- these are removed with the dataset
 	testCol, err := c.Columns.Create(ctx, dataset, &client.Column{KeyName: test.RandomStringWithPrefix("test.", 10)})
 	require.NoError(t, err)
 	testDC, err := c.DerivedColumns.Create(ctx, dataset, &client.DerivedColumn{
@@ -54,13 +30,6 @@ func TestDatasetDefinitions(t *testing.T) {
 		Expression: "BOOL(1)",
 	})
 	require.NoError(t, err)
-
-	// reset all defs and remove test helpers at end of test run
-	t.Cleanup(func() {
-		c.DatasetDefinitions.ResetAll(ctx, dataset)
-		c.Columns.Delete(ctx, dataset, testCol.ID)
-		c.DerivedColumns.Delete(ctx, dataset, testDC.ID)
-	})
 
 	t.Run("Reset and Assert Default state", func(t *testing.T) {
 		err := c.DatasetDefinitions.ResetAll(ctx, dataset)
