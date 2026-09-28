@@ -92,7 +92,7 @@ resource "honeycombio_column" "test" {
 	})
 
 	t.Run("feature: import_on_conflict", func(t *testing.T) {
-		t.Parallel() // we don't want this test to block others as it sleeps for a while
+		t.Parallel() // we don't want this test to block others while it waits for the column to be visible
 
 		c := testAccClient(t)
 		dataset := testAccDataset()
@@ -106,14 +106,11 @@ resource "honeycombio_column" "test" {
 			c.Columns.Delete(ctx, dataset, column.KeyName)
 		})
 
-		// give the backend a chance to catch up
-		time.Sleep(31 * time.Second)
-
-		// column creation can be a bit racey, so we'll wait for it to be available
-		assert.Eventually(t, func() bool {
+		// schema changes propagate asynchronously, so wait for the column to be visible
+		require.Eventually(t, func() bool {
 			_, err := c.Columns.GetByKeyName(ctx, dataset, column.KeyName)
 			return err == nil
-		}, 5*time.Second, 200*time.Millisecond)
+		}, 60*time.Second, 500*time.Millisecond, "column %q never became visible", column.KeyName)
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
@@ -186,12 +183,11 @@ func TestAcc_ColumnResourceHistogram(t *testing.T) {
 		c.Columns.Delete(ctx, dataset, column.ID)
 	})
 
-	// give the backend a chance to catch up
-	time.Sleep(31 * time.Second)
-	assert.Eventually(t, func() bool {
+	// schema changes propagate asynchronously, so wait for the column to be visible
+	require.Eventually(t, func() bool {
 		_, err := c.Columns.GetByKeyName(ctx, dataset, column.KeyName)
 		return err == nil
-	}, 5*time.Second, 200*time.Millisecond)
+	}, 60*time.Second, 500*time.Millisecond, "column %q never became visible", column.KeyName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
