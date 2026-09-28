@@ -1,3 +1,9 @@
+# 0.55.1 (September 28, 2026)
+
+## Bugfixes
+
+- fix(r/api_key): don't replace keys created before v0.51.0 when upgrading (#918)
+
 # 0.55.0 (September 24, 2026)
 
 ## Enhancements
