@@ -102,15 +102,23 @@ func testAccMetricsDataset(t *testing.T) string {
 	return dataset
 }
 
-// newTestEnvirionment creates a new Environment with a random name and description
+// testAccEnvironment creates a new Environment with a random name and description
 // for testing purposes.
 // The Environment is automatically deleted when the test completes.
 func testAccEnvironment(ctx context.Context, t *testing.T, c *v2client.Client) *v2client.Environment {
 	t.Helper()
 
+	return testAccEnvironmentWithPrefix(ctx, t, c, "")
+}
+
+// testAccEnvironmentWithPrefix is like testAccEnvironment, but the random name
+// starts with "test." followed by prefix, letting a test filter on its own Environments.
+func testAccEnvironmentWithPrefix(ctx context.Context, t *testing.T, c *v2client.Client, prefix string) *v2client.Environment {
+	t.Helper()
+
 	env, err := c.Environments.Create(ctx, &v2client.Environment{
-		Name:        test.RandomStringWithPrefix("test.", 20),
-		Description: helper.ToPtr(test.RandomString(50)),
+		Name:        test.RandomStringWithPrefix("test."+prefix, 20),
+		Description: new(test.RandomString(50)),
 	})
 	require.NoError(t, err)
 

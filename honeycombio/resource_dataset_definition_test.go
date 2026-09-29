@@ -3,6 +3,7 @@ package honeycombio
 import (
 	"context"
 	"fmt"
+	"os"
 	"slices"
 	"testing"
 
@@ -11,10 +12,19 @@ import (
 
 	honeycombio "github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test/fixture"
 )
 
 func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
-	dataset := testAccDataset()
+	// the fixture calls the API before resource.Test gets a chance to skip
+	if os.Getenv(resource.EnvTfAcc) == "" {
+		t.Skipf("Acceptance tests skipped unless env '%s' set", resource.EnvTfAcc)
+	}
+
+	ctx := context.Background()
+	c := testAccClient(t)
+	dataset := fixture.NewDataset(ctx, t, c, fixture.DefinitionDefaultColumns()...)
+
 	col1Name := test.RandomStringWithPrefix("test.", 8)
 	col2Name := test.RandomStringWithPrefix("test.", 8)
 	col3Name := test.RandomStringWithPrefix("test.", 8)
@@ -92,9 +102,7 @@ resource "honeycombio_dataset_definition" "error" {
 			{
 				// remove the 'error' definition and ensure reading the definitions still works
 				PreConfig: func() {
-					ctx := context.Background()
-					client := testAccClient(t)
-					client.DatasetDefinitions.Update(ctx, dataset, &honeycombio.DatasetDefinition{
+					c.DatasetDefinitions.Update(ctx, dataset, &honeycombio.DatasetDefinition{
 						Error: &honeycombio.DefinitionColumn{Name: ""},
 					})
 				},
@@ -109,8 +117,7 @@ resource "honeycombio_dataset_definition" "error" {
 		CheckDestroy: func(s *terraform.State) error {
 			// ensure that after destroying ('deleting') the above definitions
 			// they have been reset to their default values
-			client := testAccClient(t)
-			dd, err := client.DatasetDefinitions.Get(context.Background(), dataset)
+			dd, err := c.DatasetDefinitions.Get(ctx, dataset)
 			if err != nil {
 				return fmt.Errorf("could not lookup dataset definitions: %w", err)
 			}
