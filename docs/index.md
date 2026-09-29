@@ -154,7 +154,8 @@ The `features` block supports the following:
 The `client` block supports the following:
 * `read_caching` - (Optional) Set to `true` to serve reads of supported resource types from a short-lived (60 second) cache of the containing collection, so configurations managing many resources of the same type don't issue one API request per resource read. Defaults to `false`.
     Reads confirm not-found results directly against the API, so drift is still detected. The trade-off is that a resource changed outside of Terraform within the cache window may be read stale for up to 60 seconds.
-    Currently supported resource types: derived columns.
+    Currently supported resource types: columns and derived columns (both resources and their data sources).
+    Note for columns: `last_written_at` is served from the same cache, so it may lag actual write activity by up to 60 seconds. Leave `read_caching` disabled if you depend on that attribute being current.
 
 ---
 The `column` block supports the following:
