@@ -16,6 +16,8 @@ import (
 )
 
 func TestAccHoneycombioBoardView(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 
@@ -140,6 +142,8 @@ func testAccBoardViewImportStateIdFunc(resourceName, boardID string) resource.Im
 }
 
 func TestAccHoneycombioBoardView_validation(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 
@@ -186,6 +190,8 @@ func TestAccHoneycombioBoardView_validation(t *testing.T) {
 }
 
 func TestAccHoneycombioBoardView_emptyStringInArrayFilter(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 
@@ -284,6 +290,8 @@ resource "honeycombio_board_view" "test" {
 }
 
 func TestAccHoneycombioBoardView_boardIdRequiresReplace(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 

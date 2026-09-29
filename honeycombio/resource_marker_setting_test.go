@@ -13,6 +13,8 @@ import (
 )
 
 func TestAccHoneycombioMarkerSetting_basic(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -38,6 +40,8 @@ resource "honeycombio_marker_setting" "test" {
 }
 
 func TestAccHoneycombioMarkerSetting_AllToUnset(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 

@@ -11,6 +11,7 @@ import (
 )
 
 func TestAcc_EnvironmentResource(t *testing.T) {
+	t.Parallel()
 
 	t.Run("happy path", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{

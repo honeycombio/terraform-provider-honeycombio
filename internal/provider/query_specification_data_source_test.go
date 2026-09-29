@@ -12,6 +12,8 @@ import (
 )
 
 func TestAcc_QuerySpecificationDataSource_EmptyDefaults(t *testing.T) {
+	t.Parallel()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
@@ -32,6 +34,8 @@ output "query_json" {
 }
 
 func TestAcc_QuerySpecificationDataSource_basic(t *testing.T) {
+	t.Parallel()
+
 	// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
 	expected, err := test.MinifyJSON(`
 {
@@ -199,7 +203,9 @@ output "query_json" {
 }
 
 func TestAcc_QuerySpecificationDataSource_validationChecks(t *testing.T) {
-	resource.ParallelTest(t, resource.TestCase{
+	t.Parallel()
+
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		Steps: appendAllTestSteps(
@@ -657,6 +663,8 @@ func appendAllTestSteps(steps ...[]resource.TestStep) []resource.TestStep {
 }
 
 func TestAcc_QuerySpecificationDataSource_filterOpInAndNotIn(t *testing.T) {
+	t.Parallel()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
@@ -687,6 +695,8 @@ data "honeycombio_query_specification" "test" {
 }
 
 func TestAcc_QuerySpecificationDataSource_zerovalue(t *testing.T) {
+	t.Parallel()
+
 	// Note: By default go encodes `<` and `>` for html, hence the `\u003e`
 	expected, err := test.MinifyJSON(`
 {
@@ -741,6 +751,8 @@ output "query_json" {
 // Check that string ops cause integer-like string values to be treated
 // as strings instead of being converted to integers
 func TestAcc_QuerySpecificationDataSource_stringcoercion(t *testing.T) {
+	t.Parallel()
+
 	expected, err := test.MinifyJSON(`
 {
   "calculations": [
@@ -792,6 +804,8 @@ output "query_json" {
 }
 
 func TestAcc_QuerySpecificationDataSource_CompareTimeOffsetSecondsValid(t *testing.T) {
+	t.Parallel()
+
 	expected, err := test.MinifyJSON(`
 {
   "calculations": [
@@ -855,6 +869,8 @@ output "query_json" {
 // TestAcc_QuerySpecificationDataSource_dynamicFilter verifies that a dynamic filter
 // block driven by a for_each produces the correct JSON output.
 func TestAcc_QuerySpecificationDataSource_dynamicFilter(t *testing.T) {
+	t.Parallel()
+
 	expected, err := test.MinifyJSON(`{
   "calculations": [{"op": "COUNT"}],
   "filters": [{"column": "message", "op": "contains", "value": "hello"}],
@@ -898,6 +914,8 @@ output "query_json" {
 // dynamic filter block nested inside a calculation block driven by a for_each produces
 // the correct JSON output.
 func TestAcc_QuerySpecificationDataSource_dynamicCalculationFilterForEach(t *testing.T) {
+	t.Parallel()
+
 	expected, err := test.MinifyJSON(`{
   "calculations": [
     {
@@ -944,6 +962,8 @@ output "query_json" {
 }
 
 func TestAcc_QuerySpecificationDataSource_formulas(t *testing.T) {
+	t.Parallel()
+
 	expected, err := test.MinifyJSON(`
 {
   "calculations": [
@@ -994,6 +1014,8 @@ output "query_json" {
 }
 
 func TestAcc_QuerySpecificationDataSource_calculationFilters(t *testing.T) {
+	t.Parallel()
+
 	expected, err := test.MinifyJSON(`
 {
   "calculations": [
@@ -1048,6 +1070,8 @@ output "query_json" {
 }
 
 func TestAcc_QuerySpecificationDataSource_orderByFormula(t *testing.T) {
+	t.Parallel()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
@@ -1079,6 +1103,8 @@ data "honeycombio_query_specification" "test" {
 }
 
 func TestAcc_QuerySpecificationDataSource_orderByNamedCalculation(t *testing.T) {
+	t.Parallel()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
@@ -1358,6 +1384,8 @@ data "honeycombio_query_specification" "test" {
 }
 
 func TestAcc_QuerySpecificationDataSource_TimeRange_CompareTimeOffsetInvalid(t *testing.T) {
+	t.Parallel()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,

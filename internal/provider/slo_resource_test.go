@@ -19,6 +19,8 @@ import (
 )
 
 func TestAccHoneycombioSLO_basic(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 	slo := &client.SLO{}
 
@@ -114,6 +116,8 @@ resource "honeycombio_slo" "test" {
 }
 
 func TestAccHoneycombioSLO_EmptyDescription(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 	slo := &client.SLO{}
 
@@ -181,6 +185,8 @@ resource "honeycombio_slo" "test" {
 // Checks to ensure that if an SLO was removed from Honeycomb outside of Terraform (UI or API)
 // that it is detected and planned for recreation.
 func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 	slo := &client.SLO{}
 
@@ -209,6 +215,8 @@ func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 }
 
 func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 	slo := &client.SLO{}
 
@@ -243,6 +251,8 @@ func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
 }
 
 func TestAccHoneycombSLO_MD(t *testing.T) {
+	t.Parallel()
+
 	c := testAccClient(t)
 	if c.IsClassic(context.Background()) {
 		t.Skip("MD SLOs are not supported in classic")
@@ -285,6 +295,8 @@ func TestAccHoneycombSLO_MD(t *testing.T) {
 }
 
 func TestAccHoneycombioSLO_UpgradeFromSDK(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 	slo := &client.SLO{}
 
@@ -350,6 +362,8 @@ func TestAccHoneycombioSLO_UpgradeFromSDK(t *testing.T) {
 // That failure leaves the SLO tainted in state, so the first apply after
 // upgrading replaces it once and then converges.
 func TestAccHoneycombioSLO_UpgradeFromEmptyDescriptionBug(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 	config := fmt.Sprintf(`
 resource "honeycombio_slo" "test" {
@@ -387,6 +401,8 @@ resource "honeycombio_slo" "test" {
 }
 
 func TestAccHoneycombioSLO_DatasetConstraint(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 
 	resource.Test(t, resource.TestCase{
@@ -423,6 +439,8 @@ func TestAccHoneycombioSLO_DatasetConstraint(t *testing.T) {
 }
 
 func TestAccHoneycombioSLO_Update(t *testing.T) {
+	t.Parallel()
+
 	c := testAccClient(t)
 	if c.IsClassic(context.Background()) {
 		t.Skip("Multi-dataset SLOs are not supported in classic")

@@ -12,6 +12,8 @@ import (
 )
 
 func TestAcc_HoneycombioQueryAnnotation(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	firstName := "first annotation name"
 	secondName := "second annotation name"
@@ -149,6 +151,8 @@ resource "honeycombio_query_annotation" "test" {
 }
 
 func TestAcc_HoneycombioQueryAnnotation_AllToUnset(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 
@@ -193,6 +197,8 @@ resource "honeycombio_query_annotation" "test" {
 }
 
 func TestAcc_QueryAnnotationImportState(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := "test annotation import"
 
@@ -246,6 +252,8 @@ resource "honeycombio_query_annotation" "test" {
 }
 
 func TestAcc_QueryAnnotationImportState_EnvironmentWide(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 
@@ -293,6 +301,8 @@ resource "honeycombio_query_annotation" "test" {
 //
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_QueryAnnotationResource_UpgradeFromVersion0381(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := "test annotation name"
 	config := fmt.Sprintf(`

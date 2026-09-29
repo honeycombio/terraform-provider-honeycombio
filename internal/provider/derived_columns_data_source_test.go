@@ -13,6 +13,8 @@ import (
 )
 
 func TestAcc_DerivedColumnsDataSource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 

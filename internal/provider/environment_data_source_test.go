@@ -10,6 +10,8 @@ import (
 )
 
 func TestAcc_EnvironmentDataSource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccV2Client(t)
 	env := testAccEnvironment(ctx, t, c)

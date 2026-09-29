@@ -14,6 +14,8 @@ import (
 // and validation of the original Honeycomb MSTeams recipient
 // and the new Honeycomb MSTeams Workflow recipient.
 func TestAccHoneycombMSTeamsRecipient(t *testing.T) {
+	t.Parallel()
+
 	t.Run("workflow recipient works", func(t *testing.T) {
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
