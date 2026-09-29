@@ -16,6 +16,8 @@ import (
 )
 
 func TestAccHoneycombioDatasetDefinition_basic(t *testing.T) {
+	t.Parallel()
+
 	// the fixture calls the API before resource.Test gets a chance to skip
 	if os.Getenv(resource.EnvTfAcc) == "" {
 		t.Skipf("Acceptance tests skipped unless env '%s' set", resource.EnvTfAcc)

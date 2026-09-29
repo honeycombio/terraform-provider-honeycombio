@@ -13,6 +13,8 @@ import (
 )
 
 func TestAcc_WebhookRecipientResource(t *testing.T) {
+	t.Parallel()
+
 	t.Run("happy path standard webhook", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
 		url := test.RandomURL()
@@ -535,6 +537,8 @@ resource "honeycombio_webhook_recipient" "test" {
 }
 
 func TestAcc_WebhookRecipientResource_validateDuplicateTemplateType(t *testing.T) {
+	t.Parallel()
+
 	name := test.RandomStringWithPrefix("test.", 20)
 	url := test.RandomURL()
 
@@ -566,6 +570,8 @@ resource "honeycombio_webhook_recipient" "test" {
 }
 
 func TestAcc_WebhookRecipientResource_anomalyTemplate(t *testing.T) {
+	t.Parallel()
+
 	name := test.RandomStringWithPrefix("test.", 20)
 	url := test.RandomURL()
 	body := `<<EOT
@@ -605,6 +611,8 @@ resource "honeycombio_webhook_recipient" "test" {
 }
 
 func TestAcc_WebhookRecipientResource_validateDuplicateAnomalyTemplateType(t *testing.T) {
+	t.Parallel()
+
 	name := test.RandomStringWithPrefix("test.", 20)
 	url := test.RandomURL()
 
@@ -636,6 +644,8 @@ resource "honeycombio_webhook_recipient" "test" {
 }
 
 func TestAcc_WebhookRecipientResource_validateDuplicateVariableName(t *testing.T) {
+	t.Parallel()
+
 	name := test.RandomStringWithPrefix("test.", 20)
 	url := test.RandomURL()
 
@@ -672,6 +682,8 @@ resource "honeycombio_webhook_recipient" "test" {
 }
 
 func TestAcc_WebhookRecipientResource_validateVariableMustHaveTemplate(t *testing.T) {
+	t.Parallel()
+
 	name := test.RandomStringWithPrefix("test.", 20)
 	url := test.RandomURL()
 
@@ -785,6 +797,8 @@ resource "honeycombio_webhook_recipient" "test" {
 }
 
 func TestAcc_WebhookRecipientResource_validateInvalidWebhookHeader(t *testing.T) {
+	t.Parallel()
+
 	name := test.RandomStringWithPrefix("test.", 20)
 	url := test.RandomURL()
 
@@ -825,6 +839,8 @@ resource "honeycombio_webhook_recipient" "test" {
 //
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_WebhookRecipientResource_UpgradeFromVersion027(t *testing.T) {
+	t.Parallel()
+
 	name := test.RandomStringWithPrefix("test.", 20)
 	url := test.RandomURL()
 	config := fmt.Sprintf(`

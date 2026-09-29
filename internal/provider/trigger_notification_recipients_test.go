@@ -16,6 +16,8 @@ import (
 )
 
 func Test_reconcileReadTriggerNotificationRecipientState(t *testing.T) {
+	t.Parallel()
+
 	elemType := types.ObjectType{AttrTypes: models.TriggerNotificationRecipientAttrType}
 	type args struct {
 		remote []client.TriggerNotificationRecipient

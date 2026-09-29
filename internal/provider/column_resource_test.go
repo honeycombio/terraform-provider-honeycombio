@@ -23,6 +23,8 @@ import (
 )
 
 func TestAcc_ColumnResource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	t.Run("happy path", func(t *testing.T) {
@@ -165,6 +167,8 @@ resource "honeycombio_column" "test" {
 }
 
 func TestAcc_ColumnResourceHistogram(t *testing.T) {
+	t.Parallel()
+
 	// histogram columns are only valid on metrics datasets; skips unless
 	// HONEYCOMB_METRICS_DATASET is set (metrics acc tests don't run in CI).
 	dataset := testAccMetricsDataset(t)
@@ -229,6 +233,8 @@ resource "honeycombio_column" "hist" {
 //
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_ColumnResourceUpgradeFromVersion037(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 10)
 
@@ -285,6 +291,8 @@ func (m mockColumns) Update(_ context.Context, _ string, c *client.Column) (*cli
 func (m mockColumns) Delete(_ context.Context, _, _ string) error { return m.deleteErr }
 
 func Test_columnResource_Delete(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 
 	cr := &columnResource{}

@@ -15,6 +15,8 @@ import (
 )
 
 func TestAcc_SLOsDataSource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 	dataset := testAccDataset()
@@ -216,6 +218,8 @@ data "honeycombio_slos" "combined_operators" {
 
 // Test specifically for filter groups
 func TestAcc_SLOsDataSource_FilterGroups(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 	// filters on targets and tags would also match other tests' SLOs in the shared dataset
@@ -366,6 +370,8 @@ data "honeycombio_slos" "complex_filter" {
 
 // Test for SLO filtering by tags
 func TestAcc_SLOsDataSource_TagFiltering(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 	// filters on targets and tags would also match other tests' SLOs in the shared dataset

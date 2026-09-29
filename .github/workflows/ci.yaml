@@ -7,6 +7,9 @@ on:
     # run CI nightly at 00:11UTC
     - cron: "11 0 * * *"
 
+env:
+  TEST_PARALLELISM: 8
+
 jobs:
   build:
     name: Build
@@ -99,6 +102,7 @@ jobs:
         run: |
           go test -v ./internal/... ./honeycombio/... \
             -timeout=20m \
+            -parallel="$TEST_PARALLELISM" \
             -covermode=atomic | \
             go-junit-report \
             -set-exit-code \
@@ -198,6 +202,7 @@ jobs:
         run: |
           go test -v ./internal/... ./honeycombio/... \
             -timeout=20m \
+            -parallel="$TEST_PARALLELISM" \
             -covermode=atomic | \
             go-junit-report \
             -set-exit-code \

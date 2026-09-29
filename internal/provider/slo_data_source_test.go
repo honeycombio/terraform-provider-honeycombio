@@ -15,6 +15,8 @@ import (
 )
 
 func TestAcc_SLODataSource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 	dataset := testAccDataset()
@@ -73,6 +75,8 @@ data "honeycombio_slo" "test" {
 }
 
 func TestAcc_MDSLODataSource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 

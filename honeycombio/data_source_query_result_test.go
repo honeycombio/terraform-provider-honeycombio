@@ -8,6 +8,8 @@ import (
 )
 
 func TestAccDataSourceHoneycombioQueryResult_basic(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{

@@ -14,6 +14,8 @@ import (
 )
 
 func Test_reconcileReadNotificationRecipientState(t *testing.T) {
+	t.Parallel()
+
 	elemType := types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}
 	type args struct {
 		remote []client.NotificationRecipient

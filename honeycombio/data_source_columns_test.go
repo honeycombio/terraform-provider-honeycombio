@@ -15,6 +15,8 @@ import (
 )
 
 func TestAccDataSourceHoneycombioColumns_basic(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 	dataset := testAccDataset()

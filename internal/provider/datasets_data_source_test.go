@@ -14,6 +14,8 @@ import (
 )
 
 func TestAcc_DatasetsDatasource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 	const numDatasets = 15

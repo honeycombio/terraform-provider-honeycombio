@@ -16,6 +16,8 @@ import (
 )
 
 func TestAcc_QueryResource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	dataset := testAccDataset()
 	c := testAccClient(t)
@@ -101,6 +103,8 @@ EOT
 //
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
+	t.Parallel()
+
 	t.Skip("mysteriously broken and under investigation")
 
 	ctx := context.Background()
@@ -143,6 +147,8 @@ func TestAcc_QueryResourceUpgradeFromVersion022(t *testing.T) {
 // TestAcc_QueryResourceEquivalentQuerySpecSupressed tests the behavior of the
 // resource when an equivalent query is suppressed by the plan modifier.
 func TestAcc_QueryResourceEquivalentQuerySpecSupressed(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -186,6 +192,8 @@ EOT
 }
 
 func TestAcc_QueryAllToUnset(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 
@@ -218,6 +226,8 @@ resource "honeycombio_query" "test" {
 }
 
 func TestAcc_QueryResourceWithMetrics(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccMetricsDataset(t)
 
 	resource.Test(t, resource.TestCase{

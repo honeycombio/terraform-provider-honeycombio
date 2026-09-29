@@ -16,6 +16,7 @@ import (
 )
 
 func TestAcc_DatasetResource(t *testing.T) {
+	t.Parallel()
 
 	t.Run("happy path", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
@@ -230,6 +231,8 @@ resource "honeycombio_dataset" "test" {
 //
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_DatasetResource_UpgradeFromVersion026(t *testing.T) {
+	t.Parallel()
+
 	name := test.RandomStringWithPrefix("test.", 20)
 
 	resource.Test(t, resource.TestCase{

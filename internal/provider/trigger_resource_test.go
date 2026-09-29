@@ -19,6 +19,8 @@ import (
 )
 
 func TestAcc_TriggerResource(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -492,6 +494,8 @@ resource "honeycombio_trigger" "test" {
 //
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	config := testAccConfigBasicTriggerTest(dataset, test.RandomStringWithPrefix("test.", 20), "info")
@@ -529,6 +533,8 @@ func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
 }
 
 func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 	dataset := testAccDataset()
@@ -585,6 +591,8 @@ func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
 }
 
 func TestAcc_TriggerResourceRecipientOrderingStable(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	email1 := test.RandomEmail()
 	email2 := test.RandomEmail()
@@ -706,6 +714,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceEvaluationWindow(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -871,6 +881,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourcePagerDutyUnsetSeverity(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -923,6 +935,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing.T) {
+	t.Parallel()
+
 	c := testAccClient(t)
 	ctx := context.Background()
 	dataset := testAccDataset()
@@ -962,6 +976,8 @@ func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing
 }
 
 func TestAcc_TriggerResourceValidatesQueryJSON(t *testing.T) {
+	t.Parallel()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
@@ -1209,6 +1225,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResource_HavingScenarios(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -1290,6 +1308,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResource_QueryJSONHandlesEquivQuerySpecs(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -1331,6 +1351,8 @@ resource honeycombio_trigger "test" {
 // Requires the team to have grouped resolution alerts enabled; the API returns 422
 // otherwise.
 func TestAcc_TriggerResource_groupedRecipientRouting(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
@@ -1398,6 +1420,8 @@ func TestAcc_TriggerResource_groupedRecipientRouting(t *testing.T) {
 // TestAcc_TriggerResource_groupedRecipientRoutingValidation covers the plan-time rules.
 // These never reach the API, so they run without grouped resolution alerts enabled.
 func TestAcc_TriggerResource_groupedRecipientRoutingValidation(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -1598,6 +1622,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResource_autoInvestigate(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -1676,6 +1702,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResource_autoInvestigateNoDiffOnUpgrade(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -2278,6 +2306,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceValidatesFormulaQueryJSON(t *testing.T) {
+	t.Parallel()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
@@ -2459,6 +2489,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceWithFormula(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -2550,6 +2582,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceWithCalculatedField(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -2634,6 +2668,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceWithMetrics(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccMetricsDataset(t)
 	name := test.RandomStringWithPrefix("test.", 20)
 

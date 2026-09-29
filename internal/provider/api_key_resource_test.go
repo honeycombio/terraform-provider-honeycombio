@@ -14,6 +14,8 @@ import (
 )
 
 func TestAcc_APIKeyResource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccV2Client(t)
 	env := testAccEnvironment(ctx, t, c)
@@ -179,6 +181,8 @@ resource "honeycombio_api_key" "test_configuration" {
 }
 
 func TestAcc_APIKeyResource_upgradeFromVersion050_0(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccV2Client(t)
 	env := testAccEnvironment(ctx, t, c)
@@ -208,6 +212,8 @@ func TestAcc_APIKeyResource_upgradeFromVersion050_0(t *testing.T) {
 }
 
 func TestAPIKeyResource_UpgradeStateV0(t *testing.T) {
+	t.Parallel()
+
 	const configKey = `{"id":"hcxlk_01","name":"k","type":"configuration","environment_id":"hcaen_01",
 		"disabled":false,"visible_to_members":true,"key":"s","secret":"s",
 		"permissions":[{"send_events":true,"create_datasets":false,"manage_queries":false,

@@ -12,6 +12,8 @@ import (
 )
 
 func TestAcc_EnvironmentsDatasource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccV2Client(t)
 	const numEnvs = 3
