@@ -268,6 +268,48 @@ func (*flexibleBoardResource) Schema(_ context.Context, _ resource.SchemaRequest
 																Description: "Use logarithmic scale on Y axis.",
 															},
 														},
+														Blocks: map[string]schema.Block{
+															"threshold": schema.ListNestedBlock{
+																Description: "Threshold lines to display on the chart.",
+																Validators: []validator.List{
+																	listvalidator.SizeAtMost(1),
+																},
+																NestedObject: schema.NestedBlockObject{
+																	Attributes: map[string]schema.Attribute{
+																		"value": schema.Float64Attribute{
+																			Required:    true,
+																			Description: "The numeric value of the threshold.",
+																		},
+																		"label": schema.StringAttribute{
+																			Optional:    true,
+																			Computed:    true,
+																			Description: "Label displayed next to the threshold line.",
+																		},
+																		"color": schema.StringAttribute{
+																			Required:    true,
+																			Description: "Color of the threshold line. One of: red, yellow, blue, green, purple.",
+																			Validators: []validator.String{
+																				stringvalidator.OneOf("red", "yellow", "blue", "green", "purple"),
+																			},
+																		},
+																		"operation": schema.StringAttribute{
+																			Required:    true,
+																			Description: "Comparison direction. One of: gt (greater than), lt (less than).",
+																			Validators: []validator.String{
+																				stringvalidator.OneOf("gt", "lt"),
+																			},
+																		},
+																		"line_style": schema.StringAttribute{
+																			Required:    true,
+																			Description: "Style of the threshold line. One of: filled-solid, filled-dotted, solid, dotted.",
+																			Validators: []validator.String{
+																				stringvalidator.OneOf("filled-solid", "filled-dotted", "solid", "dotted"),
+																			},
+																		},
+																	},
+																},
+															},
+														},
 													},
 												},
 											},
@@ -1058,9 +1100,37 @@ func expandBoardQueryVizCharts(
 			ChartIndex:        int(chart.ChartIndex.ValueInt64()),
 			OmitMissingValues: chart.OmitMissingValues.ValueBool(),
 			UseLogScale:       chart.LogScale.ValueBool(),
+			Thresholds:        expandChartThresholds(ctx, chart.Thresholds, diags),
 		})
 	}
 
+	return result
+}
+
+func expandChartThresholds(
+	ctx context.Context,
+	thresholdsList types.List,
+	diags *diag.Diagnostics,
+) []client.Threshold {
+	if thresholdsList.IsNull() || thresholdsList.IsUnknown() {
+		return nil
+	}
+	var thresholds []models.ThresholdModel
+	diags.Append(thresholdsList.ElementsAs(ctx, &thresholds, false)...)
+	if len(thresholds) == 0 {
+		return nil
+	}
+
+	result := make([]client.Threshold, 0, len(thresholds))
+	for _, t := range thresholds {
+		result = append(result, client.Threshold{
+			Value:     t.Value.ValueFloat64(),
+			Label:     t.Label.ValueString(),
+			Color:     t.Color.ValueString(),
+			Operation: t.Operation.ValueString(),
+			LineStyle: t.LineStyle.ValueString(),
+		})
+	}
 	return result
 }
 
@@ -1245,6 +1315,7 @@ func flattenBoardQueryVizCharts(
 			"chart_index":         types.Int64Value(int64(chart.ChartIndex)),
 			"omit_missing_values": types.BoolValue(chart.OmitMissingValues),
 			"use_log_scale":       types.BoolValue(chart.UseLogScale),
+			"threshold":           flattenChartThresholds(ctx, chart.Thresholds, diags),
 		})
 		diags.Append(d...)
 
@@ -1258,6 +1329,37 @@ func flattenBoardQueryVizCharts(
 	)
 	diags.Append(d...)
 
+	return result
+}
+
+func flattenChartThresholds(
+	ctx context.Context,
+	thresholds []client.Threshold,
+	diags *diag.Diagnostics,
+) types.List {
+	if len(thresholds) == 0 {
+		return types.ListNull(types.ObjectType{AttrTypes: models.ThresholdModelAttrType})
+	}
+
+	objs := make([]attr.Value, 0, len(thresholds))
+	for _, t := range thresholds {
+		obj, d := types.ObjectValue(models.ThresholdModelAttrType, map[string]attr.Value{
+			"value":      types.Float64Value(t.Value),
+			"label":      types.StringValue(t.Label),
+			"color":      types.StringValue(t.Color),
+			"operation":  types.StringValue(t.Operation),
+			"line_style": types.StringValue(t.LineStyle),
+		})
+		diags.Append(d...)
+		objs = append(objs, obj)
+	}
+
+	result, d := types.ListValueFrom(
+		ctx,
+		types.ObjectType{AttrTypes: models.ThresholdModelAttrType},
+		objs,
+	)
+	diags.Append(d...)
 	return result
 }
 
