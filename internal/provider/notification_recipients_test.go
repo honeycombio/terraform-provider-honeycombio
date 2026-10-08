@@ -116,6 +116,110 @@ func Test_reconcileReadNotificationRecipientState(t *testing.T) {
 			}),
 		},
 		{
+			name: "remote default pagerduty severity is ignored when unconfigured",
+			args: args{
+				remote: []client.NotificationRecipient{
+					{
+						ID:      "abcd12345",
+						Type:    client.RecipientTypePagerDuty,
+						Details: &client.NotificationRecipientDetails{PDSeverity: client.PDDefaultSeverity},
+					},
+				},
+				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+					{ID: types.StringValue("abcd12345")},
+				}),
+			},
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+				{ID: types.StringValue("abcd12345")},
+			}),
+		},
+		{
+			name: "remote non-default pagerduty severity is drift when unconfigured",
+			args: args{
+				remote: []client.NotificationRecipient{
+					{
+						ID:      "abcd12345",
+						Type:    client.RecipientTypePagerDuty,
+						Details: &client.NotificationRecipientDetails{PDSeverity: client.PDSeverityINFO},
+					},
+				},
+				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+					{ID: types.StringValue("abcd12345")},
+				}),
+			},
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+				{
+					ID:      types.StringValue("abcd12345"),
+					Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, notificationRecipientDetailsToValue("info")),
+				},
+			}),
+		},
+		{
+			name: "configured default pagerduty severity is preserved",
+			args: args{
+				remote: []client.NotificationRecipient{
+					{
+						ID:      "abcd12345",
+						Type:    client.RecipientTypePagerDuty,
+						Details: &client.NotificationRecipientDetails{PDSeverity: client.PDDefaultSeverity},
+					},
+				},
+				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+					{
+						ID:      types.StringValue("abcd12345"),
+						Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, notificationRecipientDetailsToValue("critical")),
+					},
+				}),
+			},
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+				{
+					ID:      types.StringValue("abcd12345"),
+					Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, notificationRecipientDetailsToValue("critical")),
+				},
+			}),
+		},
+		{
+			name: "remote variables removed outside of terraform",
+			args: args{
+				remote: []client.NotificationRecipient{
+					{ID: "abcd12345", Type: client.RecipientTypeWebhook},
+				},
+				state: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+					{
+						ID:      types.StringValue("abcd12345"),
+						Details: notificationRecipientDetailsWithVariablesToList(client.NotificationVariable{Name: "severity", Value: "warning"}),
+					},
+				}),
+			},
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+				{
+					ID: types.StringValue("abcd12345"),
+					Details: types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, []attr.Value{
+						types.ObjectValueMust(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{
+							"pagerduty_severity": types.StringNull(),
+							"variable":           types.SetNull(types.ObjectType{AttrTypes: models.NotificationVariableAttrType}),
+						}),
+					}),
+				},
+			}),
+		},
+		{
+			name: "import ignores default pagerduty severity",
+			args: args{
+				remote: []client.NotificationRecipient{
+					{
+						ID:      "abcd12345",
+						Type:    client.RecipientTypePagerDuty,
+						Details: &client.NotificationRecipientDetails{PDSeverity: client.PDDefaultSeverity},
+					},
+				},
+				state: types.SetNull(elemType),
+			},
+			want: notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+				{ID: types.StringValue("abcd12345")},
+			}),
+		},
+		{
 			name: "remote has additional recipients",
 			args: args{
 				remote: []client.NotificationRecipient{
@@ -215,7 +319,7 @@ func notificationRecipientDetailsWithVariablesToList(variables ...client.Notific
 
 	variableSet := types.SetValueMust(types.ObjectType{AttrTypes: models.NotificationVariableAttrType}, variableValues)
 	details := types.ObjectValueMust(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{
-		"pagerduty_severity": types.StringValue(""),
+		"pagerduty_severity": types.StringNull(),
 		"variable":           variableSet,
 	})
 
