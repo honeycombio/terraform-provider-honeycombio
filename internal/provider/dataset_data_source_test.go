@@ -14,6 +14,8 @@ import (
 )
 
 func TestAcc_DatsetDataSource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 

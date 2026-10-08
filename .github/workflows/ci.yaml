@@ -7,6 +7,9 @@ on:
     # run CI nightly at 00:11UTC
     - cron: "11 0 * * *"
 
+env:
+  TEST_PARALLELISM: 8
+
 jobs:
   build:
     name: Build
@@ -61,7 +64,7 @@ jobs:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
           HONEYCOMB_DATASET: testacc
         run: |
-          go install github.com/jstemmer/go-junit-report/v2@latest
+          go install github.com/jstemmer/go-junit-report/v2@v2.1.0
           ./scripts/setup-testsuite-dataset
 
       - name: Run client acceptance tests
@@ -83,6 +86,11 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
+      # Without an explicit path, the acceptance test framework downloads
+      # Terraform for every test case instead of reusing this binary.
+      - name: Use installed Terraform for acceptance tests
+        run: echo "TF_ACC_TERRAFORM_PATH=$(command -v terraform)" >> "$GITHUB_ENV"
+
       - name: Run TF acceptance tests
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
@@ -94,6 +102,7 @@ jobs:
         run: |
           go test -v ./internal/... ./honeycombio/... \
             -timeout=20m \
+            -parallel="$TEST_PARALLELISM" \
             -covermode=atomic | \
             go-junit-report \
             -set-exit-code \
@@ -153,7 +162,7 @@ jobs:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY_EU }}
           HONEYCOMB_DATASET: testacc
         run: |
-          go install github.com/jstemmer/go-junit-report/v2@latest
+          go install github.com/jstemmer/go-junit-report/v2@v2.1.0
           ./scripts/setup-testsuite-dataset
 
       - name: Run client acceptance tests
@@ -176,6 +185,11 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
+      # Without an explicit path, the acceptance test framework downloads
+      # Terraform for every test case instead of reusing this binary.
+      - name: Use installed Terraform for acceptance tests
+        run: echo "TF_ACC_TERRAFORM_PATH=$(command -v terraform)" >> "$GITHUB_ENV"
+
       - name: Run TF acceptance tests
         env:
           HONEYCOMB_API_ENDPOINT: https://api.eu1.honeycomb.io
@@ -188,6 +202,7 @@ jobs:
         run: |
           go test -v ./internal/... ./honeycombio/... \
             -timeout=20m \
+            -parallel="$TEST_PARALLELISM" \
             -covermode=atomic | \
             go-junit-report \
             -set-exit-code \

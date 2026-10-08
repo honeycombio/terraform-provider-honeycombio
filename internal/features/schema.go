@@ -16,6 +16,17 @@ func GetFeaturesBlock() schema.Block {
 		},
 		NestedObject: schema.NestedBlockObject{
 			Blocks: map[string]schema.Block{
+				"client": schema.ListNestedBlock{
+					MarkdownDescription: "API client features.",
+					NestedObject: schema.NestedBlockObject{
+						Attributes: map[string]schema.Attribute{
+							"read_caching": schema.BoolAttribute{
+								MarkdownDescription: "Set to true to serve reads of supported resource types from a short-lived cache of the containing collection, so configurations managing many resources of the same type don't issue one API request per resource read. Currently supported: derived columns.",
+								Optional:            true,
+							},
+						},
+					},
+				},
 				"column": schema.ListNestedBlock{
 					MarkdownDescription: "Column resource features.",
 					NestedObject: schema.NestedBlockObject{
@@ -63,6 +74,21 @@ func GetPluginSDKFeaturesSchema() *pluginsdk.Schema {
 		Description: "The features block allows customization of the behavior of the Honeycomb Provider.",
 		Elem: &pluginsdk.Resource{
 			Schema: map[string]*pluginsdk.Schema{
+				"client": {
+					Type:        pluginsdk.TypeList,
+					Optional:    true,
+					MaxItems:    1,
+					Description: "API client features.",
+					Elem: &pluginsdk.Resource{
+						Schema: map[string]*pluginsdk.Schema{
+							"read_caching": {
+								Type:        pluginsdk.TypeBool,
+								Optional:    true,
+								Description: "Set to true to serve reads of supported resource types from a short-lived cache of the containing collection, so configurations managing many resources of the same type don't issue one API request per resource read. Currently supported: derived columns.",
+							},
+						},
+					},
+				},
 				"column": {
 					Type:        pluginsdk.TypeList,
 					Optional:    true,

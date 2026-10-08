@@ -19,6 +19,8 @@ import (
 )
 
 func TestAcc_TriggerResource(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -413,6 +415,28 @@ resource "honeycombio_trigger" "test" {
 					}),
 					ExpectError: regexp.MustCompile(`must begin with a lowercase letter`),
 				},
+				{
+					// invalid tag value - too many tags
+					Config: testAccConfigTriggerWithTags(dataset, name, map[string]string{
+						"tag1":  "1",
+						"tag2":  "2",
+						"tag3":  "3",
+						"tag4":  "4",
+						"tag5":  "5",
+						"tag6":  "6",
+						"tag7":  "7",
+						"tag8":  "8",
+						"tag9":  "9",
+						"tag10": "10",
+						"tag11": "11",
+						"tag12": "12",
+						"tag13": "13",
+						"tag14": "14",
+						"tag15": "15",
+						"tag16": "16",
+					}),
+					ExpectError: regexp.MustCompile(`map must contain at most 15 elements`),
+				},
 			},
 		})
 	})
@@ -470,6 +494,8 @@ resource "honeycombio_trigger" "test" {
 //
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	config := testAccConfigBasicTriggerTest(dataset, test.RandomStringWithPrefix("test.", 20), "info")
@@ -507,6 +533,8 @@ func TestAcc_TriggerResourceUpgradeFromVersion014(t *testing.T) {
 }
 
 func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 	dataset := testAccDataset()
@@ -563,6 +591,8 @@ func TestAcc_TriggerResourceUpdateRecipientByID(t *testing.T) {
 }
 
 func TestAcc_TriggerResourceRecipientOrderingStable(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	email1 := test.RandomEmail()
 	email2 := test.RandomEmail()
@@ -684,6 +714,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceEvaluationWindow(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -849,6 +881,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourcePagerDutyUnsetSeverity(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -901,6 +935,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing.T) {
+	t.Parallel()
+
 	c := testAccClient(t)
 	ctx := context.Background()
 	dataset := testAccDataset()
@@ -940,6 +976,8 @@ func TestAcc_TriggerResourceHandlesRecipientChangedOutsideOfTerraform(t *testing
 }
 
 func TestAcc_TriggerResourceValidatesQueryJSON(t *testing.T) {
+	t.Parallel()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
@@ -1187,6 +1225,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResource_HavingScenarios(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -1268,6 +1308,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResource_QueryJSONHandlesEquivQuerySpecs(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -1304,7 +1346,284 @@ resource honeycombio_trigger "test" {
 	})
 }
 
+// TestAcc_TriggerResource_groupedRecipientRouting covers per-group recipient routing.
+//
+// Requires the team to have grouped resolution alerts enabled; the API returns 422
+// otherwise.
+func TestAcc_TriggerResource_groupedRecipientRouting(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	dataset := testAccDataset()
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	// a group_filter may only name a column the Trigger's query groups by, so the
+	// breakdown needs to be a real column
+	c := testAccClient(t)
+	column, err := c.Columns.Create(ctx, dataset, &client.Column{
+		KeyName: test.RandomStringWithPrefix("test.", 10),
+		Type:    client.ToPtr(client.ColumnTypeString),
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		//nolint:errcheck
+		c.Columns.Delete(ctx, dataset, column.ID)
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigTriggerGroupedRouting(dataset, name, column.KeyName, true),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "alert_type", "on_group_change"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
+					// The routed recipient. It is specified by id, so `type` is null in
+					// state -- the routing attributes identify it well enough.
+					resource.TestCheckTypeSetElemNestedAttrs("honeycombio_trigger.test", "recipient.*", map[string]string{
+						"pagerduty_per_group_incidents":         "true",
+						"group_filter.%":                        "1",
+						"group_filter." + column.KeyName + ".#": "2",
+					}),
+				),
+				// re-planning the same config after apply and refresh must be a no-op.
+				// This is the regression test for the routing attributes being Optional
+				// rather than Optional+Computed.
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+			{
+				// dropping the routing from the config must clear it, not silently keep it
+				Config: testAccConfigTriggerGroupedRouting(dataset, name, column.KeyName, false),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+					resource.TestCheckResourceAttr("honeycombio_trigger.test", "recipient.#", "2"),
+					// Neither recipient is routed now. A map attribute is flattened as
+					// `group_filter.%`, so asserting on the bare name would always pass;
+					// a null attribute is absent from the flatmap entirely.
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.0.group_filter.%"),
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.1.group_filter.%"),
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.0.pagerduty_per_group_incidents"),
+					resource.TestCheckNoResourceAttr("honeycombio_trigger.test", "recipient.1.pagerduty_per_group_incidents"),
+				),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PostApplyPostRefresh: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
+// TestAcc_TriggerResource_groupedRecipientRoutingValidation covers the plan-time rules.
+// These never reach the API, so they run without grouped resolution alerts enabled.
+func TestAcc_TriggerResource_groupedRecipientRoutingValidation(t *testing.T) {
+	t.Parallel()
+
+	dataset := testAccDataset()
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				// group_filter without on_group_change
+				Config: testAccConfigTriggerRoutingInvalid(dataset, name, `
+  alert_type = "on_true"
+
+  recipient {
+    type         = "email"
+    target       = "test@example.com"
+    group_filter = { "app.tenant" = ["acme"] }
+  }
+`),
+				ExpectError: regexp.MustCompile(`requires an "alert_type" of "on_group_change"`),
+			},
+			{
+				// pagerduty_per_group_incidents without on_group_change
+				Config: testAccConfigTriggerRoutingInvalid(dataset, name, `
+  alert_type = "on_change"
+
+  recipient {
+    type                          = "email"
+    target                        = "test@example.com"
+    pagerduty_per_group_incidents = true
+  }
+`),
+				ExpectError: regexp.MustCompile(`requires an "alert_type" of "on_group_change"`),
+			},
+			{
+				// pagerduty_per_group_incidents on a non-PagerDuty recipient
+				Config: testAccConfigTriggerRoutingInvalid(dataset, name, `
+  alert_type = "on_group_change"
+
+  recipient {
+    type                          = "email"
+    target                        = "test@example.com"
+    pagerduty_per_group_incidents = true
+  }
+`),
+				ExpectError: regexp.MustCompile(`only supported for PagerDuty recipients`),
+			},
+			{
+				// a group_filter naming a column the query does not group by
+				Config: testAccConfigTriggerRoutingInvalid(dataset, name, `
+  alert_type = "on_group_change"
+
+  recipient {
+    type         = "email"
+    target       = "test@example.com"
+    group_filter = { "not.a.breakdown" = ["acme"] }
+  }
+`),
+				ExpectError: regexp.MustCompile(`is not one of the Trigger query's group by columns`),
+			},
+			{
+				// two routing rules for the same recipient
+				Config: testAccConfigTriggerRoutingInvalid(dataset, name, `
+  alert_type = "on_group_change"
+
+  recipient {
+    type         = "email"
+    target       = "test@example.com"
+    group_filter = { "app.tenant" = ["acme"] }
+  }
+
+  recipient {
+    type         = "email"
+    target       = "test@example.com"
+    group_filter = { "app.tenant" = ["globex"] }
+  }
+`),
+				ExpectError: regexp.MustCompile(`A recipient may only appear once in a Trigger`),
+			},
+			{
+				// the same recipient routed once and listed again as a catch-all: still
+				// two blocks for one recipient, which Honeycomb rejects
+				Config: testAccConfigTriggerRoutingInvalid(dataset, name, `
+  alert_type = "on_group_change"
+
+  recipient {
+    type         = "email"
+    target       = "test@example.com"
+    group_filter = { "app.tenant" = ["acme"] }
+  }
+
+  recipient {
+    type   = "email"
+    target = "test@example.com"
+  }
+`),
+				ExpectError: regexp.MustCompile(`A recipient may only appear once in a Trigger`),
+			},
+			{
+				// an empty group_filter is meaningless; omit the attribute for a catch-all
+				Config: testAccConfigTriggerRoutingInvalid(dataset, name, `
+  alert_type = "on_group_change"
+
+  recipient {
+    type         = "email"
+    target       = "test@example.com"
+    group_filter = {}
+  }
+`),
+				ExpectError: regexp.MustCompile(`map must contain at least 1 element`),
+			},
+		},
+	})
+}
+
+func testAccConfigTriggerGroupedRouting(dataset, name, column string, withRouting bool) string {
+	routing := ""
+	if withRouting {
+		routing = fmt.Sprintf(`
+    group_filter                  = { %[1]q = ["checkout", "cart"] }
+    pagerduty_per_group_incidents = true
+`, column)
+	}
+
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  breakdowns = [%[3]q]
+
+  time_range = 1800
+}
+
+resource "honeycombio_pagerduty_recipient" "test" {
+  integration_key  = "%[5]s"
+  integration_name = "%[2]s"
+}
+
+resource "honeycombio_trigger" "test" {
+  name       = "%[2]s"
+  dataset    = "%[1]s"
+  alert_type = "on_group_change"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = 1800
+
+  recipient {
+    id = honeycombio_pagerduty_recipient.test.id
+%[4]s
+  }
+
+  # a catch-all recipient: notified about every group
+  recipient {
+    type   = "email"
+    target = "%[6]s"
+  }
+}
+`, dataset, name, column, routing, test.RandomString(32), test.RandomEmail())
+}
+
+// testAccConfigTriggerRoutingInvalid builds a Trigger whose recipient and alert_type blocks
+// are supplied verbatim, for the plan-time validation cases. The query groups by
+// `app.tenant` so a group_filter on that column is valid.
+func testAccConfigTriggerRoutingInvalid(dataset, name, triggerAttrs string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op = "COUNT"
+  }
+
+  breakdowns = ["app.tenant"]
+
+  time_range = 1800
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  threshold {
+    op    = ">"
+    value = 100
+  }
+
+  frequency = 1800
+%[3]s
+}
+`, dataset, name, triggerAttrs)
+}
+
 func TestAcc_TriggerResource_autoInvestigate(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -1383,6 +1702,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResource_autoInvestigateNoDiffOnUpgrade(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -1985,6 +2306,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceValidatesFormulaQueryJSON(t *testing.T) {
+	t.Parallel()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
@@ -2166,6 +2489,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceWithFormula(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -2257,6 +2582,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceWithCalculatedField(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -2341,6 +2668,8 @@ resource "honeycombio_trigger" "test" {
 }
 
 func TestAcc_TriggerResourceWithMetrics(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccMetricsDataset(t)
 	name := test.RandomStringWithPrefix("test.", 20)
 

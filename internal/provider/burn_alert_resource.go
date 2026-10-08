@@ -147,7 +147,8 @@ func (*burnAlertResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 		},
 		Blocks: map[string]schema.Block{
 			// Burn Alerts require at least one recipient (enforced in ValidateConfig)
-			"recipient": notificationRecipientSchema(client.RecipientTypes(), true),
+			// nil extraAttrs: Burn Alerts do not support per-group recipient routing.
+			"recipient": notificationRecipientSchema(client.RecipientTypes(), true, nil, modifiers.NotificationRecipients()),
 		},
 	}
 }

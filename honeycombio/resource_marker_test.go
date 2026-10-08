@@ -13,6 +13,8 @@ import (
 )
 
 func TestAccHoneycombioMarker_basic(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -40,6 +42,8 @@ resource "honeycombio_marker" "test" {
 }
 
 func TestAccHoneycombioMarker_timeRange(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	startTime := 1700000000
@@ -69,6 +73,8 @@ resource "honeycombio_marker" "test" {
 }
 
 func TestAccHoneycombioMarker_endBeforeStart(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -91,6 +97,8 @@ resource "honeycombio_marker" "test" {
 }
 
 func TestAccHoneycombioMarker_endWithoutStart(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -112,6 +120,8 @@ resource "honeycombio_marker" "test" {
 }
 
 func TestAccHoneycombioMarker_startTimeComputed(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 
 	resource.Test(t, resource.TestCase{
@@ -148,6 +158,8 @@ resource "honeycombio_marker" "test" {
 }
 
 func TestAccHoneycombioMarker_AllToUnset(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 

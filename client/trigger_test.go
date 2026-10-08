@@ -2,6 +2,7 @@ package client_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 
@@ -55,10 +56,12 @@ func TestTriggers(t *testing.T) {
 				Op:    client.TriggerThresholdOpGreaterThan,
 				Value: 10000,
 			},
-			Recipients: []client.NotificationRecipient{
+			Recipients: []client.TriggerNotificationRecipient{
 				{
-					Type:   client.RecipientTypeMarker,
-					Target: "This marker is created by a trigger",
+					NotificationRecipient: client.NotificationRecipient{
+						Type:   client.RecipientTypeMarker,
+						Target: "This marker is created by a trigger",
+					},
 				},
 			},
 			Tags: []client.Tag{
@@ -175,10 +178,12 @@ func TestTriggers_AutoInvestigate(t *testing.T) {
 				Op:    client.TriggerThresholdOpGreaterThan,
 				Value: 100,
 			},
-			Recipients: []client.NotificationRecipient{
+			Recipients: []client.TriggerNotificationRecipient{
 				{
-					Type:   client.RecipientTypeMarker,
-					Target: "auto investigate trigger fired",
+					NotificationRecipient: client.NotificationRecipient{
+						Type:   client.RecipientTypeMarker,
+						Target: "auto investigate trigger fired",
+					},
 				},
 			},
 		}
@@ -207,6 +212,177 @@ func TestTriggers_AutoInvestigate(t *testing.T) {
 			}
 		})
 	})
+}
+
+// TestTriggers_GroupedRecipientRouting exercises the per-group routing round-trip.
+//
+// This is the only coverage of what the API actually stores: the Trigger resource writes
+// config straight back to state after apply, so the API's response never reaches Terraform
+// state and any server-side canonicalisation would otherwise go unnoticed.
+//
+// Requires the team to have grouped resolution alerts enabled; the API returns 422
+// otherwise.
+func TestTriggers_GroupedRecipientRouting(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+
+	c := newTestClient(t)
+	dataset := testDataset(t)
+	floatCol, col1, col2 := createRandomTestColumns(t, c, dataset)
+
+	groupFilter := map[string][]string{col1.KeyName: {"checkout", "cart"}}
+
+	data := &client.Trigger{
+		Name:      test.RandomStringWithPrefix("test.", 8),
+		AlertType: client.TriggerAlertTypeOnGroupChange,
+		Query: &client.QuerySpec{
+			Breakdowns: []string{col1.KeyName, col2.KeyName},
+			Calculations: []client.CalculationSpec{
+				{Op: client.CalculationOpP99, Column: &floatCol.KeyName},
+			},
+		},
+		Frequency: 300,
+		Threshold: &client.TriggerThreshold{
+			Op:    client.TriggerThresholdOpGreaterThan,
+			Value: 100,
+		},
+		Recipients: []client.TriggerNotificationRecipient{
+			{
+				NotificationRecipient: client.NotificationRecipient{
+					Type:   client.RecipientTypeEmail,
+					Target: test.RandomEmail(),
+				},
+				GroupFilter: groupFilter,
+			},
+			{
+				// a catch-all recipient: no group filter
+				NotificationRecipient: client.NotificationRecipient{
+					Type:   client.RecipientTypeMarker,
+					Target: "grouped routing trigger fired",
+				},
+			},
+		},
+	}
+
+	trigger, err := c.Triggers.Create(ctx, dataset, data)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		//nolint:errcheck
+		c.Triggers.Delete(ctx, dataset, trigger.ID)
+	})
+
+	assert.Equal(t, client.TriggerAlertTypeOnGroupChange, trigger.AlertType)
+
+	t.Run("Get returns the routing as sent", func(t *testing.T) {
+		result, err := c.Triggers.Get(ctx, dataset, trigger.ID)
+		require.NoError(t, err)
+
+		require.Len(t, result.Recipients, 2)
+
+		filtered := recipientByTarget(t, result.Recipients, data.Recipients[0].Target)
+		assert.Equal(t, groupFilter, filtered.GroupFilter,
+			"the group filter should round-trip unchanged")
+
+		catchAll := recipientByTarget(t, result.Recipients, "grouped routing trigger fired")
+		assert.Empty(t, catchAll.GroupFilter,
+			"a catch-all recipient should have no group filter")
+		assert.Nil(t, catchAll.PDPerGroupIncidents,
+			"pagerduty_per_group_incidents is only returned for PagerDuty recipients")
+	})
+
+	t.Run("Update can clear a group filter", func(t *testing.T) {
+		// PUT is replace-semantics: omitting group_filter clears it
+		updated := *trigger
+		updated.Recipients = make([]client.TriggerNotificationRecipient, len(trigger.Recipients))
+		copy(updated.Recipients, trigger.Recipients)
+		for i := range updated.Recipients {
+			updated.Recipients[i].GroupFilter = nil
+		}
+
+		result, err := c.Triggers.Update(ctx, dataset, &updated)
+		require.NoError(t, err)
+
+		for _, r := range result.Recipients {
+			assert.Empty(t, r.GroupFilter, "group filter should have been cleared for %s", r.Target)
+		}
+	})
+}
+
+func recipientByTarget(t *testing.T, recipients []client.TriggerNotificationRecipient, target string) client.TriggerNotificationRecipient {
+	t.Helper()
+
+	for _, r := range recipients {
+		if r.Target == target {
+			return r
+		}
+	}
+	t.Fatalf("no recipient with target %q in %+v", target, recipients)
+
+	return client.TriggerNotificationRecipient{}
+}
+
+// TestTriggerNotificationRecipient_MarshalJSON guards the embedding in
+// TriggerNotificationRecipient. NotificationRecipient is embedded by value and must not
+// grow a MarshalJSON of its own: encoding/json promotes the embedded fields into a flat
+// object, and a custom marshaller on the embedded type would silently hijack this.
+//
+// The per-group routing fields must stay `omitempty`: the Burn Alerts API shares
+// NotificationRecipient and rejects unknown fields.
+func TestTriggerNotificationRecipient_MarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	testCases := map[string]struct {
+		recipient client.TriggerNotificationRecipient
+		expected  string
+	}{
+		"embedded fields are promoted, routing fields omitted when unset": {
+			recipient: client.TriggerNotificationRecipient{
+				NotificationRecipient: client.NotificationRecipient{
+					ID:     "abcd1234",
+					Type:   client.RecipientTypeEmail,
+					Target: "hello@example.com",
+				},
+			},
+			expected: `{"id":"abcd1234","type":"email","target":"hello@example.com"}`,
+		},
+		"group_filter is marshalled flat, alongside the promoted fields": {
+			recipient: client.TriggerNotificationRecipient{
+				NotificationRecipient: client.NotificationRecipient{
+					ID: "abcd1234",
+				},
+				GroupFilter: map[string][]string{"service.name": {"checkout", "cart"}},
+			},
+			expected: `{"id":"abcd1234","type":"","group_filter":{"service.name":["checkout","cart"]}}`,
+		},
+		"pagerduty_per_group_incidents is sent when explicitly false": {
+			recipient: client.TriggerNotificationRecipient{
+				NotificationRecipient: client.NotificationRecipient{
+					ID: "abcd1234",
+				},
+				PDPerGroupIncidents: client.ToPtr(false),
+			},
+			expected: `{"id":"abcd1234","type":"","pagerduty_per_group_incidents":false}`,
+		},
+		"an empty group_filter is omitted rather than sent as an empty object": {
+			recipient: client.TriggerNotificationRecipient{
+				NotificationRecipient: client.NotificationRecipient{
+					ID: "abcd1234",
+				},
+				GroupFilter: map[string][]string{},
+			},
+			expected: `{"id":"abcd1234","type":""}`,
+		},
+	}
+
+	for name, tc := range testCases {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := json.Marshal(tc.recipient)
+			require.NoError(t, err)
+			assert.JSONEq(t, tc.expected, string(got))
+		})
+	}
 }
 
 func TestMatchesTriggerSubset(t *testing.T) {
@@ -314,10 +490,12 @@ func TestTriggersWithBaselineDetails(t *testing.T) {
 				Op:    client.TriggerThresholdOpGreaterThanOrEqual,
 				Value: 10000,
 			},
-			Recipients: []client.NotificationRecipient{
+			Recipients: []client.TriggerNotificationRecipient{
 				{
-					Type:   client.RecipientTypeMarker,
-					Target: "This marker is created by a trigger",
+					NotificationRecipient: client.NotificationRecipient{
+						Type:   client.RecipientTypeMarker,
+						Target: "This marker is created by a trigger",
+					},
 				},
 			},
 			BaselineDetails: &client.TriggerBaselineDetails{
@@ -414,10 +592,12 @@ func TestTriggersEnvironmentWide(t *testing.T) {
 				Op:    client.TriggerThresholdOpGreaterThan,
 				Value: 1000,
 			},
-			Recipients: []client.NotificationRecipient{
+			Recipients: []client.TriggerNotificationRecipient{
 				{
-					Type:   client.RecipientTypeMarker,
-					Target: "Environment-wide trigger fired",
+					NotificationRecipient: client.NotificationRecipient{
+						Type:   client.RecipientTypeMarker,
+						Target: "Environment-wide trigger fired",
+					},
 				},
 			},
 		}

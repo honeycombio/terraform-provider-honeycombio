@@ -8,18 +8,22 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
 func TestAcc_EnvironmentsDatasource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccV2Client(t)
-	const numEnvs = 15
+	const numEnvs = 3
+	// scope the regex filter to this test's environments so concurrently
+	// running tests creating their own environments don't change the count
+	envPrefix := test.RandomString(6) + "-"
 
-	// create a bunch of environments
 	testEnvs := make([]*v2client.Environment, numEnvs)
 	for i := range numEnvs {
-		e := testAccEnvironment(ctx, t, c)
-		testEnvs[i] = e
+		testEnvs[i] = testAccEnvironmentWithPrefix(ctx, t, c, envPrefix)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -33,7 +37,7 @@ data "honeycombio_environments" "all" {}
 data "honeycombio_environments" "regex" {
   detail_filter {
     name        = "name"
-    value_regex = "test.*"
+    value_regex = "^test\\.%s"
   }
 }
 
@@ -42,7 +46,7 @@ data "honeycombio_environments" "exact" {
     name  = "name"
     value = "%s"
   }
-}`, testEnvs[0].Name),
+}`, envPrefix, testEnvs[0].Name),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.honeycombio_environments.regex",

@@ -17,6 +17,8 @@ import (
 )
 
 func TestAccHoneycombioFlexibleBoard(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	dataset := testAccDataset()
 	c := testAccClient(t)
@@ -649,6 +651,8 @@ EOF
 
 // TestAccHoneycombioFlexibleBoard_presetFilters tests preset_filters functionality
 func TestAccHoneycombioFlexibleBoard_presetFilters(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	dataset := testAccDataset()
 	c := testAccClient(t)
@@ -782,6 +786,8 @@ resource "honeycombio_flexible_board" "test" {
 
 // TestAccHoneycombioFlexibleBoard_presetFilterLimit tests that the preset filter limit (5) is enforced
 func TestAccHoneycombioFlexibleBoard_presetFilterLimit(t *testing.T) {
+	t.Parallel()
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
@@ -829,6 +835,8 @@ resource "honeycombio_flexible_board" "test" {
 // This is needed because the position field was changed from a list to a single object causing a schema drift.
 // This test ensures the conversion works as expected.
 func TestAccHoneycombioFlexibleBoard_upgradeFromVersion036_2(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	dataset := testAccDataset()
 	c := testAccClient(t)
@@ -882,6 +890,8 @@ func TestAccHoneycombioFlexibleBoard_upgradeFromVersion036_2(t *testing.T) {
 }
 
 func TestAccHoneycombioFlexibleBoard_upgradeFromVersion043_0(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	dataset := testAccDataset()
 	c := testAccClient(t)
@@ -1089,6 +1099,8 @@ func testAccCheckBoardExists(t *testing.T, name string) resource.TestCheckFunc {
 }
 
 func TestImportHoneycombioFlexibleBoard(t *testing.T) {
+	t.Parallel()
+
 	config := `
 resource "honeycombio_flexible_board" "test" {
   name        = "Test board for import"

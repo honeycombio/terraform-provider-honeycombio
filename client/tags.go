@@ -6,7 +6,7 @@ import (
 )
 
 // MaxTagsPerResource is the maximum number of tags that can be associated with a resource.
-const MaxTagsPerResource = 10
+const MaxTagsPerResource = 15
 
 var (
 	// TagKeyValidationRegex is the regex used to validate tag keys.

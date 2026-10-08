@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"regexp"
@@ -22,6 +24,8 @@ import (
 const testBADescription = "burn alert description"
 
 func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 	dataset2, slo2ID := getNewDatasetAndSLO(t)
 	burnAlert := &client.BurnAlert{}
@@ -86,6 +90,8 @@ func TestAcc_BurnAlertResource_defaultBasic(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_exhaustionTimeBasic(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
@@ -135,6 +141,8 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasic(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_exhaustionTimeBasicWebhookRecipient(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 	exhaustionMinutes := 240
@@ -222,6 +230,8 @@ func TestAcc_BurnAlertResource_exhaustionTimeBasicWebhookRecipient(t *testing.T)
 }
 
 func TestAcc_BurnAlertResource_budgetRateBasic(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
@@ -272,6 +282,8 @@ func TestAcc_BurnAlertResource_budgetRateBasic(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_budgetRateBasicWebhookRecipient(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 	budgetRateWindowMinutes := 60
@@ -315,6 +327,8 @@ func TestAcc_BurnAlertResource_budgetRateBasicWebhookRecipient(t *testing.T) {
 // budget_rate_decrease_percent with trailing zeros works,
 // doesn't produce spurious plans after apply, and imports successfully
 func TestAcc_BurnAlertResource_budgetRateTrailingZeros(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
@@ -354,6 +368,8 @@ func TestAcc_BurnAlertResource_budgetRateTrailingZeros(t *testing.T) {
 //
 // See: https://developer.hashicorp.com/terraform/plugin/framework/migrating/testing#testing-migration
 func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
@@ -392,6 +408,8 @@ func TestAcc_BurnAlertResourceUpgradeFromVersion015(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_validateDefault(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 
 	resource.Test(t, resource.TestCase{
@@ -420,6 +438,8 @@ func TestAcc_BurnAlertResource_validateDefault(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_validateExhaustionTime(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 
 	resource.Test(t, resource.TestCase{
@@ -452,6 +472,8 @@ func TestAcc_BurnAlertResource_validateExhaustionTime(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_validateBudgetRate(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 
 	budgetRateWindowMinutes := 60
@@ -499,6 +521,8 @@ func TestAcc_BurnAlertResource_validateBudgetRate(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_validateRequiresRecipient(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 
 	budgetRateWindowMinutes := 60
@@ -524,6 +548,8 @@ func TestAcc_BurnAlertResource_validateRequiresRecipient(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_validateUnknownOrVariableAttributesExhaustionTime(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
@@ -543,6 +569,8 @@ func TestAcc_BurnAlertResource_validateUnknownOrVariableAttributesExhaustionTime
 // Checks to ensure that if a Burn Alert was removed from Honeycomb outside of Terraform (UI or API)
 // that it is detected and planned for recreation.
 func TestAcc_BurnAlertResource_recreateOnNotFound(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
 
@@ -573,6 +601,8 @@ func TestAcc_BurnAlertResource_recreateOnNotFound(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_HandlesRecipientChangedOutsideOfTerraform(t *testing.T) {
+	t.Parallel()
+
 	c := testAccClient(t)
 	ctx := context.Background()
 	dataset, sloID := burnAlertAccTestSetup(t)
@@ -613,6 +643,8 @@ func TestAcc_BurnAlertResource_HandlesRecipientChangedOutsideOfTerraform(t *test
 
 // ensures no type error when using a dynamic recipient block
 func TestAcc_BurnAlertResource_HandlesDynamicRecipientBlock(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 
 	resource.Test(t, resource.TestCase{
@@ -630,6 +662,8 @@ func TestAcc_BurnAlertResource_HandlesDynamicRecipientBlock(t *testing.T) {
 }
 
 func TestAcc_BurnAlertResource_HandlesDescriptionSetToEmptyString(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	dataset, sloID := burnAlertAccTestSetup(t)
 	burnAlert := &client.BurnAlert{}
@@ -915,6 +949,8 @@ func testAccEnsureBurnAlertDestroyed(t *testing.T) resource.TestCheckFunc {
 }
 
 func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
+	t.Parallel()
+
 	_, sloID := burnAlertAccTestSetup(t)
 	c := testAccClient(t)
 
@@ -966,6 +1002,14 @@ func TestAcc_BurnAlertResource_MDBasic(t *testing.T) {
 			},
 		},
 	})
+}
+
+// testAccPagerDutyKey returns a PagerDuty integration key unique to the SLO.
+// PagerDuty recipients are unique per team by key, so tests running in
+// parallel can't share one, yet each test needs the same key across its steps.
+func testAccPagerDutyKey(sloID string) string {
+	sum := sha256.Sum256([]byte(sloID))
+	return hex.EncodeToString(sum[:16])
 }
 
 func burnAlertAccTestSetup(t *testing.T) (string, string) {
@@ -1041,6 +1085,8 @@ func getNewDatasetAndSLO(t *testing.T) (string, string) {
 }
 
 func TestAcc_BurnAlertResource_autoInvestigate(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 
 	resource.Test(t, resource.TestCase{
@@ -1098,6 +1144,8 @@ resource "honeycombio_burn_alert" "test" {
 }
 
 func TestAcc_BurnAlertResource_autoInvestigateNoDiffOnUpgrade(t *testing.T) {
+	t.Parallel()
+
 	dataset, sloID := burnAlertAccTestSetup(t)
 
 	resource.Test(t, resource.TestCase{
@@ -1137,7 +1185,7 @@ resource "honeycombio_burn_alert" "test" {
 func testAccConfigBurnAlert_withoutDescription(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_key  = "%[5]s"
   integration_name = "test.pd-basic"
 }
 
@@ -1153,7 +1201,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[4]s"
     }
   }
-}`, exhaustionMinutes, dataset, sloID, pdseverity)
+}`, exhaustionMinutes, dataset, sloID, pdseverity, testAccPagerDutyKey(sloID))
 }
 
 func testAccConfigBurnAlertDefault_basic(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
@@ -1166,7 +1214,7 @@ func testAccConfigBurnAlertDefault_basic(exhaustionMinutes int, dataset, sloID, 
 		EOT`
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_key  = "%[7]s"
   integration_name = "test.pd-basic"
 }
 
@@ -1184,13 +1232,13 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[4]s"
     }
   }
-}`, exhaustionMinutes, dataset, sloID, pdseverity, testBADescription, tmplBody)
+}`, exhaustionMinutes, dataset, sloID, pdseverity, testBADescription, tmplBody, testAccPagerDutyKey(sloID))
 }
 
 func testAccConfigBurnAlertDefault_MD(exhaustionMinutes int, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_key  = "%[5]s"
   integration_name = "test.pd-basic"
 }
 
@@ -1207,7 +1255,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[3]s"
     }
   }
-}`, exhaustionMinutes, sloID, pdseverity, testBADescription)
+}`, exhaustionMinutes, sloID, pdseverity, testBADescription, testAccPagerDutyKey(sloID))
 }
 
 func testAccConfigBurnAlertExhaustionTime_basicWebhookRecipient(exhaustionMinutes int, dataset, sloID, rcptName, rcptURL, variableValue string) string {
@@ -1369,7 +1417,7 @@ resource "honeycombio_burn_alert" "test" {
 func testAccConfigBurnAlertExhaustionTime_basic(exhaustionMinutes int, dataset, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_key  = "%[6]s"
   integration_name = "test.pd-basic"
 }
 
@@ -1388,7 +1436,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[4]s"
     }
   }
-}`, exhaustionMinutes, dataset, sloID, pdseverity, testBADescription)
+}`, exhaustionMinutes, dataset, sloID, pdseverity, testBADescription, testAccPagerDutyKey(sloID))
 }
 
 func testAccConfigBurnAlertExhaustionTime_validateAttributesWhenAlertTypeIsExhaustionTime(dataset, sloID string) string {
@@ -1411,7 +1459,7 @@ resource "honeycombio_burn_alert" "test" {
 func testAccConfigBurnAlertBudgetRate_basic(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_key  = "%[7]s"
   integration_name = "test.pd-basic"
 }
 
@@ -1431,7 +1479,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[5]s"
     }
   }
-}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, pdseverity, testBADescription)
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), dataset, sloID, pdseverity, testBADescription, testAccPagerDutyKey(sloID))
 }
 
 func testAccConfigBurnAlertBudgetRate_noRecipient(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID string) string {
@@ -1472,7 +1520,7 @@ resource "honeycombio_burn_alert" "test" {
 func testAccConfigBurnAlertBudgetRate_basic_dataset_deprecation(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_key  = "%[6]s"
   integration_name = "test.pd-basic"
 }
 
@@ -1491,13 +1539,13 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[4]s"
     }
   }
-}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), sloID, pdseverity, testBADescription)
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), sloID, pdseverity, testBADescription, testAccPagerDutyKey(sloID))
 }
 
 func testAccConfigBurnAlertBudgetRate_MD(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, sloID, pdseverity string) string {
 	return fmt.Sprintf(`
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_key  = "%[6]s"
   integration_name = "test.pd-basic"
 }
 
@@ -1516,7 +1564,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "%[4]s"
     }
   }
-}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), sloID, pdseverity, testBADescription)
+}`, budgetRateWindowMinutes, helper.FloatToPercentString(budgetRateDecreasePercent), sloID, pdseverity, testBADescription, testAccPagerDutyKey(sloID))
 }
 
 func testAccConfigBurnAlertBudgetRate_basicWebhookRecipient(budgetRateWindowMinutes int, budgetRateDecreasePercent float64, dataset, sloID, variableValue, rcptName, rcptURL string) string {
@@ -1717,7 +1765,7 @@ variable "exhaustion_minutes" {
 }
 
 resource "honeycombio_pagerduty_recipient" "test" {
-  integration_key  = "08b9d4cacd68933151a1ef1028b67da2"
+  integration_key  = "%[4]s"
   integration_name = "test.pd-basic"
 }
 
@@ -1735,7 +1783,7 @@ resource "honeycombio_burn_alert" "test" {
       pagerduty_severity = "info"
     }
   }
-}`, dataset, sloID, testBADescription)
+}`, dataset, sloID, testBADescription, testAccPagerDutyKey(sloID))
 }
 
 func testAccConfigBurnAlertWithSlackRecipient(dataset, sloID, channel string) string {

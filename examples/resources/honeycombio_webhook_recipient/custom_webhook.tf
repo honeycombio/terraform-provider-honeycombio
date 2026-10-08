@@ -23,6 +23,19 @@ resource "honeycombio_webhook_recipient" "prod" {
 		EOT
   }
     
+  template {
+    type = "anomaly"
+    body = <<EOT
+		{
+			"service": "{{ .ServiceName }}",
+			"signal": "{{ .SignalType }}",
+			"status": "{{ .Alert.Status }}",
+			"peak": {{ toJson .Anomaly.PeakValue }},
+			"duration": {{ toJson .Anomaly.Duration }}
+		}
+		EOT
+  }
+
   variable {
       name          = "severity"
       default_value = "critical"

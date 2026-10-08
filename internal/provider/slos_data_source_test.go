@@ -11,9 +11,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test/fixture"
 )
 
 func TestAcc_SLOsDataSource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 	dataset := testAccDataset()
@@ -215,9 +218,12 @@ data "honeycombio_slos" "combined_operators" {
 
 // Test specifically for filter groups
 func TestAcc_SLOsDataSource_FilterGroups(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
-	dataset := testAccDataset()
+	// filters on targets and tags would also match other tests' SLOs in the shared dataset
+	dataset := fixture.NewDataset(ctx, t, c)
 	testPrefix := acctest.RandString(8)
 
 	testData := []struct {
@@ -364,9 +370,12 @@ data "honeycombio_slos" "complex_filter" {
 
 // Test for SLO filtering by tags
 func TestAcc_SLOsDataSource_TagFiltering(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
-	dataset := testAccDataset()
+	// filters on targets and tags would also match other tests' SLOs in the shared dataset
+	dataset := fixture.NewDataset(ctx, t, c)
 	testPrefix := acctest.RandString(8)
 
 	testData := []struct {

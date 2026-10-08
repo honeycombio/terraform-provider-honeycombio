@@ -28,40 +28,57 @@ func (m notificationRecipientsModifier) PlanModifySet(ctx context.Context, req p
 	if req.Plan.Raw.IsNull() {
 		return
 	}
-
-	var plan models.TriggerResourceModel
-	req.Plan.Get(ctx, &plan)
+	// Nothing to reconcile against on create.
+	if req.StateValue.IsNull() {
+		return
+	}
+	// An unknown set (a dynamic block over an unknown for_each, say) has no elements to
+	// normalize, and decoding one into the model is an error.
+	if req.PlanValue.IsUnknown() {
+		return
+	}
 
 	var rcpts []models.NotificationRecipientModel
-	req.Plan.GetAttribute(ctx, path.Root("recipient"), &rcpts)
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("recipient"), &rcpts)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	// manage null values properly based on the type of recipient
-	if !req.StateValue.IsNull() {
-		for i, r := range rcpts {
-			if r.ID.IsUnknown() && r.Type.IsUnknown() {
-				// likely dependant on creation of another resource
-				continue
-			}
-			if r.ID.IsUnknown() && !r.Type.IsUnknown() {
-				// specified by type and target
-				r.ID = types.StringNull()
-				if r.Type.ValueString() == string(client.RecipientTypePagerDuty) {
-					// PagerDuty recipients do not have a target
-					r.Target = types.StringNull()
-				}
-			}
-			if !r.ID.IsUnknown() && r.Type.IsUnknown() {
-				// specified by ID
-				r.Type = types.StringNull()
-				r.Target = types.StringNull()
-			}
+	for i := range rcpts {
+		normalizeRecipientIdentity(&rcpts[i])
+	}
 
-			rcpts[i] = r
+	updated, diag := types.SetValueFrom(ctx, req.PlanValue.ElementType(ctx), rcpts)
+	resp.Diagnostics.Append(diag...)
+	resp.PlanValue = updated
+}
+
+// normalizeRecipientIdentity resolves the "specified by ID" versus "specified by
+// type+target" distinction in place, nulling whichever attributes do not apply. This keeps
+// the planned recipient consistent with what the API will return for it.
+//
+// A recipient that is still wholly unknown -- likely dependent on the creation of another
+// resource -- is left alone.
+//
+// Shared by the notification recipient plan modifiers so that the Trigger fork and the base
+// block cannot drift apart on this logic.
+func normalizeRecipientIdentity(r *models.NotificationRecipientModel) {
+	if r.ID.IsUnknown() && r.Type.IsUnknown() {
+		return
+	}
+	if r.ID.IsUnknown() && !r.Type.IsUnknown() {
+		// specified by type and target
+		r.ID = types.StringNull()
+		if r.Type.ValueString() == string(client.RecipientTypePagerDuty) {
+			// PagerDuty recipients do not have a target
+			r.Target = types.StringNull()
 		}
-
-		updated, diag := types.SetValueFrom(ctx, req.PlanValue.ElementType(ctx), rcpts)
-		resp.Diagnostics.Append(diag...)
-		resp.PlanValue = updated
+	}
+	if !r.ID.IsUnknown() && r.Type.IsUnknown() {
+		// specified by ID
+		r.Type = types.StringNull()
+		r.Target = types.StringNull()
 	}
 }
 

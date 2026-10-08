@@ -15,6 +15,8 @@ import (
 )
 
 func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	dataset := testAccDataset()
 	c := testAccClient(t)
@@ -31,10 +33,12 @@ func TestAccDataSourceHoneycombioTriggerRecipient_basic(t *testing.T) {
 			Op:    honeycombio.TriggerThresholdOpGreaterThan,
 			Value: 100,
 		},
-		Recipients: []honeycombio.NotificationRecipient{
+		Recipients: []honeycombio.TriggerNotificationRecipient{
 			{
-				Type:   honeycombio.RecipientTypeEmail,
-				Target: randomEmail,
+				NotificationRecipient: honeycombio.NotificationRecipient{
+					Type:   honeycombio.RecipientTypeEmail,
+					Target: randomEmail,
+				},
 			},
 		},
 	})

@@ -90,6 +90,7 @@ type PayloadTemplates struct {
 	Trigger        *PayloadTemplate `json:"trigger,omitempty"`
 	ExhaustionTime *PayloadTemplate `json:"exhaustion_time,omitempty"`
 	BudgetRate     *PayloadTemplate `json:"budget_rate,omitempty"`
+	Anomaly        *PayloadTemplate `json:"anomaly,omitempty"`
 }
 
 type PayloadTemplate struct {

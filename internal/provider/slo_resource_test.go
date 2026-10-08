@@ -19,6 +19,8 @@ import (
 )
 
 func TestAccHoneycombioSLO_basic(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 	slo := &client.SLO{}
 
@@ -113,9 +115,78 @@ resource "honeycombio_slo" "test" {
 	})
 }
 
+func TestAccHoneycombioSLO_EmptyDescription(t *testing.T) {
+	t.Parallel()
+
+	dataset, sliAlias := sloAccTestSetup(t)
+	slo := &client.SLO{}
+
+	config := func(description string) string {
+		return fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO"
+  %s
+  dataset           = "%s"
+  sli               = "%s"
+  target_percentage = 99.95
+  time_period       = 30
+}`, description, dataset, sliAlias)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		Steps: []resource.TestStep{
+			{ // create without a description
+				Config: config(""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", ""),
+				),
+			},
+			{ // add a description
+				Config: config(`description = "integration test SLO"`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", "integration test SLO"),
+				),
+			},
+			{ // remove the description
+				Config: config(""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckSLOExists(t, "honeycombio_slo.test", slo),
+					resource.TestCheckResourceAttr("honeycombio_slo.test", "description", ""),
+					func(_ *terraform.State) error {
+						if slo.Description != "" {
+							return fmt.Errorf("expected remote description to be cleared, got %q", slo.Description)
+						}
+						return nil
+					},
+				),
+			},
+			{ // an explicit empty description is equivalent to omitting it
+				Config: config(`description = ""`),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectEmptyPlan(),
+					},
+				},
+			},
+			{
+				ResourceName:        "honeycombio_slo.test",
+				ImportStateIdPrefix: fmt.Sprintf("%s/", dataset),
+				ImportState:         true,
+				ImportStateVerify:   true,
+			},
+		},
+	})
+}
+
 // Checks to ensure that if an SLO was removed from Honeycomb outside of Terraform (UI or API)
 // that it is detected and planned for recreation.
 func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 	slo := &client.SLO{}
 
@@ -144,6 +215,8 @@ func TestAccHoneycombioSLO_RecreateOnNotFound(t *testing.T) {
 }
 
 func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 	slo := &client.SLO{}
 
@@ -178,6 +251,8 @@ func TestAccHoneycombioSLO_dataset_deprecation(t *testing.T) {
 }
 
 func TestAccHoneycombSLO_MD(t *testing.T) {
+	t.Parallel()
+
 	c := testAccClient(t)
 	if c.IsClassic(context.Background()) {
 		t.Skip("MD SLOs are not supported in classic")
@@ -220,6 +295,8 @@ func TestAccHoneycombSLO_MD(t *testing.T) {
 }
 
 func TestAccHoneycombioSLO_UpgradeFromSDK(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 	slo := &client.SLO{}
 
@@ -281,7 +358,51 @@ func TestAccHoneycombioSLO_UpgradeFromSDK(t *testing.T) {
 	})
 }
 
+// Versions up to 0.54.0 failed to apply an SLO without a description (#902).
+// That failure leaves the SLO tainted in state, so the first apply after
+// upgrading replaces it once and then converges.
+func TestAccHoneycombioSLO_UpgradeFromEmptyDescriptionBug(t *testing.T) {
+	t.Parallel()
+
+	dataset, sliAlias := sloAccTestSetup(t)
+	config := fmt.Sprintf(`
+resource "honeycombio_slo" "test" {
+  name              = "TestAcc SLO Upgrade"
+  dataset           = "%s"
+  sli               = "%s"
+  target_percentage = 99.95
+  time_period       = 30
+}`, dataset, sliAlias)
+
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"honeycombio": {
+						VersionConstraint: "0.54.0",
+						Source:            "honeycombio/honeycombio",
+					},
+				},
+				Config:      config,
+				ExpectError: regexp.MustCompile(`inconsistent result after apply`),
+			},
+			{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+				Config:                   config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("honeycombio_slo.test", plancheck.ResourceActionReplace),
+					},
+				},
+				Check: resource.TestCheckResourceAttr("honeycombio_slo.test", "description", ""),
+			},
+		},
+	})
+}
+
 func TestAccHoneycombioSLO_DatasetConstraint(t *testing.T) {
+	t.Parallel()
+
 	dataset, sliAlias := sloAccTestSetup(t)
 
 	resource.Test(t, resource.TestCase{
@@ -318,6 +439,8 @@ func TestAccHoneycombioSLO_DatasetConstraint(t *testing.T) {
 }
 
 func TestAccHoneycombioSLO_Update(t *testing.T) {
+	t.Parallel()
+
 	c := testAccClient(t)
 	if c.IsClassic(context.Background()) {
 		t.Skip("Multi-dataset SLOs are not supported in classic")

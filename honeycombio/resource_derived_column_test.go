@@ -12,6 +12,8 @@ import (
 )
 
 func TestAccHoneycombioDerivedColumn_basic(t *testing.T) {
+	t.Parallel()
+
 	dataset := testAccDataset()
 	alias := test.RandomStringWithPrefix("test.", 10)
 
@@ -130,6 +132,8 @@ EOF
 }
 
 func TestAccHoneycombioDerivedColumn_AllToUnset(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccClient(t)
 

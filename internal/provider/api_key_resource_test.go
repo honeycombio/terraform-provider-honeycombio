@@ -5,11 +5,17 @@ import (
 	"fmt"
 	"testing"
 
+	tfresource "github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAcc_APIKeyResource(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
 	c := testAccV2Client(t)
 	env := testAccEnvironment(ctx, t, c)
@@ -172,6 +178,107 @@ resource "honeycombio_api_key" "test_configuration" {
 			},
 		})
 	})
+}
+
+func TestAcc_APIKeyResource_upgradeFromVersion050_0(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := testAccV2Client(t)
+	env := testAccEnvironment(ctx, t, c)
+
+	config := testAccConfigIngestAPIKeyTest("test key", "false", env.ID)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: testAccPreCheckV2API(t),
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"honeycombio": {
+						VersionConstraint: "0.50.0",
+						Source:            "honeycombio/honeycombio",
+					},
+				},
+				Config: config,
+				Check:  testAccEnsureAPIKeyExists(t, "honeycombio_api_key.test"),
+			},
+			{
+				ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+				Config:                   config,
+				PlanOnly:                 true,
+			},
+		},
+	})
+}
+
+func TestAPIKeyResource_UpgradeStateV0(t *testing.T) {
+	t.Parallel()
+
+	const configKey = `{"id":"hcxlk_01","name":"k","type":"configuration","environment_id":"hcaen_01",
+		"disabled":false,"visible_to_members":true,"key":"s","secret":"s",
+		"permissions":[{"send_events":true,"create_datasets":false,"manage_queries":false,
+		"run_queries":false,"read_service_maps":false,"manage_public_boards":false,
+		"manage_private_boards":false,"manage_slos":true,"manage_triggers":false,
+		"manage_recipients":false,"manage_markers":false}]}`
+
+	tests := []struct {
+		name, state, want string
+	}{
+		{
+			name: "v0.50.0 ingest key backfills false permissions",
+			state: `{"id":"hcaik_01","name":"k","type":"ingest","environment_id":"hcaen_01",
+				"disabled":false,"key":"hcaik_01s","secret":"s",
+				"permissions":[{"create_datasets":true}]}`,
+			want: `{"id":"hcaik_01","name":"k","type":"ingest","environment_id":"hcaen_01",
+				"disabled":false,"visible_to_members":false,"key":"hcaik_01s","secret":"s",
+				"permissions":[{"send_events":false,"create_datasets":true,"manage_queries":false,
+				"run_queries":false,"read_service_maps":false,"manage_public_boards":false,
+				"manage_private_boards":false,"manage_slos":false,"manage_triggers":false,
+				"manage_recipients":false,"manage_markers":false}]}`,
+		},
+		{
+			name: "v0.50.0 ingest key without permissions",
+			state: `{"id":"hcaik_01","name":"k","type":"ingest","environment_id":"hcaen_01",
+				"disabled":false,"key":"hcaik_01s","secret":"s","permissions":[]}`,
+			want: `{"id":"hcaik_01","name":"k","type":"ingest","environment_id":"hcaen_01",
+				"disabled":false,"visible_to_members":false,"key":"hcaik_01s","secret":"s",
+				"permissions":[]}`,
+		},
+		{
+			name:  "v0.51.0+ configuration key is left untouched",
+			state: configKey,
+			want:  configKey,
+		},
+	}
+
+	ctx := context.Background()
+	var schemaResp tfresource.SchemaResponse
+	(&apiKeyResource{}).Schema(ctx, tfresource.SchemaRequest{}, &schemaResp)
+	typ := schemaResp.Schema.Type().TerraformType(ctx)
+
+	server, err := testAccProtoV6ProviderFactory["honeycombio"]()
+	require.NoError(t, err)
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			resp, err := server.UpgradeResourceState(ctx, &tfprotov6.UpgradeResourceStateRequest{
+				TypeName: "honeycombio_api_key",
+				Version:  0,
+				RawState: &tfprotov6.RawState{JSON: []byte(tc.state)},
+			})
+			require.NoError(t, err)
+			require.Empty(t, resp.Diagnostics)
+
+			got, err := resp.UpgradedState.Unmarshal(typ)
+			require.NoError(t, err)
+			want, err := tftypes.ValueFromJSONWithOpts([]byte(tc.want), typ, tftypes.ValueFromJSONOpts{})
+			require.NoError(t, err)
+
+			diffs, err := want.Diff(got)
+			require.NoError(t, err)
+			require.Empty(t, diffs)
+		})
+	}
 }
 
 func testAccConfigIngestAPIKeyTest(name, disabled, envID string) string {

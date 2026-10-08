@@ -220,10 +220,11 @@ func (p *HoneycombioProvider) Configure(ctx context.Context, req provider.Config
 
 	if initv1Client {
 		client, err := client.NewClientWithConfig(&client.Config{
-			APIKey:    apiKey,
-			APIUrl:    config.APIUrl.ValueString(),
-			Debug:     debug,
-			UserAgent: userAgent,
+			APIKey:      apiKey,
+			APIUrl:      config.APIUrl.ValueString(),
+			Debug:       debug,
+			UserAgent:   userAgent,
+			ReadCaching: parsedFeatures.Client.ReadCaching,
 		})
 		if helper.AddDiagnosticOnError(&resp.Diagnostics, "Unable to create Honeycomb API V1 Client", err) {
 			return
