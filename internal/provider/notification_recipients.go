@@ -217,27 +217,60 @@ func reconcileReadNotificationRecipientState(ctx context.Context, remote []clien
 	return result
 }
 
-func expandNotificationRecipients(ctx context.Context, set types.Set, diags *diag.Diagnostics) []client.NotificationRecipient {
+// expandNotificationRecipients converts the planned recipients to their client type.
+//
+// The API keeps a recipient's stored variables when an update omits them, so a
+// recipient whose prior state has variables that the plan does not is sent an
+// explicitly empty list to clear them.
+func expandNotificationRecipients(ctx context.Context, set, prior types.Set, diags *diag.Diagnostics) []client.NotificationRecipient {
 	var recipients []models.NotificationRecipientModel
 	diags.Append(set.ElementsAs(ctx, &recipients, false)...)
 	if diags.HasError() {
 		return nil
 	}
-
-	clientRecips := make([]client.NotificationRecipient, len(recipients))
-	for i, r := range recipients {
-		clientRecips[i] = expandNotificationRecipient(ctx, r, diags)
+	var priorRecipients []models.NotificationRecipientModel
+	if !prior.IsNull() && !prior.IsUnknown() {
+		diags.Append(prior.ElementsAs(ctx, &priorRecipients, false)...)
 		if diags.HasError() {
 			return nil
 		}
-		// Omitting details leaves any existing details in place, so send an
-		// empty object to clear details that were removed from the config.
-		if clientRecips[i].Details == nil {
-			clientRecips[i].Details = &client.NotificationRecipientDetails{}
+	}
+
+	clientRecips := make([]client.NotificationRecipient, len(recipients))
+	for i, r := range recipients {
+		rcpt := expandNotificationRecipient(ctx, r, diags)
+		if diags.HasError() {
+			return nil
 		}
+		if (rcpt.Details == nil || rcpt.Details.Variables == nil) && priorRecipientHasVariables(ctx, priorRecipients, rcpt, diags) {
+			if rcpt.Details == nil {
+				rcpt.Details = &client.NotificationRecipientDetails{}
+			}
+			rcpt.Details.Variables = []client.NotificationVariable{}
+		}
+		clientRecips[i] = rcpt
 	}
 
 	return clientRecips
+}
+
+// priorRecipientHasVariables reports whether the recipient matching r in prior has
+// any notification variables.
+func priorRecipientHasVariables(ctx context.Context, prior []models.NotificationRecipientModel, r client.NotificationRecipient, diags *diag.Diagnostics) bool {
+	idx := slices.IndexFunc(prior, func(p models.NotificationRecipientModel) bool {
+		if r.ID != "" {
+			return p.ID.ValueString() == r.ID
+		}
+		return p.Type.ValueString() == string(r.Type) && p.Target.ValueString() == r.Target
+	})
+	if idx < 0 || prior[idx].Details.IsNull() || prior[idx].Details.IsUnknown() {
+		return false
+	}
+
+	var details []models.NotificationRecipientDetailsModel
+	diags.Append(prior[idx].Details.ElementsAs(ctx, &details, false)...)
+
+	return len(details) > 0 && len(details[0].Variables.Elements()) > 0
 }
 
 // expandNotificationRecipient converts a single recipient model to its client type. It is
@@ -387,7 +420,8 @@ func flattenNotificationVariables(ctx context.Context, vars []client.Notificatio
 func expandNotificationVariables(ctx context.Context, set types.Set, diags *diag.Diagnostics) []client.NotificationVariable {
 	var notifVars []models.NotificationVariableModel
 	diags.Append(set.ElementsAs(ctx, &notifVars, false)...)
-	if diags.HasError() {
+	if diags.HasError() || len(notifVars) == 0 {
+		// nil leaves any stored variables unchanged; an empty slice would clear them
 		return nil
 	}
 

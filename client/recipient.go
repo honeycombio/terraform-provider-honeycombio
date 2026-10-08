@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -79,6 +80,21 @@ type NotificationVariable struct {
 type NotificationRecipientDetails struct {
 	Variables  []NotificationVariable `json:"variables,omitempty"`
 	PDSeverity PagerDutySeverity      `json:"pagerduty_severity,omitempty"`
+}
+
+// MarshalJSON sends a non-nil, empty Variables as "variables": [], which
+// clears any stored variables on update. A nil Variables is omitted, which
+// leaves stored variables unchanged.
+func (d NotificationRecipientDetails) MarshalJSON() ([]byte, error) {
+	type details NotificationRecipientDetails
+	if d.Variables == nil || len(d.Variables) > 0 {
+		return json.Marshal(details(d))
+	}
+
+	return json.Marshal(struct {
+		details
+		Variables []NotificationVariable `json:"variables"`
+	}{details: details(d), Variables: d.Variables})
 }
 
 type WebhookPayloads struct {

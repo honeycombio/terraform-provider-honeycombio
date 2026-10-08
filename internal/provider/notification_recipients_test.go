@@ -329,24 +329,43 @@ func notificationRecipientDetailsWithVariablesToList(variables ...client.Notific
 }
 
 func Test_expandNotificationRecipients(t *testing.T) {
-	var diags diag.Diagnostics
-	got := expandNotificationRecipients(context.Background(), notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+	withVariables := notificationRecipientDetailsWithVariablesToList(client.NotificationVariable{Name: "severity", Value: "warning"})
+	plan := notificationRecipientModelsToSet([]models.NotificationRecipientModel{
 		{ID: types.StringValue("abcd12345")},
-		{
-			ID:      types.StringValue("efgh67890"),
-			Details: notificationRecipientDetailsWithVariablesToList(client.NotificationVariable{Name: "severity", Value: "warning"}),
-		},
-	}), &diags)
+		{ID: types.StringValue("efgh67890"), Details: withVariables},
+		{ID: types.StringValue("ijkl13579")},
+		{Type: types.StringValue("webhook"), Target: types.StringValue("test-webhook")},
+	})
 
-	assert.Empty(t, diags)
-	assert.ElementsMatch(t, []client.NotificationRecipient{
-		// recipients without details send an empty object to clear any existing details
-		{ID: "abcd12345", Details: &client.NotificationRecipientDetails{}},
-		{
-			ID: "efgh67890",
-			Details: &client.NotificationRecipientDetails{
-				Variables: []client.NotificationVariable{{Name: "severity", Value: "warning"}},
-			},
-		},
-	}, got)
+	t.Run("no prior state", func(t *testing.T) {
+		var diags diag.Diagnostics
+		got := expandNotificationRecipients(context.Background(), plan, types.SetNull(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}), &diags)
+
+		assert.Empty(t, diags)
+		assert.ElementsMatch(t, []client.NotificationRecipient{
+			{ID: "abcd12345"},
+			{ID: "efgh67890", Details: &client.NotificationRecipientDetails{Variables: []client.NotificationVariable{{Name: "severity", Value: "warning"}}}},
+			{ID: "ijkl13579"},
+			{Type: client.RecipientTypeWebhook, Target: "test-webhook"},
+		}, got)
+	})
+
+	t.Run("variables removed from config are cleared", func(t *testing.T) {
+		var diags diag.Diagnostics
+		prior := notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+			{ID: types.StringValue("abcd12345"), Details: withVariables},
+			{ID: types.StringValue("efgh67890"), Details: withVariables},
+			{ID: types.StringValue("ijkl13579")},
+			{Type: types.StringValue("webhook"), Target: types.StringValue("test-webhook"), Details: withVariables},
+		})
+		got := expandNotificationRecipients(context.Background(), plan, prior, &diags)
+
+		assert.Empty(t, diags)
+		assert.ElementsMatch(t, []client.NotificationRecipient{
+			{ID: "abcd12345", Details: &client.NotificationRecipientDetails{Variables: []client.NotificationVariable{}}},
+			{ID: "efgh67890", Details: &client.NotificationRecipientDetails{Variables: []client.NotificationVariable{{Name: "severity", Value: "warning"}}}},
+			{ID: "ijkl13579"},
+			{Type: client.RecipientTypeWebhook, Target: "test-webhook", Details: &client.NotificationRecipientDetails{Variables: []client.NotificationVariable{}}},
+		}, got)
+	})
 }
