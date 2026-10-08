@@ -327,3 +327,26 @@ func notificationRecipientDetailsWithVariablesToList(variables ...client.Notific
 
 	return types.ListValueMust(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, []attr.Value{details})
 }
+
+func Test_expandNotificationRecipients(t *testing.T) {
+	var diags diag.Diagnostics
+	got := expandNotificationRecipients(context.Background(), notificationRecipientModelsToSet([]models.NotificationRecipientModel{
+		{ID: types.StringValue("abcd12345")},
+		{
+			ID:      types.StringValue("efgh67890"),
+			Details: notificationRecipientDetailsWithVariablesToList(client.NotificationVariable{Name: "severity", Value: "warning"}),
+		},
+	}), &diags)
+
+	assert.Empty(t, diags)
+	assert.ElementsMatch(t, []client.NotificationRecipient{
+		// recipients without details send an empty object to clear any existing details
+		{ID: "abcd12345", Details: &client.NotificationRecipientDetails{}},
+		{
+			ID: "efgh67890",
+			Details: &client.NotificationRecipientDetails{
+				Variables: []client.NotificationVariable{{Name: "severity", Value: "warning"}},
+			},
+		},
+	}, got)
+}

@@ -230,6 +230,11 @@ func expandNotificationRecipients(ctx context.Context, set types.Set, diags *dia
 		if diags.HasError() {
 			return nil
 		}
+		// Omitting details leaves any existing details in place, so send an
+		// empty object to clear details that were removed from the config.
+		if clientRecips[i].Details == nil {
+			clientRecips[i].Details = &client.NotificationRecipientDetails{}
+		}
 	}
 
 	return clientRecips
