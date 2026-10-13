@@ -18,7 +18,7 @@ require (
 	github.com/honeycombio/honeycomb-derived-column-validator v0.2.0
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/sync v0.23.0
+	golang.org/x/sync v0.24.0
 )
 
 require (
