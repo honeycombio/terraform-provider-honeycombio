@@ -285,7 +285,7 @@ func (r *burnAlertResource) Create(ctx context.Context, req resource.CreateReque
 	// Get attributes from config and construct the create request
 	createRequest := &client.BurnAlert{
 		AlertType:   client.BurnAlertAlertType(plan.AlertType.ValueString()),
-		Recipients:  expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
+		Recipients:  expandNotificationRecipients(ctx, plan.Recipients, types.SetNull(types.ObjectType{AttrTypes: models.NotificationRecipientAttrType}), &resp.Diagnostics),
 		SLO:         client.SLORef{ID: plan.SLOID.ValueString()},
 		Description: plan.Description.ValueString(),
 	}
@@ -410,10 +410,11 @@ func (r *burnAlertResource) Read(ctx context.Context, req resource.ReadRequest, 
 }
 
 func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan, config models.BurnAlertResourceModel
-	// Read in the config and plan data
+	var plan, config, prior models.BurnAlertResourceModel
+	// Read in the config, plan, and prior state data
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -432,7 +433,7 @@ func (r *burnAlertResource) Update(ctx context.Context, req resource.UpdateReque
 	updateRequest := &client.BurnAlert{
 		ID:          plan.ID.ValueString(),
 		AlertType:   client.BurnAlertAlertType(plan.AlertType.ValueString()),
-		Recipients:  expandNotificationRecipients(ctx, plan.Recipients, &resp.Diagnostics),
+		Recipients:  expandNotificationRecipients(ctx, plan.Recipients, prior.Recipients, &resp.Diagnostics),
 		SLO:         client.SLORef{ID: plan.SLOID.ValueString()},
 		Description: plan.Description.ValueString(),
 	}
