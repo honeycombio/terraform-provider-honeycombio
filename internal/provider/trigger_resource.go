@@ -39,6 +39,7 @@ var (
 	_ resource.ResourceWithConfigure      = &triggerResource{}
 	_ resource.ResourceWithImportState    = &triggerResource{}
 	_ resource.ResourceWithValidateConfig = &triggerResource{}
+	_ resource.ResourceWithModifyPlan     = &triggerResource{}
 )
 
 func NewTriggerResource() resource.Resource {
@@ -641,6 +642,55 @@ func (r *triggerResource) ImportState(ctx context.Context, req resource.ImportSt
 	resp.State.SetAttribute(ctx, path.Root("query_id"), types.StringNull()) // favor query_json on import
 
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+// ModifyPlan reports a metrics Trigger whose query omits granularity, which the API rejects on create.
+//
+// A query created by the same apply has an unknown id, so its granularity cannot be read
+// here and that case still fails at apply.
+func (r *triggerResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if !req.State.Raw.IsNull() || r.client == nil {
+		return
+	}
+
+	var data models.TriggerResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() || data.Dataset.IsNull() || data.Dataset.IsUnknown() {
+		return
+	}
+	dataset := data.Dataset.ValueString()
+
+	var q *client.QuerySpec
+	attr := path.Root("query_json")
+	switch {
+	case !data.QueryJson.IsNull() && !data.QueryJson.IsUnknown():
+		var parsed client.QuerySpec
+		if err := json.Unmarshal([]byte(data.QueryJson.ValueString()), &parsed); err != nil {
+			return // ValidateConfig reports the parse failure.
+		}
+		q = &parsed
+	case !data.QueryID.IsNull() && !data.QueryID.IsUnknown():
+		attr = path.Root("query_id")
+		q, _ = r.client.Queries.Get(ctx, dataset, data.QueryID.ValueString())
+	}
+
+	if q == nil || (q.Granularity != nil && *q.Granularity != 0) {
+		return
+	}
+
+	ds, err := r.client.Datasets.Get(ctx, dataset)
+	if err != nil {
+		ds, err = r.client.Datasets.GetByName(ctx, dataset)
+	}
+	if err != nil || ds == nil || ds.DatasetType != client.DatasetTypeMetrics {
+		return
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		attr,
+		"Trigger validation error",
+		"A Trigger on a metrics Dataset must set a query granularity.",
+	)
 }
 
 func (r *triggerResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
