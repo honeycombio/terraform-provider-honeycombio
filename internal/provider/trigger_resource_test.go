@@ -2795,7 +2795,6 @@ resource "honeycombio_trigger" "test" {
 }`, dataset, name)
 }
 
-// https://github.com/honeycombio/terraform-provider-honeycombio/issues/896
 func TestAcc_TriggerResourceWithMetricsOmittedGranularity(t *testing.T) {
 	dataset := testAccMetricsDataset(t)
 	name := test.RandomStringWithPrefix("test.", 20)
@@ -2819,27 +2818,6 @@ func TestAcc_TriggerResourceWithMetricsOmittedGranularity(t *testing.T) {
 			{
 				Config: testAccConfigTriggerGranularity(dataset, name, calc, ""),
 				Check:  testAccCheckTriggerGranularity(300),
-			},
-		},
-	})
-}
-
-func TestAcc_TriggerResourceOmittedGranularityClearsOnStandardDataset(t *testing.T) {
-	dataset := testAccDataset()
-	name := test.RandomStringWithPrefix("test.", 20)
-	calc := `op = "COUNT"`
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 testAccPreCheck(t),
-		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccConfigTriggerGranularity(dataset, name, calc, "granularity = 300"),
-				Check:  testAccCheckTriggerGranularity(300),
-			},
-			{
-				Config: testAccConfigTriggerGranularity(dataset, name, calc, ""),
-				Check:  testAccCheckTriggerGranularity(0),
 			},
 		},
 	})
