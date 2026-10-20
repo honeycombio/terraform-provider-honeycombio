@@ -1,3 +1,14 @@
+# 0.55.2 (October 20, 2026)
+
+## Notes
+
+- Built with Go 1.27.3, which distrusts the eMudhra intermediate CAs whose keys were compromised (https://emudhra.we-have-a-problem.com/)
+
+## Housekeeping
+
+- maint(deps): bump goreleaser/goreleaser-action from 7.2.3 to 7.3.0 (#927)
+- maint: bump Go to 1.27.3 (#930)
+
 # 0.55.1 (September 28, 2026)
 
 ## Bugfixes
