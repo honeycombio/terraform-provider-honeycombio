@@ -30,7 +30,7 @@ func Strings(strings []string) string {
 	var buf bytes.Buffer
 
 	for _, s := range strings {
-		buf.WriteString(fmt.Sprintf("%s-", s))
+		fmt.Fprintf(&buf, "%s-", s)
 	}
 
 	return fmt.Sprintf("%d", String(buf.String()))
@@ -41,7 +41,7 @@ func StringValues(strings []types.String) string {
 	var buf bytes.Buffer
 
 	for _, s := range strings {
-		buf.WriteString(fmt.Sprintf("%s-", s.String()))
+		fmt.Fprintf(&buf, "%s-", s.String())
 	}
 
 	return fmt.Sprintf("%d", String(buf.String()))

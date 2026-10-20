@@ -63,7 +63,7 @@ func (f *DetailFilter) Match(resource any) bool {
 // formatTagsAsString converts tag fields to a string representation in "key:value" format
 func formatTagsAsString(tagField any) string {
 	v := reflect.ValueOf(tagField)
-	if v.Kind() == reflect.Ptr && !v.IsNil() {
+	if v.Kind() == reflect.Pointer && !v.IsNil() {
 		v = v.Elem()
 	}
 
@@ -126,7 +126,7 @@ func formatTagsAsString(tagField any) string {
 // Field name matching is always case-insensitive
 func getFieldValue(resource any, fieldName string) (any, bool) {
 	v := reflect.ValueOf(resource)
-	if v.Kind() == reflect.Ptr {
+	if v.Kind() == reflect.Pointer {
 		v = v.Elem()
 	}
 
