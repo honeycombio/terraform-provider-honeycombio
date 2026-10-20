@@ -1,3 +1,7 @@
+## Bugfixes
+
+- fix(r/trigger): keep the stored `granularity` when a metrics Trigger omits it, avoiding a perpetual diff (#896)
+
 # 0.55.1 (September 28, 2026)
 
 ## Bugfixes
@@ -18,14 +22,17 @@
 # 0.54.0 (September 15, 2026)
 
 ## Notes
+
 - Adds support for "Group resolution alerts" trigger type
 - Serves derived column reads from a cached list
 
 ## Enhancements
- - feat(r/trigger): support grouped recipient routing (#906)
- - feat(client): serve derived column reads from a cached list (#886)
+
+- feat(r/trigger): support grouped recipient routing (#906)
+- feat(client): serve derived column reads from a cached list (#886)
 
 ## Housekeeping
+
 - maint(deps): bump golang.org/x/net from 0.57.0 to 0.58.0 (#897)
 - maint(deps): bump github.com/dunglas/httpsfv from 1.1.0 to 1.1.1 (#898)
 - maint(deps): bump github.com/stretchr/testify from 1.11.1 to 1.12.0 (#899)
@@ -59,6 +66,7 @@
 - feat(r/marker): support start and end time (#882)
 
 ## Housekeeping
+
 - maint(deps): bump slackapi/slack-github-action from 3.0.5 to 4.0.0 (#888)
 - maint(deps): bump slackapi/slack-github-action from 3.0.3 to 3.0.5 (#887)
 - maint(deps): bump golang.org/x/net from 0.56.0 to 0.57.0 (#884)
