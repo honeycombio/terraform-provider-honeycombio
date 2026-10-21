@@ -117,11 +117,20 @@ type BoardQueryVisualizationSettings struct {
 	Charts               []*ChartSettings `json:"charts,omitempty"`
 }
 
+type Threshold struct {
+	Value     float64 `json:"value"`
+	Label     string  `json:"label,omitempty"`
+	Color     string  `json:"color"`      // "red", "yellow", "blue", "green", "purple"
+	Operation string  `json:"operation"`  // "gt" (greater than), "lt" (less than)
+	LineStyle string  `json:"line_style"` // "filled-solid", "filled-dotted", "solid", "dotted"
+}
+
 type ChartSettings struct {
-	ChartType         string `json:"chart_type,omitempty"` // "default", "line", "stacked", "stat", "tsbar"
-	ChartIndex        int    `json:"chart_index"`
-	OmitMissingValues bool   `json:"omit_missing_values,omitempty"`
-	UseLogScale       bool   `json:"log_scale,omitempty"`
+	ChartType         string      `json:"chart_type,omitempty"` // "default", "line", "stacked", "stat", "tsbar"
+	ChartIndex        int         `json:"chart_index"`
+	OmitMissingValues bool        `json:"omit_missing_values,omitempty"`
+	UseLogScale       bool        `json:"log_scale,omitempty"`
+	Thresholds        []Threshold `json:"thresholds,omitempty"`
 }
 
 type BoardSLOPanel struct {
