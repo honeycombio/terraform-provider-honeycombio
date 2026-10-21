@@ -59,7 +59,10 @@ type Dataset struct {
 	// Read only
 	LastWrittenAt time.Time `json:"last_written_at,omitempty"`
 	CreatedAt     time.Time `json:"created_at,omitempty"`
+	DatasetType   string    `json:"dataset_type,omitempty"`
 }
+
+const DatasetTypeMetrics = "metrics"
 
 type DatasetSettings struct {
 	// Optional, defaults to true. Cannot be set on creation.
