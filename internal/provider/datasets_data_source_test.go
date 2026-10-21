@@ -6,11 +6,10 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test/fixture"
 )
 
 func TestAcc_DatasetsDatasource(t *testing.T) {
@@ -23,26 +22,11 @@ func TestAcc_DatasetsDatasource(t *testing.T) {
 	// create a bunch of datasets
 	testDatasets := make([]*client.Dataset, numDatasets)
 	for i := range numDatasets {
-		d, err := c.Datasets.Create(ctx, &client.Dataset{
+		testDatasets[i] = fixture.CreateDataset(ctx, t, c, &client.Dataset{
 			Name:        test.RandomStringWithPrefix("test.ds.", 20),
 			Description: test.RandomString(70),
 		})
-		require.NoError(t, err)
-		testDatasets[i] = d
 	}
-
-	t.Cleanup(func() {
-		for _, d := range testDatasets {
-			// disable deletion protection and delete the Dataset
-			c.Datasets.Update(ctx, &client.Dataset{
-				Slug: d.Slug,
-				Settings: client.DatasetSettings{
-					DeleteProtected: helper.ToPtr(false),
-				},
-			})
-			c.Datasets.Delete(ctx, d.Slug)
-		}
-	})
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheckV2API(t),

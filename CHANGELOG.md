@@ -1,3 +1,7 @@
+## Bugfixes
+
+- fix(r/trigger): keep the stored `granularity` when a metrics Trigger omits it, avoiding a perpetual diff (#896)
+
 # 0.55.2 (October 20, 2026)
 
 ## Notes
@@ -33,8 +37,8 @@
 - Serves derived column reads from a cached list
 
 ## Enhancements
- - feat(r/trigger): support grouped recipient routing (#906)
- - feat(client): serve derived column reads from a cached list (#886)
+- feat(r/trigger): support grouped recipient routing (#906)
+- feat(client): serve derived column reads from a cached list (#886)
 
 ## Housekeeping
 - maint(deps): bump golang.org/x/net from 0.57.0 to 0.58.0 (#897)

@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test/fixture"
 )
 
 func TestSLOs(t *testing.T) {
@@ -154,17 +154,14 @@ func Test_MDSLOs(t *testing.T) {
 	var mdSLI *client.DerivedColumn
 	var dataset1, dataset2 *client.Dataset
 
-	dataset1, err = c.Datasets.Create(ctx, &client.Dataset{
+	dataset1 = fixture.CreateDataset(ctx, t, c, &client.Dataset{
 		Name:        test.RandomStringWithPrefix("test.", 10),
 		Description: "test dataset 1",
 	})
-	require.NoError(t, err)
-
-	dataset2, err = c.Datasets.Create(ctx, &client.Dataset{
+	dataset2 = fixture.CreateDataset(ctx, t, c, &client.Dataset{
 		Name:        test.RandomStringWithPrefix("test.", 10),
 		Description: "test dataset 2",
 	})
-	require.NoError(t, err)
 
 	mdSLI, err = c.DerivedColumns.Create(ctx, client.EnvironmentWideSlug, &client.DerivedColumn{
 		Alias:       test.RandomStringWithPrefix("test.", 10),
@@ -174,24 +171,10 @@ func Test_MDSLOs(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
-		c.SLOs.Delete(ctx, client.EnvironmentWideSlug, slo.ID)
+		if slo != nil {
+			c.SLOs.Delete(ctx, client.EnvironmentWideSlug, slo.ID)
+		}
 		c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, mdSLI.ID)
-
-		c.Datasets.Update(ctx, &client.Dataset{
-			Slug: dataset1.Slug,
-			Settings: client.DatasetSettings{
-				DeleteProtected: helper.ToPtr(false),
-			},
-		})
-		err = c.Datasets.Delete(ctx, dataset1.Slug)
-
-		c.Datasets.Update(ctx, &client.Dataset{
-			Slug: dataset2.Slug,
-			Settings: client.DatasetSettings{
-				DeleteProtected: helper.ToPtr(false),
-			},
-		})
-		err = c.Datasets.Delete(ctx, dataset2.Slug)
 	})
 
 	t.Run("Create MD SLO", func(t *testing.T) {
