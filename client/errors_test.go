@@ -275,12 +275,9 @@ func TestErrors_JSONAPI(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			resp := &httptest.ResponseRecorder{
-				Code: testCase.code,
-				HeaderMap: http.Header{
-					"Content-Type": []string{jsonapi.MediaType},
-				},
-			}
+			resp := httptest.NewRecorder()
+			resp.Code = testCase.code
+			resp.Header().Set("Content-Type", jsonapi.MediaType)
 
 			buf := bytes.NewBuffer(nil)
 			jsonapi.MarshalErrors(buf, testCase.body.Errors)

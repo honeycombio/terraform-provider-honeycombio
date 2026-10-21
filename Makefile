@@ -1,7 +1,7 @@
 .PHONY: build testacc lint lint-version sweep docs docs-check
 default: testacc
 
-GOLANGCI_LINT_VERSION := v2.9.0
+GOLANGCI_LINT_VERSION := v2.15.0
 
 build:
 	go build -o terraform-provider-honeycombio
