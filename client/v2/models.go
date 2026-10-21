@@ -41,6 +41,7 @@ type AuthMetadata struct {
 type APIKey struct {
 	ID          string             `jsonapi:"primary,api-keys,omitempty"`
 	Name        *string            `jsonapi:"attr,name,omitempty"`
+	Description *string            `jsonapi:"attr,description,omitempty"`
 	KeyType     string             `jsonapi:"attr,key_type,omitempty"`
 	Disabled    *bool              `jsonapi:"attr,disabled,omitempty"`
 	Secret      string             `jsonapi:"attr,secret,omitempty"`

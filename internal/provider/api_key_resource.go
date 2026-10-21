@@ -16,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -83,6 +84,15 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				MarkdownDescription: "The name of the API key.",
 				Validators: []validator.String{
 					stringvalidator.LengthBetween(1, 100),
+				},
+			},
+			"description": schema.StringAttribute{
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(""),
+				MarkdownDescription: "A description of the API key, such as where it is used, of up to 2000 characters. This is not secret, so do not store secrets in it. Defaults to an empty string, so a description set outside of Terraform is removed on the next apply.",
+				Validators: []validator.String{
+					stringvalidator.UTF8LengthAtMost(2000),
 				},
 			},
 			"type": schema.StringAttribute{
@@ -322,6 +332,7 @@ func (*apiKeyResource) UpgradeState(_ context.Context) map[int64]resource.StateU
 				Attributes: map[string]schema.Attribute{
 					"id":                 schema.StringAttribute{Computed: true},
 					"name":               schema.StringAttribute{Required: true},
+					"description":        schema.StringAttribute{Optional: true, Computed: true},
 					"type":               schema.StringAttribute{Required: true},
 					"environment_id":     schema.StringAttribute{Required: true},
 					"disabled":           schema.BoolAttribute{Optional: true, Computed: true},
@@ -359,6 +370,9 @@ func (*apiKeyResource) UpgradeState(_ context.Context) map[int64]resource.StateU
 				if state.VisibleToMembers.IsNull() {
 					state.VisibleToMembers = types.BoolValue(false)
 				}
+				if state.Description.IsNull() {
+					state.Description = types.StringValue("")
+				}
 				if len(state.Permissions.Elements()) > 0 {
 					permissions := expandAPIKeyPermissions(ctx, state.Permissions, &resp.Diagnostics)
 					state.Permissions = flattenAPIKeyPermissions(ctx, permissions, &resp.Diagnostics)
@@ -387,6 +401,7 @@ func (r *apiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	newKey := &v2client.APIKey{
 		Name:        plan.Name.ValueStringPointer(),
+		Description: plan.Description.ValueStringPointer(),
 		KeyType:     plan.Type.ValueString(),
 		Environment: &v2client.Environment{ID: plan.EnvironmentID.ValueString()},
 		Disabled:    plan.Disabled.ValueBoolPointer(),
@@ -401,6 +416,7 @@ func (r *apiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 	var state models.APIKeyResourceModel
 	state.ID = types.StringValue(key.ID)
 	state.Name = types.StringValue(*key.Name)
+	state.Description = flattenAPIKeyDescription(key.Description)
 	state.Type = types.StringValue(key.KeyType)
 	state.EnvironmentID = types.StringValue(key.Environment.ID)
 	state.Disabled = types.BoolValue(*key.Disabled)
@@ -460,6 +476,7 @@ func (r *apiKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 	state.ID = types.StringValue(key.ID)
 	state.Name = types.StringValue(*key.Name)
+	state.Description = flattenAPIKeyDescription(key.Description)
 	state.Type = types.StringValue(key.KeyType)
 	state.Disabled = types.BoolValue(*key.Disabled)
 	state.EnvironmentID = types.StringValue(key.Environment.ID)
@@ -483,9 +500,10 @@ func (r *apiKeyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	updateRequest := &v2client.APIKey{
-		ID:       plan.ID.ValueString(),
-		Name:     plan.Name.ValueStringPointer(),
-		Disabled: plan.Disabled.ValueBoolPointer(),
+		ID:          plan.ID.ValueString(),
+		Name:        plan.Name.ValueStringPointer(),
+		Description: plan.Description.ValueStringPointer(),
+		Disabled:    plan.Disabled.ValueBoolPointer(),
 	}
 
 	_, err := r.client.APIKeys.Update(ctx, updateRequest)
@@ -500,6 +518,7 @@ func (r *apiKeyResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	state.ID = types.StringValue(key.ID)
 	state.Name = types.StringValue(*key.Name)
+	state.Description = flattenAPIKeyDescription(key.Description)
 	state.Type = types.StringValue(key.KeyType)
 	state.Disabled = types.BoolValue(*key.Disabled)
 	state.EnvironmentID = types.StringValue(key.Environment.ID)
@@ -565,6 +584,18 @@ func expandAPIKeyPermissions(ctx context.Context, list types.List, diags *diag.D
 		ManageRecipients:    permissions[0].ManageRecipients.ValueBool(),
 		ManageMarkers:       permissions[0].ManageMarkers.ValueBool(),
 	}
+}
+
+// flattenAPIKeyDescription maps an unset description to the empty string.
+//
+// The API reports an unset description as "" and an API which predates
+// descriptions omits it. Either way the state must hold "", never null,
+// to agree with the attribute's default.
+func flattenAPIKeyDescription(d *string) types.String {
+	if d == nil {
+		return types.StringValue("")
+	}
+	return types.StringValue(*d)
 }
 
 func flattenAPIKeyPermissions(ctx context.Context, p *v2client.APIKeyPermissions, diags *diag.Diagnostics) types.List {

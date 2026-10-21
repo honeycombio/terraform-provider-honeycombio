@@ -23,8 +23,9 @@ func TestClient_APIKeys(t *testing.T) {
 	// create a new key
 	keyName := test.RandomStringWithPrefix("test.", 10)
 	k, err := c.APIKeys.Create(ctx, &APIKey{
-		Name:    helper.ToPtr(keyName),
-		KeyType: "ingest",
+		Name:        helper.ToPtr(keyName),
+		Description: helper.ToPtr("created by the client tests"),
+		KeyType:     "ingest",
 		Environment: &Environment{
 			ID: env.ID,
 		},
@@ -36,6 +37,7 @@ func TestClient_APIKeys(t *testing.T) {
 	assert.NotEmpty(t, k.ID)
 	assert.NotEmpty(t, k.Secret)
 	assert.Equal(t, keyName, *k.Name)
+	assert.Equal(t, helper.ToPtr("created by the client tests"), k.Description)
 	assert.False(t, *k.Disabled)
 	assert.True(t, k.Permissions.CreateDatasets)
 
@@ -44,6 +46,7 @@ func TestClient_APIKeys(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, k.ID, key.ID)
 	assert.Equal(t, k.Name, key.Name)
+	assert.Equal(t, k.Description, key.Description)
 	assert.Equal(t, k.KeyType, key.KeyType)
 	assert.Equal(t, k.Disabled, key.Disabled)
 	assert.Equal(t, k.Environment.ID, key.Environment.ID)
@@ -63,6 +66,16 @@ func TestClient_APIKeys(t *testing.T) {
 	assert.Equal(t, keyName, *key.Name)
 	assert.True(t, *key.Disabled)
 	assert.WithinDuration(t, time.Now(), key.Timestamps.UpdatedAt, 5*time.Second)
+	// leaving the description out of an update leaves it unchanged
+	assert.Equal(t, helper.ToPtr("created by the client tests"), key.Description)
+
+	// an empty description clears it
+	key, err = c.APIKeys.Update(ctx, &APIKey{
+		ID:          k.ID,
+		Description: helper.ToPtr(""),
+	})
+	require.NoError(t, err)
+	assert.Equal(t, helper.ToPtr(""), key.Description)
 
 	// delete the key
 	err = c.APIKeys.Delete(ctx, k.ID)

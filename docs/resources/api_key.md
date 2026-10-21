@@ -9,8 +9,9 @@ For more information about API Keys, check out [Best Practices for API Keys](htt
 
 ```terraform
 resource "honeycombio_api_key" "prod_ingest" {
-  name = "Production Ingest"
-  type = "ingest"
+  name        = "Production Ingest"
+  description = "Used by the checkout service in production"
+  type        = "ingest"
 
   environment_id = var.environment_id
 
@@ -35,6 +36,7 @@ output "ingest_key" {
 
 ### Optional
 
+- `description` (String) A description of the API key, such as where it is used, of up to 2000 characters. This is not secret, so do not store secrets in it. Defaults to an empty string, so a description set outside of Terraform is removed on the next apply.
 - `disabled` (Boolean) Whether the API key is disabled. Defaults to `false`.
 - `permissions` (Block List) A configuration block setting what actions the API key can perform. (see [below for nested schema](#nestedblock--permissions))
 - `visible_to_members` (Boolean) Whether the key can be viewed by members and read-only users, or only owners.
