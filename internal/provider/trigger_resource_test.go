@@ -2794,3 +2794,71 @@ resource "honeycombio_trigger" "test" {
   }
 }`, dataset, name)
 }
+
+func TestAcc_TriggerResourceWithMetricsOmittedGranularity(t *testing.T) {
+	dataset := testAccMetricsDataset(t)
+	name := test.RandomStringWithPrefix("test.", 20)
+	calc := `op = "COUNT"
+    column = "host.name"`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheck(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		Steps: []resource.TestStep{
+			// the API picks a granularity; the post-apply plan must still be empty
+			{
+				Config: testAccConfigTriggerGranularity(dataset, name, calc, ""),
+				Check:  testAccEnsureTriggerExists(t, "honeycombio_trigger.test"),
+			},
+			{
+				Config: testAccConfigTriggerGranularity(dataset, name, calc, "granularity = 300"),
+				Check:  testAccCheckTriggerGranularity(300),
+			},
+			// removing granularity from config keeps the stored value, so there's nothing to apply
+			{
+				Config: testAccConfigTriggerGranularity(dataset, name, calc, ""),
+				Check:  testAccCheckTriggerGranularity(300),
+			},
+		},
+	})
+}
+
+func testAccCheckTriggerGranularity(want int) resource.TestCheckFunc {
+	return resource.TestCheckResourceAttrWith("honeycombio_trigger.test", "query_json", testAccCheckQueryJSON(func(q client.QuerySpec) error {
+		if got := client.PtrValueOrDefault(q.Granularity, 0); got != want {
+			return fmt.Errorf("expected granularity %d, got %d", want, got)
+		}
+		return nil
+	}))
+}
+
+func testAccConfigTriggerGranularity(dataset, name, calculation, granularity string) string {
+	return fmt.Sprintf(`
+data "honeycombio_query_specification" "test" {
+  calculation {
+    %[3]s
+  }
+
+  time_range = 1800
+  %[4]s
+}
+
+resource "honeycombio_trigger" "test" {
+  name    = "%[2]s"
+  dataset = "%[1]s"
+
+  query_json = data.honeycombio_query_specification.test.json
+
+  frequency = 900
+
+  threshold {
+    op    = ">"
+    value = 1000
+  }
+
+  recipient {
+    type   = "marker"
+    target = "Trigger fired"
+  }
+}`, dataset, name, calculation, granularity)
+}

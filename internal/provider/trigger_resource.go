@@ -39,6 +39,7 @@ var (
 	_ resource.ResourceWithConfigure      = &triggerResource{}
 	_ resource.ResourceWithImportState    = &triggerResource{}
 	_ resource.ResourceWithValidateConfig = &triggerResource{}
+	_ resource.ResourceWithModifyPlan     = &triggerResource{}
 )
 
 func NewTriggerResource() resource.Resource {
@@ -641,6 +642,43 @@ func (r *triggerResource) ImportState(ctx context.Context, req resource.ImportSt
 	resp.State.SetAttribute(ctx, path.Root("query_id"), types.StringNull()) // favor query_json on import
 
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+// ModifyPlan keeps the stored granularity of a metrics Trigger whose query_json omits one.
+func (r *triggerResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() || r.client == nil {
+		return
+	}
+
+	var plan, state models.TriggerResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() ||
+		!plan.Dataset.Equal(state.Dataset) ||
+		plan.QueryJson.IsNull() || plan.QueryJson.IsUnknown() || state.QueryJson.IsNull() ||
+		plan.QueryJson.Equal(state.QueryJson) {
+		return
+	}
+
+	var planQs, stateQs client.QuerySpec
+	if json.Unmarshal([]byte(plan.QueryJson.ValueString()), &planQs) != nil ||
+		json.Unmarshal([]byte(state.QueryJson.ValueString()), &stateQs) != nil {
+		return
+	}
+	if client.PtrValueOrDefault(planQs.Granularity, 0) != 0 || client.PtrValueOrDefault(stateQs.Granularity, 0) == 0 {
+		return
+	}
+	planQs.Granularity = stateQs.Granularity
+	if !stateQs.EquivalentTo(planQs) {
+		return
+	}
+
+	ds, err := r.client.Datasets.Get(ctx, state.Dataset.ValueString())
+	if err != nil || ds == nil || ds.DatasetType != client.DatasetTypeMetrics {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.Plan.SetAttribute(ctx, path.Root("query_json"), state.QueryJson)...)
 }
 
 func (r *triggerResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
