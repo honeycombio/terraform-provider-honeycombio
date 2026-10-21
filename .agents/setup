@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Prepares an orb to build, lint and test terraform-provider-honeycombio:
+# the Go toolchain pinned in go.mod, Terraform (for acceptance tests) at the
+# version CI uses, and a warm module and build cache.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+step() { printf '\n==> %s (%s)\n' "$1" "$(date +%T)"; }
+
+arch="$(dpkg --print-architecture)" # amd64 or arm64
+
+step "Go toolchain"
+want_go="$(awk '/^go /{print $2}' go.mod)"
+if [ "$(/usr/local/go/bin/go env GOVERSION 2>/dev/null || true)" != "go${want_go}" ]; then
+  sudo rm -rf /usr/local/go
+  curl -fsSL "https://go.dev/dl/go${want_go}.linux-${arch}.tar.gz" | sudo tar -C /usr/local -xz
+fi
+for bin in go gofmt; do
+  sudo ln -sf "/usr/local/go/bin/${bin}" "/usr/local/bin/${bin}"
+done
+go version
+
+step "Terraform"
+want_tf="$(sed -n 's/^ *TERRAFORM_VERSION: *"\(.*\)"/\1/p' .github/workflows/ci.yaml | head -1)"
+if [ "$(terraform version -json 2>/dev/null | jq -r .terraform_version 2>/dev/null || true)" != "${want_tf}" ]; then
+  tmp="$(mktemp -d)"
+  curl -fsSL -o "${tmp}/tf.zip" "https://releases.hashicorp.com/terraform/${want_tf}/terraform_${want_tf}_linux_${arch}.zip"
+  unzip -qo "${tmp}/tf.zip" -d "${tmp}"
+  sudo install -m 0755 "${tmp}/terraform" /usr/local/bin/terraform
+  rm -rf "${tmp}"
+fi
+terraform version | head -1
+
+step "Go modules and build cache"
+go mod download
+go build ./...
+go vet ./... >/dev/null
+
+step "Done"

@@ -15,3 +15,5 @@ terraform-provider-honeycombio*
 
 .envrc
 .tool-versions
+
+.amp/portals/*
