@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test/fixture"
 )
 
 func TestAcc_SLODataSource(t *testing.T) {
@@ -83,17 +83,14 @@ func TestAcc_MDSLODataSource(t *testing.T) {
 	if c.IsClassic(ctx) {
 		t.Skip("Classic does not support multi-dataset SLOs")
 	}
-	dataset1, err := c.Datasets.Create(ctx, &client.Dataset{
+	dataset1 := fixture.CreateDataset(ctx, t, c, &client.Dataset{
 		Name:        test.RandomStringWithPrefix("test.", 10),
 		Description: "test dataset 1",
 	})
-	require.NoError(t, err)
-
-	dataset2, err := c.Datasets.Create(ctx, &client.Dataset{
+	dataset2 := fixture.CreateDataset(ctx, t, c, &client.Dataset{
 		Name:        test.RandomStringWithPrefix("test.", 10),
 		Description: "test dataset 2",
 	})
-	require.NoError(t, err)
 
 	sli, err := c.DerivedColumns.Create(ctx, client.EnvironmentWideSlug, &client.DerivedColumn{
 		Alias:       test.RandomStringWithPrefix("test.", 10),
@@ -119,22 +116,6 @@ func TestAcc_MDSLODataSource(t *testing.T) {
 	t.Cleanup(func() {
 		c.SLOs.Delete(ctx, client.EnvironmentWideSlug, slo.ID)
 		c.DerivedColumns.Delete(ctx, client.EnvironmentWideSlug, sli.ID)
-
-		c.Datasets.Update(ctx, &client.Dataset{
-			Slug: dataset1.Slug,
-			Settings: client.DatasetSettings{
-				DeleteProtected: helper.ToPtr(false),
-			},
-		})
-		err = c.Datasets.Delete(ctx, dataset1.Slug)
-
-		c.Datasets.Update(ctx, &client.Dataset{
-			Slug: dataset2.Slug,
-			Settings: client.DatasetSettings{
-				DeleteProtected: helper.ToPtr(false),
-			},
-		})
-		err = c.Datasets.Delete(ctx, dataset2.Slug)
 	})
 
 	resource.Test(t, resource.TestCase{
