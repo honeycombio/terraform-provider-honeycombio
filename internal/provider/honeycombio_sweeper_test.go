@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
@@ -47,23 +48,26 @@ func getDatasetSweeper(name string) *resource.Sweeper {
 				return fmt.Errorf("could not list datasets: %w", err)
 			}
 
+			var errs []error
 			for _, ds := range datasets {
 				if strings.HasPrefix(ds.Name, SweeperTargetPrefix) {
 					log.Printf("[DEBUG] deleting dataset %s (%s)", ds.Name, ds.Slug)
-					c.Datasets.Update(ctx, &client.Dataset{
+					if _, err := c.Datasets.Update(ctx, &client.Dataset{
 						Slug: ds.Slug,
 						Settings: client.DatasetSettings{
 							DeleteProtected: client.ToPtr(false),
 						},
-					})
-					err = c.Datasets.Delete(ctx, ds.Slug)
-					if err != nil {
+					}); err != nil {
+						log.Printf("[ERROR] could not disable delete protection on dataset %s: %s", ds.Slug, err)
+					}
+					if err := c.Datasets.Delete(ctx, ds.Slug); err != nil {
 						log.Printf("[ERROR] could not delete dataset %s: %s", ds.Slug, err)
+						errs = append(errs, fmt.Errorf("could not delete dataset %s: %w", ds.Slug, err))
 					}
 				}
 			}
 
-			return nil
+			return errors.Join(errs...)
 		},
 	}
 }

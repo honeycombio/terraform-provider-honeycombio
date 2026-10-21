@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test/fixture"
 )
 
 func TestAccHoneycombioSLO_basic(t *testing.T) {
@@ -648,36 +648,13 @@ func mdSLOAccTestSetup(t *testing.T) (client.Dataset, client.Dataset, client.Der
 	ctx := context.Background()
 	c := testAccClient(t)
 
-	dataset1, err := c.Datasets.Create(ctx, &client.Dataset{
+	dataset1 := fixture.CreateDataset(ctx, t, c, &client.Dataset{
 		Name:        "test." + acctest.RandString(8),
 		Description: "test dataset 1",
 	})
-	require.NoError(t, err)
-
-	dataset2, err := c.Datasets.Create(ctx, &client.Dataset{
+	dataset2 := fixture.CreateDataset(ctx, t, c, &client.Dataset{
 		Name:        "test." + acctest.RandString(8),
 		Description: "test dataset 2",
-	})
-	require.NoError(t, err)
-
-	t.Cleanup(func() {
-		c.Datasets.Update(ctx, &client.Dataset{
-			Slug: dataset1.Slug,
-			Settings: client.DatasetSettings{
-				DeleteProtected: helper.ToPtr(false),
-			},
-		})
-		err = c.Datasets.Delete(ctx, dataset1.Slug)
-		require.NoError(t, err)
-
-		c.Datasets.Update(ctx, &client.Dataset{
-			Slug: dataset2.Slug,
-			Settings: client.DatasetSettings{
-				DeleteProtected: helper.ToPtr(false),
-			},
-		})
-		err = c.Datasets.Delete(ctx, dataset2.Slug)
-		require.NoError(t, err)
 	})
 
 	sli, err := c.DerivedColumns.Create(ctx, client.EnvironmentWideSlug, &client.DerivedColumn{

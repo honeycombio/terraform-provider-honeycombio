@@ -4,6 +4,8 @@ package fixture
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -13,6 +15,9 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
+
+// sweeperPrefix is the name prefix the dataset sweeper deletes by.
+const sweeperPrefix = "test."
 
 // NewDataset creates a throwaway dataset for tests which can't share
 // HONEYCOMB_DATASET with others: those mutating per-dataset state, such as
@@ -25,17 +30,39 @@ import (
 func NewDataset(ctx context.Context, t *testing.T, c *client.Client, columns ...client.Column) string {
 	t.Helper()
 
-	// named with the sweeper's prefix so it is cleaned up if a run is interrupted
-	ds, err := c.Datasets.Create(ctx, &client.Dataset{
-		Name: test.RandomStringWithPrefix("test.", 10),
+	ds := CreateDataset(ctx, t, c, &client.Dataset{
+		Name: test.RandomStringWithPrefix(sweeperPrefix, 10),
 	})
+	createColumns(ctx, t, c, ds.Slug, columns)
+
+	return ds.Slug
+}
+
+// CreateDataset creates the dataset and registers its deletion with the test
+// before returning, so a failure later in the test can't leak it. Deletion
+// protection is disabled for the delete, and a dataset the test already
+// deleted is not an error.
+//
+// The dataset's name must start with the sweeper's prefix so it is cleaned
+// up if a run is interrupted.
+func CreateDataset(ctx context.Context, t *testing.T, c *client.Client, d *client.Dataset) *client.Dataset {
+	t.Helper()
+
+	require.True(t, strings.HasPrefix(d.Name, sweeperPrefix),
+		"test dataset %q must be named with the sweeper prefix %q", d.Name, sweeperPrefix)
+
+	ds, err := c.Datasets.Create(ctx, d)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
+		var de client.DetailedError
 		_, err := c.Datasets.Update(ctx, &client.Dataset{
 			Slug:     ds.Slug,
 			Settings: client.DatasetSettings{DeleteProtected: new(false)},
 		})
+		if errors.As(err, &de) && de.IsNotFound() {
+			return
+		}
 		if err != nil {
 			t.Errorf("could not disable deletion protection on dataset %q: %v", ds.Slug, err)
 			return
@@ -45,9 +72,7 @@ func NewDataset(ctx context.Context, t *testing.T, c *client.Client, columns ...
 		}
 	})
 
-	createColumns(ctx, t, c, ds.Slug, columns)
-
-	return ds.Slug
+	return ds
 }
 
 // DefinitionDefaultColumns returns a column for every dataset definition's

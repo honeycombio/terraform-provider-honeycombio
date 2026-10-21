@@ -12,6 +12,7 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test/fixture"
 )
 
 func TestDatasets(t *testing.T) {
@@ -24,12 +25,11 @@ func TestDatasets(t *testing.T) {
 		// create a new dataset
 		name := test.RandomStringWithPrefix("test.", 10)
 		description := test.RandomString(70)
-		ds, err := c.Datasets.Create(ctx, &client.Dataset{
+		ds := fixture.CreateDataset(ctx, t, c, &client.Dataset{
 			Name:            name,
 			Description:     description,
 			ExpandJSONDepth: 2,
 		})
-		require.NoError(t, err)
 		assert.Equal(t, name, ds.Name)
 		assert.NotEmpty(t, ds.Slug)
 		assert.Equal(t, description, ds.Description)
