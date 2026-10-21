@@ -2798,8 +2798,8 @@ resource "honeycombio_trigger" "test" {
 func TestAcc_TriggerResourceWithMetricsOmittedGranularity(t *testing.T) {
 	dataset := testAccMetricsDataset(t)
 	name := test.RandomStringWithPrefix("test.", 20)
-	calc := `op = "AVG"
-    column = "app.cumulative"`
+	calc := `op = "COUNT"
+    column = "host.name"`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 testAccPreCheck(t),
