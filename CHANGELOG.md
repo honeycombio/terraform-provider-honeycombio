@@ -1,6 +1,20 @@
+# 0.56.0 (October 22, 2026)
+
+## Notes
+
+- This release contains support for `description` on `honeycombio_api_key`, however at the time of release the Honeycomb UI is still missing support for API key descriptions.
+
+## Enhancements
+
+- feat(r/api_key): add `description` attribute (#935)
+
 ## Bugfixes
 
-- fix(r/trigger): keep the stored `granularity` when a metrics Trigger omits it, avoiding a perpetual diff (#896)
+- fix(r/trigger): keep the stored `granularity` when a metrics Trigger omits it, avoiding a perpetual diff (#933)
+
+## Housekeeping
+
+- maint(tests): stop test datasets leaking when a test fails partway (#934)
 
 # 0.55.2 (October 20, 2026)
 
