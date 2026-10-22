@@ -138,6 +138,9 @@ This process is largely automated with GoReleaser and GitHub Actions.
 
 ### When to release
 
+A release is cut every two weeks on a regular schedule.
+Unless a change is urgent, it does not need a dedicated release and will ship in the next scheduled one.
+
 Do **not** cut a release if the only unreleased commits are dependency bumps (e.g. Dependabot PRs), unless the bump addresses a critical vulnerability or security patch. Releases should contain user-facing changes (features, bug fixes, enhancements, or notable documentation updates).
 
 ### Preparing the release commit
