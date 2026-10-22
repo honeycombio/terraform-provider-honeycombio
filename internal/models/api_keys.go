@@ -8,6 +8,7 @@ import (
 type APIKeyResourceModel struct {
 	ID               types.String `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`
+	Description      types.String `tfsdk:"description"`
 	Type             types.String `tfsdk:"type"`
 	EnvironmentID    types.String `tfsdk:"environment_id"`
 	VisibleToMembers types.Bool   `tfsdk:"visible_to_members"`

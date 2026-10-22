@@ -2,13 +2,17 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	tfresource "github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/require"
 )
@@ -136,6 +140,7 @@ resource "honeycombio_api_key" "test_ingest" {
 						resource.TestCheckResourceAttrSet("honeycombio_api_key.test_ingest", "id"),
 						resource.TestCheckResourceAttrSet("honeycombio_api_key.test_ingest", "secret"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test_ingest", "name", "test key"),
+						resource.TestCheckResourceAttr("honeycombio_api_key.test_ingest", "description", ""),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test_ingest", "type", "ingest"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test_ingest", "environment_id", env.ID),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test_ingest", "disabled", "false"),
@@ -157,6 +162,7 @@ resource "honeycombio_api_key" "test_configuration" {
 						resource.TestCheckResourceAttrSet("honeycombio_api_key.test_configuration", "secret"),
 						resource.TestCheckResourceAttrSet("honeycombio_api_key.test_configuration", "key"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test_configuration", "name", "test key"),
+						resource.TestCheckResourceAttr("honeycombio_api_key.test_configuration", "description", ""),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test_configuration", "type", "configuration"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test_configuration", "environment_id", env.ID),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test_configuration", "visible_to_members", "false"),
@@ -174,6 +180,54 @@ resource "honeycombio_api_key" "test_configuration" {
 						resource.TestCheckResourceAttr("honeycombio_api_key.test_configuration", "permissions.0.manage_recipients", "false"),
 						resource.TestCheckResourceAttr("honeycombio_api_key.test_configuration", "permissions.0.manage_markers", "false"),
 					),
+				},
+			},
+		})
+	})
+
+	t.Run("description lifecycle", func(t *testing.T) {
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheckV2API(t),
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config: testAccConfigAPIKeyDescriptionTest(`description = "first description"`, env.ID),
+					Check:  testAccCheckAPIKeyDescription(t, "first description"),
+				},
+				{ // change it, using characters outside of ASCII
+					Config: testAccConfigAPIKeyDescriptionTest(`description = "changed \U0001F600"`, env.ID),
+					Check:  testAccCheckAPIKeyDescription(t, "changed \U0001F600"),
+				},
+				{ // clear it with an empty string
+					Config: testAccConfigAPIKeyDescriptionTest(`description = ""`, env.ID),
+					Check:  testAccCheckAPIKeyDescription(t, ""),
+				},
+				{ // set it again
+					Config: testAccConfigAPIKeyDescriptionTest(`description = "second description"`, env.ID),
+					Check:  testAccCheckAPIKeyDescription(t, "second description"),
+				},
+				{ // clear it by removing the attribute
+					Config: testAccConfigAPIKeyDescriptionTest(``, env.ID),
+					Check:  testAccCheckAPIKeyDescription(t, ""),
+				},
+			},
+		})
+	})
+
+	t.Run("description length is counted in characters", func(t *testing.T) {
+		longest := strings.Repeat("\U0001F600", 2000)
+
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheckV2API(t),
+			ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+			Steps: []resource.TestStep{
+				{
+					Config:      testAccConfigAPIKeyDescriptionTest(fmt.Sprintf(`description = %q`, longest+"x"), env.ID),
+					ExpectError: regexp.MustCompile(`Invalid Attribute Value Length`),
+				},
+				{
+					Config: testAccConfigAPIKeyDescriptionTest(fmt.Sprintf(`description = %q`, longest), env.ID),
+					Check:  testAccCheckAPIKeyDescription(t, longest),
 				},
 			},
 		})
@@ -211,10 +265,43 @@ func TestAcc_APIKeyResource_upgradeFromVersion050_0(t *testing.T) {
 	})
 }
 
+func TestAcc_APIKeyResource_upgradeFromVersion055_2(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := testAccV2Client(t)
+	env := testAccEnvironment(ctx, t, c)
+
+	config := testAccConfigIngestAPIKeyTest("test key", "false", env.ID)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: testAccPreCheckV2API(t),
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"honeycombio": {
+						VersionConstraint: "0.55.2",
+						Source:            "honeycombio/honeycombio",
+					},
+				},
+				Config: config,
+				Check:  testAccEnsureAPIKeyExists(t, "honeycombio_api_key.test"),
+			},
+			{ // state written without a description must not produce a diff once refreshed
+				ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+				Config:                   config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{plancheck.ExpectEmptyPlan()},
+				},
+			},
+		},
+	})
+}
+
 func TestAPIKeyResource_UpgradeStateV0(t *testing.T) {
 	t.Parallel()
 
-	const configKey = `{"id":"hcxlk_01","name":"k","type":"configuration","environment_id":"hcaen_01",
+	const configKey = `{"id":"hcxlk_01","name":"k","description":"","type":"configuration","environment_id":"hcaen_01",
 		"disabled":false,"visible_to_members":true,"key":"s","secret":"s",
 		"permissions":[{"send_events":true,"create_datasets":false,"manage_queries":false,
 		"run_queries":false,"read_service_maps":false,"manage_public_boards":false,
@@ -229,7 +316,7 @@ func TestAPIKeyResource_UpgradeStateV0(t *testing.T) {
 			state: `{"id":"hcaik_01","name":"k","type":"ingest","environment_id":"hcaen_01",
 				"disabled":false,"key":"hcaik_01s","secret":"s",
 				"permissions":[{"create_datasets":true}]}`,
-			want: `{"id":"hcaik_01","name":"k","type":"ingest","environment_id":"hcaen_01",
+			want: `{"id":"hcaik_01","name":"k","description":"","type":"ingest","environment_id":"hcaen_01",
 				"disabled":false,"visible_to_members":false,"key":"hcaik_01s","secret":"s",
 				"permissions":[{"send_events":false,"create_datasets":true,"manage_queries":false,
 				"run_queries":false,"read_service_maps":false,"manage_public_boards":false,
@@ -240,13 +327,13 @@ func TestAPIKeyResource_UpgradeStateV0(t *testing.T) {
 			name: "v0.50.0 ingest key without permissions",
 			state: `{"id":"hcaik_01","name":"k","type":"ingest","environment_id":"hcaen_01",
 				"disabled":false,"key":"hcaik_01s","secret":"s","permissions":[]}`,
-			want: `{"id":"hcaik_01","name":"k","type":"ingest","environment_id":"hcaen_01",
+			want: `{"id":"hcaik_01","name":"k","description":"","type":"ingest","environment_id":"hcaen_01",
 				"disabled":false,"visible_to_members":false,"key":"hcaik_01s","secret":"s",
 				"permissions":[]}`,
 		},
 		{
-			name:  "v0.51.0+ configuration key is left untouched",
-			state: configKey,
+			name:  "v0.51.0+ configuration key only gains an empty description",
+			state: strings.Replace(configKey, `"description":"",`, "", 1),
 			want:  configKey,
 		},
 	}
@@ -336,4 +423,42 @@ func testAccEnsureAPIKeyExists(t *testing.T, name string) resource.TestCheckFunc
 
 		return nil
 	}
+}
+
+func testAccConfigAPIKeyDescriptionTest(descriptionAttr, envID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_api_key" "test" {
+  name = "test key"
+  type = "ingest"
+  %s
+
+  environment_id = "%s"
+
+  permissions {
+    create_datasets = true
+  }
+}`, descriptionAttr, envID)
+}
+
+// testAccCheckAPIKeyDescription checks the description held by both the
+// Terraform state and the API for the "honeycombio_api_key.test" resource.
+func testAccCheckAPIKeyDescription(t *testing.T, want string) resource.TestCheckFunc {
+	return resource.ComposeAggregateTestCheckFunc(
+		resource.TestCheckResourceAttr("honeycombio_api_key.test", "description", want),
+		func(s *terraform.State) error {
+			rs, ok := s.RootModule().Resources["honeycombio_api_key.test"]
+			if !ok {
+				return errors.New("resource not found: honeycombio_api_key.test")
+			}
+
+			key, err := testAccV2Client(t).APIKeys.Get(context.Background(), rs.Primary.ID)
+			if err != nil {
+				return fmt.Errorf("failed to fetch API key: %w", err)
+			}
+			if key.Description == nil || *key.Description != want {
+				return fmt.Errorf("API reports description %v, want %q", key.Description, want)
+			}
+			return nil
+		},
+	)
 }
