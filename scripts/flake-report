@@ -1,0 +1,64 @@
+#!/usr/bin/env python3
+"""Report which tests fail most often in the scheduled CI runs.
+
+Usage: flake-report [COUNT]
+
+Looks at the last COUNT (default 30) scheduled runs of the CI workflow on
+main, reads the logs of each failed run, and prints how often every test
+failed. A test which fails in some runs and passes in others is a flake.
+Requires the GitHub CLI (`gh`) with access to this repository.
+"""
+import collections
+import json
+import re
+import subprocess
+import sys
+
+WORKFLOW = "ci.yaml"
+FAIL = re.compile(r"--- FAIL: (\S+)")
+NO_TEST = "(no failing test: build, setup, lint, or infrastructure)"
+
+
+def gh(*args):
+    return subprocess.run(["gh", *args], check=True, capture_output=True, text=True).stdout
+
+
+def failed_tests(run_id):
+    """Returns the innermost failing (test, job) pairs of a run."""
+    found = set()
+    for line in gh("run", "view", str(run_id), "--log-failed").splitlines():
+        job, _, rest = line.partition("\t")
+        if match := FAIL.search(rest):
+            found.add((match.group(1), job))
+    # a parent fails whenever a subtest does: keep only the innermost
+    return {
+        (name, job)
+        for name, job in found
+        if not any(other.startswith(name + "/") and other_job == job for other, other_job in found)
+    }
+
+
+def main(count):
+    runs = json.loads(
+        gh(
+            "run", "list", "--workflow", WORKFLOW, "--event", "schedule", "--branch", "main",
+            "--limit", str(count), "--json", "databaseId,conclusion,createdAt",
+        )
+    )
+    finished = [r for r in runs if r["conclusion"] in ("success", "failure")]
+    failed = [r for r in finished if r["conclusion"] == "failure"]
+    print(f"{len(failed)} of the last {len(finished)} scheduled runs failed\n")
+
+    seen = collections.defaultdict(list)  # (test, job) -> dates of the runs it failed in
+    for run in failed:
+        tests = failed_tests(run["databaseId"]) or {(NO_TEST, "")}
+        for key in tests:
+            seen[key].append(run["createdAt"][:10])
+
+    for (name, job), dates in sorted(seen.items(), key=lambda kv: (-len(kv[1]), kv[0])):
+        where = f" [{job}]" if job else ""
+        print(f"{len(dates):3d}  {name}{where}  (latest {max(dates)})")
+
+
+if __name__ == "__main__":
+    main(int(sys.argv[1]) if len(sys.argv) > 1 else 30)

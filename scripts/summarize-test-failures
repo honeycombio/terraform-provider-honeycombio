@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""Summarize the failing tests in go-junit-report XML files as Slack mrkdwn.
+
+Usage: summarize-test-failures REPORT.xml [REPORT.xml ...]
+
+Missing report files are ignored: when an earlier CI step fails, the later
+test steps never run and never write their report.
+
+Only the innermost failing tests are listed. A parent test fails whenever one
+of its subtests does, so listing it too would only add noise.
+"""
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+MAX_TESTS = 10
+MAX_DETAIL = 200
+# the first line of a failure which points at the failing assertion or error
+DETAIL = re.compile(r"_test\.go:\d+:|Error:|panic:")
+
+
+def failures(path):
+    try:
+        root = ET.parse(path).getroot()
+    except (FileNotFoundError, ET.ParseError):
+        return {}
+    failed = {}
+    for case in root.iter("testcase"):
+        failure = case.find("failure")
+        if failure is not None:
+            failed[case.get("name")] = (failure.text or "").strip()
+    return failed
+
+
+def detail(text):
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    line = next((line for line in lines if DETAIL.search(line)), lines[0] if lines else "")
+    return line if len(line) <= MAX_DETAIL else line[: MAX_DETAIL - 1] + "…"
+
+
+def main(paths):
+    failed = {}
+    for path in paths:
+        failed.update(failures(path))
+
+    names = sorted(name for name in failed if not any(other.startswith(name + "/") for other in failed))
+    if not names:
+        return (
+            "No failing tests were recorded, so the failure was probably in the build, "
+            "test setup, or the test run itself (timeout, panic, or crash)."
+        )
+
+    out = []
+    for name in names[:MAX_TESTS]:
+        line = f"• `{name}`"
+        if failed[name]:
+            line += f": {detail(failed[name])}"
+        out.append(line)
+    if len(names) > MAX_TESTS:
+        out.append(f"…and {len(names) - MAX_TESTS} more")
+    return "\n".join(out)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        sys.exit(__doc__)
+    print(main(sys.argv[1:]))
