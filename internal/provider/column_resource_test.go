@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -108,11 +109,15 @@ resource "honeycombio_column" "test" {
 			c.Columns.Delete(ctx, dataset, column.KeyName)
 		})
 
-		// schema changes propagate asynchronously, so wait for the column to be visible
+		// schema changes propagate asynchronously: a column can be readable
+		// before the API's uniqueness check on create sees it, in which case
+		// the provider's create would succeed instead of conflicting. Wait
+		// until creating the column is rejected as a duplicate.
 		require.Eventually(t, func() bool {
-			_, err := c.Columns.GetByKeyName(ctx, dataset, column.KeyName)
-			return err == nil
-		}, 60*time.Second, 500*time.Millisecond, "column %q never became visible", column.KeyName)
+			_, err := c.Columns.Create(ctx, dataset, &client.Column{KeyName: column.KeyName})
+			var de client.DetailedError
+			return errors.As(err, &de) && de.IsConflict()
+		}, 60*time.Second, 500*time.Millisecond, "column %q never became a create conflict", column.KeyName)
 
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
