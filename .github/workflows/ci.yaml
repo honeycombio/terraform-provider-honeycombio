@@ -109,6 +109,19 @@ jobs:
             -iocopy \
             -out provider-report.xml
 
+      - name: Summarize test failures
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        env:
+          REGION: US
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          failures="$(go run ./tools/summarize-test-failures client-report.xml provider-report.xml || true)"
+          jq -n --arg region "$REGION" --arg url "$RUN_URL" --arg failures "$failures" '{
+            username: "Terraform Provider CI",
+            icon_emoji: ":terraform-fall-down:",
+            text: ":rotating_light: The scheduled test suite run failed for the \($region) region.\n\n\($failures)\n\n<\($url)|View Workflow>"
+          }' > slack-payload.json
+
       - name: Notify if scheduled run fails
         id: slack-notify
         if: ${{ failure() && github.event_name == 'schedule' }}
@@ -116,10 +129,7 @@ jobs:
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
-          payload: |
-            username: "Terraform Provider CI"
-            text: ":rotating_light: The scheduled test suite run failed for the US region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
-            icon_emoji: ":terraform-fall-down:"
+          payload-file-path: slack-payload.json
 
       - name: Cleanup Dangling Resources
         if: ${{ always() }}
@@ -209,6 +219,19 @@ jobs:
             -iocopy \
             -out provider-report.xml
 
+      - name: Summarize test failures
+        if: ${{ failure() && github.event_name == 'schedule' }}
+        env:
+          REGION: EU
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          failures="$(go run ./tools/summarize-test-failures client-report.xml provider-report.xml || true)"
+          jq -n --arg region "$REGION" --arg url "$RUN_URL" --arg failures "$failures" '{
+            username: "Terraform Provider CI",
+            icon_emoji: ":terraform-fall-down:",
+            text: ":rotating_light: The scheduled test suite run failed for the \($region) region.\n\n\($failures)\n\n<\($url)|View Workflow>"
+          }' > slack-payload.json
+
       - name: Notify if scheduled run fails
         id: slack-notify
         if: ${{ failure() && github.event_name == 'schedule' }}
@@ -216,10 +239,7 @@ jobs:
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
-          payload: |
-            username: "Terraform Provider CI"
-            text: ":rotating_light: The scheduled test suite run failed for the EU region.\n\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
-            icon_emoji: ":terraform-fall-down:"
+          payload-file-path: slack-payload.json
 
       - name: Cleanup Dangling Resources
         if: ${{ always() }}
