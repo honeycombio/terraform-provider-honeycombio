@@ -115,7 +115,7 @@ jobs:
           REGION: US
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          failures="$(scripts/summarize-test-failures client-report.xml provider-report.xml || true)"
+          failures="$(go run ./tools/summarize-test-failures client-report.xml provider-report.xml || true)"
           jq -n --arg region "$REGION" --arg url "$RUN_URL" --arg failures "$failures" '{
             username: "Terraform Provider CI",
             icon_emoji: ":terraform-fall-down:",
@@ -225,7 +225,7 @@ jobs:
           REGION: EU
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          failures="$(scripts/summarize-test-failures client-report.xml provider-report.xml || true)"
+          failures="$(go run ./tools/summarize-test-failures client-report.xml provider-report.xml || true)"
           jq -n --arg region "$REGION" --arg url "$RUN_URL" --arg failures "$failures" '{
             username: "Terraform Provider CI",
             icon_emoji: ":terraform-fall-down:",
