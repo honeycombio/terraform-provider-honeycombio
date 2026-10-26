@@ -78,6 +78,13 @@ func (c *Cache[T]) Get(ctx context.Context, key string, fetch func(context.Conte
 	// invalidation still completes for the readers that predate the
 	// invalidation, but readers arriving after it start a fresh fetch
 	ch := c.group.DoChan(fmt.Sprintf("%d\x00%s", epoch, key), func() (any, error) {
+		// re-check the cache: a fetch for this key may have completed
+		// (storing its result and leaving the flight) between this
+		// read's cache miss above and the start of this flight. An
+		// invalidation removes the entry, so a hit here is never stale.
+		if items, ok := c.lru.Get(key); ok {
+			return items, nil
+		}
 		items, err := fetch(ctx)
 		if err != nil {
 			return nil, err
