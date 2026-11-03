@@ -29,6 +29,13 @@ const (
 	defaultUserAgent = "go-honeycomb"
 )
 
+// ErrEnvironmentScopedKey is returned for calls which need a team-scoped
+// Management Key when the client is configured with an environment-scoped one.
+var ErrEnvironmentScopedKey = errors.New(
+	"the configured API Key is scoped to a single Environment, " +
+		"but this operation requires a team-scoped Management Key",
+)
+
 type Config struct {
 	APIKeyID     string
 	APIKeySecret string
@@ -59,6 +66,9 @@ type Client struct {
 // teamSlug returns the team slug for the configured API key, fetching the
 // auth metadata from the API on first use and caching the result. Errors are
 // not cached so that a transient failure does not poison later calls.
+//
+// Every caller builds a team-scoped path, which environment-scoped Management
+// Keys cannot use, so it returns ErrEnvironmentScopedKey for those.
 func (c *Client) teamSlug(ctx context.Context) (string, error) {
 	c.authMu.Lock()
 	defer c.authMu.Unlock()
@@ -68,6 +78,9 @@ func (c *Client) teamSlug(ctx context.Context) (string, error) {
 			return "", err
 		}
 		c.authInfo = info
+	}
+	if c.authInfo.Environment != nil {
+		return "", ErrEnvironmentScopedKey
 	}
 	return c.authInfo.Team.Slug, nil
 }
