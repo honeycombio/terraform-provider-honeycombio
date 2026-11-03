@@ -9,8 +9,29 @@ For more information about API Keys, check out [Best Practices for API Keys](htt
 
 {{tffile "examples/resources/honeycombio_api_key/resource.tf"}}
 
+### Environment-scoped Management Keys
+
+A `management` key is scoped to a single Environment and has `scopes` instead of `permissions`.
+A key can only grant the scopes it holds itself, so the provider's key needs each scope it gives to a `management` key as well as `api-keys:write`.
+It must be a team-scoped Management Key: an environment-scoped key cannot create keys.
+A complete example, with the central configuration which creates the keys and the automation which uses one, can be found in the [examples directory](https://github.com/honeycombio/terraform-provider-honeycombio/tree/main/examples/samples/environment_scoped_keys).
+
+{{tffile "examples/resources/honeycombio_api_key/management_key.tf"}}
+
+Use `id` and `secret` of a `management` key as the provider's `api_key_id` and `api_key_secret`.
+The `key` attribute is not set for `management` keys.
+
 {{ .SchemaMarkdown | trimspace }}
 
 ## Import
 
-API Keys cannot be imported.
+API Keys can be imported by their ID. e.g.
+
+```
+$ terraform import honeycombio_api_key.prod_ingest hcxik_01j1jrsewaha3m0z6fwffpcrxg
+```
+
+Honeycomb only returns the secret of an API Key when it is created, so an imported key has no `secret` or `key`.
+If you need the secret of an imported key, replace the key: `terraform apply -replace=honeycombio_api_key.prod_ingest`.
+
+Import `ingest` and `configuration` keys with a `permissions` block that matches the key, or Terraform plans to replace it.
