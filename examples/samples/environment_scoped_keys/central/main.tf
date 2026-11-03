@@ -2,7 +2,7 @@
 # and an environment-scoped Management Key for each Environment.
 #
 # Run it with a team-scoped Management Key which has the scopes `environments:write`
-# and `api-keys:write`, and also every scope given to the keys it creates, here `datasets:write`.
+# and `api-keys:write`, which is also what creating the environment-scoped keys needs.
 # HONEYCOMB_KEY_ID and HONEYCOMB_KEY_SECRET can be used to set the key.
 terraform {
   required_providers {

@@ -5,7 +5,7 @@ resource "honeycombio_api_key" "prod_automation" {
   type           = "management"
   environment_id = var.environment_id
 
-  # the provider's own key must hold every scope it grants
+  # creating this key needs a provider key with the `api-keys:write` and `environments:write` scopes
   scopes = ["datasets:read", "datasets:write"]
 }
 

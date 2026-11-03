@@ -28,7 +28,7 @@ output "ingest_key" {
 ### Environment-scoped Management Keys
 
 A `management` key is scoped to a single Environment and has `scopes` instead of `permissions`.
-A key can only grant the scopes it holds itself, so the provider's key needs each scope it gives to a `management` key as well as `api-keys:write`.
+Creating one needs a provider key with both the `api-keys:write` and `environments:write` scopes. Reading, updating and deleting one need only the `api-keys` scopes.
 It must be a team-scoped Management Key: an environment-scoped key cannot create keys.
 A complete example, with the central configuration which creates the keys and the automation which uses one, can be found in the [examples directory](https://github.com/honeycombio/terraform-provider-honeycombio/tree/main/examples/samples/environment_scoped_keys).
 
@@ -40,7 +40,7 @@ resource "honeycombio_api_key" "prod_automation" {
   type           = "management"
   environment_id = var.environment_id
 
-  # the provider's own key must hold every scope it grants
+  # creating this key needs a provider key with the `api-keys:write` and `environments:write` scopes
   scopes = ["datasets:read", "datasets:write"]
 }
 
@@ -73,7 +73,7 @@ The `key` attribute is not set for `management` keys.
 - `description` (String) A description of the API key, such as where it is used, of up to 2000 characters. This is not secret, so do not store secrets in it. Defaults to an empty string, so a description set outside of Terraform is removed on the next apply.
 - `disabled` (Boolean) Whether the API key is disabled. Defaults to `false`.
 - `permissions` (Block List) A configuration block setting what actions the API key can perform. (see [below for nested schema](#nestedblock--permissions))
-- `scopes` (Set of String) The scopes granted to a `management` key, such as `datasets:read` or `datasets:write`. Required for `management` keys, and not allowed for other types. The scopes of a key cannot be changed: changing them replaces the key. The provider's own key must hold every scope it grants.
+- `scopes` (Set of String) The scopes granted to a `management` key, such as `datasets:read` or `datasets:write`. Required for `management` keys, and not allowed for other types. The scopes of a key cannot be changed: changing them replaces the key. The provider's own key needs the `api-keys:write` and `environments:write` scopes to create one.
 - `visible_to_members` (Boolean) Whether the key can be viewed by members and read-only users, or only owners.
 
 ### Read-Only

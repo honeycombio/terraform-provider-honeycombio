@@ -135,7 +135,7 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				MarkdownDescription: "The scopes granted to a `management` key, such as `datasets:read` or `datasets:write`. " +
 					"Required for `management` keys, and not allowed for other types. " +
 					"The scopes of a key cannot be changed: changing them replaces the key. " +
-					"The provider's own key must hold every scope it grants.",
+					"The provider's own key needs the `api-keys:write` and `environments:write` scopes to create one.",
 				Validators: []validator.Set{
 					setvalidator.SizeAtLeast(1),
 				},

@@ -246,7 +246,6 @@ func TestAcc_APIKeyResource_ManagementKey(t *testing.T) {
 	env := testAccEnvironment(ctx, t, c)
 	testAccSkipWithoutEnvScopedKeys(ctx, t, c, env)
 
-	// the key which creates the other keys must hold the scopes it grants
 	both := `["datasets:read", "datasets:write"]`
 	readOnly := `["datasets:read"]`
 
