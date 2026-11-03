@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
@@ -23,7 +24,11 @@ func NewAuthMetadataDataSource() datasource.DataSource {
 
 // authMetadataDataSource is the data source implementation.
 type authMetadataDataSource struct {
+	// client is used when the provider is configured with an API Key.
 	client *client.Client
+	// v2client is used when it is configured only with a Key ID and Secret pair,
+	// as the v1 API does not accept Management Keys.
+	v2client *v2client.Client
 }
 
 type authMetadataDataSourceModel struct {
@@ -39,6 +44,7 @@ type authMetadataDataSourceModel struct {
 		Triggers   types.Bool `tfsdk:"triggers"`
 	} `tfsdk:"api_key_access"`
 	Environment struct {
+		ID      types.String `tfsdk:"id"`
 		Classic types.Bool   `tfsdk:"classic"`
 		Name    types.String `tfsdk:"name"`
 		Slug    types.String `tfsdk:"slug"`
@@ -55,10 +61,12 @@ func (d *authMetadataDataSource) Metadata(_ context.Context, req datasource.Meta
 
 func (d *authMetadataDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Retreives information about the API key used to authenticate the provider.",
+		MarkdownDescription: "Retreives information about the API key used to authenticate the provider.\n\n" +
+			"If the provider is configured with an API Key (`api_key`), the information comes from the v1 API. " +
+			"If it is configured only with a Key ID and Secret pair, it comes from the v2 API and `api_key_access` is not set.",
 		Blocks: map[string]schema.Block{
 			"api_key_access": schema.SingleNestedBlock{
-				Description: "The authorizations granted for the API key used to authenticate the provider. See https://docs.honeycomb.io/working-with-your-data/settings/api-keys/ for more information.",
+				Description: "The authorizations granted for the API key used to authenticate the provider. Only set if the provider is configured with an API Key. See https://docs.honeycomb.io/working-with-your-data/settings/api-keys/ for more information.",
 				Attributes: map[string]schema.Attribute{
 					"boards": schema.BoolAttribute{
 						Description: "Whether this API key can create and manage Boards.",
@@ -117,8 +125,15 @@ func (d *authMetadataDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 				},
 			},
 			"environment": schema.SingleNestedBlock{
-				Description: "Information about the Environment the API key is scoped to.",
+				Description: "Information about the Environment the API key is scoped to. " +
+					"If the provider is configured with a team-scoped Management Key, the Environment is not set.",
 				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: "The ID of the Environment. Only set if the provider is configured with a Key ID and Secret pair.",
+						Computed:    true,
+						Optional:    false,
+						Required:    false,
+					},
 					"classic": schema.BoolAttribute{
 						Description: "Whether the Environment is a Classic Environment.",
 						Computed:    true,
@@ -166,16 +181,18 @@ func (d *authMetadataDataSource) Configure(_ context.Context, req datasource.Con
 		return
 	}
 
-	c, err := w.V1Client()
-	if err != nil || c == nil {
-		resp.Diagnostics.AddError("Failed to configure client", err.Error())
-		return
-	}
-	d.client = c
+	// The provider guarantees at least one of the clients is configured.
+	d.client = w.v1client
+	d.v2client = w.v2client
 }
 
 func (d *authMetadataDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data authMetadataDataSourceModel
+
+	if d.client == nil {
+		d.readV2(ctx, &data, resp)
+		return
+	}
 
 	metadata, err := d.client.Auth.List(ctx)
 	if helper.AddDiagnosticOnError(&resp.Diagnostics,
@@ -210,4 +227,27 @@ func (d *authMetadataDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)
+}
+
+// readV2 fills the data from the v2 API, which unlike v1 accepts Management Keys.
+func (d *authMetadataDataSource) readV2(ctx context.Context, data *authMetadataDataSourceModel, resp *datasource.ReadResponse) {
+	metadata, err := d.v2client.AuthInfo(ctx)
+	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Retrieving Auth Metadata", err) {
+		return
+	}
+
+	data.Team.Name = types.StringValue(metadata.Team.Name)
+	data.Team.Slug = types.StringValue(metadata.Team.Slug)
+
+	// only environment-scoped keys have an Environment.
+	// All of the other attributes are left null: Management Keys have scopes,
+	// not the API Key access of v1 keys, and a team-scoped key isn't Classic.
+	if metadata.Environment != nil {
+		data.Environment.ID = types.StringValue(metadata.Environment.ID)
+		data.Environment.Classic = types.BoolValue(false)
+		data.Environment.Name = types.StringValue(metadata.Environment.Name)
+		data.Environment.Slug = types.StringValue(metadata.Environment.Slug)
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
 }
