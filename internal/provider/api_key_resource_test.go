@@ -15,6 +15,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/client"
+	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
 )
 
 func TestAcc_APIKeyResource(t *testing.T) {
@@ -234,6 +238,130 @@ resource "honeycombio_api_key" "test_configuration" {
 	})
 }
 
+func TestAcc_APIKeyResource_ManagementKey(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	c := testAccV2Client(t)
+	env := testAccEnvironment(ctx, t, c)
+	testAccSkipWithoutEnvScopedKeys(ctx, t, c, env)
+
+	// the key which creates the other keys must hold the scopes it grants
+	both := `["datasets:read", "datasets:write"]`
+	readOnly := `["datasets:read"]`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheckV2API(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigManagementAPIKeyTest("test key", "false", both, env.ID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureAPIKeyExists(t, "honeycombio_api_key.test"),
+					resource.TestCheckResourceAttrSet("honeycombio_api_key.test", "id"),
+					resource.TestCheckResourceAttrSet("honeycombio_api_key.test", "secret"),
+					resource.TestCheckNoResourceAttr("honeycombio_api_key.test", "key"),
+					resource.TestCheckResourceAttr("honeycombio_api_key.test", "name", "test key"),
+					resource.TestCheckResourceAttr("honeycombio_api_key.test", "type", "management"),
+					resource.TestCheckResourceAttr("honeycombio_api_key.test", "environment_id", env.ID),
+					resource.TestCheckResourceAttr("honeycombio_api_key.test", "disabled", "false"),
+					resource.TestCheckResourceAttr("honeycombio_api_key.test", "visible_to_members", "false"),
+					resource.TestCheckResourceAttr("honeycombio_api_key.test", "scopes.#", "2"),
+					resource.TestCheckTypeSetElemAttr("honeycombio_api_key.test", "scopes.*", "datasets:read"),
+					resource.TestCheckTypeSetElemAttr("honeycombio_api_key.test", "scopes.*", "datasets:write"),
+					testAccCheckManagementKeyAuthenticates(t, "honeycombio_api_key.test", env.ID),
+				),
+			},
+			{ // the name and disabled state are updated in place
+				Config: testAccConfigManagementAPIKeyTest("updated test key", "true", both, env.ID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("honeycombio_api_key.test", plancheck.ResourceActionUpdate),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_api_key.test", "name", "updated test key"),
+					resource.TestCheckResourceAttr("honeycombio_api_key.test", "disabled", "true"),
+					resource.TestCheckResourceAttrSet("honeycombio_api_key.test", "secret"),
+				),
+			},
+			{ // the secret cannot be read back, so an import does not have it
+				ResourceName:            "honeycombio_api_key.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"secret", "key"},
+			},
+			{ // the scopes of a key cannot be changed, so it is replaced
+				Config: testAccConfigManagementAPIKeyTest("updated test key", "true", readOnly, env.ID),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("honeycombio_api_key.test", plancheck.ResourceActionDestroyBeforeCreate),
+					},
+				},
+				Check: resource.TestCheckResourceAttr("honeycombio_api_key.test", "scopes.#", "1"),
+			},
+			{
+				Config:      testAccConfigManagementAPIKeyTest("test key", "false", `[]`, env.ID),
+				ExpectError: regexp.MustCompile(`(?s)at least 1`),
+			},
+		},
+	})
+}
+
+func TestAcc_APIKeyResource_ManagementKey_invalidConfig(t *testing.T) {
+	t.Parallel()
+
+	config := func(attrs string) string {
+		return fmt.Sprintf(`
+resource "honeycombio_api_key" "test" {
+  name           = "test key"
+  environment_id = "hcxen_00000000000000000000000000"
+  %s
+}`, attrs)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheckV2API(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config:      config(`type = "management"`),
+				ExpectError: regexp.MustCompile(`required for .management. keys`),
+			},
+			{
+				Config:      config("type = \"ingest\"\nscopes = [\"datasets:read\"]"),
+				ExpectError: regexp.MustCompile(`can only be set for .management. keys`),
+			},
+			{
+				Config:      config("type = \"management\"\nscopes = [\"datasets:read\"]\npermissions {}"),
+				ExpectError: regexp.MustCompile(`cannot be set for .management. keys`),
+			},
+		},
+	})
+}
+
+// An environment-scoped key cannot manage API keys, so it fails with an error which says why.
+func TestAcc_APIKeyResource_EnvironmentScopedProviderKey(t *testing.T) {
+	t.Parallel()
+
+	id, secret := testAccEnvScopedKey(t)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccProviderV2Only(id, secret) + `
+resource "honeycombio_api_key" "test" {
+  name           = "test key"
+  type           = "ingest"
+  environment_id = "hcxen_00000000000000000000000000"
+}`,
+				ExpectError: regexp.MustCompile(`(?s)scoped\s+to\s+a\s+single\s+Environment`),
+			},
+		},
+	})
+}
+
 func TestAcc_APIKeyResource_upgradeFromVersion050_0(t *testing.T) {
 	t.Parallel()
 
@@ -406,6 +534,67 @@ resource "honeycombio_api_key" "test" {
 	manage_markers        = true
   }
 }`, name, disabled, visibleToMembers, envID)
+}
+
+func testAccConfigManagementAPIKeyTest(name, disabled, scopes, envID string) string {
+	return fmt.Sprintf(`
+resource "honeycombio_api_key" "test" {
+  name     = "%s"
+  type     = "management"
+  disabled = %s
+
+  environment_id = "%s"
+
+  scopes = %s
+}`, name, disabled, envID, scopes)
+}
+
+// testAccSkipWithoutEnvScopedKeys skips the test unless the API lets the test
+// key create environment-scoped Management Keys.
+// It does not while the feature is limited to some teams, or before the API
+// grants the ability to API keys.
+func testAccSkipWithoutEnvScopedKeys(ctx context.Context, t *testing.T, c *v2client.Client, env *v2client.Environment) {
+	t.Helper()
+
+	key, err := c.APIKeys.Create(ctx, &v2client.APIKey{
+		Name:        helper.ToPtr("test.availability"),
+		KeyType:     "management",
+		Scopes:      []string{"datasets:read"},
+		Environment: &v2client.Environment{ID: env.ID},
+	})
+	var detailedErr client.DetailedError
+	if errors.As(err, &detailedErr) && (detailedErr.Status == 403 || detailedErr.Status == 422) {
+		t.Skipf("environment-scoped Management Keys are not available to the test key: %v", err)
+	}
+	require.NoError(t, err)
+	require.NoError(t, c.APIKeys.Delete(ctx, key.ID))
+}
+
+// testAccCheckManagementKeyAuthenticates checks that the Management Key of the
+// resource works, and belongs to the environment.
+func testAccCheckManagementKeyAuthenticates(t *testing.T, name, envID string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("resource not found: %s", name)
+		}
+
+		c, err := v2client.NewClientWithConfig(&v2client.Config{
+			APIKeyID:     rs.Primary.ID,
+			APIKeySecret: rs.Primary.Attributes["secret"],
+		})
+		if err != nil {
+			return err
+		}
+		info, err := c.AuthInfo(context.Background())
+		if err != nil {
+			return fmt.Errorf("failed to authenticate with the new key: %w", err)
+		}
+		if info.Environment == nil || info.Environment.ID != envID {
+			return fmt.Errorf("new key is scoped to environment %v, want %s", info.Environment, envID)
+		}
+		return nil
+	}
 }
 
 func testAccEnsureAPIKeyExists(t *testing.T, name string) resource.TestCheckFunc {

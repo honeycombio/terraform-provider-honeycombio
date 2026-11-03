@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -16,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -30,13 +32,15 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 //
-// This resource is not implementing ResourceWithImportState because importing keys
-// won't give us the secret portion of the key which is arguably the whole reason
-// for the resource.
+// Importing a key doesn't give us the secret portion of the key,
+// which is arguably the whole reason for the resource. So an imported key
+// has no `secret` or `key` and Terraform can only manage the rest of it.
 var (
-	_ resource.Resource                 = &apiKeyResource{}
-	_ resource.ResourceWithConfigure    = &apiKeyResource{}
-	_ resource.ResourceWithUpgradeState = &apiKeyResource{}
+	_ resource.Resource                   = &apiKeyResource{}
+	_ resource.ResourceWithConfigure      = &apiKeyResource{}
+	_ resource.ResourceWithImportState    = &apiKeyResource{}
+	_ resource.ResourceWithUpgradeState   = &apiKeyResource{}
+	_ resource.ResourceWithValidateConfig = &apiKeyResource{}
 )
 
 type apiKeyResource struct {
@@ -96,10 +100,11 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				},
 			},
 			"type": schema.StringAttribute{
-				Required:            true,
-				MarkdownDescription: "The type of API key. Currently only `ingest` and `configuration` is supported.",
+				Required: true,
+				MarkdownDescription: "The type of API key. Currently only `ingest`, `configuration`, and `management` are supported. " +
+					"A `management` key is scoped to the Environment given by `environment_id`.",
 				Validators: []validator.String{
-					stringvalidator.OneOf("ingest", "configuration"),
+					stringvalidator.OneOf("ingest", "configuration", "management"),
 				},
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -124,19 +129,33 @@ func (*apiKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp 
 				MarkdownDescription: "Whether the key can be viewed by members and read-only users, or only owners.",
 				Default:             booldefault.StaticBool(false),
 			},
+			"scopes": schema.SetAttribute{
+				ElementType: types.StringType,
+				Optional:    true,
+				MarkdownDescription: "The scopes granted to a `management` key, such as `datasets:read` or `datasets:write`. " +
+					"Required for `management` keys, and not allowed for other types. " +
+					"The scopes of a key cannot be changed: changing them replaces the key. " +
+					"The provider's own key must hold every scope it grants.",
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
+				},
+				PlanModifiers: []planmodifier.Set{
+					setplanmodifier.RequiresReplace(),
+				},
+			},
 			"key": schema.StringAttribute{
 				Computed:            true,
 				Required:            false,
 				Optional:            false,
 				Sensitive:           true,
-				MarkdownDescription: "The API key formatted for use based on its type.",
+				MarkdownDescription: "The API key formatted for use based on its type. Not set for `management` keys: use `id` and `secret`.",
 			},
 			"secret": schema.StringAttribute{
 				Computed:            true,
 				Required:            false,
 				Optional:            false,
 				Sensitive:           true,
-				MarkdownDescription: "The secret portion of the API Key.",
+				MarkdownDescription: "The secret portion of the API Key. It is only available when the key is created: it is not set for an imported key.",
 			},
 		},
 		Blocks: map[string]schema.Block{
@@ -361,12 +380,37 @@ func (*apiKeyResource) UpgradeState(_ context.Context) map[int64]resource.StateU
 				},
 			},
 			StateUpgrader: func(ctx context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
-				var state models.APIKeyResourceModel
-				resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+				// the model as it was before `scopes` was added
+				var prior struct {
+					ID               types.String `tfsdk:"id"`
+					Name             types.String `tfsdk:"name"`
+					Description      types.String `tfsdk:"description"`
+					Type             types.String `tfsdk:"type"`
+					EnvironmentID    types.String `tfsdk:"environment_id"`
+					VisibleToMembers types.Bool   `tfsdk:"visible_to_members"`
+					Disabled         types.Bool   `tfsdk:"disabled"`
+					Permissions      types.List   `tfsdk:"permissions"`
+					Secret           types.String `tfsdk:"secret"`
+					Key              types.String `tfsdk:"key"`
+				}
+				resp.Diagnostics.Append(req.State.Get(ctx, &prior)...)
 				if resp.Diagnostics.HasError() {
 					return
 				}
 
+				state := models.APIKeyResourceModel{
+					ID:               prior.ID,
+					Name:             prior.Name,
+					Description:      prior.Description,
+					Type:             prior.Type,
+					EnvironmentID:    prior.EnvironmentID,
+					VisibleToMembers: prior.VisibleToMembers,
+					Disabled:         prior.Disabled,
+					Permissions:      prior.Permissions,
+					Scopes:           types.SetNull(types.StringType),
+					Secret:           prior.Secret,
+					Key:              prior.Key,
+				}
 				if state.VisibleToMembers.IsNull() {
 					state.VisibleToMembers = types.BoolValue(false)
 				}
@@ -385,6 +429,52 @@ func (*apiKeyResource) UpgradeState(_ context.Context) map[int64]resource.StateU
 			},
 		},
 	}
+}
+
+func (*apiKeyResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var config models.APIKeyResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() || config.Type.IsUnknown() || config.Type.IsNull() {
+		return
+	}
+
+	if config.Type.ValueString() != "management" {
+		if !config.Scopes.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("scopes"),
+				"Invalid API Key Configuration",
+				"`scopes` can only be set for `management` keys. Use `permissions` for "+config.Type.ValueString()+" keys.",
+			)
+		}
+		return
+	}
+
+	// a management key is defined by its scopes, not by permissions
+	if config.Scopes.IsNull() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("scopes"),
+			"Invalid API Key Configuration",
+			"`scopes` is required for `management` keys.",
+		)
+	}
+	if len(config.Permissions.Elements()) > 0 {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("permissions"),
+			"Invalid API Key Configuration",
+			"`permissions` cannot be set for `management` keys. Use `scopes` instead.",
+		)
+	}
+	if config.VisibleToMembers.ValueBool() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("visible_to_members"),
+			"Invalid API Key Configuration",
+			"`visible_to_members` cannot be set for `management` keys.",
+		)
+	}
+}
+
+func (*apiKeyResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
 func (r *apiKeyResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -407,6 +497,12 @@ func (r *apiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		Disabled:    plan.Disabled.ValueBoolPointer(),
 		Permissions: apiPermissions,
 	}
+	if !plan.Scopes.IsNull() {
+		resp.Diagnostics.Append(plan.Scopes.ElementsAs(ctx, &newKey.Scopes, false)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
 
 	key, err := r.client.APIKeys.Create(ctx, newKey)
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb API Key", err) {
@@ -421,7 +517,8 @@ func (r *apiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 	state.EnvironmentID = types.StringValue(key.Environment.ID)
 	state.Disabled = types.BoolValue(*key.Disabled)
 	state.Secret = types.StringValue(key.Secret)
-	state.VisibleToMembers = types.BoolValue(key.Permissions.VisibleToMembers)
+	state.VisibleToMembers = types.BoolValue(key.Permissions != nil && key.Permissions.VisibleToMembers)
+	state.Scopes = flattenAPIKeyScopes(ctx, key.Scopes, &resp.Diagnostics)
 
 	if !plan.Permissions.IsNull() {
 		state.Permissions = flattenAPIKeyPermissions(ctx, key.Permissions, &resp.Diagnostics)
@@ -434,10 +531,14 @@ func (r *apiKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 		state.Key = types.StringValue(key.ID + key.Secret)
 	case "configuration":
 		state.Key = types.StringValue(key.Secret)
+	case "management":
+		// authenticating takes the ID and the secret as a pair, as the provider's
+		// `api_key_id` and `api_key_secret` do, so there is no single value to give
+		state.Key = types.StringNull()
 	default:
 		resp.Diagnostics.AddError(
 			"Unknown API Key Type",
-			"API Key Type "+key.KeyType+" is not supported. Supported types are: ingest",
+			"API Key Type "+key.KeyType+" is not supported. Supported types are: ingest, configuration, management",
 		)
 	}
 
@@ -450,6 +551,9 @@ func (r *apiKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// an imported key has only its ID
+	imported := state.Type.IsNull()
 
 	var detailedErr client.DetailedError
 	key, err := r.client.APIKeys.Get(ctx, state.ID.ValueString())
@@ -480,9 +584,11 @@ func (r *apiKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 	state.Type = types.StringValue(key.KeyType)
 	state.Disabled = types.BoolValue(*key.Disabled)
 	state.EnvironmentID = types.StringValue(key.Environment.ID)
-	state.VisibleToMembers = types.BoolValue(key.Permissions.VisibleToMembers)
+	state.VisibleToMembers = types.BoolValue(key.Permissions != nil && key.Permissions.VisibleToMembers)
+	state.Scopes = flattenAPIKeyScopes(ctx, key.Scopes, &resp.Diagnostics)
 
-	if !state.Permissions.IsNull() {
+	// there is no configuration to be matched on import, so take what the key has
+	if !state.Permissions.IsNull() || imported {
 		state.Permissions = flattenAPIKeyPermissions(ctx, key.Permissions, &resp.Diagnostics)
 	} else {
 		state.Permissions = types.ListNull(types.ObjectType{AttrTypes: models.APIKeyPermissionsAttrType})
@@ -522,7 +628,8 @@ func (r *apiKeyResource) Update(ctx context.Context, req resource.UpdateRequest,
 	state.Type = types.StringValue(key.KeyType)
 	state.Disabled = types.BoolValue(*key.Disabled)
 	state.EnvironmentID = types.StringValue(key.Environment.ID)
-	state.VisibleToMembers = types.BoolValue(key.Permissions.VisibleToMembers)
+	state.VisibleToMembers = types.BoolValue(key.Permissions != nil && key.Permissions.VisibleToMembers)
+	state.Scopes = flattenAPIKeyScopes(ctx, key.Scopes, &resp.Diagnostics)
 
 	if !state.Permissions.IsNull() {
 		state.Permissions = flattenAPIKeyPermissions(ctx, key.Permissions, &resp.Diagnostics)
@@ -596,6 +703,18 @@ func flattenAPIKeyDescription(d *string) types.String {
 		return types.StringValue("")
 	}
 	return types.StringValue(*d)
+}
+
+// flattenAPIKeyScopes maps no scopes to null, as only Management Keys have them.
+func flattenAPIKeyScopes(ctx context.Context, scopes []string, diags *diag.Diagnostics) types.Set {
+	if len(scopes) == 0 {
+		return types.SetNull(types.StringType)
+	}
+
+	result, d := types.SetValueFrom(ctx, types.StringType, scopes)
+	diags.Append(d...)
+
+	return result
 }
 
 func flattenAPIKeyPermissions(ctx context.Context, p *v2client.APIKeyPermissions, diags *diag.Diagnostics) types.List {
