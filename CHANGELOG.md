@@ -1,3 +1,10 @@
+# Next (unreleased)
+
+## Enhancements
+
+- feat(queries): support `usage_mode` in query specifications, so query JSON with `usage_mode` passes validation and doesn't drift (#943)
+- feat(r/telemetry_schema): add honeycombio_telemetry_schema resource (#947)
+
 # 0.56.0 (November 5, 2026)
 
 ## Notes

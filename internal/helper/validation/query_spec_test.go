@@ -41,6 +41,9 @@ func Test_QuerySpecValidator(t *testing.T) {
 		"valid HISTOGRAM_COUNT": {
 			val: types.StringValue(`{"calculations": [{"op": "HISTOGRAM_COUNT", "column": "request.duration"}]}`),
 		},
+		"valid usage_mode": {
+			val: types.StringValue(`{"calculations": [{"op": "COUNT"}], "usage_mode": true}`),
+		},
 		"invalid json": {
 			val:         types.StringValue("whoop"),
 			expectError: true,

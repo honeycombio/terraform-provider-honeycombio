@@ -80,6 +80,13 @@ func (v triggerQuerySpecValidator) ValidateString(ctx context.Context, request v
 			"Trigger queries cannot use start_time or end_time.",
 		))
 	}
+	if client.PtrValueOrDefault(q.UsageMode, false) {
+		response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+			request.Path,
+			v.Description(ctx),
+			"Trigger queries cannot use usage_mode.",
+		))
+	}
 	// Max 1 HAVING clause
 	if len(q.Havings) > 1 {
 		response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
