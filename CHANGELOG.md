@@ -1,3 +1,7 @@
+## Enhancements
+
+- feat(queries): support `usage_mode` in query specifications, so query JSON with `usage_mode` passes validation and doesn't drift
+
 ## Bugfixes
 
 - fix(r/trigger): keep the stored `granularity` when a metrics Trigger omits it, avoiding a perpetual diff (#896)
