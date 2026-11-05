@@ -1,6 +1,20 @@
+# 0.56.0 (November 5, 2026)
+
+## Notes
+
+- `honeycombio_api_key` now supports `description`. Terraform configuration is the source of truth, so a description set outside Terraform is removed on the next apply.
+
+## Enhancements
+
+- feat(r/api_key): add description attribute (#935)
+
 ## Bugfixes
 
-- fix(r/trigger): keep the stored `granularity` when a metrics Trigger omits it, avoiding a perpetual diff (#896)
+- fix(r/trigger): keep the stored `granularity` when a metrics Trigger omits it, avoiding a perpetual diff (#933)
+
+## Housekeeping
+
+- maint(deps): bump golang.org/x/net from 0.61.0 to 0.62.0 (#941)
 
 # 0.55.2 (October 20, 2026)
 
