@@ -116,9 +116,14 @@ func ErrorFromResponse(r *http.Response) error {
 		if len(errPayload.Errors) == 1 {
 			// format the detailed error a bit differently if there's only one error
 			detailedError.Type = errPayload.Errors[0].Code
+			// prefer the specific detail over the generic title when there is one
+			description := errPayload.Errors[0].Title
+			if errPayload.Errors[0].Detail != "" {
+				description = errPayload.Errors[0].Detail
+			}
 			detailedError.Details = []ErrorTypeDetail{
 				{
-					Description: errPayload.Errors[0].Title,
+					Description: description,
 					Field:       parseJSONAPIErrorSource(errPayload.Errors[0].Source),
 				},
 			}
