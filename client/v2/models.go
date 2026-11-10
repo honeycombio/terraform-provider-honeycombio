@@ -64,3 +64,13 @@ type APIKeyPermissions struct {
 	ManageMarkers       bool `json:"manage_markers,omitempty" jsonapi:"attr,manage_markers,omitempty"`
 	VisibleToMembers    bool `json:"visible_team_members,omitempty" jsonapi:"attr,visible_team_members,omitempty"`
 }
+
+// TelemetrySchema is a Team's custom telemetry schema.
+//
+// SchemaYAML is an opaque string. The API stores and returns it
+// byte-for-byte, so it must never be parsed or re-serialised on the way through.
+type TelemetrySchema struct {
+	// ID is the slug of the Team which owns the schema.
+	ID         string `jsonapi:"primary,telemetry-schema,omitempty"`
+	SchemaYAML string `jsonapi:"attr,schema_yaml"`
+}
