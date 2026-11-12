@@ -52,8 +52,9 @@ type Client struct {
 	authInfo *AuthMetadata
 
 	// API handlers here
-	APIKeys      APIKeys
-	Environments Environments
+	APIKeys          APIKeys
+	Environments     Environments
+	TelemetrySchemas TelemetrySchemas
 }
 
 // teamSlug returns the team slug for the configured API key, fetching the
@@ -138,6 +139,7 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	// bind API handlers here
 	client.APIKeys = &apiKeys{client: client}
 	client.Environments = &environments{client: client}
+	client.TelemetrySchemas = &telemetrySchemas{client: client}
 
 	return client, nil
 }

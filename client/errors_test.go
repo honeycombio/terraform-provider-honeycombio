@@ -232,6 +232,34 @@ func TestErrors_JSONAPI(t *testing.T) {
 			},
 		},
 		{
+			name: "single error with detail",
+			code: http.StatusUnprocessableEntity,
+			body: jsonapi.ErrorsPayload{
+				Errors: []*jsonapi.ErrorObject{
+					{
+						Status: "422",
+						Title:  "field is invalid",
+						Code:   "validation-failed/invalid",
+						Detail: "must be no greater than 10",
+						Source: &jsonapi.ErrorSource{
+							Pointer: "/data/attributes/age",
+						},
+					},
+				},
+			},
+			expectedOutput: client.DetailedError{
+				Status: 422,
+				Type:   "validation-failed/invalid",
+				Title:  "field is invalid",
+				Details: []client.ErrorTypeDetail{
+					{
+						Description: "must be no greater than 10",
+						Field:       "/data/attributes/age",
+					},
+				},
+			},
+		},
+		{
 			name: "multi error",
 			code: http.StatusUnprocessableEntity,
 			body: jsonapi.ErrorsPayload{
