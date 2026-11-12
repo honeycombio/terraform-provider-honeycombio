@@ -5,9 +5,8 @@ Manages the custom telemetry schema of your Team: a [Weaver](https://github.com/
 -> This resource requires the provider be configured with a Management Key with `telemetry-schema:read` and `telemetry-schema:write` in the configured scopes.
 
 ~> **Warning** A Team has exactly one telemetry schema, shared by all of its Environments and Datasets.
-Creating this resource when the Team already has a different schema fails, and leaves that schema in place.
-To bring an existing schema under management, set `schema_yaml` to match it exactly.
-If the Team's schema is identical to the configuration, creating the resource adopts it without changing it.
+Creating this resource fails if the Team already has a telemetry schema, and leaves that schema in place.
+To manage a schema which already exists, [import it](#import) first.
 Two of these resources which manage the same Team, including ones in separate configurations or workspaces which point at different Environments, overwrite each other's schema whenever either is updated.
 Manage the schema from one resource only.
 
@@ -49,4 +48,27 @@ The schema must be a valid Weaver registry. If it is not, the apply fails with t
 
 ## Import
 
-Telemetry Schemas cannot be imported.
+A Team's existing telemetry schema can be imported by the slug of the Team. The slug is the first part of the path in Honeycomb URLs, such as `ui.honeycomb.io/my-team/environments/production`, and the `team.slug` attribute of the `honeycombio_auth_metadata` data source.
+
+To bring an existing schema under management:
+
+1. Add a `honeycombio_telemetry_schema` resource with `schema_yaml` set to the schema you want.
+1. Import the existing schema. e.g.
+
+```
+$ terraform import honeycombio_telemetry_schema.example my-team
+```
+
+Or with an [`import` block](https://developer.hashicorp.com/terraform/language/import):
+
+```terraform
+import {
+  to = honeycombio_telemetry_schema.example
+  id = "my-team"
+}
+```
+
+1. Run `terraform plan`. The plan shows how the existing schema differs from your configuration. There is no change if they match exactly.
+1. Run `terraform apply` to replace the existing schema with the configuration, or change the configuration to match the existing schema first.
+
+The slug must be that of the Team of the provider's Management Key. Importing any other slug fails.

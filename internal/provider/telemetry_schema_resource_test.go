@@ -58,19 +58,18 @@ func TestAcc_TelemetrySchemaResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
 		CheckDestroy:             testAccEnsureTelemetrySchemaDeleted(t),
 		Steps: []resource.TestStep{
-			{ // creating over a different existing schema is refused, and leaves it alone
+			{ // creating over an existing schema is refused, whatever it holds
 				PreConfig: func() {
-					_, err := c.TelemetrySchemas.Put(ctx, &v2client.TelemetrySchema{SchemaYAML: testAccTelemetrySchemaB})
+					_, err := c.TelemetrySchemas.Put(ctx, &v2client.TelemetrySchema{SchemaYAML: testAccTelemetrySchemaA})
 					require.NoError(t, err)
 				},
 				Config:      testAccConfigTelemetrySchema(testAccTelemetrySchemaA),
 				ExpectError: regexp.MustCompile(`(?s)Telemetry Schema Already Exists`),
-				Check:       testAccEnsureTelemetrySchemaIs(t, testAccTelemetrySchemaB),
 			},
-			{ // creating over an identical existing schema adopts it
+			{ // the refused create left the existing schema alone
 				PreConfig: func() {
-					_, err := c.TelemetrySchemas.Put(ctx, &v2client.TelemetrySchema{SchemaYAML: testAccTelemetrySchemaA})
-					require.NoError(t, err)
+					require.NoError(t, testAccEnsureTelemetrySchemaIs(t, testAccTelemetrySchemaA)(nil))
+					require.NoError(t, c.TelemetrySchemas.Delete(ctx))
 				},
 				Config: testAccConfigTelemetrySchema(testAccTelemetrySchemaA),
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -86,6 +85,17 @@ func TestAcc_TelemetrySchemaResource(t *testing.T) {
 					testAccEnsureTelemetrySchemaIs(t, testAccTelemetrySchemaB),
 				),
 			},
+			{ // import by the Team's slug gives the same state
+				ResourceName:      "honeycombio_telemetry_schema.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{ // another Team's slug is not importable with this key
+				ResourceName:  "honeycombio_telemetry_schema.test",
+				ImportState:   true,
+				ImportStateId: "not-the-slug-of-this-team",
+				ExpectError:   regexp.MustCompile(`Cannot import non-existent remote object`),
+			},
 			{ // a change made outside Terraform is detected
 				PreConfig: func() {
 					_, err := c.TelemetrySchemas.Put(ctx, &v2client.TelemetrySchema{SchemaYAML: testAccTelemetrySchemaA})
@@ -99,18 +109,51 @@ func TestAcc_TelemetrySchemaResource(t *testing.T) {
 				Config: testAccConfigTelemetrySchema(testAccTelemetrySchemaB),
 				Check:  testAccEnsureTelemetrySchemaIs(t, testAccTelemetrySchemaB),
 			},
-			{ // a schema deleted outside Terraform is created again, which is also a create with none present
+			{ // a schema deleted outside Terraform is created again
 				PreConfig: func() {
 					require.NoError(t, c.TelemetrySchemas.Delete(ctx))
 				},
 				Config: testAccConfigTelemetrySchema(testAccTelemetrySchemaB),
 				Check:  testAccEnsureTelemetrySchemaIs(t, testAccTelemetrySchemaB),
 			},
-			{ // not importable to start
-				ResourceName:  "honeycombio_telemetry_schema.test",
-				ImportState:   true,
-				ImportStateId: "anything",
-				ExpectError:   regexp.MustCompile(`does not support import`),
+		},
+	})
+}
+
+// TestAcc_TelemetrySchemaResource_adopt follows the way to bring a schema which
+// already exists under management: import it, then plan.
+func TestAcc_TelemetrySchemaResource_adopt(t *testing.T) {
+	ctx := context.Background()
+	c := testAccV2Client(t)
+	t.Cleanup(func() { _ = c.TelemetrySchemas.Delete(ctx) })
+
+	auth, err := c.AuthInfo(ctx)
+	require.NoError(t, err)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheckV2API(t),
+		ProtoV6ProviderFactories: testAccProtoV6MuxServerFactory,
+		CheckDestroy:             testAccEnsureTelemetrySchemaDeleted(t),
+		Steps: []resource.TestStep{
+			{ // import a schema which was set outside Terraform
+				PreConfig: func() {
+					_, err := c.TelemetrySchemas.Put(ctx, &v2client.TelemetrySchema{SchemaYAML: testAccTelemetrySchemaB})
+					require.NoError(t, err)
+				},
+				Config:             testAccConfigTelemetrySchema(testAccTelemetrySchemaB),
+				ResourceName:       "honeycombio_telemetry_schema.test",
+				ImportState:        true,
+				ImportStateId:      auth.Team.Slug,
+				ImportStatePersist: true,
+			},
+			{ // the configuration matches, so there is nothing to change
+				Config:   testAccConfigTelemetrySchema(testAccTelemetrySchemaB),
+				PlanOnly: true,
+			},
+			{ // a configuration which differs shows the change before it replaces the schema
+				Config:             testAccConfigTelemetrySchema(testAccTelemetrySchemaA),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
 			},
 		},
 	})
@@ -125,12 +168,12 @@ func TestAcc_TelemetrySchemaResource_validation(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      testAccConfigTelemetrySchema(""),
-				ExpectError: regexp.MustCompile(`string length must be at least 1`),
+				ExpectError: regexp.MustCompile(`string length must be between 1 and 1048576`),
 			},
 			{
 				// 600,000 characters but 1,200,000 bytes
 				Config:      testAccConfigTelemetrySchema(strings.Repeat("é", 600_000)),
-				ExpectError: regexp.MustCompile(`size must be at most 1048576 bytes`),
+				ExpectError: regexp.MustCompile(`string length must be between 1 and 1048576`),
 			},
 		},
 	})

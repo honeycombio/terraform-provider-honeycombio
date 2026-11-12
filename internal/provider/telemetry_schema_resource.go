@@ -15,7 +15,6 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/client"
 	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper"
-	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/validation"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/models"
 )
 
@@ -23,12 +22,10 @@ import (
 const maxTelemetrySchemaSize = 1 << 20
 
 // Ensure the implementation satisfies the expected interfaces.
-//
-// This resource is not implementing ResourceWithImportState:
-// it is not importable to start.
 var (
-	_ resource.Resource              = &telemetrySchemaResource{}
-	_ resource.ResourceWithConfigure = &telemetrySchemaResource{}
+	_ resource.Resource                = &telemetrySchemaResource{}
+	_ resource.ResourceWithConfigure   = &telemetrySchemaResource{}
+	_ resource.ResourceWithImportState = &telemetrySchemaResource{}
 )
 
 type telemetrySchemaResource struct {
@@ -76,12 +73,25 @@ func (*telemetrySchemaResource) Schema(_ context.Context, _ resource.SchemaReque
 					"of up to 1 MiB (1,048,576 bytes). " +
 					"It is stored and returned exactly as written, so any change to the text, including whitespace and comments, is a change to the schema.",
 				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(1),
-					validation.StringByteLengthAtMost(maxTelemetrySchemaSize),
+					stringvalidator.LengthBetween(1, maxTelemetrySchemaSize),
 				},
 			},
 		},
 	}
+}
+
+// ImportState takes the slug of the Team which owns the schema as the ID.
+// Read then fetches the schema and removes it from state again if the ID is
+// not the Team of the configured key.
+func (r *telemetrySchemaResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	if req.ID == "" {
+		resp.Diagnostics.AddError("Invalid Import ID", "The slug of the Team which owns the telemetry schema must be provided")
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &models.TelemetrySchemaResourceModel{
+		ID: types.StringValue(req.ID),
+	})...)
 }
 
 func (r *telemetrySchemaResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -92,22 +102,20 @@ func (r *telemetrySchemaResource) Create(ctx context.Context, req resource.Creat
 	}
 
 	// The Team has a single schema and setting it replaces whatever is there,
-	// so look first rather than overwrite a schema Terraform doesn't know about.
+	// so refuse to overwrite a schema which Terraform is not managing.
+	// Importing it is how an existing schema is brought under management.
 	var detailedErr client.DetailedError
-	existing, err := r.client.TelemetrySchemas.Get(ctx)
+	_, err := r.client.TelemetrySchemas.Get(ctx)
 	switch {
 	case err == nil:
-		if existing.SchemaYAML != plan.SchemaYAML.ValueString() {
-			resp.Diagnostics.AddError(
-				"Honeycomb Telemetry Schema Already Exists",
-				"This Team already has a telemetry schema which differs from the configuration, and creating this resource would replace it. "+
-					"To manage the existing schema with Terraform, set `schema_yaml` to match it exactly. "+
-					"To replace it, delete the existing schema first.",
-			)
-			return
-		}
-		// the existing schema is exactly what was asked for, so adopt it
-		resp.Diagnostics.Append(resp.State.Set(ctx, flattenTelemetrySchema(existing))...)
+		resp.Diagnostics.AddError(
+			"Honeycomb Telemetry Schema Already Exists",
+			"This Team already has a telemetry schema, and creating this resource would replace it. "+
+				"To manage the existing schema with Terraform, import it with the Team's slug as the ID, "+
+				"for example `terraform import honeycombio_telemetry_schema.example <team-slug>`. "+
+				"The next plan then shows how the existing schema differs from the configuration. "+
+				"To replace it without importing, delete the existing schema first.",
+		)
 		return
 	case errors.As(err, &detailedErr) && detailedErr.IsNotFound():
 		// no schema yet, so create it below
@@ -152,6 +160,13 @@ func (r *telemetrySchemaResource) Read(ctx context.Context, req resource.ReadReq
 		)
 	}
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// The schema belongs to the Team of the configured key. If that is no longer
+	// the Team in state, the schema in state is gone as far as this key can tell.
+	if schema.ID != state.ID.ValueString() {
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
