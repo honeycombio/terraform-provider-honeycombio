@@ -82,6 +82,9 @@ type QuerySpec struct {
 	// The time offset for comparison queries, in seconds. Used to compare current
 	// time range data with data from a previous time period.
 	CompareTimeOffsetSeconds *int `json:"compare_time_offset_seconds,omitempty"`
+	// If true, aggregates are returned without correcting for sample rates.
+	// Defaults to false. Not supported for triggers.
+	UsageMode *bool `json:"usage_mode,omitempty"`
 }
 
 // Encode returns the JSON string representation of the QuerySpec.
@@ -198,6 +201,9 @@ func (qs *QuerySpec) EquivalentTo(other QuerySpec) bool {
 		return false
 	}
 	if !reflect.DeepEqual(qs.CompareTimeOffsetSeconds, other.CompareTimeOffsetSeconds) {
+		return false
+	}
+	if PtrValueOrDefault(qs.UsageMode, false) != PtrValueOrDefault(other.UsageMode, false) {
 		return false
 	}
 

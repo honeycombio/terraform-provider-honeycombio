@@ -104,6 +104,11 @@ func Test_TriggerQuerySpecValidator(t *testing.T) {
 			expectError:      true,
 			expectedErrorMsg: "Trigger queries cannot use start_time or end_time.",
 		},
+		"invalid usage_mode": {
+			val:              types.StringValue(`{"calculations": [{"op": "COUNT"}], "usage_mode": true}`),
+			expectError:      true,
+			expectedErrorMsg: "Trigger queries cannot use usage_mode.",
+		},
 		"valid granularity": {
 			val: types.StringValue(`{"calculations": [{"op": "COUNT"}], "granularity": 120}`),
 		},

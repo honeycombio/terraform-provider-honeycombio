@@ -83,6 +83,7 @@ func TestQuerySpec(t *testing.T) {
 		TimeRange:                client.ToPtr(3600),  // 1 hour
 		Granularity:              client.ToPtr(60),    // 1 minute
 		CompareTimeOffsetSeconds: client.ToPtr(86400), // 1 day
+		UsageMode:                client.ToPtr(true),
 	}
 
 	_, err := c.Queries.Create(ctx, dataset, &query)
@@ -416,6 +417,22 @@ func TestQuerySpec_EquivalentTo(t *testing.T) {
 			client.QuerySpec{
 				CompareTimeOffsetSeconds: client.ToPtr((3600)),
 			},
+			false,
+		},
+		{
+			"Unset UsageMode equivalent to false",
+			client.QuerySpec{},
+			client.QuerySpec{
+				UsageMode: client.ToPtr(false),
+			},
+			true,
+		},
+		{
+			"Not equivalent UsageMode",
+			client.QuerySpec{
+				UsageMode: client.ToPtr(true),
+			},
+			client.QuerySpec{},
 			false,
 		},
 		{
