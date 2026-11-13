@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"regexp"
@@ -82,6 +83,33 @@ func testAccPreCheckV2API(t *testing.T) func() {
 			t.Fatalf("environment variable HONEYCOMB_KEY_SECRET must be set to run acceptance tests")
 		}
 	}
+}
+
+// testAccEnvScopedKey returns the Key ID and Secret pair of an environment-scoped
+// Management Key from HONEYCOMB_ENV_KEY_ID and HONEYCOMB_ENV_KEY_SECRET, skipping
+// the test if they are not set.
+//
+// The key must belong to a team which can use environment-scoped keys.
+func testAccEnvScopedKey(t *testing.T) (id, secret string) {
+	t.Helper()
+
+	id, secret = os.Getenv("HONEYCOMB_ENV_KEY_ID"), os.Getenv("HONEYCOMB_ENV_KEY_SECRET")
+	if id == "" || secret == "" {
+		t.Skip("set HONEYCOMB_ENV_KEY_ID and HONEYCOMB_ENV_KEY_SECRET to run environment-scoped key acceptance tests")
+	}
+	return id, secret
+}
+
+// testAccProviderV2Only returns a provider configuration which uses only the
+// given v2 Key ID and Secret pair, ignoring HONEYCOMB_API_KEY.
+func testAccProviderV2Only(id, secret string) string {
+	return fmt.Sprintf(`
+provider "honeycombio" {
+  api_key        = ""
+  api_key_id     = %q
+  api_key_secret = %q
+}
+`, id, secret)
 }
 
 func testAccDataset() string {
@@ -270,7 +298,7 @@ data "honeycombio_environments" "all" {}
 					PreConfig: func() {
 						t.Setenv("HONEYCOMB_API_KEY", "")
 					},
-					Config:      `data "honeycombio_auth_metadata" "current" {}`,
+					Config:      `data "honeycombio_dataset" "current" { slug = "test" }`,
 					ExpectError: regexp.MustCompile(`No v1 API client configured`),
 				},
 			},

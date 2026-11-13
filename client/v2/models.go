@@ -36,6 +36,8 @@ type AuthMetadata struct {
 	Scopes     []string    `jsonapi:"attr,scopes"`
 	Timestamps *Timestamps `jsonapi:"attr,timestamps"`
 	Team       *Team       `jsonapi:"relation,team"`
+	// Environment is only set for environment-scoped Management Keys.
+	Environment *Environment `jsonapi:"relation,environment"`
 }
 
 type APIKey struct {
@@ -46,8 +48,10 @@ type APIKey struct {
 	Disabled    *bool              `jsonapi:"attr,disabled,omitempty"`
 	Secret      string             `jsonapi:"attr,secret,omitempty"`
 	Permissions *APIKeyPermissions `jsonapi:"attr,permissions,omitempty"`
-	Timestamps  *Timestamps        `jsonapi:"attr,timestamps,omitempty"`
-	Environment *Environment       `jsonapi:"relation,environment"`
+	// Scopes are only set for Management Keys.
+	Scopes      []string     `jsonapi:"attr,scopes,omitempty"`
+	Timestamps  *Timestamps  `jsonapi:"attr,timestamps,omitempty"`
+	Environment *Environment `jsonapi:"relation,environment"`
 }
 
 type APIKeyPermissions struct {
