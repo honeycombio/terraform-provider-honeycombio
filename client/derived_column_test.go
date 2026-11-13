@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -80,11 +81,18 @@ func TestDerivedColumns(t *testing.T) {
 			Expression:  "BOOL(0)",
 			Description: "This is a new description",
 		}
-		derivedColumn, err = c.DerivedColumns.Update(ctx, dataset, data)
 
-		require.NoError(t, err)
+		// the API can briefly 404 an update which closely follows the create above, so we'll retry a few times
+		var updated *client.DerivedColumn
+		require.EventuallyWithT(t, func(col *assert.CollectT) {
+			var err error
+			updated, err = c.DerivedColumns.Update(ctx, dataset, data)
+			require.NoError(col, err)
+		}, 5*time.Second, 250*time.Millisecond, "could not update newly created DerivedColumn")
 
-		data.ID = derivedColumn.ID
+		// only replaced once the update has succeeded, so that a failure
+		// leaves the ID in place for the Delete below
+		derivedColumn = updated
 		assert.Equal(t, data, derivedColumn)
 	})
 
