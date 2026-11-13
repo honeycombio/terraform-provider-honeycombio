@@ -1,9 +1,13 @@
-# Next (unreleased)
+# 0.57.0 (November 13, 2026)
 
 ## Enhancements
 
 - feat(queries): support `usage_mode` in query specifications, so query JSON with `usage_mode` passes validation and doesn't drift (#943)
 - feat(r/telemetry_schema): add honeycombio_telemetry_schema resource (#947)
+
+## Housekeeping
+
+- maint(deps): bump golang.org/x/sync from 0.24.0 to 0.25.0 (#945)
 
 # 0.56.0 (November 5, 2026)
 
