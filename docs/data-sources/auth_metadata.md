@@ -25,8 +25,8 @@ output "slo_management_access" {
 
 ### Read-Only
 
-- `api_key_access` (Block, Read-only) The authorizations granted for the API key used to authenticate the provider. See https://docs.honeycomb.io/working-with-your-data/settings/api-keys/ for more information. (see [below for nested schema](#nestedblock--api_key_access))
-- `environment` (Block, Read-only) Information about the Environment the API key is scoped to. (see [below for nested schema](#nestedblock--environment))
+- `api_key_access` (Block, Read-only) The authorizations granted for the API key used to authenticate the provider. Only set if the provider is configured with an API Key. See https://docs.honeycomb.io/working-with-your-data/settings/api-keys/ for more information. (see [below for nested schema](#nestedblock--api_key_access))
+- `environment` (Block, Read-only) Information about the Environment the API key is scoped to. If the provider is configured with a team-scoped Management Key, the Environment is not set. (see [below for nested schema](#nestedblock--environment))
 - `team` (Block, Read-only) Information about the Team the API key is scoped to. (see [below for nested schema](#nestedblock--team))
 
 <a id="nestedblock--api_key_access"></a>
@@ -51,6 +51,7 @@ Read-Only:
 Read-Only:
 
 - `classic` (Boolean) Whether the Environment is a Classic Environment.
+- `id` (String) The ID of the Environment. Only set if the provider is configured with a Key ID and Secret pair.
 - `name` (String) The name of the Environment. For Classic environments, this will be null.
 - `slug` (String) The slug of the Environment. For Classic environments, this will be null.
 

@@ -91,6 +91,10 @@ There is a `.env.example` template file checked into the root of the repository.
 - `HONEYCOMB_API_KEY`: a Configuration Key for a Honeycomb Team
 - `HONEYCOMB_DATASET`: name of the test dataset to run tests against
 - `HONEYCOMB_KEY_ID` and `HONEYCOMB_KEY_SECRET`: the v2 Management API Key pair for a Honeycomb Team
+- `HONEYCOMB_ENV_KEY_ID` and `HONEYCOMB_ENV_KEY_SECRET`: _optional_, an environment-scoped Management Key pair for the same Honeycomb Team.
+  The tests which need it are skipped without it.
+  The Team must have environment-scoped Management Keys enabled.
+  The Management Key above also needs the `api-keys:write` and `environments:write` scopes to create environment-scoped keys.
 
 Or alternatively, you can set them directly and run the `testacc` make target:
 

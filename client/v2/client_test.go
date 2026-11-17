@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/joho/godotenv"
@@ -133,6 +134,65 @@ func TestClient_AuthInfo(t *testing.T) {
 			assert.Equal(t, "invalid API key", de.Details[0].Description)
 		}
 		assert.Equal(t, "Authorization header - invalid API key", de.Error())
+	})
+}
+
+// TestClient_EnvironmentScopedKey uses a fake API because the real one only
+// issues environment-scoped keys to teams with the feature enabled.
+func TestClient_EnvironmentScopedKey(t *testing.T) {
+	t.Parallel()
+
+	const authResponse = `{
+  "data": {
+    "type": "api-keys",
+    "id": "hccmk_01gga9dvzr9pbp2r9zv7qdkw",
+    "attributes": {"name": "test key", "key_type": "management", "scopes": ["datasets:write"], "disabled": false},
+    "relationships": {
+      "team": {"data": {"type": "teams", "id": "hcctm_1"}},
+      "environment": {"data": {"type": "environments", "id": "hccen_1"}}
+    }
+  },
+  "included": [
+    {"type": "teams", "id": "hcctm_1", "attributes": {"name": "Scale", "slug": "api"}},
+    {"type": "environments", "id": "hccen_1", "attributes": {"name": "development", "slug": "dev"}}
+  ]
+}`
+
+	var apiKeyRequests int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/vnd.api+json")
+		if r.URL.Path == "/2/auth" {
+			_, _ = w.Write([]byte(authResponse))
+			return
+		}
+		apiKeyRequests++
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	t.Cleanup(srv.Close)
+
+	c, err := NewClientWithConfig(&Config{
+		APIKeyID:     "id",
+		APIKeySecret: "secret",
+		BaseURL:      srv.URL,
+		UserAgent:    testUserAgent,
+	})
+	require.NoError(t, err)
+
+	t.Run("AuthInfo returns the key's environment", func(t *testing.T) {
+		info, err := c.AuthInfo(context.Background())
+		require.NoError(t, err)
+		assert.Equal(t, "api", info.Team.Slug)
+		if assert.NotNil(t, info.Environment) {
+			assert.Equal(t, "hccen_1", info.Environment.ID)
+			assert.Equal(t, "development", info.Environment.Name)
+			assert.Equal(t, "dev", info.Environment.Slug)
+		}
+	})
+
+	t.Run("team-scoped calls fail without calling the API", func(t *testing.T) {
+		_, err := c.APIKeys.Get(context.Background(), "hcxik_1")
+		require.ErrorIs(t, err, ErrEnvironmentScopedKey)
+		assert.Zero(t, apiKeyRequests)
 	})
 }
 

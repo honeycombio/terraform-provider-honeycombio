@@ -14,6 +14,7 @@ type APIKeyResourceModel struct {
 	VisibleToMembers types.Bool   `tfsdk:"visible_to_members"`
 	Disabled         types.Bool   `tfsdk:"disabled"`
 	Permissions      types.List   `tfsdk:"permissions"` // APIKeyPermissionModel
+	Scopes           types.Set    `tfsdk:"scopes"`      // of String
 	Secret           types.String `tfsdk:"secret"`
 	Key              types.String `tfsdk:"key"`
 }
