@@ -54,7 +54,7 @@ func (r *groupResource) Configure(_ context.Context, req resource.ConfigureReque
 
 func (*groupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a Group in a Honeycomb Team. A Group's members can read the restricted datasets the Group is granted.",
+		Description: "Manages a Group in a Honeycomb Team. A Group's members get the access the Group is granted.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,

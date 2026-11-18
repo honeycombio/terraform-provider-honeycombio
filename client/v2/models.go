@@ -75,7 +75,7 @@ type TelemetrySchema struct {
 	SchemaYAML string `jsonapi:"attr,schema_yaml"`
 }
 
-// Group is a set of Team members who share access to restricted datasets.
+// Group is a set of Team members who share the access the Group is granted.
 type Group struct {
 	ID          string      `jsonapi:"primary,groups,omitempty"`
 	Name        string      `jsonapi:"attr,name,omitempty"`

@@ -1,7 +1,7 @@
 # Resource: honeycombio_group
 
 Creates a Group in your Honeycomb Team.
-Groups are part of Dataset Restrictions: a Group's members can read the restricted datasets the Group is granted.
+Groups control access: a Group's members get the access the Group is granted.
 
 -> This resource requires the provider be configured with a Management Key with `groups:write` in the configured scopes.
 
