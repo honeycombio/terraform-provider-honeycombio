@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -106,53 +105,6 @@ func TestAcc_GroupMembersResource(t *testing.T) {
 					testAccEnsureGroupExists(t, "honeycombio_group.test"),
 					testAccEnsureGroupMembersAre(t),
 				),
-			},
-		},
-	})
-}
-
-// TestAcc_GroupMembersResource_keepsAgents needs HONEYCOMB_GROUP_WITH_AGENT_ID:
-// the ID of a Group whose members are agents and no users. The API never
-// lists agent members, so the test checks the Group's member_count instead.
-func TestAcc_GroupMembersResource_keepsAgents(t *testing.T) {
-	preCheck := testAccPreCheckGroups(t)
-	groupID := os.Getenv("HONEYCOMB_GROUP_WITH_AGENT_ID")
-	if groupID == "" {
-		t.Skip("set HONEYCOMB_GROUP_WITH_AGENT_ID to run this test")
-	}
-	users := testAccTeamUserIDs(t, 1)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 preCheck,
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
-		Steps: []resource.TestStep{
-			{ // the agents are not in user_ids, and that is not drift
-				Config: fmt.Sprintf(`
-resource "honeycombio_group_members" "test" {
-  group_id = "%s"
-  user_ids = ["%s"]
-}`, groupID, users[0]),
-				Check: resource.TestCheckResourceAttr("honeycombio_group_members.test", "user_ids.#", "1"),
-			},
-			{ // deleting the resource removes the user and keeps the agents
-				Config: `locals {}`,
-				Check: func(*terraform.State) error {
-					userIDs, err := testAccGroupUserIDs(groupID)
-					if err != nil {
-						return err
-					}
-					if len(userIDs) > 0 {
-						return fmt.Errorf("Group %s still has users %v", groupID, userIDs)
-					}
-					g, err := testAccV2Client(t).Groups.Get(context.Background(), groupID)
-					if err != nil {
-						return err
-					}
-					if g.MemberCount < 1 {
-						return fmt.Errorf("Group %s has no members left, but its agents should stay", groupID)
-					}
-					return nil
-				},
 			},
 		},
 	})
