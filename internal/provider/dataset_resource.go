@@ -102,8 +102,6 @@ func (*datasetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Computed:    true,
 				Default:     stringdefault.StaticString(""),
 				Validators: []validator.String{
-					// The API stores at most 1023 bytes. Its own check counts
-					// characters, so longer non-ASCII text fails with a 500.
 					stringvalidator.LengthAtMost(1023),
 				},
 			},
