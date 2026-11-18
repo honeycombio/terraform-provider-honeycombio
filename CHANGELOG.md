@@ -4,6 +4,10 @@
 
 - feat(r/group): add honeycombio_group resource
 
+## Bugfixes
+
+- fix(r/dataset): limit `description` to 1023 bytes, the most the API stores, so a longer description fails at plan instead of at apply
+
 # 0.57.0 (November 13, 2026)
 
 ## Enhancements

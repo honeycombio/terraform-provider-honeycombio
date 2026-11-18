@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -94,6 +95,34 @@ resource "honeycombio_dataset" "test" {
   name             = "%s"
   delete_protected = false
 }`, name),
+				},
+			},
+		})
+	})
+
+	t.Run("description limit is the 1023 bytes the API stores", func(t *testing.T) {
+		name := test.RandomStringWithPrefix("test.", 20)
+		longest := strings.Repeat("a", 1023)
+		resource.Test(t, resource.TestCase{
+			PreCheck:                 testAccPreCheck(t),
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+			Steps: []resource.TestStep{
+				{
+					Config:      testAccConfigBasicDatasetTest(name, strings.Repeat("a", 1024), 0, true),
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile(`string length must be at most 1023`),
+				},
+				{ // 512 characters, but 1024 bytes: the API fails on this with a 500
+					Config:      testAccConfigBasicDatasetTest(name, strings.Repeat("é", 512), 0, true),
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile(`string length must be at most 1023`),
+				},
+				{
+					Config: testAccConfigBasicDatasetTest(name, longest, 0, true),
+					Check:  resource.TestCheckResourceAttr("honeycombio_dataset.test", "description", longest),
+				},
+				{ // disable delete protection to allow cleanup
+					Config: testAccConfigBasicDatasetTest(name, longest, 0, false),
 				},
 			},
 		})
