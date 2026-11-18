@@ -9,7 +9,6 @@ This resource is authoritative: it owns the Group's whole list of users.
 * Users in the Group but not in `user_ids` are removed on the next apply, including users added in the UI.
 * Deleting this resource removes every user from the Group. The Group itself stays.
   The API removes at most 15,000 users in one request, so the delete fails if users added outside Terraform took the Group past that.
-* Agent members are never listed or removed.
 * Use one `honeycombio_group_members` per Group. Two of them on the same Group remove each other's users on every apply.
 
 A user ID must belong to a user on the Team. An ID which does not fails the apply with an error that names it.

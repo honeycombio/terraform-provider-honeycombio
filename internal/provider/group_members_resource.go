@@ -165,7 +165,7 @@ func (r *groupMembersResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	// remove every user; agent members stay
+	// an empty list removes every user
 	err := r.client.Groups.ReplaceMembers(ctx, state.GroupID.ValueString(), []string{})
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {

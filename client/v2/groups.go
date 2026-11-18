@@ -26,10 +26,10 @@ type Groups interface {
 	Delete(ctx context.Context, id string) error
 	List(ctx context.Context, opts ...ListOption) (*Pager[Group], error)
 
-	// ListMembers lists the users in the Group. Agent members are never listed.
+	// ListMembers lists the users in the Group.
 	ListMembers(ctx context.Context, groupID string, opts ...ListOption) (*Pager[GroupMember], error)
 	// ReplaceMembers makes the Group's users exactly userIDs, in one change.
-	// An empty list removes every user. Agent members are left unchanged.
+	// An empty list removes every user.
 	ReplaceMembers(ctx context.Context, groupID string, userIDs []string) error
 
 	// ListDatasets lists the datasets the Group is granted.
