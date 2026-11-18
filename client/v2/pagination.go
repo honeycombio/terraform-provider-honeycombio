@@ -22,6 +22,8 @@ type ListOptions struct {
 	// PageSize is the number of results to return per page.
 	// Default is 20, max is 100.
 	PageSize int `url:"page[size],omitempty"`
+
+	filters map[string]string
 }
 
 type ListOption func(*ListOptions)
@@ -30,6 +32,17 @@ const defaultPageSize = 20
 
 func PageSize(size int) ListOption {
 	return func(po *ListOptions) { po.PageSize = size }
+}
+
+// Filter asks for only the results whose field has value, as the query
+// parameter filter[field]. Each list endpoint documents the fields it accepts.
+func Filter(field, value string) ListOption {
+	return func(po *ListOptions) {
+		if po.filters == nil {
+			po.filters = make(map[string]string)
+		}
+		po.filters[field] = value
+	}
 }
 
 type Pager[T any] struct {
@@ -59,6 +72,9 @@ func NewPager[T any](
 	v, err := query.Values(opts)
 	if err != nil {
 		return nil, err
+	}
+	for field, value := range opts.filters {
+		v.Set("filter["+field+"]", value)
 	}
 	u.RawQuery = v.Encode()
 	nextUrl := u.RequestURI()

@@ -1,3 +1,9 @@
+# Next (unreleased)
+
+## Enhancements
+
+- feat(r/group): add honeycombio_group resource
+
 # 0.57.0 (November 13, 2026)
 
 ## Enhancements

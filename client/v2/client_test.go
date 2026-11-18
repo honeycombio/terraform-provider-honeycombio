@@ -1,10 +1,15 @@
 package v2
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"net/http"
+	"net/http/httptest"
+	"sync"
 	"testing"
 
+	"github.com/hashicorp/jsonapi"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -175,3 +180,73 @@ func newTestEnvironment(ctx context.Context, t *testing.T, c *Client) *Environme
 
 	return env
 }
+
+// fakeAPI serves the routes a test registers, plus /2/auth for the team slug,
+// and records every other request it gets.
+//
+// Responses are hand-written JSON rather than output of the jsonapi package
+// the client uses, so a bug in the client's encoding can't cancel itself out.
+type fakeAPI struct {
+	mu       sync.Mutex
+	requests []recordedRequest
+}
+
+type recordedRequest struct {
+	Method string
+	Path   string
+	Query  string
+	Body   string
+}
+
+func newFakeAPIClient(t *testing.T, routes map[string]http.HandlerFunc) (*Client, *fakeAPI) {
+	t.Helper()
+
+	f := &fakeAPI{}
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /2/auth", func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONAPI(w, http.StatusOK, `{
+			"data": {"id": "key1", "type": "api-keys",
+				"attributes": {"name": "k", "key_type": "management", "disabled": false, "scopes": []},
+				"relationships": {"team": {"data": {"type": "teams", "id": "team1"}}}},
+			"included": [{"id": "team1", "type": "teams", "attributes": {"name": "Test", "slug": "`+testTeamSlug+`"}}]
+		}`)
+	})
+	for pattern, h := range routes {
+		mux.HandleFunc(pattern, h)
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		r.Body = io.NopCloser(bytes.NewReader(body))
+		if r.URL.Path != "/2/auth" {
+			f.mu.Lock()
+			f.requests = append(f.requests, recordedRequest{r.Method, r.URL.Path, r.URL.RawQuery, string(body)})
+			f.mu.Unlock()
+		}
+		mux.ServeHTTP(w, r)
+	}))
+	t.Cleanup(srv.Close)
+
+	c, err := NewClientWithConfig(&Config{
+		APIKeyID:     "id",
+		APIKeySecret: "secret",
+		BaseURL:      srv.URL,
+		UserAgent:    testUserAgent,
+	})
+	require.NoError(t, err)
+	return c, f
+}
+
+func (f *fakeAPI) recorded() []recordedRequest {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]recordedRequest(nil), f.requests...)
+}
+
+func writeJSONAPI(w http.ResponseWriter, status int, body string) {
+	w.Header().Set("Content-Type", jsonapi.MediaType)
+	w.WriteHeader(status)
+	_, _ = io.WriteString(w, body)
+}
+
+func noContent(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }

@@ -74,3 +74,51 @@ type TelemetrySchema struct {
 	ID         string `jsonapi:"primary,telemetry-schema,omitempty"`
 	SchemaYAML string `jsonapi:"attr,schema_yaml"`
 }
+
+// Group is a set of Team members who share access to restricted datasets.
+type Group struct {
+	ID          string      `jsonapi:"primary,groups,omitempty"`
+	Name        string      `jsonapi:"attr,name,omitempty"`
+	Description *string     `jsonapi:"attr,description,omitempty"`
+	MemberCount int         `jsonapi:"attr,member_count,omitempty"`
+	Timestamps  *Timestamps `jsonapi:"attr,timestamps,omitempty"`
+}
+
+// GroupMember names one user in a Group by the user's ID.
+type GroupMember struct {
+	ID string `jsonapi:"primary,users"`
+}
+
+// GroupDataset names one dataset a Group can read by the dataset's ID.
+type GroupDataset struct {
+	ID string `jsonapi:"primary,datasets"`
+}
+
+// User is a member of the Team.
+type User struct {
+	ID    string `jsonapi:"primary,users"`
+	Email string `jsonapi:"attr,email"`
+	Role  string `jsonapi:"attr,role"`
+}
+
+// Dataset is a dataset in an Environment, as the v2 API returns it.
+//
+// An update sends only the fields that are set, so the read-only fields
+// are all omitted when empty.
+type Dataset struct {
+	ID                  string           `jsonapi:"primary,datasets"`
+	Name                string           `jsonapi:"attr,name,omitempty"`
+	Slug                string           `jsonapi:"attr,slug,omitempty"`
+	Description         *string          `jsonapi:"attr,description,omitempty"`
+	ExpandJSONDepth     *int             `jsonapi:"attr,expand_json_depth,omitempty"`
+	Settings            *DatasetSettings `jsonapi:"attr,settings,omitempty"`
+	Restricted          *bool            `jsonapi:"attr,restricted,omitempty"`
+	DatasetType         string           `jsonapi:"attr,dataset_type,omitempty"`
+	RegularColumnsCount int              `jsonapi:"attr,regular_columns_count,omitempty"`
+	LastWrittenAt       *time.Time       `jsonapi:"attr,last_written_at,rfc3339,omitempty"`
+	CreatedAt           *time.Time       `jsonapi:"attr,created_at,rfc3339,omitempty"`
+}
+
+type DatasetSettings struct {
+	DeleteProtected *bool `json:"delete_protected" jsonapi:"attr,delete_protected,omitempty"`
+}

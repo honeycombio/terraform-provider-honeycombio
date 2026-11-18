@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"testing"
 
@@ -31,6 +32,7 @@ func init() {
 	resource.AddTestSweepers("boards", getBoardSweeper("boards"))
 	resource.AddTestSweepers("datasets", getDatasetSweeper("datasets"))
 	resource.AddTestSweepers("environments", getEnvironmentSweeper("environments"))
+	resource.AddTestSweepers("groups", getGroupSweeper("groups"))
 	resource.AddTestSweepers("recipients", getRecipientSweeper("recipients"))
 }
 
@@ -112,6 +114,45 @@ func getEnvironmentSweeper(name string) *resource.Sweeper {
 			}
 
 			return nil
+		},
+	}
+}
+
+func getGroupSweeper(name string) *resource.Sweeper {
+	return &resource.Sweeper{
+		Name: name,
+		F: func(_ string) error {
+			if os.Getenv("HONEYCOMB_GROUPS_ENABLED") == "" {
+				log.Printf("[DEBUG] skipping group sweeper: HONEYCOMB_GROUPS_ENABLED is not set")
+				return nil
+			}
+			ctx := context.Background()
+			c, err := v2client.NewClient()
+			if err != nil {
+				return fmt.Errorf("could not initialize client: %w", err)
+			}
+			pager, err := c.Groups.List(ctx)
+			if err != nil {
+				return fmt.Errorf("could not list groups: %w", err)
+			}
+
+			var errs []error
+			for pager.HasNext() {
+				groups, err := pager.Next(ctx)
+				if err != nil {
+					return fmt.Errorf("error listing groups: %w", err)
+				}
+				for _, g := range groups {
+					if strings.HasPrefix(g.Name, SweeperTargetPrefix) {
+						log.Printf("[DEBUG] deleting group %s (%s)", g.Name, g.ID)
+						if err := c.Groups.Delete(ctx, g.ID); err != nil {
+							errs = append(errs, fmt.Errorf("could not delete group %s: %w", g.ID, err))
+						}
+					}
+				}
+			}
+
+			return errors.Join(errs...)
 		},
 	}
 }
