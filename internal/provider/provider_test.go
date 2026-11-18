@@ -84,18 +84,6 @@ func testAccPreCheckV2API(t *testing.T) func() {
 	}
 }
 
-// testAccPreCheckGroups is testAccPreCheckV2API for tests of Groups. Groups
-// need a Team that has them turned on, so the tests run only when
-// HONEYCOMB_GROUPS_ENABLED is set.
-func testAccPreCheckGroups(t *testing.T) func() {
-	t.Helper()
-
-	if os.Getenv("HONEYCOMB_GROUPS_ENABLED") == "" {
-		t.Skip("set HONEYCOMB_GROUPS_ENABLED to run acceptance tests for Groups")
-	}
-	return testAccPreCheckV2API(t)
-}
-
 func testAccDataset() string {
 	return os.Getenv("HONEYCOMB_DATASET")
 }

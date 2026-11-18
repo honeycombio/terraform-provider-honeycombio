@@ -17,7 +17,7 @@ func TestAcc_GroupResource(t *testing.T) {
 	newName := test.RandomStringWithPrefix("test.", 20)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 testAccPreCheckGroups(t),
+		PreCheck:                 testAccPreCheckV2API(t),
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		CheckDestroy:             testAccEnsureGroupDestroyed(t),
 		Steps: []resource.TestStep{

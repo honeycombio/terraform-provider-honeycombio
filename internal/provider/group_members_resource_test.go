@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"slices"
 	"strings"
@@ -17,12 +18,15 @@ import (
 )
 
 func TestAcc_GroupMembersResource(t *testing.T) {
-	preCheck := testAccPreCheckGroups(t)
+	// the users are looked up before resource.Test, which would skip
+	if os.Getenv(resource.EnvTfAcc) == "" {
+		t.Skipf("set %s to run this acceptance test", resource.EnvTfAcc)
+	}
 	users := testAccTeamUserIDs(t, 3)
 	name := test.RandomStringWithPrefix("test.", 20)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 preCheck,
+		PreCheck:                 testAccPreCheckV2API(t),
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
 		CheckDestroy:             testAccEnsureGroupDestroyed(t),
 		Steps: []resource.TestStep{
