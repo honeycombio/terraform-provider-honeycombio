@@ -84,8 +84,8 @@ func testAccPreCheckV2API(t *testing.T) func() {
 	}
 }
 
-// testAccPreCheckGroups is testAccPreCheckV2API for tests of Groups. The CI
-// Teams can't use Groups yet, so the tests are skipped unless
+// testAccPreCheckGroups is testAccPreCheckV2API for tests of Groups. Groups
+// need a Team that has them turned on, so the tests run only when
 // HONEYCOMB_GROUPS_ENABLED is set.
 func testAccPreCheckGroups(t *testing.T) func() {
 	t.Helper()

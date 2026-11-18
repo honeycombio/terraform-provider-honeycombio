@@ -2,8 +2,12 @@ package v2
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
+	"slices"
+	"strconv"
+	"strings"
 
 	"github.com/hashicorp/jsonapi"
 
@@ -143,7 +147,8 @@ func (g *groups) ReplaceMembers(ctx context.Context, groupID string, userIDs []s
 	for i, id := range userIDs {
 		members[i] = &GroupMember{ID: id}
 	}
-	return g.send(ctx, http.MethodPatch, fmt.Sprintf(groupMembersPath, slug, groupID), members)
+	err = g.send(ctx, http.MethodPatch, fmt.Sprintf(groupMembersPath, slug, groupID), members)
+	return withRequestIDs(err, userIDs)
 }
 
 func (g *groups) ListDatasets(ctx context.Context, groupID string, opts ...ListOption) (*Pager[GroupDataset], error) {
@@ -178,10 +183,35 @@ func (g *groups) changeDatasets(ctx context.Context, method, groupID string, dat
 			batch = append(batch, &GroupDataset{ID: id})
 		}
 		if err := g.send(ctx, method, url, batch); err != nil {
-			return err
+			return withRequestIDs(err, datasetIDs[start:end])
 		}
 	}
 	return nil
+}
+
+// withRequestIDs names the ID behind each error in err. The API names a
+// rejected user or dataset only by its position in the request, as the
+// pointer "/data/<index>". ids are the IDs that request sent, in order.
+func withRequestIDs(err error, ids []string) error {
+	var de hnyclient.DetailedError
+	if !errors.As(err, &de) {
+		return err
+	}
+	de.Details = slices.Clone(de.Details)
+	for i, d := range de.Details {
+		index, ok := strings.CutPrefix(d.Field, "/data/")
+		if !ok {
+			continue
+		}
+		n, convErr := strconv.Atoi(index)
+		if convErr != nil || n < 0 || n >= len(ids) {
+			continue
+		}
+		// the position means nothing to the caller, so drop it
+		de.Details[i].Field = ""
+		de.Details[i].Description = ids[n] + ": " + d.Description
+	}
+	return de
 }
 
 // send makes a request whose success response is 204 No Content.

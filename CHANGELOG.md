@@ -3,6 +3,7 @@
 ## Enhancements
 
 - feat(r/group): add honeycombio_group resource
+- feat(r/group_members): add honeycombio_group_members resource
 
 ## Bugfixes
 

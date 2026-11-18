@@ -108,6 +108,21 @@ func TestClient_Groups(t *testing.T) {
 		assert.JSONEq(t, `{"data":[]}`, reqs[1].Body)
 	})
 
+	t.Run("replace members names each user the API rejects", func(t *testing.T) {
+		c, _ := newFakeAPIClient(t, map[string]http.HandlerFunc{
+			"PATCH " + testGroupPath + "/relationships/members": func(w http.ResponseWriter, _ *http.Request) {
+				writeJSONAPI(w, http.StatusUnprocessableEntity, `{"errors":[
+					{"status":"422","code":"validation-failed/invalid-field","title":"The request failed validation.",
+						"detail":"no user with this ID on the team","source":{"pointer":"/data/0"}},
+					{"status":"422","code":"validation-failed/invalid-field","title":"The request failed validation.",
+						"detail":"no user with this ID on the team","source":{"pointer":"/data/2"}}]}`)
+			},
+		})
+
+		err := c.Groups.ReplaceMembers(ctx, testGroupID, []string{"hcxus_a", "hcxus_b", "hcxus_c"})
+		assert.Equal(t, "hcxus_a: no user with this ID on the team\nhcxus_c: no user with this ID on the team", err.Error())
+	})
+
 	t.Run("list members follows the next link to the last page", func(t *testing.T) {
 		c, _ := newFakeAPIClient(t, map[string]http.HandlerFunc{
 			"GET " + testGroupPath + "/relationships/members": func(w http.ResponseWriter, r *http.Request) {
@@ -195,7 +210,8 @@ func TestClient_Groups(t *testing.T) {
 		var de hnyclient.DetailedError
 		require.ErrorAs(t, err, &de)
 		assert.Equal(t, http.StatusUnprocessableEntity, de.Status)
-		assert.Contains(t, de.Error(), "only a restricted dataset can be granted")
+		// /data/7 in the second batch is dataset 107
+		assert.Equal(t, "hcxds_107: only a restricted dataset can be granted to a group", de.Error())
 		assert.Len(t, f.recorded(), 2, "no batch is sent after a failure")
 	})
 }

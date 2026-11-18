@@ -49,6 +49,7 @@ jobs:
       group: hnytf-testacc-us
     env:
       TERRAFORM_VERSION: "1.15.5"
+      HONEYCOMB_GROUPS_ENABLED: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -156,6 +157,7 @@ jobs:
       group: hnytf-testacc-eu
     env:
       TERRAFORM_VERSION: "1.15.5"
+      HONEYCOMB_GROUPS_ENABLED: "1"
     steps:
       - name: Checkout
         uses: actions/checkout@v7
