@@ -1,0 +1,32 @@
+# Resource: honeycombio_group_members
+
+Manages all the users in a Honeycomb Group.
+
+-> This resource requires the provider be configured with a Management Key with `groups:write` and `users:read` in the configured scopes.
+
+This resource is authoritative: it owns the Group's whole list of users.
+
+* Users in the Group but not in `user_ids` are removed on the next apply, including users added in the UI.
+* Deleting this resource removes every user from the Group. The Group itself stays.
+  The API removes at most 15,000 users in one request, so the delete fails if users added outside Terraform took the Group past that.
+* Use one `honeycombio_group_members` per Group. Two of them on the same Group remove each other's users on every apply.
+
+A user ID must belong to a user on the Team. An ID which does not fails the apply with an error that names it.
+When someone leaves the Team, remove their ID from `user_ids`: until you do, every apply fails on it.
+
+The API cannot set an expiry on a membership. After a membership set in the UI expires, the next apply adds the user back.
+For a Group that Terraform manages, remove people from `user_ids` instead of setting an expiry in the UI.
+
+## Example Usage
+
+{{tffile "examples/resources/honeycombio_group_members/resource.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+A Group's members can be imported by the Group's ID. e.g.
+
+```
+$ terraform import honeycombio_group_members.payments hcxgr_01jbr2v3k8m4n5p6q7r8s9t0vw
+```

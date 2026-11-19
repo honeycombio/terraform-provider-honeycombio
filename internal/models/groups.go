@@ -9,3 +9,9 @@ type GroupResourceModel struct {
 	Name        types.String `tfsdk:"name"`
 	Description types.String `tfsdk:"description"`
 }
+
+type GroupMembersResourceModel struct {
+	ID      types.String `tfsdk:"id"`
+	GroupID types.String `tfsdk:"group_id"`
+	UserIDs types.Set    `tfsdk:"user_ids"` // types.String
+}

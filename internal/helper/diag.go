@@ -58,8 +58,8 @@ func (d DetailedErrorDiagnostic) Detail() string {
 		for i, dt := range d.e.Details {
 			response += dt.Code + " - " + dt.Description
 
-			if i > len(d.e.Details)-1 {
-				response += "\n "
+			if i < len(d.e.Details)-1 {
+				response += "\n"
 			}
 		}
 		return response

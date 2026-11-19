@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"testing"
 
@@ -122,10 +121,6 @@ func getGroupSweeper(name string) *resource.Sweeper {
 	return &resource.Sweeper{
 		Name: name,
 		F: func(_ string) error {
-			if os.Getenv("HONEYCOMB_GROUPS_ENABLED") == "" {
-				log.Printf("[DEBUG] skipping group sweeper: HONEYCOMB_GROUPS_ENABLED is not set")
-				return nil
-			}
 			ctx := context.Background()
 			c, err := v2client.NewClient()
 			if err != nil {
