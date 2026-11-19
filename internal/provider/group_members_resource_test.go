@@ -18,10 +18,6 @@ import (
 )
 
 func TestAcc_GroupMembersResource(t *testing.T) {
-	// the users are looked up before resource.Test, which would skip
-	if os.Getenv(resource.EnvTfAcc) == "" {
-		t.Skipf("set %s to run this acceptance test", resource.EnvTfAcc)
-	}
 	users := testAccTeamUserIDs(t, 3)
 	name := test.RandomStringWithPrefix("test.", 20)
 
@@ -132,25 +128,41 @@ resource "honeycombio_group_members" "test" {
 func testAccTeamUserIDs(t *testing.T, n int) []string {
 	t.Helper()
 
+	users := testAccTeamUsers(t, n)
+	ids := make([]string, len(users))
+	for i, u := range users {
+		ids[i] = u.ID
+	}
+	return ids
+}
+
+// testAccTeamUsers returns n users on the Team, and fails the test when
+// the Team has fewer. Tests call it before resource.Test, so it skips the
+// test itself when acceptance tests are off.
+func testAccTeamUsers(t *testing.T, n int) []*v2client.User {
+	t.Helper()
+
+	if os.Getenv(resource.EnvTfAcc) == "" {
+		t.Skipf("set %s to run this acceptance test", resource.EnvTfAcc)
+	}
+
 	ctx := context.Background()
 	pager, err := testAccV2Client(t).Users.List(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var ids []string
-	for pager.HasNext() && len(ids) < n {
-		users, err := pager.Next(ctx)
+	var users []*v2client.User
+	for pager.HasNext() && len(users) < n {
+		page, err := pager.Next(ctx)
 		if err != nil {
 			t.Fatal(err)
 		}
-		for _, u := range users {
-			ids = append(ids, u.ID)
-		}
+		users = append(users, page...)
 	}
-	if len(ids) < n {
-		t.Fatalf("the Team needs at least %d users, and has %d", n, len(ids))
+	if len(users) < n {
+		t.Fatalf("the Team needs at least %d users, and has %d", n, len(users))
 	}
-	return ids[:n]
+	return users[:n]
 }
 
 func testAccGroupIDByName(t *testing.T, name string) string {

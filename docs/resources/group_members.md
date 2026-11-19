@@ -11,15 +11,21 @@ This resource is authoritative: it owns the Group's whole list of users.
   The API removes at most 15,000 users in one request, so the delete fails if users added outside Terraform took the Group past that.
 * Use one `honeycombio_group_members` per Group. Two of them on the same Group remove each other's users on every apply.
 
+Use the `honeycombio_user` or `honeycombio_users` data source to turn emails into user IDs.
 A user ID must belong to a user on the Team. An ID which does not fails the apply with an error that names it.
 When someone leaves the Team, remove their ID from `user_ids`: until you do, every apply fails on it.
-
-The API cannot set an expiry on a membership. After a membership set in the UI expires, the next apply adds the user back.
-For a Group that Terraform manages, remove people from `user_ids` instead of setting an expiry in the UI.
 
 ## Example Usage
 
 ```terraform
+data "honeycombio_user" "alice" {
+  email = "alice@example.com"
+}
+
+data "honeycombio_user" "bob" {
+  email = "bob@example.com"
+}
+
 resource "honeycombio_group" "payments" {
   name = "payments-oncall"
 }
@@ -27,8 +33,8 @@ resource "honeycombio_group" "payments" {
 resource "honeycombio_group_members" "payments" {
   group_id = honeycombio_group.payments.id
   user_ids = [
-    "hcxus_01jbr2v3k8m4n5p6q7r8s9t0vw",
-    "hcxus_01jbr2w9z1a2b3c4d5e6f7g8hj",
+    data.honeycombio_user.alice.id,
+    data.honeycombio_user.bob.id,
   ]
 }
 ```

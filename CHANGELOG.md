@@ -4,6 +4,8 @@
 
 - feat(r/group): add honeycombio_group resource
 - feat(r/group_members): add honeycombio_group_members resource
+- feat(d/user): add honeycombio_user data source
+- feat(d/users): add honeycombio_users data source
 
 ## Bugfixes
 

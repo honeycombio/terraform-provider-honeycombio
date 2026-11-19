@@ -1,0 +1,19 @@
+# Data Source: honeycombio_user
+
+The `honeycombio_user` data source looks up one user on the Team by their email address.
+Use it to get a user's ID for `honeycombio_group_members`.
+
+-> This data source requires the provider be configured with a Management Key with `users:read` in the configured scopes.
+
+The email matches without regard to case. It must be a bare address, such as `alice@example.com`, without a name or angle brackets.
+The read fails if no user on the Team has the email. Pending invites are not listed.
+
+Because a missing email fails the plan, this data source is the safe way to build `user_ids` for `honeycombio_group_members`:
+a typo stops the apply instead of removing someone from the Group.
+To list every user on the Team at once, use the `honeycombio_users` data source instead.
+
+## Example Usage
+
+{{tffile "examples/data-sources/honeycombio_user/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
