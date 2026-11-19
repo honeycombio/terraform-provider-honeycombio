@@ -31,6 +31,7 @@ resource "honeycombio_dataset" "my_dataset" {
 ### Read-Only
 
 - `created_at` (String) ISO8601-formatted time the dataset was created.
+- `hcid` (String) The unique ID of the Dataset. It is not the same value as `id`, which is the Dataset's slug.
 - `id` (String) The ID of the Dataset.
 - `last_written_at` (String) ISO8601-formatted time the dataset was last written to (received event data).
 - `slug` (String) The slug of the Dataset.

@@ -60,6 +60,7 @@ type Dataset struct {
 	LastWrittenAt time.Time `json:"last_written_at,omitempty"`
 	CreatedAt     time.Time `json:"created_at,omitempty"`
 	DatasetType   string    `json:"dataset_type,omitempty"`
+	HCID          *string   `json:"hcid,omitempty"`
 }
 
 const DatasetTypeMetrics = "metrics"

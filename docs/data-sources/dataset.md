@@ -25,6 +25,7 @@ data "honeycombio_dataset" "my-service" {
 - `delete_protected` (Boolean) The current delete protection status of the Environment.
 - `description` (String) The Dataset's description.
 - `expand_json_depth` (Number) The Dataset's maximum unpacking depth of nested JSON fields.
+- `hcid` (String) The unique ID of the Dataset. It is not the same value as `id`, which is the Dataset's slug.
 - `id` (String) The ID of the Dataset.
 - `last_written_at` (String) ISO8601-formatted time the dataset was last written to (received event data).
 - `name` (String) The name of the Dataset.

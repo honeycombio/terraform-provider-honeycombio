@@ -36,12 +36,16 @@ func TestDatasets(t *testing.T) {
 		assert.Equal(t, 2, ds.ExpandJSONDepth)
 		assert.True(t, *ds.Settings.DeleteProtected)
 		assert.WithinDuration(t, time.Now(), ds.CreatedAt, 5*time.Second)
+		if assert.NotNil(t, ds.HCID) {
+			assert.Regexp(t, `^hc[a-z]ds_[0-9a-z]{26}$`, *ds.HCID)
+		}
 
 		// read back the dataset by Slug and compare
 		dataset, err := c.Datasets.Get(ctx, ds.Slug)
 		require.NoError(t, err)
 		assert.Equal(t, ds.Name, dataset.Name)
 		assert.Equal(t, ds.Slug, dataset.Slug)
+		assert.Equal(t, ds.HCID, dataset.HCID)
 		assert.Equal(t, ds.Description, dataset.Description)
 		assert.Equal(t, ds.ExpandJSONDepth, dataset.ExpandJSONDepth)
 		if assert.NotNil(t, dataset.Settings) {
