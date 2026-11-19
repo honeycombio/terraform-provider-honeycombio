@@ -82,6 +82,10 @@ func (d *datasetDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 				Required:    false,
 				Optional:    false,
 			},
+			"hcid": schema.StringAttribute{
+				Description: "The unique ID of the Dataset. It is not the same value as `id`, which is the Dataset's slug.",
+				Computed:    true,
+			},
 		},
 	}
 }
@@ -121,6 +125,7 @@ func (d *datasetDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	data.DeleteProtected = types.BoolPointerValue(ds.Settings.DeleteProtected)
 	data.CreatedAt = types.StringValue(ds.CreatedAt.Format(time.RFC3339))
 	data.LastWrittenAt = types.StringValue(ds.LastWrittenAt.Format(time.RFC3339))
+	data.HCID = types.StringPointerValue(ds.HCID)
 
 	diags := resp.State.Set(ctx, &data)
 	resp.Diagnostics.Append(diags...)

@@ -15,6 +15,7 @@ type DatasetResourceModel struct {
 	DeleteProtected types.Bool   `tfsdk:"delete_protected"`
 	CreatedAt       types.String `tfsdk:"created_at"`
 	LastWrittenAt   types.String `tfsdk:"last_written_at"`
+	HCID            types.String `tfsdk:"hcid"`
 }
 
 type DatasetsDataSourceModel struct {

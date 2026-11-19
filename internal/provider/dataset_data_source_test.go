@@ -50,6 +50,7 @@ data "honeycombio_dataset" "test" {
 					resource.TestCheckResourceAttr("data.honeycombio_dataset.test", "id", ds.Slug),
 					resource.TestCheckResourceAttr("data.honeycombio_dataset.test", "name", ds.Name),
 					resource.TestCheckResourceAttr("data.honeycombio_dataset.test", "slug", ds.Slug),
+					resource.TestMatchResourceAttr("data.honeycombio_dataset.test", "hcid", datasetHCIDRegex),
 					resource.TestCheckResourceAttr("data.honeycombio_dataset.test", "expand_json_depth", "3"),
 					resource.TestCheckResourceAttr("data.honeycombio_dataset.test", "description", ds.Description),
 					resource.TestCheckResourceAttr("data.honeycombio_dataset.test", "delete_protected", "true"),

@@ -135,6 +135,14 @@ func (*datasetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Required:    false,
 				Optional:    false,
 			},
+			"hcid": schema.StringAttribute{
+				Description: "The unique ID of the Dataset. It is not the same value as `id`, which is the Dataset's slug.",
+				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					// a dataset's HCID never changes
+					stringplanmodifier.UseNonNullStateForUnknown(),
+				},
+			},
 		},
 	}
 }
@@ -218,6 +226,7 @@ func (r *datasetResource) Create(ctx context.Context, req resource.CreateRequest
 	state.DeleteProtected = types.BoolPointerValue(ds.Settings.DeleteProtected)
 	state.CreatedAt = types.StringValue(ds.CreatedAt.Format(time.RFC3339))
 	state.LastWrittenAt = types.StringValue(ds.LastWrittenAt.Format(time.RFC3339))
+	state.HCID = types.StringPointerValue(ds.HCID)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -260,6 +269,7 @@ func (r *datasetResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.DeleteProtected = types.BoolPointerValue(ds.Settings.DeleteProtected)
 	state.CreatedAt = types.StringValue(ds.CreatedAt.Format(time.RFC3339))
 	state.LastWrittenAt = types.StringValue(ds.LastWrittenAt.Format(time.RFC3339))
+	state.HCID = types.StringPointerValue(ds.HCID)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -296,6 +306,7 @@ func (r *datasetResource) Update(ctx context.Context, req resource.UpdateRequest
 	state.DeleteProtected = types.BoolPointerValue(ds.Settings.DeleteProtected)
 	state.CreatedAt = types.StringValue(ds.CreatedAt.Format(time.RFC3339))
 	state.LastWrittenAt = types.StringValue(ds.LastWrittenAt.Format(time.RFC3339))
+	state.HCID = types.StringPointerValue(ds.HCID)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }

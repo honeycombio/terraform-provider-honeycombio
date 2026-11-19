@@ -16,6 +16,10 @@ import (
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
+// datasetHCIDRegex matches a dataset's hcid, such as
+// "hcads_01m7tcyy9tcqjhfh1fnpzf6awa". The third letter is the region.
+var datasetHCIDRegex = regexp.MustCompile(`^hc[a-z]ds_[0-9a-z]{26}$`)
+
 func TestAcc_DatasetResource(t *testing.T) {
 	t.Parallel()
 
@@ -37,6 +41,7 @@ func TestAcc_DatasetResource(t *testing.T) {
 						resource.TestCheckResourceAttr("honeycombio_dataset.test", "delete_protected", "true"),
 						resource.TestCheckResourceAttrSet("honeycombio_dataset.test", "created_at"),
 						resource.TestCheckResourceAttrSet("honeycombio_dataset.test", "last_written_at"),
+						resource.TestMatchResourceAttr("honeycombio_dataset.test", "hcid", datasetHCIDRegex),
 					),
 				},
 				{ // fail to delete protected dataset
@@ -297,6 +302,7 @@ resource "honeycombio_dataset" "test" {
 					resource.TestCheckResourceAttr("honeycombio_dataset.test", "delete_protected", "true"),
 					resource.TestCheckResourceAttrSet("honeycombio_dataset.test", "created_at"),
 					resource.TestCheckResourceAttrSet("honeycombio_dataset.test", "last_written_at"),
+					resource.TestMatchResourceAttr("honeycombio_dataset.test", "hcid", datasetHCIDRegex),
 				),
 			},
 			{ // disable delete protection to allow cleanup
