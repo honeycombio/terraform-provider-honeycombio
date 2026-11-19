@@ -11,9 +11,13 @@ output "team_name" {
   value = data.honeycombio_auth_metadata.current.team.name
 }
 
+output "environment_id" {
+  value = data.honeycombio_auth_metadata.current.environment.id
+}
+
 output "environment_slug" {
   value = data.honeycombio_auth_metadata.current.environment.slug
-} 
+}
 
 output "slo_management_access" {
   value = data.honeycombio_auth_metadata.current.api_key_access.slos
@@ -51,6 +55,7 @@ Read-Only:
 Read-Only:
 
 - `classic` (Boolean) Whether the Environment is a Classic Environment.
+- `id` (String) The ID of the Environment.
 - `name` (String) The name of the Environment. For Classic environments, this will be null.
 - `slug` (String) The slug of the Environment. For Classic environments, this will be null.
 

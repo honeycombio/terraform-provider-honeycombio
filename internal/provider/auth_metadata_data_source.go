@@ -39,6 +39,7 @@ type authMetadataDataSourceModel struct {
 		Triggers   types.Bool `tfsdk:"triggers"`
 	} `tfsdk:"api_key_access"`
 	Environment struct {
+		ID      types.String `tfsdk:"id"`
 		Classic types.Bool   `tfsdk:"classic"`
 		Name    types.String `tfsdk:"name"`
 		Slug    types.String `tfsdk:"slug"`
@@ -119,6 +120,12 @@ func (d *authMetadataDataSource) Schema(_ context.Context, _ datasource.SchemaRe
 			"environment": schema.SingleNestedBlock{
 				Description: "Information about the Environment the API key is scoped to.",
 				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Description: "The ID of the Environment.",
+						Computed:    true,
+						Optional:    false,
+						Required:    false,
+					},
 					"classic": schema.BoolAttribute{
 						Description: "Whether the Environment is a Classic Environment.",
 						Computed:    true,
@@ -196,6 +203,8 @@ func (d *authMetadataDataSource) Read(ctx context.Context, req datasource.ReadRe
 
 	data.Team.Name = types.StringValue(metadata.Team.Name)
 	data.Team.Slug = types.StringValue(metadata.Team.Slug)
+
+	data.Environment.ID = types.StringPointerValue(metadata.Environment.ID)
 
 	// Classic environments don't have a name or slug
 	if metadata.Environment.Slug == "" {

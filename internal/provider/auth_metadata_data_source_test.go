@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -29,6 +30,7 @@ func TestAcc_AuthMetadataData(t *testing.T) {
 					resource.TestCheckResourceAttr("data.honeycombio_auth_metadata.test", "team.name", metadata.Team.Name),
 					resource.TestCheckResourceAttr("data.honeycombio_auth_metadata.test", "team.slug", metadata.Team.Slug),
 					resource.TestCheckResourceAttr("data.honeycombio_auth_metadata.test", "environment.classic", fmt.Sprintf("%v", c.IsClassic(ctx))),
+					resource.TestMatchResourceAttr("data.honeycombio_auth_metadata.test", "environment.id", regexp.MustCompile(`^hc[a-z]en_[0-9a-z]{26}$`)),
 					resource.TestCheckResourceAttr("data.honeycombio_auth_metadata.test", "api_key_access.boards", fmt.Sprintf("%v", metadata.APIKeyAccess.Boards)),
 					resource.TestCheckResourceAttr("data.honeycombio_auth_metadata.test", "api_key_access.columns", fmt.Sprintf("%v", metadata.APIKeyAccess.Columns)),
 					resource.TestCheckResourceAttr("data.honeycombio_auth_metadata.test", "api_key_access.datasets", fmt.Sprintf("%v", metadata.APIKeyAccess.CreateDatasets)),

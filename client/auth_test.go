@@ -21,6 +21,9 @@ func TestAuthMetadata(t *testing.T) {
 		assert.NotEmpty(t, metadata.APIKeyAccess)
 		assert.NotEmpty(t, metadata.Team.Name)
 		assert.NotEmpty(t, metadata.Team.Slug)
+		if assert.NotNil(t, metadata.Environment.ID) {
+			assert.Regexp(t, `^hc[a-z]en_[0-9a-z]{26}$`, *metadata.Environment.ID)
+		}
 		// classic environment's don't have environment name and slugs
 		if c.IsClassic(ctx) {
 			assert.Empty(t, metadata.Environment.Name)
