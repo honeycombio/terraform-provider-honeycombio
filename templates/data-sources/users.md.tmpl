@@ -1,0 +1,18 @@
+# Data Source: honeycombio_users
+
+The `honeycombio_users` data source lists the users on the Team, or the users in one Group.
+
+-> This data source requires the provider be configured with a Management Key with `users:read` in the configured scopes.
+  Filtering by `group_id` also needs `groups:read` or `groups:write`.
+
+Pending invites are not listed. Emails are returned in lower case.
+
+~> **Note** If you build `user_ids` for `honeycombio_group_members` by matching emails against this list, an email that matches no user is left out without an error.
+  `honeycombio_group_members` removes every user it doesn't list, so a typo removes that person from the Group.
+  Use the `honeycombio_user` data source, for example with `for_each`, when a missing email should fail the plan.
+
+## Example Usage
+
+{{tffile "examples/data-sources/honeycombio_users/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
