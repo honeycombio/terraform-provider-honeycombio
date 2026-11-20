@@ -11,7 +11,6 @@ The Group has access while this resource exists.
 * Set exactly one of `dataset_id` and `environment_id`.
 * Creating this resource fails for a grant that already exists. Import the grant instead.
 * If the grant is revoked outside Terraform, the next apply grants it again.
-* This resource manages only its own grant. Grants made outside Terraform stay.
 * Do not use this resource on a Group that `honeycombio_group_grants` manages. That resource revokes every Dataset grant that it does not list.
 
 ## Dataset grants
@@ -31,6 +30,18 @@ The Environment does not have to be restricted. In an Environment that is not re
 The grant stays when the Environment is restricted or unrestricted. When the Environment is deleted, the API deletes the grant.
 
 To restrict an Environment and keep the Group's access, grant the Group access first. Then restrict the Environment.
+
+## Grants made outside Terraform
+
+This resource manages only its own grant.
+Terraform does not read the Group's other grants, such as grants made in the UI.
+Choose what happens to them:
+
+| To                         | Use                                                                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Revoke them                | The `honeycombio_group_grants` resource instead of this one. It owns the Group's whole list of Dataset grants.                                    |
+| Get a warning about them   | This resource and a `check` block with the `honeycombio_group_grants` data source, as the data source docs show. A warning never blocks an apply. |
+| Keep them, with no warning | This resource only.                                                                                                                               |
 
 ## Example Usage
 
