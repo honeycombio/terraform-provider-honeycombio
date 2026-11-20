@@ -95,6 +95,7 @@ func (p *HoneycombioProvider) Resources(ctx context.Context) []func() resource.R
 		NewEnvironmentResource,
 		NewGroupResource,
 		NewGroupGrantResource,
+		NewGroupGrantsResource,
 		NewGroupMembersResource,
 		NewTelemetrySchemaResource,
 		NewSLOResource,
