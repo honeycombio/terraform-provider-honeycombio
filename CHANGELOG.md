@@ -11,6 +11,7 @@
 - feat(r/dataset_restriction): add honeycombio_dataset_restriction resource
 - feat(r/group_grant): add honeycombio_group_grant resource
 - feat(r/group_grants): add honeycombio_group_grants resource
+- feat(d/group): add honeycombio_group data source
 
 ## Bugfixes
 

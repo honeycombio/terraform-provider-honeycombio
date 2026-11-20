@@ -89,13 +89,13 @@ func (r *groupResource) ImportState(ctx context.Context, req resource.ImportStat
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &models.GroupResourceModel{
+	resp.Diagnostics.Append(resp.State.Set(ctx, &models.GroupModel{
 		ID: types.StringValue(req.ID),
 	})...)
 }
 
 func (r *groupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan models.GroupResourceModel
+	var plan models.GroupModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -113,7 +113,7 @@ func (r *groupResource) Create(ctx context.Context, req resource.CreateRequest, 
 }
 
 func (r *groupResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state models.GroupResourceModel
+	var state models.GroupModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -134,7 +134,7 @@ func (r *groupResource) Read(ctx context.Context, req resource.ReadRequest, resp
 }
 
 func (r *groupResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan models.GroupResourceModel
+	var plan models.GroupModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -153,7 +153,7 @@ func (r *groupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 }
 
 func (r *groupResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state models.GroupResourceModel
+	var state models.GroupModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -168,12 +168,12 @@ func (r *groupResource) Delete(ctx context.Context, req resource.DeleteRequest, 
 	helper.AddDiagnosticOnError(&resp.Diagnostics, "Deleting Honeycomb Group", err)
 }
 
-func flattenGroup(g *v2client.Group) models.GroupResourceModel {
+func flattenGroup(g *v2client.Group) models.GroupModel {
 	var description string
 	if g.Description != nil {
 		description = *g.Description
 	}
-	return models.GroupResourceModel{
+	return models.GroupModel{
 		ID:          types.StringValue(g.ID),
 		Name:        types.StringValue(g.Name),
 		Description: types.StringValue(description),

@@ -1,0 +1,15 @@
+# Data Source: honeycombio_group
+
+The `honeycombio_group` data source looks up one Group on the Team by its name.
+Use it to get the ID of a Group that this configuration does not manage, such as a Group made in the UI.
+
+-> This data source requires the provider be configured with a Management Key with `groups:read` or `groups:write` in the configured scopes.
+
+The name must match exactly, including case, because two Groups can have names that differ only in case.
+The read fails if no Group on the Team has the name, so a typo stops the plan.
+
+## Example Usage
+
+{{tffile "examples/data-sources/honeycombio_group/data-source.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
