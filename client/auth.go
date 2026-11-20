@@ -35,6 +35,7 @@ type AuthMetadata struct {
 		Triggers       bool `json:"triggers"`
 	} `json:"api_key_access"`
 	Environment struct {
+		ID *string `json:"id,omitempty"`
 		// Name is empty for Classic environments.
 		Name string `json:"name"`
 		// Slug is empty for Classic environments.

@@ -1,0 +1,48 @@
+# Resource: honeycombio_dataset_restriction
+
+Restricts a Dataset.
+Only Team owners and the members of a Group that has access to the Dataset can read a restricted Dataset.
+
+-> This resource requires the provider be configured with a Management Key with `environments:write` in the configured scopes.
+  To delete the restriction of a Dataset that a Group has access to, the key also needs `groups:write`.
+
+The Dataset is restricted while this resource exists.
+
+* Creating this resource fails for a Dataset that is already restricted. Import the restriction instead.
+* If the restriction is removed outside Terraform, the next apply restricts the Dataset again.
+
+~> **Warning** Deleting this resource makes the Dataset readable by every Team member again.
+  It also removes the Dataset from every Group that has access to it, including access given outside Terraform.
+  Restricting the Dataset again does not restore that access.
+
+To keep a Dataset restricted, add `prevent_destroy` to the resource's `lifecycle` block.
+
+When one apply deletes a Dataset together with its restriction, Terraform deletes the restriction first.
+If the Dataset's delete then fails, the Dataset stays, without its restriction.
+
+## Example Usage
+
+### With the Environment of the provider's API key
+
+`honeycombio_auth_metadata` returns the ID of the Environment that the provider's API key belongs to.
+
+{{tffile "examples/resources/honeycombio_dataset_restriction/with_auth_metadata.tf"}}
+
+### With the slugs of the Environment and the Dataset
+
+The data sources turn each slug into an ID.
+The `honeycombio_dataset` data source reads Datasets in the Environment of the provider's API key.
+
+{{tffile "examples/resources/honeycombio_dataset_restriction/with_slugs.tf"}}
+
+{{ .SchemaMarkdown | trimspace }}
+
+## Import
+
+Dataset Restrictions can be imported by the ID of the Environment and the ID of the Dataset, separated by a `/`. e.g.
+
+```
+$ terraform import honeycombio_dataset_restriction.checkout hcaen_01j1jrsewaha3m0z6fwffpcrxg/hcads_01jbr4k2m7n8p9q0r1s2t3v4wx
+```
+
+The import fails for a Dataset that is not restricted.
