@@ -10,7 +10,6 @@ The Group has access to the Dataset while this resource exists.
 * The Dataset must be restricted. A grant on a Dataset that is not restricted fails.
 * Creating this resource fails for a grant that already exists. Import the grant instead.
 * If the grant is revoked outside Terraform, the next apply grants it again.
-* This resource manages only its own grant. Grants made outside Terraform stay.
 * Do not use this resource on a Group that `honeycombio_group_grants` manages. That resource revokes every grant that it does not list.
 
 Set `dataset_id` from the `honeycombio_dataset_restriction` resource, as the example shows.
@@ -18,6 +17,18 @@ Terraform then restricts the Dataset before it grants it, and revokes the grant 
 
 ~> **Note** When a Dataset loses its restriction, the API deletes every grant on it.
   If the restriction was removed outside Terraform, the next apply restricts the Dataset and grants it again.
+
+## Grants made outside Terraform
+
+This resource manages only its own grant.
+Terraform does not read the Group's other grants, such as grants made in the UI.
+Choose what happens to them:
+
+| To                         | Use                                                                                                                                               |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Revoke them                | The `honeycombio_group_grants` resource instead of this one. It owns the Group's whole list of grants.                                            |
+| Get a warning about them   | This resource and a `check` block with the `honeycombio_group_grants` data source, as the data source docs show. A warning never blocks an apply. |
+| Keep them, with no warning | This resource only.                                                                                                                               |
 
 ## Example Usage
 

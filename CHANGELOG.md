@@ -12,6 +12,7 @@
 - feat(r/group_grant): add honeycombio_group_grant resource
 - feat(r/group_grants): add honeycombio_group_grants resource
 - feat(d/group): add honeycombio_group data source
+- feat(d/group_grants): add honeycombio_group_grants data source
 
 ## Bugfixes
 
