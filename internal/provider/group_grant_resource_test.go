@@ -1,0 +1,230 @@
+package provider
+
+import (
+	"context"
+	"fmt"
+	"regexp"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/stretchr/testify/require"
+
+	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
+)
+
+func TestAcc_GroupGrantResource(t *testing.T) {
+	envID, datasetID, _ := testAccDatasetForRestriction(t)
+	name := test.RandomStringWithPrefix("test.", 20)
+	config := testAccConfigGroupGrant(name, envID, datasetID)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheckV2API(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		CheckDestroy:             testAccEnsureGroupDestroyed(t),
+		Steps: []resource.TestStep{
+			{
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrPair("honeycombio_group_grant.test", "group_id", "honeycombio_group.test", "id"),
+					resource.TestCheckResourceAttr("honeycombio_group_grant.test", "dataset_id", datasetID),
+					resource.TestCheckResourceAttrWith("honeycombio_group_grant.test", "id", func(id string) error {
+						if want := testAccGroupIDByName(t, name) + "/dataset/" + datasetID; id != want {
+							return fmt.Errorf("id is %q, want %q", id, want)
+						}
+						return nil
+					}),
+					testAccEnsureGroupGrant(t, datasetID, true),
+				),
+			},
+			{
+				ResourceName:      "honeycombio_group_grant.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{ // a grant revoked outside Terraform is created again
+				PreConfig: func() {
+					err := testAccV2Client(t).Groups.RevokeDatasets(context.Background(), testAccGroupIDByName(t, name), []string{datasetID})
+					require.NoError(t, err)
+				},
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("honeycombio_group_grant.test", plancheck.ResourceActionCreate),
+					},
+				},
+				Check: testAccEnsureGroupGrant(t, datasetID, true),
+			},
+			{ // deleting the grant revokes it, and the Dataset stays restricted
+				Config: testAccConfigGroupAndRestriction(name, envID, datasetID),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureGroupGrant(t, datasetID, false),
+					testAccEnsureDatasetRestricted(t, envID, datasetID, true),
+				),
+			},
+		},
+	})
+}
+
+// A grant made outside Terraform, such as in the UI, must be imported, so
+// that deleting the resource can't revoke a grant it didn't create.
+func TestAcc_GroupGrantResource_alreadyExists(t *testing.T) {
+	envID, datasetID, _ := testAccDatasetForRestriction(t)
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheckV2API(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigGroupAndRestriction(name, envID, datasetID),
+			},
+			{
+				PreConfig: func() {
+					err := testAccV2Client(t).Groups.GrantDatasets(context.Background(), testAccGroupIDByName(t, name), []string{datasetID})
+					require.NoError(t, err)
+				},
+				Config:      testAccConfigGroupGrant(name, envID, datasetID),
+				ExpectError: regexp.MustCompile(`Honeycomb Group Grant Already Exists`),
+			},
+			{ // the failed create left the grant in place
+				Config: testAccConfigGroupAndRestriction(name, envID, datasetID),
+				Check:  testAccEnsureGroupGrant(t, datasetID, true),
+			},
+		},
+	})
+}
+
+// The API deletes a Dataset's grants when the Dataset loses its restriction.
+func TestAcc_GroupGrantResource_datasetUnrestricted(t *testing.T) {
+	envID, datasetID, _ := testAccDatasetForRestriction(t)
+	name := test.RandomStringWithPrefix("test.", 20)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheckV2API(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccConfigGroupGrant(name, envID, datasetID),
+			},
+			{ // the grant and the restriction leave state, so the plan creates both again
+				PreConfig: func() {
+					testAccSetDatasetRestricted(t, envID, datasetID, false)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+		},
+	})
+}
+
+func TestAcc_GroupGrantResource_errors(t *testing.T) {
+	_, datasetID, _ := testAccDatasetForRestriction(t)
+	name := test.RandomStringWithPrefix("test.", 20)
+	config := testAccConfigGroupGrantTo(name, `"`+datasetID+`"`)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheckV2API(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile(`only a restricted dataset can be granted`),
+			},
+			{
+				Config:      testAccConfigGroupGrantTo(name, `"hcxds_01aaaaaaaaaaaaaaaaaaaaaaaa"`),
+				ExpectError: regexp.MustCompile(`hcxds_01aaaaaaaaaaaaaaaaaaaaaaaa: no dataset with this ID`),
+			},
+			{ // a Group that wasn't granted the Dataset has no grant to import
+				Config:            config,
+				ResourceName:      "honeycombio_group_grant.test",
+				ImportState:       true,
+				ImportStateIdFunc: testAccGroupGrantImportID(datasetID, "/dataset/"),
+				ExpectError:       regexp.MustCompile(`Cannot import non-existent remote object`),
+			},
+			{
+				Config:            config,
+				ResourceName:      "honeycombio_group_grant.test",
+				ImportState:       true,
+				ImportStateIdFunc: testAccGroupGrantImportID(datasetID, "/environment/"),
+				ExpectError:       regexp.MustCompile(`Import ID must be written as <group_id>/dataset/<dataset_id>`),
+			},
+			{
+				Config: testAccConfigGroup(name, "") + `
+resource "honeycombio_group_grant" "test" {
+  group_id   = "hcxgr_01aaaaaaaaaaaaaaaaaaaaaaaa"
+  dataset_id = "` + datasetID + `"
+}`,
+				ExpectError: regexp.MustCompile(`The API found no Group "hcxgr_01aaaaaaaaaaaaaaaaaaaaaaaa"`),
+			},
+		},
+	})
+}
+
+// testAccGroupGrantImportID joins the ID of honeycombio_group.test in state
+// and datasetID with sep.
+func testAccGroupGrantImportID(datasetID, sep string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources["honeycombio_group.test"]
+		if !ok {
+			return "", fmt.Errorf("resource not found: honeycombio_group.test")
+		}
+		return rs.Primary.ID + sep + datasetID, nil
+	}
+}
+
+// testAccConfigGroupAndRestriction is a Group and a restricted Dataset,
+// with no grant.
+func testAccConfigGroupAndRestriction(groupName, environmentID, datasetID string) string {
+	return testAccConfigGroup(groupName, "") + testAccConfigDatasetRestriction(environmentID, datasetID)
+}
+
+func testAccConfigGroupGrant(groupName, environmentID, datasetID string) string {
+	return testAccConfigGroupAndRestriction(groupName, environmentID, datasetID) + `
+resource "honeycombio_group_grant" "test" {
+  group_id   = honeycombio_group.test.id
+  dataset_id = honeycombio_dataset_restriction.test.dataset_id
+}`
+}
+
+// testAccConfigGroupGrantTo grants honeycombio_group.test the Dataset that
+// the HCL expression datasetID names.
+func testAccConfigGroupGrantTo(groupName, datasetID string) string {
+	return testAccConfigGroup(groupName, "") + `
+resource "honeycombio_group_grant" "test" {
+  group_id   = honeycombio_group.test.id
+  dataset_id = ` + datasetID + `
+}`
+}
+
+// testAccEnsureGroupGrant checks whether the API lists datasetID as a
+// grant of honeycombio_group.test.
+func testAccEnsureGroupGrant(t *testing.T, datasetID string, want bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources["honeycombio_group.test"]
+		if !ok {
+			return fmt.Errorf("resource not found: honeycombio_group.test")
+		}
+
+		ctx := context.Background()
+		pager, err := testAccV2Client(t).Groups.ListDatasets(ctx, rs.Primary.ID)
+		if err != nil {
+			return err
+		}
+		got := false
+		for pager.HasNext() && !got {
+			datasets, err := pager.Next(ctx)
+			if err != nil {
+				return err
+			}
+			for _, ds := range datasets {
+				got = got || ds.ID == datasetID
+			}
+		}
+		if got != want {
+			return fmt.Errorf("Group %s: grant of dataset %s is %t in the API, want %t", rs.Primary.ID, datasetID, got, want)
+		}
+		return nil
+	}
+}
