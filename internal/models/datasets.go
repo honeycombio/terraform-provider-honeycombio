@@ -18,6 +18,12 @@ type DatasetResourceModel struct {
 	HCID            types.String `tfsdk:"hcid"`
 }
 
+type DatasetRestrictionResourceModel struct {
+	ID            types.String `tfsdk:"id"`
+	EnvironmentID types.String `tfsdk:"environment_id"`
+	DatasetID     types.String `tfsdk:"dataset_id"`
+}
+
 type DatasetsDataSourceModel struct {
 	ID           types.String               `tfsdk:"id"`
 	StartsWith   types.String               `tfsdk:"starts_with"`

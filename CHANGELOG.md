@@ -8,6 +8,7 @@
 - feat(d/users): add honeycombio_users data source
 - feat(r/dataset, d/dataset): add `hcid`, the unique ID of the Dataset
 - feat(d/auth_metadata): add `environment.id`, the ID of the API key's Environment
+- feat(r/dataset_restriction): add honeycombio_dataset_restriction resource
 
 ## Bugfixes
 
