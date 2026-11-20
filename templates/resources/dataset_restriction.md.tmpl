@@ -35,6 +35,13 @@ The `honeycombio_dataset` data source reads Datasets in the Environment of the p
 
 {{tffile "examples/resources/honeycombio_dataset_restriction/with_slugs.tf"}}
 
+### Several Datasets
+
+`for_each` makes one restriction for each slug.
+The slugs are the keys, so removing a slug from the set removes only the restriction of that Dataset.
+
+{{tffile "examples/resources/honeycombio_dataset_restriction/many_datasets.tf"}}
+
 {{ .SchemaMarkdown | trimspace }}
 
 ## Import
