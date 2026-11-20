@@ -111,6 +111,7 @@ func (p *HoneycombioProvider) DataSources(ctx context.Context) []func() datasour
 		NewDerivedColumnsDataSource,
 		NewEnvironmentDataSource,
 		NewEnvironmentsDataSource,
+		NewGroupDataSource,
 		NewSLODataSource,
 		NewSLOsDataSource,
 		NewQuerySpecDataSource,
