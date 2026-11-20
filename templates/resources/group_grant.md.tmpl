@@ -11,6 +11,7 @@ The Group has access to the Dataset while this resource exists.
 * Creating this resource fails for a grant that already exists. Import the grant instead.
 * If the grant is revoked outside Terraform, the next apply grants it again.
 * This resource manages only its own grant. Grants made outside Terraform stay.
+* Do not use this resource on a Group that `honeycombio_group_grants` manages. That resource revokes every grant that it does not list.
 
 Set `dataset_id` from the `honeycombio_dataset_restriction` resource, as the example shows.
 Terraform then restricts the Dataset before it grants it, and revokes the grant before it removes the restriction.

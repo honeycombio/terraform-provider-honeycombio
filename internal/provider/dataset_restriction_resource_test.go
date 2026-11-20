@@ -93,14 +93,7 @@ func TestAcc_DatasetRestrictionResource_datasetDeleted(t *testing.T) {
 			},
 			{ // the restriction of a deleted dataset leaves state, so the plan creates it again
 				PreConfig: func() {
-					ctx := context.Background()
-					c := testAccClient(t)
-					_, err := c.Datasets.Update(ctx, &client.Dataset{
-						Slug:     slug,
-						Settings: client.DatasetSettings{DeleteProtected: new(false)},
-					})
-					require.NoError(t, err)
-					require.NoError(t, c.Datasets.Delete(ctx, slug))
+					testAccDeleteDataset(t, slug)
 				},
 				RefreshState:       true,
 				ExpectNonEmptyPlan: true,

@@ -16,6 +16,12 @@ type GroupGrantResourceModel struct {
 	DatasetID types.String `tfsdk:"dataset_id"`
 }
 
+type GroupGrantsResourceModel struct {
+	ID         types.String `tfsdk:"id"`
+	GroupID    types.String `tfsdk:"group_id"`
+	DatasetIDs types.Set    `tfsdk:"dataset_ids"` // types.String
+}
+
 type GroupMembersResourceModel struct {
 	ID      types.String `tfsdk:"id"`
 	GroupID types.String `tfsdk:"group_id"`
