@@ -115,11 +115,28 @@ var VisualizationSettingsModelAttrType = map[string]attr.Type{
 	},
 }
 
+type ThresholdModel struct {
+	Value     types.Float64 `tfsdk:"value"`
+	Label     types.String  `tfsdk:"label"`
+	Color     types.String  `tfsdk:"color"`
+	Operation types.String  `tfsdk:"operation"`
+	LineStyle types.String  `tfsdk:"line_style"`
+}
+
+var ThresholdModelAttrType = map[string]attr.Type{
+	"value":      types.Float64Type,
+	"label":      types.StringType,
+	"color":      types.StringType,
+	"operation":  types.StringType,
+	"line_style": types.StringType,
+}
+
 type ChartSettingsModel struct {
 	ChartType         types.String `tfsdk:"chart_type"`
 	ChartIndex        types.Int64  `tfsdk:"chart_index"`
 	OmitMissingValues types.Bool   `tfsdk:"omit_missing_values"`
 	LogScale          types.Bool   `tfsdk:"use_log_scale"`
+	Thresholds        types.List   `tfsdk:"threshold"`
 }
 
 var ChartSettingsModelAttrType = map[string]attr.Type{
@@ -127,6 +144,11 @@ var ChartSettingsModelAttrType = map[string]attr.Type{
 	"chart_index":         types.Int64Type,
 	"omit_missing_values": types.BoolType,
 	"use_log_scale":       types.BoolType,
+	"threshold": types.ListType{
+		ElemType: types.ObjectType{
+			AttrTypes: ThresholdModelAttrType,
+		},
+	},
 }
 
 type PresetFilterModel struct {

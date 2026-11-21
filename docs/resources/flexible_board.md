@@ -219,7 +219,23 @@ Optional:
 - `chart_index` (Number) Index of the chart this configuration controls.
 - `chart_type` (String) Type of chart (e.g., 'line', 'bar').
 - `omit_missing_values` (Boolean) Omit missing values from the visualization.
+- `threshold` (Block List) Threshold lines to display on the chart. (see [below for nested schema](#nestedblock--panel--query_panel--visualization_settings--chart--threshold))
 - `use_log_scale` (Boolean) Use logarithmic scale on Y axis.
+
+<a id="nestedblock--panel--query_panel--visualization_settings--chart--threshold"></a>
+### Nested Schema for `panel.query_panel.visualization_settings.chart.threshold`
+
+Required:
+
+- `color` (String) Color of the threshold line. One of: red, yellow, blue, green, purple.
+- `line_style` (String) Style of the threshold line. One of: filled-solid, filled-dotted, solid, dotted.
+- `operation` (String) Comparison direction. One of: gt (greater than), lt (less than).
+- `value` (Number) The numeric value of the threshold.
+
+Optional:
+
+- `label` (String) Label displayed next to the threshold line.
+
 
 
 
