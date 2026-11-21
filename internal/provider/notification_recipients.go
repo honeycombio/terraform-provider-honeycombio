@@ -164,8 +164,11 @@ func mapNotificationRecipientToState(ctx context.Context, remote []client.Notifi
 			// if we didn't find a match, use the recipient as specified in remote
 			recipients[i] = notificationRecipientToModel(ctx, r, diags)
 		} else {
-			// if we found a match, use the stored recipient
+			// Preserve whether the recipient was authored using id or type+target,
+			// but refresh notification details so changes to live variables and
+			// PagerDuty severity are visible as drift.
 			recipients[i] = state[idx]
+			recipients[i].Details = reconcileNotificationRecipientDetails(ctx, state[idx].Details, r.Details, diags)
 		}
 	}
 	return recipients
@@ -185,7 +188,7 @@ func reconcileReadNotificationRecipientState(ctx context.Context, remote []clien
 				"id":                   types.StringValue(r.ID),
 				"type":                 types.StringNull(),
 				"target":               types.StringNull(),
-				"notification_details": types.ListNull(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}),
+				"notification_details": reconcileNotificationRecipientDetails(ctx, types.ListNull(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}), r.Details, diags),
 			})
 			diags.Append(d...)
 
@@ -214,22 +217,60 @@ func reconcileReadNotificationRecipientState(ctx context.Context, remote []clien
 	return result
 }
 
-func expandNotificationRecipients(ctx context.Context, set types.Set, diags *diag.Diagnostics) []client.NotificationRecipient {
+// expandNotificationRecipients converts the planned recipients to their client type.
+//
+// The API keeps a recipient's stored variables when an update omits them, so a
+// recipient whose prior state has variables that the plan does not is sent an
+// explicitly empty list to clear them.
+func expandNotificationRecipients(ctx context.Context, set, prior types.Set, diags *diag.Diagnostics) []client.NotificationRecipient {
 	var recipients []models.NotificationRecipientModel
 	diags.Append(set.ElementsAs(ctx, &recipients, false)...)
 	if diags.HasError() {
 		return nil
 	}
-
-	clientRecips := make([]client.NotificationRecipient, len(recipients))
-	for i, r := range recipients {
-		clientRecips[i] = expandNotificationRecipient(ctx, r, diags)
+	var priorRecipients []models.NotificationRecipientModel
+	if !prior.IsNull() && !prior.IsUnknown() {
+		diags.Append(prior.ElementsAs(ctx, &priorRecipients, false)...)
 		if diags.HasError() {
 			return nil
 		}
 	}
 
+	clientRecips := make([]client.NotificationRecipient, len(recipients))
+	for i, r := range recipients {
+		rcpt := expandNotificationRecipient(ctx, r, diags)
+		if diags.HasError() {
+			return nil
+		}
+		if (rcpt.Details == nil || rcpt.Details.Variables == nil) && priorRecipientHasVariables(ctx, priorRecipients, rcpt, diags) {
+			if rcpt.Details == nil {
+				rcpt.Details = &client.NotificationRecipientDetails{}
+			}
+			rcpt.Details.Variables = []client.NotificationVariable{}
+		}
+		clientRecips[i] = rcpt
+	}
+
 	return clientRecips
+}
+
+// priorRecipientHasVariables reports whether the recipient matching r in prior has
+// any notification variables.
+func priorRecipientHasVariables(ctx context.Context, prior []models.NotificationRecipientModel, r client.NotificationRecipient, diags *diag.Diagnostics) bool {
+	idx := slices.IndexFunc(prior, func(p models.NotificationRecipientModel) bool {
+		if r.ID != "" {
+			return p.ID.ValueString() == r.ID
+		}
+		return p.Type.ValueString() == string(r.Type) && p.Target.ValueString() == r.Target
+	})
+	if idx < 0 || prior[idx].Details.IsNull() || prior[idx].Details.IsUnknown() {
+		return false
+	}
+
+	var details []models.NotificationRecipientDetailsModel
+	diags.Append(prior[idx].Details.ElementsAs(ctx, &details, false)...)
+
+	return len(details) > 0 && len(details[0].Variables.Elements()) > 0
 }
 
 // expandNotificationRecipient converts a single recipient model to its client type. It is
@@ -291,25 +332,63 @@ func notificationRecipientToModel(ctx context.Context, r client.NotificationReci
 		ID:      types.StringValue(r.ID),
 		Type:    types.StringValue(string(r.Type)),
 		Target:  types.StringValue(r.Target),
-		Details: notificationRecipientDetailsToList(ctx, r.Details, diags),
+		Details: reconcileNotificationRecipientDetails(ctx, types.ListNull(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}), r.Details, diags),
 	}
 
 	return rcpt
 }
 
-func notificationRecipientDetailsToList(ctx context.Context, details *client.NotificationRecipientDetails, diags *diag.Diagnostics) basetypes.ListValue {
-	var result basetypes.ListValue
-	if details != nil {
-		detailsObj := map[string]attr.Value{"pagerduty_severity": types.StringValue(string(details.PDSeverity)), "variable": flattenNotificationVariables(ctx, details.Variables, diags)}
-		objVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrType, detailsObj)
-		diags.Append(d...)
-		result, d = types.ListValueFrom(ctx, types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}, []attr.Value{objVal})
-		diags.Append(d...)
-	} else {
-		result = types.ListNull(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType})
+// reconcileNotificationRecipientDetails maps the remote notification details
+// onto the prior state's details.
+//
+// Values matching the API's defaults are left null when they are null in the
+// prior state, so omitting them from the configuration does not produce a
+// perpetual diff. Any other remote value is surfaced so it shows up as drift.
+func reconcileNotificationRecipientDetails(ctx context.Context, prior types.List, remote *client.NotificationRecipientDetails, diags *diag.Diagnostics) types.List {
+	elemType := types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}
+	if remote == nil {
+		remote = &client.NotificationRecipientDetails{}
 	}
 
+	priorSeverity := types.StringNull()
+	priorIsNull := prior.IsNull() || prior.IsUnknown()
+	if !priorIsNull {
+		var details []models.NotificationRecipientDetailsModel
+		diags.Append(prior.ElementsAs(ctx, &details, false)...)
+		if diags.HasError() {
+			return types.ListNull(elemType)
+		}
+		if len(details) > 0 {
+			priorSeverity = details[0].PDSeverity
+		}
+	}
+
+	severity := types.StringValue(string(remote.PDSeverity))
+	if (priorSeverity.IsNull() || priorSeverity.IsUnknown()) && isDefaultPDSeverity(remote.PDSeverity) {
+		severity = types.StringNull()
+	}
+	variables := flattenNotificationVariables(ctx, remote.Variables, diags)
+
+	if priorIsNull && severity.IsNull() && variables.IsNull() {
+		return types.ListNull(elemType)
+	}
+
+	objVal, d := types.ObjectValue(models.NotificationRecipientDetailsAttrType, map[string]attr.Value{
+		"pagerduty_severity": severity,
+		"variable":           variables,
+	})
+	diags.Append(d...)
+	result, d := types.ListValueFrom(ctx, elemType, []attr.Value{objVal})
+	diags.Append(d...)
+
 	return result
+}
+
+// isDefaultPDSeverity reports whether the severity is one the API assigns
+// when none is provided: empty for non-PagerDuty recipients, and
+// PDDefaultSeverity for PagerDuty recipients.
+func isDefaultPDSeverity(s client.PagerDutySeverity) bool {
+	return s == "" || s == client.PDDefaultSeverity
 }
 
 func notificationVariableToObjectValue(v client.NotificationVariable, diags *diag.Diagnostics) basetypes.ObjectValue {
@@ -341,7 +420,8 @@ func flattenNotificationVariables(ctx context.Context, vars []client.Notificatio
 func expandNotificationVariables(ctx context.Context, set types.Set, diags *diag.Diagnostics) []client.NotificationVariable {
 	var notifVars []models.NotificationVariableModel
 	diags.Append(set.ElementsAs(ctx, &notifVars, false)...)
-	if diags.HasError() {
+	if diags.HasError() || len(notifVars) == 0 {
+		// nil leaves any stored variables unchanged; an empty slice would clear them
 		return nil
 	}
 
