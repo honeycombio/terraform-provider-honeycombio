@@ -13,7 +13,7 @@ It is also valid to use literal JSON strings in your configuration or to use the
 
 ~> **NOTE** It is not allowed to specify all three of `time_range`, `start_time` and `end_time`. For more details about specifying time windows, check [Query specification: A caveat on time](https://docs.honeycomb.io/api/query-specification/#a-caveat-on-time).
 
--> **NOTE** Filter op `in` and `not-in` expect an array of strings as value. Use the `value` attribute and pass the values in a single string separated by `,` without additional spaces (similar to the query builder in the UI). For example: the list `foo`, `bar` becomes `foo,bar`.
+-> **NOTE** Filter op `in` and `not-in` expect an array of strings as value. Use the `value` attribute and pass the values in a single string separated by `,` without additional spaces (similar to the query builder in the UI). For example: the list `foo`, `bar` becomes `foo,bar`. Do not wrap the list in brackets: a value such as `["foo","bar"]` or `[foo,bar]` is rejected. Values that are themselves bracketed are allowed, so `[foo],[bar]` matches the two values `[foo]` and `[bar]`.
 
 ~> **NOTE** A `having` block's `column`/`calculate_op` pair must have a corresponding `calculation`. There can be multiple `having` blocks for the same `column`/`calculate_op` pair.
 
