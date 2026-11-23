@@ -214,4 +214,32 @@ func TestClient_Groups(t *testing.T) {
 		assert.Equal(t, "hcxds_107: only a restricted dataset can be granted to a group", de.Error())
 		assert.Len(t, f.recorded(), 2, "no batch is sent after a failure")
 	})
+
+	t.Run("environment grants use the environments path and type", func(t *testing.T) {
+		environmentsPath := testGroupPath + "/relationships/environments"
+		c, f := newFakeAPIClient(t, map[string]http.HandlerFunc{
+			"GET " + environmentsPath: func(w http.ResponseWriter, _ *http.Request) {
+				writeJSONAPI(w, http.StatusOK, `{"data": [{"type": "environments", "id": "hcxen_a"}], "links": {}}`)
+			},
+			"POST " + environmentsPath:   noContent,
+			"DELETE " + environmentsPath: noContent,
+		})
+
+		pager, err := c.Groups.ListEnvironments(ctx, testGroupID)
+		require.NoError(t, err)
+		envs, err := pager.Next(ctx)
+		require.NoError(t, err)
+		require.Len(t, envs, 1)
+		assert.Equal(t, "hcxen_a", envs[0].ID)
+
+		require.NoError(t, c.Groups.GrantEnvironments(ctx, testGroupID, []string{"hcxen_a", "hcxen_b"}))
+		require.NoError(t, c.Groups.RevokeEnvironments(ctx, testGroupID, []string{"hcxen_a"}))
+
+		reqs := f.recorded()
+		require.Len(t, reqs, 3)
+		assert.Equal(t, http.MethodPost, reqs[1].Method)
+		assert.JSONEq(t, `{"data":[{"type":"environments","id":"hcxen_a"},{"type":"environments","id":"hcxen_b"}]}`, reqs[1].Body)
+		assert.Equal(t, http.MethodDelete, reqs[2].Method)
+		assert.JSONEq(t, `{"data":[{"type":"environments","id":"hcxen_a"}]}`, reqs[2].Body)
+	})
 }

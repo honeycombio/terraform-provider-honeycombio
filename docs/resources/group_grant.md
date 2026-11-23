@@ -1,23 +1,36 @@
 # Resource: honeycombio_group_grant
 
-Gives a Group access to a restricted Dataset.
-The members of the Group can read the Dataset.
+Gives a Group access to one restricted Dataset, or to every Dataset in an Environment.
+The members of the Group can read the Datasets that the grant names.
 
 -> This resource requires the provider be configured with a Management Key with `groups:write` in the configured scopes.
+  A grant with `environment_id` also needs `environments:read`.
 
-The Group has access to the Dataset while this resource exists.
+The Group has access while this resource exists.
 
-* The Dataset must be restricted. A grant on a Dataset that is not restricted fails.
+* Set exactly one of `dataset_id` and `environment_id`.
 * Creating this resource fails for a grant that already exists. Import the grant instead.
 * If the grant is revoked outside Terraform, the next apply grants it again.
 * This resource manages only its own grant. Grants made outside Terraform stay.
-* Do not use this resource on a Group that `honeycombio_group_grants` manages. That resource revokes every grant that it does not list.
+* Do not use this resource on a Group that `honeycombio_group_grants` manages. That resource revokes every Dataset grant that it does not list.
+
+## Dataset grants
+
+The Dataset must be restricted. A grant on a Dataset that is not restricted fails.
 
 Set `dataset_id` from the `honeycombio_dataset_restriction` resource, as the example shows.
 Terraform then restricts the Dataset before it grants it, and revokes the grant before it removes the restriction.
 
 ~> **Note** When a Dataset loses its restriction, the API deletes every grant on it.
   If the restriction was removed outside Terraform, the next apply restricts the Dataset and grants it again.
+
+## Environment grants
+
+An Environment grant gives the Group access to every Dataset in the Environment, including Datasets added later.
+The Environment does not have to be restricted. In an Environment that is not restricted, the grant gives access to its restricted Datasets.
+The grant stays when the Environment is restricted or unrestricted. When the Environment is deleted, the API deletes the grant.
+
+To restrict an Environment and keep the Group's access, grant the Group access first. Then restrict the Environment.
 
 ## Example Usage
 
@@ -44,6 +57,54 @@ resource "honeycombio_group" "payments" {
 resource "honeycombio_group_grant" "checkout" {
   group_id   = honeycombio_group.payments.id
   dataset_id = honeycombio_dataset_restriction.checkout.dataset_id
+}
+```
+
+### One Environment
+
+```terraform
+resource "honeycombio_group" "sre" {
+  name = "sre"
+}
+
+data "honeycombio_environment" "production" {
+  detail_filter {
+    name  = "name"
+    value = "production"
+  }
+}
+
+# every Dataset in the Environment, including Datasets added later
+resource "honeycombio_group_grant" "production" {
+  group_id       = honeycombio_group.sre.id
+  environment_id = data.honeycombio_environment.production.id
+}
+```
+
+### Several Environments
+
+`for_each` makes one grant for each Environment.
+
+```terraform
+resource "honeycombio_group" "sre" {
+  name = "sre"
+}
+
+# the plan fails if a name matches no Environment
+data "honeycombio_environment" "prod" {
+  for_each = toset(["prod-us", "prod-eu"])
+
+  detail_filter {
+    name  = "name"
+    value = each.value
+  }
+}
+
+resource "honeycombio_group_grant" "prod" {
+  for_each = data.honeycombio_environment.prod
+
+  group_id       = honeycombio_group.sre.id
+  environment_id = each.value.id
 }
 ```
 
@@ -92,19 +153,25 @@ resource "honeycombio_group_grant" "payments" {
 
 ### Required
 
-- `dataset_id` (String) The unique ID of the Dataset that the Group can read. It is the `hcid` of the `honeycombio_dataset` resource and data source, not the Dataset's slug. The Dataset must be restricted.
 - `group_id` (String) The ID of the Group to give access to.
+
+### Optional
+
+- `dataset_id` (String) The unique ID of the Dataset that the Group can read. It is the `hcid` of the `honeycombio_dataset` resource and data source, not the Dataset's slug. The Dataset must be restricted. Set exactly one of `dataset_id` and `environment_id`.
+- `environment_id` (String) The ID of the Environment whose Datasets the Group can read, including Datasets added later. It is the `id` of the `honeycombio_environment` resource and data source, not the Environment's slug. The Environment does not have to be restricted. Set exactly one of `dataset_id` and `environment_id`.
 
 ### Read-Only
 
-- `id` (String) The ID of the grant, written as `<group_id>/dataset/<dataset_id>`.
+- `id` (String) The ID of the grant, written as `<group_id>/dataset/<dataset_id>` or `<group_id>/environment/<environment_id>`.
 
 ## Import
 
-Group grants can be imported by the ID of the Group and the ID of the Dataset, written as `<group_id>/dataset/<dataset_id>`. e.g.
+Group grants can be imported by the ID of the Group and the ID of the Dataset or the Environment.
+Write a Dataset grant as `<group_id>/dataset/<dataset_id>`, and an Environment grant as `<group_id>/environment/<environment_id>`. e.g.
 
 ```
 $ terraform import honeycombio_group_grant.checkout hcxgr_01jbr2v3k8m4n5p6q7r8s9t0vw/dataset/hcxds_01jbr4k2m7n8p9q0r1s2t3v4wx
+$ terraform import honeycombio_group_grant.production hcxgr_01jbr2v3k8m4n5p6q7r8s9t0vw/environment/hcxen_01hznmeqrcq8rz533xrvtc6mk0
 ```
 
 The import fails for a grant that does not exist.
