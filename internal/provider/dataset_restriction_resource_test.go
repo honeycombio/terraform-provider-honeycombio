@@ -216,10 +216,7 @@ func testAccDatasetForRestriction(t *testing.T) (environmentID, datasetID, slug 
 		Name: test.RandomStringWithPrefix("test.", 20),
 	})
 
-	auth, err := c.Auth.List(ctx)
-	require.NoError(t, err)
-	require.NotNil(t, auth.Environment.ID, "the API returned no Environment ID")
-	environmentID = *auth.Environment.ID
+	environmentID = testAccEnvironmentID(t)
 
 	datasets, err := v2.Datasets.List(ctx, environmentID, v2client.Filter("slug", ds.Slug))
 	require.NoError(t, err)
@@ -228,6 +225,16 @@ func testAccDatasetForRestriction(t *testing.T) (environmentID, datasetID, slug 
 	require.Len(t, page, 1)
 
 	return environmentID, page[0].ID, ds.Slug
+}
+
+// testAccEnvironmentID returns the ID of the provider API key's Environment.
+func testAccEnvironmentID(t *testing.T) string {
+	t.Helper()
+
+	auth, err := testAccClient(t).Auth.List(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, auth.Environment.ID, "the API returned no Environment ID")
+	return *auth.Environment.ID
 }
 
 func testAccSetDatasetRestricted(t *testing.T, environmentID, datasetID string, restricted bool) {

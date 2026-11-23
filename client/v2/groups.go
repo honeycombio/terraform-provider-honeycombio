@@ -40,6 +40,16 @@ type Groups interface {
 	// RevokeDatasets revokes the Group's access to datasetIDs. Revoking a
 	// dataset the Group does not have changes nothing.
 	RevokeDatasets(ctx context.Context, groupID string, datasetIDs []string) error
+
+	// ListEnvironments lists the Environments the Group is granted.
+	ListEnvironments(ctx context.Context, groupID string, opts ...ListOption) (*Pager[GroupEnvironment], error)
+	// GrantEnvironments grants the Group access to every dataset in each of
+	// environmentIDs. Granting an Environment the Group already has changes
+	// nothing.
+	GrantEnvironments(ctx context.Context, groupID string, environmentIDs []string) error
+	// RevokeEnvironments revokes the Group's access to environmentIDs.
+	// Revoking an Environment the Group does not have changes nothing.
+	RevokeEnvironments(ctx context.Context, groupID string, environmentIDs []string) error
 }
 
 type groups struct {
@@ -47,14 +57,15 @@ type groups struct {
 }
 
 const (
-	groupsPath        = "/2/teams/%s/groups"
-	groupsByIDPath    = "/2/teams/%s/groups/%s"
-	groupMembersPath  = "/2/teams/%s/groups/%s/relationships/members"
-	groupDatasetsPath = "/2/teams/%s/groups/%s/relationships/datasets"
+	groupsPath            = "/2/teams/%s/groups"
+	groupsByIDPath        = "/2/teams/%s/groups/%s"
+	groupMembersPath      = "/2/teams/%s/groups/%s/relationships/members"
+	groupDatasetsPath     = "/2/teams/%s/groups/%s/relationships/datasets"
+	groupEnvironmentsPath = "/2/teams/%s/groups/%s/relationships/environments"
 
-	// maxDatasetsPerGrantRequest is the largest batch the grant and revoke
+	// maxTargetsPerGrantRequest is the largest batch the grant and revoke
 	// routes accept.
-	maxDatasetsPerGrantRequest = 100
+	maxTargetsPerGrantRequest = 100
 )
 
 func (g *groups) Create(ctx context.Context, group *Group) (*Group, error) {
@@ -160,38 +171,58 @@ func (g *groups) ListDatasets(ctx context.Context, groupID string, opts ...ListO
 }
 
 func (g *groups) GrantDatasets(ctx context.Context, groupID string, datasetIDs []string) error {
-	return g.changeDatasets(ctx, http.MethodPost, groupID, datasetIDs)
+	return changeTargets(ctx, g, http.MethodPost, groupDatasetsPath, groupID, datasetIDs, newGroupDataset)
 }
 
 func (g *groups) RevokeDatasets(ctx context.Context, groupID string, datasetIDs []string) error {
-	return g.changeDatasets(ctx, http.MethodDelete, groupID, datasetIDs)
+	return changeTargets(ctx, g, http.MethodDelete, groupDatasetsPath, groupID, datasetIDs, newGroupDataset)
 }
 
-// changeDatasets sends datasetIDs in batches the API accepts. Each batch
-// is all or nothing, but the batches are not: when one fails, the earlier
+func (g *groups) ListEnvironments(ctx context.Context, groupID string, opts ...ListOption) (*Pager[GroupEnvironment], error) {
+	slug, err := g.client.teamSlug(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return NewPager[GroupEnvironment](g.client, fmt.Sprintf(groupEnvironmentsPath, slug, groupID), opts...)
+}
+
+func (g *groups) GrantEnvironments(ctx context.Context, groupID string, environmentIDs []string) error {
+	return changeTargets(ctx, g, http.MethodPost, groupEnvironmentsPath, groupID, environmentIDs, newGroupEnvironment)
+}
+
+func (g *groups) RevokeEnvironments(ctx context.Context, groupID string, environmentIDs []string) error {
+	return changeTargets(ctx, g, http.MethodDelete, groupEnvironmentsPath, groupID, environmentIDs, newGroupEnvironment)
+}
+
+func newGroupDataset(id string) *GroupDataset         { return &GroupDataset{ID: id} }
+func newGroupEnvironment(id string) *GroupEnvironment { return &GroupEnvironment{ID: id} }
+
+// changeTargets sends the target IDs to the Group's path in batches the
+// API accepts. newTarget wraps one ID in the target's type. Each batch is
+// all or nothing, but the batches are not: when one fails, the earlier
 // batches stay applied.
-func (g *groups) changeDatasets(ctx context.Context, method, groupID string, datasetIDs []string) error {
+func changeTargets[T any](ctx context.Context, g *groups, method, path, groupID string, ids []string, newTarget func(id string) *T) error {
 	slug, err := g.client.teamSlug(ctx)
 	if err != nil {
 		return err
 	}
-	url := fmt.Sprintf(groupDatasetsPath, slug, groupID)
-	for start := 0; start < len(datasetIDs); start += maxDatasetsPerGrantRequest {
-		end := min(start+maxDatasetsPerGrantRequest, len(datasetIDs))
-		batch := make([]*GroupDataset, 0, end-start)
-		for _, id := range datasetIDs[start:end] {
-			batch = append(batch, &GroupDataset{ID: id})
+	url := fmt.Sprintf(path, slug, groupID)
+	for chunk := range slices.Chunk(ids, maxTargetsPerGrantRequest) {
+		batch := make([]*T, 0, len(chunk))
+		for _, id := range chunk {
+			batch = append(batch, newTarget(id))
 		}
 		if err := g.send(ctx, method, url, batch); err != nil {
-			return withRequestIDs(err, datasetIDs[start:end])
+			return withRequestIDs(err, chunk)
 		}
 	}
 	return nil
 }
 
 // withRequestIDs names the ID behind each error in err. The API names a
-// rejected user or dataset only by its position in the request, as the
-// pointer "/data/<index>". ids are the IDs that request sent, in order.
+// rejected user, dataset or Environment only by its position in the
+// request, as the pointer "/data/<index>". ids are the IDs that request
+// sent, in order.
 func withRequestIDs(err error, ids []string) error {
 	var de hnyclient.DetailedError
 	if !errors.As(err, &de) {

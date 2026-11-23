@@ -94,6 +94,12 @@ type GroupDataset struct {
 	ID string `jsonapi:"primary,datasets"`
 }
 
+// GroupEnvironment names one Environment a Group can read by the
+// Environment's ID.
+type GroupEnvironment struct {
+	ID string `jsonapi:"primary,environments"`
+}
+
 // User is a member of the Team.
 type User struct {
 	ID    string `jsonapi:"primary,users"`

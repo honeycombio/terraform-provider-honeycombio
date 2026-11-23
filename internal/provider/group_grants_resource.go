@@ -60,7 +60,7 @@ func (r *groupGrantsResource) Configure(_ context.Context, req resource.Configur
 
 func (*groupGrantsResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages all the Dataset grants of a Honeycomb Group. Grants not listed are revoked.",
+		Description: "Manages all the Dataset grants of a Honeycomb Group. Dataset grants not listed are revoked.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,

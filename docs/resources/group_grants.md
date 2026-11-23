@@ -5,18 +5,19 @@ The members of the Group can read each Dataset in `dataset_ids`.
 
 -> This resource requires the provider be configured with a Management Key with `groups:write` in the configured scopes.
 
-This resource is authoritative: it owns the Group's whole list of grants.
+This resource is authoritative: it owns the Group's whole list of Dataset grants.
+It does not change Environment grants. Manage them with `honeycombio_group_grant`.
 
-* Grants that are not in `dataset_ids` are revoked on the next apply, including grants made in the UI.
-* Deleting this resource revokes every grant of the Group. The Group itself stays.
-* Creating this resource fails for a Group that already has grants. Import the grants instead. The next plan then shows how they differ from the configuration.
+* Dataset grants that are not in `dataset_ids` are revoked on the next apply, including grants made in the UI.
+* Deleting this resource revokes every Dataset grant of the Group. The Group itself stays.
+* Creating this resource fails for a Group that already has Dataset grants. Import the grants instead. The next plan then shows how they differ from the configuration.
 * Each Dataset must be restricted. A grant on a Dataset that is not restricted fails.
 * A change of more than 100 grants takes several API requests, so it can stop halfway.
   If an update stops, the next plan shows the grants that are left to change.
   If a create stops, import the Group's grants.
 
-~> **Note** Use one style per Group: `honeycombio_group_grants` or `honeycombio_group_grant`, never both.
-  If a Group has both, this resource revokes the single grants, and the single grants create them again on the next apply.
+~> **Note** For Dataset grants, use one style per Group: `honeycombio_group_grants` or `honeycombio_group_grant` with `dataset_id`, never both.
+  If a Group has both, this resource revokes the single Dataset grants, and the single grants create them again on the next apply.
 
 To manage one grant at a time and keep grants made outside Terraform, use `honeycombio_group_grant` instead.
 
