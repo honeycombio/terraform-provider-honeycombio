@@ -75,7 +75,11 @@ func TestClient_IsClassic(t *testing.T) {
 	})
 	require.NoError(t, err, "failed to create client")
 
-	assert.Equal(t, len(apiKey) == 32, c.IsClassic(ctx))
+	if len(apiKey) == 32 {
+		// a team that moves off Classic keeps its Classic-format keys
+		t.Skip("a Classic-format key does not show whether its Environment is Classic")
+	}
+	assert.False(t, c.IsClassic(ctx), "a key of the newer format never belongs to Classic")
 }
 
 func TestClient_EndpointURL(t *testing.T) {
