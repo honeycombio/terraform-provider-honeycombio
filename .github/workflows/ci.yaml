@@ -125,7 +125,7 @@ jobs:
       - name: Notify if scheduled run fails
         id: slack-notify
         if: ${{ failure() && github.event_name == 'schedule' }}
-        uses: slackapi/slack-github-action@v4.0.0
+        uses: slackapi/slack-github-action@v4.1.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
@@ -235,7 +235,7 @@ jobs:
       - name: Notify if scheduled run fails
         id: slack-notify
         if: ${{ failure() && github.event_name == 'schedule' }}
-        uses: slackapi/slack-github-action@v4.0.0
+        uses: slackapi/slack-github-action@v4.1.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
@@ -303,7 +303,7 @@ jobs:
           echo "thread_url=$thread_url" >> "$GITHUB_OUTPUT"
 
       - name: Post thread link to Slack
-        uses: slackapi/slack-github-action@v4.0.0
+        uses: slackapi/slack-github-action@v4.1.0
         with:
           webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           webhook-type: incoming-webhook
