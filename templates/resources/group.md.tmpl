@@ -3,6 +3,8 @@
 Creates a Group in your Honeycomb Team.
 Groups control access: a Group's members get the access the Group is granted.
 
+-> This feature is available as part of the [Honeycomb Enterprise plan](https://www.honeycomb.io/pricing/).
+
 -> This resource requires the provider be configured with a Management Key with `groups:write` in the configured scopes.
 
 This resource manages only the Group's name and description.

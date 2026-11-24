@@ -2,21 +2,21 @@
 
 ## Enhancements
 
-- feat(r/group): add honeycombio_group resource
-- feat(r/group_members): add honeycombio_group_members resource
-- feat(d/user): add honeycombio_user data source
-- feat(d/users): add honeycombio_users data source
-- feat(r/dataset, d/dataset): add `hcid`, the unique ID of the Dataset
-- feat(d/auth_metadata): add `environment.id`, the ID of the API key's Environment
-- feat(r/dataset_restriction): add honeycombio_dataset_restriction resource
-- feat(r/group_grant): add honeycombio_group_grant resource, for a Dataset or an Environment
-- feat(r/group_grants): add honeycombio_group_grants resource, for Datasets and Environments
-- feat(d/group): add honeycombio_group data source
-- feat(d/group_grants): add honeycombio_group_grants data source, for Datasets and Environments
+- feat(r/group): add honeycombio_group resource (#954)
+- feat(r/group_members): add honeycombio_group_members resource (#955)
+- feat(d/user): add honeycombio_user data source (#956)
+- feat(d/users): add honeycombio_users data source (#956)
+- feat(r/dataset, d/dataset): add `hcid`, the unique ID of the Dataset (#957)
+- feat(d/auth_metadata): add `environment.id`, the ID of the API key's Environment (#958)
+- feat(r/dataset_restriction): add honeycombio_dataset_restriction resource (#958)
+- feat(r/group_grant): add honeycombio_group_grant resource, for a Dataset or an Environment (#959, #965)
+- feat(r/group_grants): add honeycombio_group_grants resource, for Datasets and Environments (#960, #967)
+- feat(d/group): add honeycombio_group data source (#962)
+- feat(d/group_grants): add honeycombio_group_grants data source, for Datasets and Environments (#961, #967)
 
 ## Bugfixes
 
-- fix(r/dataset): limit `description` to 1023 bytes, the most the API stores, so a longer description fails at plan instead of at apply
+- fix(r/dataset): limit `description` to 1023 bytes, the most the API stores, so a longer description fails at plan instead of at apply (#953)
 
 # 0.57.0 (November 13, 2026)
 
