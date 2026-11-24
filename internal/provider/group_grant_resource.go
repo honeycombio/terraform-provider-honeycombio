@@ -146,9 +146,10 @@ func (r *groupGrantResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	target := grantTargetOf(plan)
-	id := plan.GroupID.ValueString() + "/" + target.kind + "/" + target.id
-	found, err := r.hasGrant(ctx, plan.GroupID.ValueString(), target)
+	groupID := plan.GroupID.ValueString()
+	target := r.targetOf(plan)
+	id := groupID + "/" + target.kind.name + "/" + target.id
+	found, err := target.isGranted(ctx, groupID)
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {
 		resp.Diagnostics.AddAttributeError(
@@ -170,7 +171,7 @@ func (r *groupGrantResource) Create(ctx context.Context, req resource.CreateRequ
 		return
 	}
 
-	err = r.grant(ctx, plan.GroupID.ValueString(), target)
+	err = target.kind.grant(ctx, groupID, []string{target.id})
 	if errors.As(err, &detailedErr) && detailedErr.Status == http.StatusUnprocessableEntity {
 		// the request holds only the target's ID, so a 422 is about it: the
 		// target is unknown, or it is a Dataset that is not restricted
@@ -192,7 +193,7 @@ func (r *groupGrantResource) Read(ctx context.Context, req resource.ReadRequest,
 		return
 	}
 
-	found, err := r.hasGrant(ctx, state.GroupID.ValueString(), grantTargetOf(state))
+	found, err := r.targetOf(state).isGranted(ctx, state.GroupID.ValueString())
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {
 		// the Group is gone, and its grants with it
@@ -230,7 +231,8 @@ func (r *groupGrantResource) Delete(ctx context.Context, req resource.DeleteRequ
 		return
 	}
 
-	err := r.revoke(ctx, state.GroupID.ValueString(), grantTargetOf(state))
+	target := r.targetOf(state)
+	err := target.kind.revoke(ctx, state.GroupID.ValueString(), []string{target.id})
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {
 		// the Group is already gone
@@ -243,70 +245,89 @@ func (r *groupGrantResource) Delete(ctx context.Context, req resource.DeleteRequ
 	helper.AddDiagnosticOnError(&resp.Diagnostics, "Deleting Honeycomb Group Grant", err)
 }
 
-// The kinds of grant target, as written in the import ID.
+// The names of the grant kinds, as written in the import ID.
 const (
 	datasetTarget     = "dataset"
 	environmentTarget = "environment"
 )
 
-// grantTarget is what a grant gives access to.
+// grantKind is one kind of grant target, with the client calls for it.
+type grantKind struct {
+	name          string // datasetTarget or environmentTarget
+	list          func(ctx context.Context, groupID string) ([]string, error)
+	grant, revoke func(ctx context.Context, groupID string, ids []string) error
+}
+
+func datasetGrants(c *v2client.Client) grantKind {
+	return grantKind{
+		name: datasetTarget,
+		list: func(ctx context.Context, groupID string) ([]string, error) {
+			pager, err := c.Groups.ListDatasets(ctx, groupID, v2client.PageSize(100))
+			if err != nil {
+				return nil, err
+			}
+			return pagerIDs(ctx, pager, func(d *v2client.GroupDataset) string { return d.ID })
+		},
+		grant:  c.Groups.GrantDatasets,
+		revoke: c.Groups.RevokeDatasets,
+	}
+}
+
+func environmentGrants(c *v2client.Client) grantKind {
+	return grantKind{
+		name: environmentTarget,
+		list: func(ctx context.Context, groupID string) ([]string, error) {
+			pager, err := c.Groups.ListEnvironments(ctx, groupID, v2client.PageSize(100))
+			if err != nil {
+				return nil, err
+			}
+			return pagerIDs(ctx, pager, func(e *v2client.GroupEnvironment) string { return e.ID })
+		},
+		grant:  c.Groups.GrantEnvironments,
+		revoke: c.Groups.RevokeEnvironments,
+	}
+}
+
+// grantKinds are every kind of grant target.
+func grantKinds(c *v2client.Client) []grantKind {
+	return []grantKind{datasetGrants(c), environmentGrants(c)}
+}
+
+// grantTarget is what one grant gives access to.
 type grantTarget struct {
-	kind string // datasetTarget or environmentTarget
+	kind grantKind
 	id   string
 }
 
-func grantTargetOf(m models.GroupGrantResourceModel) grantTarget {
+func (r *groupGrantResource) targetOf(m models.GroupGrantResourceModel) grantTarget {
 	if !m.EnvironmentID.IsNull() {
-		return grantTarget{kind: environmentTarget, id: m.EnvironmentID.ValueString()}
+		return grantTarget{kind: environmentGrants(r.client), id: m.EnvironmentID.ValueString()}
 	}
-	return grantTarget{kind: datasetTarget, id: m.DatasetID.ValueString()}
+	return grantTarget{kind: datasetGrants(r.client), id: m.DatasetID.ValueString()}
 }
 
 // idAttribute is the name of the argument that holds the target's ID.
 func (t grantTarget) idAttribute() string {
-	return t.kind + "_id"
+	return t.kind.name + "_id"
 }
 
-func (r *groupGrantResource) grant(ctx context.Context, groupID string, t grantTarget) error {
-	if t.kind == environmentTarget {
-		return r.client.Groups.GrantEnvironments(ctx, groupID, []string{t.id})
-	}
-	return r.client.Groups.GrantDatasets(ctx, groupID, []string{t.id})
+// isGranted reports whether the API lists the target among the Group's grants.
+func (t grantTarget) isGranted(ctx context.Context, groupID string) (bool, error) {
+	ids, err := t.kind.list(ctx, groupID)
+	return slices.Contains(ids, t.id), err
 }
 
-func (r *groupGrantResource) revoke(ctx context.Context, groupID string, t grantTarget) error {
-	if t.kind == environmentTarget {
-		return r.client.Groups.RevokeEnvironments(ctx, groupID, []string{t.id})
-	}
-	return r.client.Groups.RevokeDatasets(ctx, groupID, []string{t.id})
-}
-
-// hasGrant reports whether the API lists the target among the Group's grants.
-func (r *groupGrantResource) hasGrant(ctx context.Context, groupID string, t grantTarget) (bool, error) {
-	if t.kind == environmentTarget {
-		pager, err := r.client.Groups.ListEnvironments(ctx, groupID, v2client.PageSize(100))
-		if err != nil {
-			return false, err
-		}
-		return pagerHasID(ctx, pager, t.id, func(e *v2client.GroupEnvironment) string { return e.ID })
-	}
-	pager, err := r.client.Groups.ListDatasets(ctx, groupID, v2client.PageSize(100))
-	if err != nil {
-		return false, err
-	}
-	return pagerHasID(ctx, pager, t.id, func(d *v2client.GroupDataset) string { return d.ID })
-}
-
-// pagerHasID reports whether an item on any page of the pager has the ID.
-func pagerHasID[T any](ctx context.Context, pager *v2client.Pager[T], id string, idOf func(*T) string) (bool, error) {
+// pagerIDs returns the ID of every item on every page of the pager.
+func pagerIDs[T any](ctx context.Context, pager *v2client.Pager[T], idOf func(*T) string) ([]string, error) {
+	ids := []string{}
 	for pager.HasNext() {
 		items, err := pager.Next(ctx)
 		if err != nil {
-			return false, err
+			return nil, err
 		}
-		if slices.ContainsFunc(items, func(item *T) bool { return idOf(item) == id }) {
-			return true, nil
+		for _, item := range items {
+			ids = append(ids, idOf(item))
 		}
 	}
-	return false, nil
+	return ids, nil
 }

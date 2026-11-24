@@ -207,25 +207,9 @@ resource "honeycombio_group_grants" "test" {
 // as the grants of honeycombio_group.test.
 func testAccEnsureGroupGrantsAre(t *testing.T, datasetIDs ...string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources["honeycombio_group.test"]
-		if !ok {
-			return fmt.Errorf("resource not found: honeycombio_group.test")
-		}
-
-		ctx := context.Background()
-		pager, err := testAccV2Client(t).Groups.ListDatasets(ctx, rs.Primary.ID)
+		got, err := testAccGroupGrantIDs(t, s, datasetTarget)
 		if err != nil {
 			return err
-		}
-		got := []string{}
-		for pager.HasNext() {
-			datasets, err := pager.Next(ctx)
-			if err != nil {
-				return err
-			}
-			for _, ds := range datasets {
-				got = append(got, ds.ID)
-			}
 		}
 		want := slices.Clone(datasetIDs)
 		slices.Sort(got)

@@ -136,7 +136,8 @@ func (r *groupGrantsResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	if !r.setGrants(ctx, &resp.Diagnostics, "Creating Honeycomb Group Grants", plan, current) {
+	resp.Diagnostics.Append(r.setGrants(ctx, "Creating Honeycomb Group Grants", plan, current)...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -182,7 +183,8 @@ func (r *groupGrantsResource) Update(ctx context.Context, req resource.UpdateReq
 
 	// a change of more than one batch can stop halfway; Read lists every
 	// grant, so the next plan shows what is left
-	if !r.setGrants(ctx, &resp.Diagnostics, "Updating Honeycomb Group Grants", plan, current) {
+	resp.Diagnostics.Append(r.setGrants(ctx, "Updating Honeycomb Group Grants", plan, current)...)
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
@@ -199,7 +201,7 @@ func (r *groupGrantsResource) Delete(ctx context.Context, req resource.DeleteReq
 	groupID := state.GroupID.ValueString()
 	current, err := listGroupGrants(ctx, r.client, groupID)
 	if err == nil {
-		err = r.client.Groups.RevokeDatasets(ctx, groupID, current)
+		err = datasetGrants(r.client).revoke(ctx, groupID, current)
 	}
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {
@@ -212,56 +214,34 @@ func (r *groupGrantsResource) Delete(ctx context.Context, req resource.DeleteReq
 // setGrants makes the Group's grants exactly the plan's dataset_ids.
 // current is what the API lists now, so a Dataset that was deleted is
 // never sent: the API refuses a batch that names one.
-// It reports false when it added an error to diags.
-func (r *groupGrantsResource) setGrants(
-	ctx context.Context,
-	diags *diag.Diagnostics,
-	summary string,
-	plan models.GroupGrantsModel,
-	current []string,
-) bool {
+func (r *groupGrantsResource) setGrants(ctx context.Context, summary string, plan models.GroupGrantsModel, current []string) diag.Diagnostics {
 	var want []string
-	diags.Append(plan.DatasetIDs.ElementsAs(ctx, &want, false)...)
+	diags := plan.DatasetIDs.ElementsAs(ctx, &want, false)
 	if diags.HasError() {
-		return false
+		return diags
 	}
 
 	groupID := plan.GroupID.ValueString()
-	toGrant := subtract(want, current)
-	toRevoke := subtract(current, want)
+	kind := datasetGrants(r.client)
 	// grant first, so the members keep access to the Datasets that stay
-	err := r.client.Groups.GrantDatasets(ctx, groupID, toGrant)
+	err := kind.grant(ctx, groupID, subtract(want, current))
 	if err == nil {
-		err = r.client.Groups.RevokeDatasets(ctx, groupID, toRevoke)
+		err = kind.revoke(ctx, groupID, subtract(current, want))
 	}
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.Status == http.StatusUnprocessableEntity {
 		// the requests hold only dataset IDs, so a 422 is about them;
 		// the client's error names each dataset ID the API rejected
 		diags.AddAttributeError(path.Root("dataset_ids"), "Error "+summary, err.Error())
-		return false
+		return diags
 	}
-	return !helper.AddDiagnosticOnError(diags, summary, err)
+	helper.AddDiagnosticOnError(&diags, summary, err)
+	return diags
 }
 
 // listGroupGrants returns the IDs of every Dataset the Group is granted.
 func listGroupGrants(ctx context.Context, c *v2client.Client, groupID string) ([]string, error) {
-	pager, err := c.Groups.ListDatasets(ctx, groupID, v2client.PageSize(100))
-	if err != nil {
-		return nil, err
-	}
-
-	datasetIDs := []string{}
-	for pager.HasNext() {
-		datasets, err := pager.Next(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, ds := range datasets {
-			datasetIDs = append(datasetIDs, ds.ID)
-		}
-	}
-	return datasetIDs, nil
+	return datasetGrants(c).list(ctx, groupID)
 }
 
 // subtract returns the items of a that are not in b.

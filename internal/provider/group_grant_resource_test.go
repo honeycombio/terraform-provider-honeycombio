@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -11,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/require"
 
-	v2client "github.com/honeycombio/terraform-provider-honeycombio/client/v2"
 	"github.com/honeycombio/terraform-provider-honeycombio/internal/helper/test"
 )
 
@@ -36,7 +36,7 @@ func TestAcc_GroupGrantResource(t *testing.T) {
 						}
 						return nil
 					}),
-					testAccEnsureGroupGrant(t, datasetID, true),
+					testAccEnsureGroupGrant(t, datasetTarget, datasetID, true),
 				),
 			},
 			{
@@ -55,12 +55,12 @@ func TestAcc_GroupGrantResource(t *testing.T) {
 						plancheck.ExpectResourceAction("honeycombio_group_grant.test", plancheck.ResourceActionCreate),
 					},
 				},
-				Check: testAccEnsureGroupGrant(t, datasetID, true),
+				Check: testAccEnsureGroupGrant(t, datasetTarget, datasetID, true),
 			},
 			{ // deleting the grant revokes it, and the Dataset stays restricted
 				Config: testAccConfigGroupAndRestriction(name, envID, datasetID),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccEnsureGroupGrant(t, datasetID, false),
+					testAccEnsureGroupGrant(t, datasetTarget, datasetID, false),
 					testAccEnsureDatasetRestricted(t, envID, datasetID, true),
 				),
 			},
@@ -93,7 +93,7 @@ resource "honeycombio_group_grant" "test" {
 						}
 						return nil
 					}),
-					testAccEnsureGroupEnvironmentGrant(t, envID, true),
+					testAccEnsureGroupGrant(t, environmentTarget, envID, true),
 				),
 			},
 			{
@@ -112,11 +112,11 @@ resource "honeycombio_group_grant" "test" {
 						plancheck.ExpectResourceAction("honeycombio_group_grant.test", plancheck.ResourceActionCreate),
 					},
 				},
-				Check: testAccEnsureGroupEnvironmentGrant(t, envID, true),
+				Check: testAccEnsureGroupGrant(t, environmentTarget, envID, true),
 			},
 			{ // deleting the grant revokes it
 				Config: testAccConfigGroup(name, ""),
-				Check:  testAccEnsureGroupEnvironmentGrant(t, envID, false),
+				Check:  testAccEnsureGroupGrant(t, environmentTarget, envID, false),
 			},
 			{ // a grant made outside Terraform must be imported
 				PreConfig: func() {
@@ -189,7 +189,7 @@ func TestAcc_GroupGrantResource_alreadyExists(t *testing.T) {
 			},
 			{ // the failed create left the grant in place
 				Config: testAccConfigGroupAndRestriction(name, envID, datasetID),
-				Check:  testAccEnsureGroupGrant(t, datasetID, true),
+				Check:  testAccEnsureGroupGrant(t, datasetTarget, datasetID, true),
 			},
 		},
 	})
@@ -297,52 +297,32 @@ resource "honeycombio_group_grant" "test" {
 }`
 }
 
-// testAccEnsureGroupEnvironmentGrant checks whether the API lists
-// environmentID as an Environment grant of honeycombio_group.test.
-func testAccEnsureGroupEnvironmentGrant(t *testing.T, environmentID string, want bool) resource.TestCheckFunc {
+// testAccEnsureGroupGrant checks whether the API lists id as a grant of
+// the kind, datasetTarget or environmentTarget, for honeycombio_group.test.
+func testAccEnsureGroupGrant(t *testing.T, kind, id string, want bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources["honeycombio_group.test"]
-		if !ok {
-			return fmt.Errorf("resource not found: honeycombio_group.test")
-		}
-
-		ctx := context.Background()
-		pager, err := testAccV2Client(t).Groups.ListEnvironments(ctx, rs.Primary.ID)
+		ids, err := testAccGroupGrantIDs(t, s, kind)
 		if err != nil {
 			return err
 		}
-		got, err := pagerHasID(ctx, pager, environmentID, func(e *v2client.GroupEnvironment) string { return e.ID })
-		if err != nil {
-			return err
-		}
-		if got != want {
-			return fmt.Errorf("Group %s: grant of Environment %s is %t in the API, want %t", rs.Primary.ID, environmentID, got, want)
+		if got := slices.Contains(ids, id); got != want {
+			return fmt.Errorf("grant of %s %s is %t in the API, want %t", kind, id, got, want)
 		}
 		return nil
 	}
 }
 
-// testAccEnsureGroupGrant checks whether the API lists datasetID as a
-// grant of honeycombio_group.test.
-func testAccEnsureGroupGrant(t *testing.T, datasetID string, want bool) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources["honeycombio_group.test"]
-		if !ok {
-			return fmt.Errorf("resource not found: honeycombio_group.test")
-		}
-
-		ctx := context.Background()
-		pager, err := testAccV2Client(t).Groups.ListDatasets(ctx, rs.Primary.ID)
-		if err != nil {
-			return err
-		}
-		got, err := pagerHasID(ctx, pager, datasetID, func(d *v2client.GroupDataset) string { return d.ID })
-		if err != nil {
-			return err
-		}
-		if got != want {
-			return fmt.Errorf("Group %s: grant of dataset %s is %t in the API, want %t", rs.Primary.ID, datasetID, got, want)
-		}
-		return nil
+// testAccGroupGrantIDs returns the IDs that the API lists as grants of
+// the kind for honeycombio_group.test.
+func testAccGroupGrantIDs(t *testing.T, s *terraform.State, kind string) ([]string, error) {
+	rs, ok := s.RootModule().Resources["honeycombio_group.test"]
+	if !ok {
+		return nil, fmt.Errorf("resource not found: honeycombio_group.test")
 	}
+	for _, k := range grantKinds(testAccV2Client(t)) {
+		if k.name == kind {
+			return k.list(context.Background(), rs.Primary.ID)
+		}
+	}
+	return nil, fmt.Errorf("unknown grant kind %q", kind)
 }
