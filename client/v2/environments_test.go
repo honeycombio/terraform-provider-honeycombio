@@ -139,3 +139,27 @@ func TestClient_Environments_Pagination(t *testing.T) {
 		assert.True(t, pager.HasNext(), "should have more pages")
 	})
 }
+
+// An update without Restricted must not send it: honeycombio_environment
+// updates the description and color, and must keep the Environment's restriction.
+func TestEnvironments_UpdateSendsRestrictedOnlyWhenSet(t *testing.T) {
+	ctx := context.Background()
+	const envID = "hcxen_01j1jrsewaha3m0z6fwffpcrxg"
+	c, f := newFakeAPIClient(t, map[string]http.HandlerFunc{
+		"PATCH /2/teams/" + testTeamSlug + "/environments/" + envID: func(w http.ResponseWriter, _ *http.Request) {
+			writeJSONAPI(w, http.StatusOK, `{"data": {"id": "`+envID+`", "type": "environments",
+				"attributes": {"name": "prod", "slug": "prod", "restricted": true}}}`)
+		},
+	})
+
+	_, err := c.Environments.Update(ctx, &Environment{ID: envID, Description: helper.ToPtr("new")})
+	require.NoError(t, err)
+	_, err = c.Environments.Update(ctx, &Environment{ID: envID, Restricted: helper.ToPtr(false)})
+	require.NoError(t, err)
+
+	reqs := f.recorded()
+	require.Len(t, reqs, 2)
+	assert.NotContains(t, reqs[0].Body, "restricted")
+	// false is sent, so the restriction resource can unrestrict
+	assert.Contains(t, reqs[1].Body, `"restricted":false`)
+}

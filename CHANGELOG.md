@@ -9,6 +9,8 @@
 - feat(r/dataset, d/dataset): add `hcid`, the unique ID of the Dataset (#957)
 - feat(d/auth_metadata): add `environment.id`, the ID of the API key's Environment (#958)
 - feat(r/dataset_restriction): add honeycombio_dataset_restriction resource (#958)
+- feat(r/environment_restriction): add honeycombio_environment_restriction resource (#969)
+- feat(d/environment, d/environments): add `restricted` to d/environment, which is true when the Environment is restricted. Detail filters on both data sources can match `restricted` (#969)
 - feat(r/group_grant): add honeycombio_group_grant resource, for a Dataset or an Environment (#959, #965)
 - feat(r/group_grants): add honeycombio_group_grants resource, for Datasets and Environments (#960, #967)
 - feat(d/group): add honeycombio_group data source (#962)

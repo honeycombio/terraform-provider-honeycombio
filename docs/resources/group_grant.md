@@ -18,6 +18,7 @@ The Group has access while this resource exists.
 ## Dataset grants
 
 The Dataset must be restricted. A grant on a Dataset that is not restricted fails.
+A Dataset in a restricted Environment cannot be granted, and the apply fails. Grant the Environment instead.
 
 Set `dataset_id` from the `honeycombio_dataset_restriction` resource, as the example shows.
 Terraform then restricts the Dataset before it grants it, and revokes the grant before it removes the restriction.
@@ -31,7 +32,7 @@ An Environment grant gives the Group access to every Dataset in the Environment,
 The Environment does not have to be restricted. In an Environment that is not restricted, the grant gives access to its restricted Datasets.
 The grant stays when the Environment is restricted or unrestricted. When the Environment is deleted, the API deletes the grant.
 
-To restrict an Environment and keep the Group's access, grant the Group access first. Then restrict the Environment.
+To restrict an Environment and keep the Group's access, grant the Group access first. Then restrict the Environment with `honeycombio_environment_restriction`.
 
 ## Grants made outside Terraform
 

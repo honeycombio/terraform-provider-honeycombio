@@ -49,6 +49,7 @@ data "honeycombio_environment" "prod" {
 - `delete_protected` (Boolean) The current delete protection status of the Environment.
 - `description` (String) The Environment's description.
 - `name` (String) The name of the Environment.
+- `restricted` (Boolean) Whether the Environment is restricted. A restricted Environment restricts every Dataset in it.
 - `slug` (String) The slug of the Environment.
 
 <a id="nestedblock--detail_filter"></a>

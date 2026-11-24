@@ -15,6 +15,11 @@ type EnvironmentResourceModel struct {
 	DeleteProtected types.Bool   `tfsdk:"delete_protected"`
 }
 
+type EnvironmentRestrictionResourceModel struct {
+	ID            types.String `tfsdk:"id"`
+	EnvironmentID types.String `tfsdk:"environment_id"`
+}
+
 type EnvironmentDataSourceModel struct {
 	ID              types.String               `tfsdk:"id"`
 	DetailFilter    []filter.DetailFilterModel `tfsdk:"detail_filter"`
@@ -22,6 +27,7 @@ type EnvironmentDataSourceModel struct {
 	Slug            types.String               `tfsdk:"slug"`
 	Description     types.String               `tfsdk:"description"`
 	Color           types.String               `tfsdk:"color"`
+	Restricted      types.Bool                 `tfsdk:"restricted"`
 	DeleteProtected types.Bool                 `tfsdk:"delete_protected"`
 }
 

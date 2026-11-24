@@ -11,6 +11,9 @@ type Environment struct {
 	Description *string              `jsonapi:"attr,description,omitempty"`
 	Color       *string              `jsonapi:"attr,color,omitempty"`
 	Settings    *EnvironmentSettings `jsonapi:"attr,settings,omitempty"`
+	// Restricted is true when the Environment is restricted, which restricts
+	// every dataset in it. An update that leaves it nil keeps the flag.
+	Restricted *bool `jsonapi:"attr,restricted,omitempty"`
 }
 
 type EnvironmentSettings struct {
