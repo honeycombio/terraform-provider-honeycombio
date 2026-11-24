@@ -8,3 +8,11 @@ data "honeycombio_environments" "foo" {
     value_regex = "foo_*"
   }
 }
+
+# only returns the restricted Environments
+data "honeycombio_environments" "restricted" {
+  detail_filter {
+    name  = "restricted"
+    value = "true"
+  }
+}

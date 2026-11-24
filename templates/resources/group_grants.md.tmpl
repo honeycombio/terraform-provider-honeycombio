@@ -14,6 +14,7 @@ This resource is authoritative: it owns the Group's whole list of grants.
 * Deleting this resource revokes every grant of the Group. The Group itself stays.
 * Creating this resource fails for a Group that already has grants. Import the grants instead. The next plan then shows how they differ from the configuration.
 * Each Dataset must be restricted. A grant on a Dataset that is not restricted fails. An Environment does not have to be restricted.
+* A Dataset in a restricted Environment cannot be granted, and the apply fails. Grant the Environment instead.
 * A change of more than 100 grants takes several API requests, so it can stop halfway.
   If an update stops, the next plan shows the grants that are left to change.
   If a create stops, import the Group's grants.

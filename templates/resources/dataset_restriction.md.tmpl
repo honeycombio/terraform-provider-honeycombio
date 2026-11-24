@@ -12,6 +12,8 @@ The Dataset is restricted while this resource exists.
 
 * Creating this resource fails for a Dataset that is already restricted. Import the restriction instead.
 * If the restriction is removed outside Terraform, the next apply restricts the Dataset again.
+* A Dataset in a restricted Environment cannot be restricted, and the apply fails.
+  When the Environment becomes restricted, the API also clears the restriction of each Dataset in it. See `honeycombio_environment_restriction`.
 
 ~> **Warning** Deleting this resource makes the Dataset readable by every Team member again.
   It also removes the Dataset from every Group that has access to it, including access given outside Terraform.

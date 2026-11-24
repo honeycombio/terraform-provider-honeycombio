@@ -39,6 +39,7 @@ data "honeycombio_environment" "test_filter" {
 					resource.TestCheckResourceAttr("data.honeycombio_environment.test_id", "color", *env.Color),
 					resource.TestCheckResourceAttr("data.honeycombio_environment.test_id", "description", *env.Description),
 					resource.TestCheckResourceAttr("data.honeycombio_environment.test_id", "delete_protected", "true"),
+					resource.TestCheckResourceAttr("data.honeycombio_environment.test_id", "restricted", "false"),
 					resource.TestCheckResourceAttr("data.honeycombio_environment.test_filter", "id", env.ID),
 					resource.TestCheckResourceAttr("data.honeycombio_environment.test_filter", "name", env.Name),
 					resource.TestCheckResourceAttr("data.honeycombio_environment.test_filter", "slug", env.Slug),

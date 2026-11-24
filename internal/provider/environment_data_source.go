@@ -76,6 +76,10 @@ If you want to match multiple environments, use the 'honeycombio_environments' d
 				Optional:    false,
 				Required:    false,
 			},
+			"restricted": schema.BoolAttribute{
+				Description: "Whether the Environment is restricted. A restricted Environment restricts every Dataset in it.",
+				Computed:    true,
+			},
 			"delete_protected": schema.BoolAttribute{
 				Description: "The current delete protection status of the Environment.",
 				Computed:    true,
@@ -145,9 +149,7 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 
 		matched := make([]*v2client.Environment, 0, len(envs))
 		for _, e := range envs {
-			envResource := environmentToResourceModel(e)
-
-			if filterGroup == nil || filterGroup.Match(envResource) {
+			if filterGroup == nil || filterGroup.Match(environmentToDataSourceModel(e)) {
 				matched = append(matched, e)
 			}
 		}
@@ -169,29 +171,23 @@ func (d *environmentDataSource) Read(ctx context.Context, req datasource.ReadReq
 		env = matched[0]
 	}
 
-	data.ID = types.StringValue(env.ID)
-	data.Name = types.StringValue(env.Name)
-	data.Slug = types.StringValue(env.Slug)
-	data.Description = types.StringPointerValue(env.Description)
-	data.Color = types.StringPointerValue(env.Color)
-	data.DeleteProtected = types.BoolPointerValue(env.Settings.DeleteProtected)
+	result := environmentToDataSourceModel(env)
+	result.DetailFilter = data.DetailFilter
 
-	diags := resp.State.Set(ctx, &data)
+	diags := resp.State.Set(ctx, result)
 	resp.Diagnostics.Append(diags...)
 }
 
-// environmentToResourceModel converts a v2client.Environment to a EnvironmentResourceModel
-func environmentToResourceModel(env *v2client.Environment) *models.EnvironmentResourceModel {
-	if env == nil {
-		return nil
-	}
-
-	return &models.EnvironmentResourceModel{
+// environmentToDataSourceModel converts a v2client.Environment to the model
+// of the Environment data source, which the detail filters match against.
+func environmentToDataSourceModel(env *v2client.Environment) *models.EnvironmentDataSourceModel {
+	return &models.EnvironmentDataSourceModel{
 		ID:              types.StringValue(env.ID),
 		Name:            types.StringValue(env.Name),
 		Slug:            types.StringValue(env.Slug),
 		Description:     types.StringPointerValue(env.Description),
 		Color:           types.StringPointerValue(env.Color),
+		Restricted:      types.BoolPointerValue(env.Restricted),
 		DeleteProtected: types.BoolPointerValue(env.Settings.DeleteProtected),
 	}
 }
