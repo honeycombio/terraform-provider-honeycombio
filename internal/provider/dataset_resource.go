@@ -102,7 +102,7 @@ func (*datasetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				Computed:    true,
 				Default:     stringdefault.StaticString(""),
 				Validators: []validator.String{
-					stringvalidator.LengthAtMost(1023),
+					stringvalidator.UTF8LengthAtMost(1023),
 				},
 			},
 			"expand_json_depth": schema.Int32Attribute{

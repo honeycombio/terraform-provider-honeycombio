@@ -105,9 +105,10 @@ resource "honeycombio_dataset" "test" {
 		})
 	})
 
-	t.Run("description limit is the 1023 bytes the API stores", func(t *testing.T) {
+	t.Run("description limit is the 1023 characters the API stores", func(t *testing.T) {
 		name := test.RandomStringWithPrefix("test.", 20)
-		longest := strings.Repeat("a", 1023)
+		// 1023 characters, but 2046 bytes
+		longest := strings.Repeat("é", 1023)
 		resource.Test(t, resource.TestCase{
 			PreCheck:                 testAccPreCheck(t),
 			ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
@@ -115,12 +116,12 @@ resource "honeycombio_dataset" "test" {
 				{
 					Config:      testAccConfigBasicDatasetTest(name, strings.Repeat("a", 1024), 0, true),
 					PlanOnly:    true,
-					ExpectError: regexp.MustCompile(`string length must be at most 1023`),
+					ExpectError: regexp.MustCompile(`UTF-8 character count must be at most 1023`),
 				},
-				{ // 512 characters, but 1024 bytes: the API fails on this with a 500
-					Config:      testAccConfigBasicDatasetTest(name, strings.Repeat("é", 512), 0, true),
+				{
+					Config:      testAccConfigBasicDatasetTest(name, strings.Repeat("é", 1024), 0, true),
 					PlanOnly:    true,
-					ExpectError: regexp.MustCompile(`string length must be at most 1023`),
+					ExpectError: regexp.MustCompile(`UTF-8 character count must be at most 1023`),
 				},
 				{
 					Config: testAccConfigBasicDatasetTest(name, longest, 0, true),
