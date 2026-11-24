@@ -99,7 +99,7 @@ func (*groupGrantsResource) ImportState(ctx context.Context, req resource.Import
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &models.GroupGrantsResourceModel{
+	resp.Diagnostics.Append(resp.State.Set(ctx, &models.GroupGrantsModel{
 		ID:         types.StringValue(req.ID),
 		GroupID:    types.StringValue(req.ID),
 		DatasetIDs: types.SetNull(types.StringType),
@@ -107,13 +107,13 @@ func (*groupGrantsResource) ImportState(ctx context.Context, req resource.Import
 }
 
 func (r *groupGrantsResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan models.GroupGrantsResourceModel
+	var plan models.GroupGrantsModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	current, err := r.listGrants(ctx, plan.GroupID.ValueString())
+	current, err := listGroupGrants(ctx, r.client, plan.GroupID.ValueString())
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {
 		resp.Diagnostics.AddAttributeError(
@@ -145,13 +145,13 @@ func (r *groupGrantsResource) Create(ctx context.Context, req resource.CreateReq
 }
 
 func (r *groupGrantsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state models.GroupGrantsResourceModel
+	var state models.GroupGrantsModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	datasetIDs, err := r.listGrants(ctx, state.GroupID.ValueString())
+	datasetIDs, err := listGroupGrants(ctx, r.client, state.GroupID.ValueString())
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {
 		// the Group is gone, and its grants with it
@@ -169,13 +169,13 @@ func (r *groupGrantsResource) Read(ctx context.Context, req resource.ReadRequest
 }
 
 func (r *groupGrantsResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan models.GroupGrantsResourceModel
+	var plan models.GroupGrantsModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	current, err := r.listGrants(ctx, plan.GroupID.ValueString())
+	current, err := listGroupGrants(ctx, r.client, plan.GroupID.ValueString())
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Updating Honeycomb Group Grants", err) {
 		return
 	}
@@ -190,14 +190,14 @@ func (r *groupGrantsResource) Update(ctx context.Context, req resource.UpdateReq
 }
 
 func (r *groupGrantsResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state models.GroupGrantsResourceModel
+	var state models.GroupGrantsModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	groupID := state.GroupID.ValueString()
-	current, err := r.listGrants(ctx, groupID)
+	current, err := listGroupGrants(ctx, r.client, groupID)
 	if err == nil {
 		err = r.client.Groups.RevokeDatasets(ctx, groupID, current)
 	}
@@ -217,7 +217,7 @@ func (r *groupGrantsResource) setGrants(
 	ctx context.Context,
 	diags *diag.Diagnostics,
 	summary string,
-	plan models.GroupGrantsResourceModel,
+	plan models.GroupGrantsModel,
 	current []string,
 ) bool {
 	var want []string
@@ -244,9 +244,9 @@ func (r *groupGrantsResource) setGrants(
 	return !helper.AddDiagnosticOnError(diags, summary, err)
 }
 
-// listGrants returns the IDs of every Dataset the Group is granted.
-func (r *groupGrantsResource) listGrants(ctx context.Context, groupID string) ([]string, error) {
-	pager, err := r.client.Groups.ListDatasets(ctx, groupID, v2client.PageSize(100))
+// listGroupGrants returns the IDs of every Dataset the Group is granted.
+func listGroupGrants(ctx context.Context, c *v2client.Client, groupID string) ([]string, error) {
+	pager, err := c.Groups.ListDatasets(ctx, groupID, v2client.PageSize(100))
 	if err != nil {
 		return nil, err
 	}
