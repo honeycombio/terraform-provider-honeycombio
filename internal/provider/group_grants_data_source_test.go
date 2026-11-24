@@ -26,12 +26,15 @@ func TestAcc_GroupGrantsDataSource(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair("data.honeycombio_group_grants.test", "id", "honeycombio_group.test", "id"),
 					resource.TestCheckResourceAttr("data.honeycombio_group_grants.test", "dataset_ids.#", "0"),
+					resource.TestCheckResourceAttr("data.honeycombio_group_grants.test", "environment_ids.#", "0"),
 				),
 			},
 			{ // lists the grants that Terraform made and the grants made outside Terraform
 				PreConfig: func() {
-					err := testAccV2Client(t).Groups.GrantDatasets(context.Background(), testAccGroupIDByName(t, name), []string{outsideID})
-					require.NoError(t, err)
+					c := testAccV2Client(t)
+					groupID := testAccGroupIDByName(t, name)
+					require.NoError(t, c.Groups.GrantDatasets(context.Background(), groupID, []string{outsideID}))
+					require.NoError(t, c.Groups.GrantEnvironments(context.Background(), groupID, []string{envID}))
 				},
 				Config: testAccConfigGroupGrant(name, envID, datasetID) +
 					testAccConfigGroupGrantsDataSource("depends_on = [honeycombio_group_grant.test]"),
@@ -39,6 +42,8 @@ func TestAcc_GroupGrantsDataSource(t *testing.T) {
 					resource.TestCheckResourceAttr("data.honeycombio_group_grants.test", "dataset_ids.#", "2"),
 					resource.TestCheckTypeSetElemAttr("data.honeycombio_group_grants.test", "dataset_ids.*", datasetID),
 					resource.TestCheckTypeSetElemAttr("data.honeycombio_group_grants.test", "dataset_ids.*", outsideID),
+					resource.TestCheckResourceAttr("data.honeycombio_group_grants.test", "environment_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttr("data.honeycombio_group_grants.test", "environment_ids.*", envID),
 				),
 			},
 			{

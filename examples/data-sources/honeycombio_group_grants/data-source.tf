@@ -9,3 +9,7 @@ data "honeycombio_group_grants" "payments" {
 output "payments_dataset_ids" {
   value = data.honeycombio_group_grants.payments.dataset_ids
 }
+
+output "payments_environment_ids" {
+  value = data.honeycombio_group_grants.payments.environment_ids
+}

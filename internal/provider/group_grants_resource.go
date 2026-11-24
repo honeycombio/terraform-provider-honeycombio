@@ -7,13 +7,16 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -26,9 +29,10 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &groupGrantsResource{}
-	_ resource.ResourceWithConfigure   = &groupGrantsResource{}
-	_ resource.ResourceWithImportState = &groupGrantsResource{}
+	_ resource.Resource                     = &groupGrantsResource{}
+	_ resource.ResourceWithConfigure        = &groupGrantsResource{}
+	_ resource.ResourceWithConfigValidators = &groupGrantsResource{}
+	_ resource.ResourceWithImportState      = &groupGrantsResource{}
 )
 
 // groupGrantsResource owns every Dataset grant of a Group.
@@ -59,8 +63,9 @@ func (r *groupGrantsResource) Configure(_ context.Context, req resource.Configur
 }
 
 func (*groupGrantsResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	emptySet := types.SetValueMust(types.StringType, []attr.Value{})
 	resp.Schema = schema.Schema{
-		Description: "Manages all the Dataset grants of a Honeycomb Group. Dataset grants not listed are revoked.",
+		Description: "Manages all the grants of a Honeycomb Group, to Datasets and to Environments. Grants not listed are revoked.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
@@ -80,16 +85,37 @@ func (*groupGrantsResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				},
 			},
 			"dataset_ids": schema.SetAttribute{
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
+				Default:     setdefault.StaticValue(emptySet),
 				ElementType: types.StringType,
 				Description: "The unique IDs of every Dataset that the Group can read. " +
 					"Each is the `hcid` of the `honeycombio_dataset` resource and data source, not the Dataset's slug. " +
-					"Each Dataset must be restricted. An empty set revokes every grant.",
+					"Each Dataset must be restricted. Without this argument, the Group has no Dataset grants.",
+				Validators: []validator.Set{
+					setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
+				},
+			},
+			"environment_ids": schema.SetAttribute{
+				Optional:    true,
+				Computed:    true,
+				Default:     setdefault.StaticValue(emptySet),
+				ElementType: types.StringType,
+				Description: "The IDs of every Environment whose Datasets the Group can read. " +
+					"Each is the `id` of the `honeycombio_environment` resource and data source, not the Environment's slug. " +
+					"Without this argument, the Group has no Environment grants.",
 				Validators: []validator.Set{
 					setvalidator.ValueStringsAre(stringvalidator.LengthAtLeast(1)),
 				},
 			},
 		},
+	}
+}
+
+func (*groupGrantsResource) ConfigValidators(context.Context) []resource.ConfigValidator {
+	// a config with neither argument would revoke every grant, so ask for one
+	return []resource.ConfigValidator{
+		resourcevalidator.AtLeastOneOf(path.MatchRoot("dataset_ids"), path.MatchRoot("environment_ids")),
 	}
 }
 
@@ -100,9 +126,10 @@ func (*groupGrantsResource) ImportState(ctx context.Context, req resource.Import
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &models.GroupGrantsModel{
-		ID:         types.StringValue(req.ID),
-		GroupID:    types.StringValue(req.ID),
-		DatasetIDs: types.SetNull(types.StringType),
+		ID:             types.StringValue(req.ID),
+		GroupID:        types.StringValue(req.ID),
+		DatasetIDs:     types.SetNull(types.StringType),
+		EnvironmentIDs: types.SetNull(types.StringType),
 	})...)
 }
 
@@ -126,7 +153,7 @@ func (r *groupGrantsResource) Create(ctx context.Context, req resource.CreateReq
 	if helper.AddDiagnosticOnError(&resp.Diagnostics, "Creating Honeycomb Group Grants", err) {
 		return
 	}
-	if len(current) > 0 {
+	if !current.isEmpty() {
 		resp.Diagnostics.AddError(
 			"Honeycomb Group Already Has Grants",
 			"To manage the Group's existing grants with Terraform, import them, "+
@@ -152,7 +179,7 @@ func (r *groupGrantsResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	datasetIDs, err := listGroupGrants(ctx, r.client, state.GroupID.ValueString())
+	current, err := listGroupGrants(ctx, r.client, state.GroupID.ValueString())
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {
 		// the Group is gone, and its grants with it
@@ -163,9 +190,7 @@ func (r *groupGrantsResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	set, diags := types.SetValueFrom(ctx, types.StringType, datasetIDs)
-	resp.Diagnostics.Append(diags...)
-	state.DatasetIDs = set
+	resp.Diagnostics.Append(current.storeIn(ctx, &state)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
@@ -200,8 +225,11 @@ func (r *groupGrantsResource) Delete(ctx context.Context, req resource.DeleteReq
 
 	groupID := state.GroupID.ValueString()
 	current, err := listGroupGrants(ctx, r.client, groupID)
-	if err == nil {
-		err = datasetGrants(r.client).revoke(ctx, groupID, current)
+	for _, k := range grantKinds(r.client) {
+		if err != nil {
+			break
+		}
+		err = k.revoke(ctx, groupID, current[k.name])
 	}
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {
@@ -211,37 +239,86 @@ func (r *groupGrantsResource) Delete(ctx context.Context, req resource.DeleteReq
 	helper.AddDiagnosticOnError(&resp.Diagnostics, "Deleting Honeycomb Group Grants", err)
 }
 
-// setGrants makes the Group's grants exactly the plan's dataset_ids.
-// current is what the API lists now, so a Dataset that was deleted is
-// never sent: the API refuses a batch that names one.
-func (r *groupGrantsResource) setGrants(ctx context.Context, summary string, plan models.GroupGrantsModel, current []string) diag.Diagnostics {
-	var want []string
-	diags := plan.DatasetIDs.ElementsAs(ctx, &want, false)
+// setGrants makes the Group's grants exactly the plan's dataset_ids and
+// environment_ids. current is what the API lists now, so a target that was
+// deleted is never sent: the API refuses a batch that names one.
+func (r *groupGrantsResource) setGrants(ctx context.Context, summary string, plan models.GroupGrantsModel, current groupGrants) diag.Diagnostics {
+	want, diags := grantsIn(ctx, plan)
 	if diags.HasError() {
 		return diags
 	}
 
 	groupID := plan.GroupID.ValueString()
-	kind := datasetGrants(r.client)
-	// grant first, so the members keep access to the Datasets that stay
-	err := kind.grant(ctx, groupID, subtract(want, current))
-	if err == nil {
-		err = kind.revoke(ctx, groupID, subtract(current, want))
+	kinds := grantKinds(r.client)
+	// grant everything first, so the members keep access to what stays
+	for _, k := range kinds {
+		if err := k.grant(ctx, groupID, subtract(want[k.name], current[k.name])); err != nil {
+			return grantsError(summary, k, err)
+		}
 	}
+	for _, k := range kinds {
+		if err := k.revoke(ctx, groupID, subtract(current[k.name], want[k.name])); err != nil {
+			return grantsError(summary, k, err)
+		}
+	}
+	return nil
+}
+
+// grantsError turns an error from a grant or revoke of the kind into
+// diagnostics. A 422 is about the IDs that the request sent, so it goes on
+// the kind's attribute; the client's error names each ID the API rejected.
+func grantsError(summary string, k grantKind, err error) diag.Diagnostics {
+	var diags diag.Diagnostics
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.Status == http.StatusUnprocessableEntity {
-		// the requests hold only dataset IDs, so a 422 is about them;
-		// the client's error names each dataset ID the API rejected
-		diags.AddAttributeError(path.Root("dataset_ids"), "Error "+summary, err.Error())
+		diags.AddAttributeError(path.Root(k.name+"_ids"), "Error "+summary, err.Error())
 		return diags
 	}
 	helper.AddDiagnosticOnError(&diags, summary, err)
 	return diags
 }
 
-// listGroupGrants returns the IDs of every Dataset the Group is granted.
-func listGroupGrants(ctx context.Context, c *v2client.Client, groupID string) ([]string, error) {
-	return datasetGrants(c).list(ctx, groupID)
+// groupGrants are the IDs of a Group's grants, by the name of their kind.
+type groupGrants map[string][]string
+
+// listGroupGrants returns every grant of the Group.
+func listGroupGrants(ctx context.Context, c *v2client.Client, groupID string) (groupGrants, error) {
+	grants := groupGrants{}
+	for _, k := range grantKinds(c) {
+		ids, err := k.list(ctx, groupID)
+		if err != nil {
+			return nil, err
+		}
+		grants[k.name] = ids
+	}
+	return grants, nil
+}
+
+func (g groupGrants) isEmpty() bool {
+	for _, ids := range g {
+		if len(ids) > 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// grantsIn returns the grants in the dataset_ids and environment_ids of m.
+func grantsIn(ctx context.Context, m models.GroupGrantsModel) (groupGrants, diag.Diagnostics) {
+	var datasetIDs, environmentIDs []string
+	diags := m.DatasetIDs.ElementsAs(ctx, &datasetIDs, false)
+	diags.Append(m.EnvironmentIDs.ElementsAs(ctx, &environmentIDs, false)...)
+	return groupGrants{datasetTarget: datasetIDs, environmentTarget: environmentIDs}, diags
+}
+
+// storeIn stores the grants in the dataset_ids and environment_ids of m.
+func (g groupGrants) storeIn(ctx context.Context, m *models.GroupGrantsModel) diag.Diagnostics {
+	datasets, diags := types.SetValueFrom(ctx, types.StringType, g[datasetTarget])
+	environments, d := types.SetValueFrom(ctx, types.StringType, g[environmentTarget])
+	diags.Append(d...)
+	m.DatasetIDs = datasets
+	m.EnvironmentIDs = environments
+	return diags
 }
 
 // subtract returns the items of a that are not in b.

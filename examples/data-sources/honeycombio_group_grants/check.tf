@@ -45,4 +45,9 @@ check "payments_grants" {
       [for g in honeycombio_group_grant.payments : g.dataset_id],
     ))}"
   }
+
+  assert {
+    condition     = length(data.honeycombio_group_grants.payments.environment_ids) == 0
+    error_message = "payments-oncall has Environment grants that Terraform does not declare: ${join(", ", data.honeycombio_group_grants.payments.environment_ids)}"
+  }
 }

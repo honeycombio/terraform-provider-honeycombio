@@ -21,9 +21,10 @@ type GroupGrantResourceModel struct {
 // GroupGrantsModel is the model of the honeycombio_group_grants resource
 // and data source.
 type GroupGrantsModel struct {
-	ID         types.String `tfsdk:"id"`
-	GroupID    types.String `tfsdk:"group_id"`
-	DatasetIDs types.Set    `tfsdk:"dataset_ids"` // types.String
+	ID             types.String `tfsdk:"id"`
+	GroupID        types.String `tfsdk:"group_id"`
+	DatasetIDs     types.Set    `tfsdk:"dataset_ids"`     // types.String
+	EnvironmentIDs types.Set    `tfsdk:"environment_ids"` // types.String
 }
 
 type GroupMembersResourceModel struct {

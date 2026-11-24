@@ -1,8 +1,8 @@
 # Data Source: honeycombio_group_grants
 
-The `honeycombio_group_grants` data source lists the Datasets that a Group is granted, including grants made outside Terraform.
+The `honeycombio_group_grants` data source lists the Datasets and the Environments that a Group is granted, including grants made outside Terraform.
 
--> This data source requires the provider be configured with a Management Key with `groups:read` or `groups:write` in the configured scopes.
+-> This data source requires the provider be configured with a Management Key with `environments:read`, and `groups:read` or `groups:write`, in the configured scopes.
 
 ## Example Usage
 
@@ -20,6 +20,10 @@ data "honeycombio_group_grants" "payments" {
 output "payments_dataset_ids" {
   value = data.honeycombio_group_grants.payments.dataset_ids
 }
+
+output "payments_environment_ids" {
+  value = data.honeycombio_group_grants.payments.environment_ids
+}
 ```
 
 ### Warn about grants that Terraform does not declare
@@ -29,6 +33,7 @@ A `check` block (Terraform 1.5 and later) with this data source warns about them
 To revoke them instead, use the `honeycombio_group_grants` resource.
 
 * A failed check is a warning. It never blocks an apply, and it never revokes a grant.
+* The second `assert` warns about every Environment grant, because this configuration declares none.
 * The `depends_on` makes Terraform read the grants after it changes them. Without it, an apply that revokes a grant can warn about that grant.
 * Terraform reads this data source again in each apply to verify the check. So every plan shows a read of it, and `terraform plan -detailed-exitcode` exits with code 2 even when nothing else changes.
 
@@ -80,6 +85,11 @@ check "payments_grants" {
       [for g in honeycombio_group_grant.payments : g.dataset_id],
     ))}"
   }
+
+  assert {
+    condition     = length(data.honeycombio_group_grants.payments.environment_ids) == 0
+    error_message = "payments-oncall has Environment grants that Terraform does not declare: ${join(", ", data.honeycombio_group_grants.payments.environment_ids)}"
+  }
 }
 ```
 
@@ -92,5 +102,6 @@ check "payments_grants" {
 
 ### Read-Only
 
-- `dataset_ids` (Set of String) The unique IDs of every Dataset that the Group can read, including grants made outside Terraform.
+- `dataset_ids` (Set of String) The unique IDs of every Dataset that the Group is granted, including grants made outside Terraform.
+- `environment_ids` (Set of String) The IDs of every Environment that the Group is granted, including grants made outside Terraform.
 - `id` (String) The ID of the Group.

@@ -10,9 +10,9 @@
 - feat(d/auth_metadata): add `environment.id`, the ID of the API key's Environment
 - feat(r/dataset_restriction): add honeycombio_dataset_restriction resource
 - feat(r/group_grant): add honeycombio_group_grant resource, for a Dataset or an Environment
-- feat(r/group_grants): add honeycombio_group_grants resource
+- feat(r/group_grants): add honeycombio_group_grants resource, for Datasets and Environments
 - feat(d/group): add honeycombio_group data source
-- feat(d/group_grants): add honeycombio_group_grants data source
+- feat(d/group_grants): add honeycombio_group_grants data source, for Datasets and Environments
 
 ## Bugfixes
 

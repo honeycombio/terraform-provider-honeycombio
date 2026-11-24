@@ -77,6 +77,87 @@ func TestAcc_GroupGrantsResource(t *testing.T) {
 	})
 }
 
+func TestAcc_GroupGrantsResource_environments(t *testing.T) {
+	envID, datasetID, _ := testAccDatasetForRestriction(t)
+	testAccSetDatasetRestricted(t, envID, datasetID, true)
+	name := test.RandomStringWithPrefix("test.", 20)
+	config := testAccConfigGroup(name, "") + `
+resource "honeycombio_group_grants" "test" {
+  group_id        = honeycombio_group.test.id
+  environment_ids = ["` + envID + `"]
+}`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 testAccPreCheckV2API(t),
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		CheckDestroy:             testAccEnsureGroupDestroyed(t),
+		Steps: []resource.TestStep{
+			{ // without dataset_ids, the Group has no Dataset grants
+				Config: config,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("honeycombio_group_grants.test", "environment_ids.#", "1"),
+					resource.TestCheckTypeSetElemAttr("honeycombio_group_grants.test", "environment_ids.*", envID),
+					resource.TestCheckResourceAttr("honeycombio_group_grants.test", "dataset_ids.#", "0"),
+					testAccEnsureGroupGrant(t, environmentTarget, envID, true),
+					testAccEnsureGroupGrantsAre(t),
+				),
+			},
+			{
+				ResourceName:      "honeycombio_group_grants.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			{ // a Dataset grant made outside Terraform is revoked, and a revoked Environment grant is made again
+				PreConfig: func() {
+					c := testAccV2Client(t)
+					groupID := testAccGroupIDByName(t, name)
+					require.NoError(t, c.Groups.RevokeEnvironments(context.Background(), groupID, []string{envID}))
+					require.NoError(t, c.Groups.GrantDatasets(context.Background(), groupID, []string{datasetID}))
+				},
+				Config: config,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("honeycombio_group_grants.test", plancheck.ResourceActionUpdate),
+					},
+				},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccEnsureGroupGrant(t, environmentTarget, envID, true),
+					testAccEnsureGroupGrantsAre(t),
+				),
+			},
+			{ // deleting the resource revokes the Environment grants too
+				Config: testAccConfigGroup(name, ""),
+				Check:  testAccEnsureGroupGrant(t, environmentTarget, envID, false),
+			},
+			{ // a Group with an Environment grant must be imported
+				PreConfig: func() {
+					err := testAccV2Client(t).Groups.GrantEnvironments(context.Background(), testAccGroupIDByName(t, name), []string{envID})
+					require.NoError(t, err)
+				},
+				Config:      config,
+				ExpectError: regexp.MustCompile(`Honeycomb Group Already Has Grants`),
+			},
+		},
+	})
+}
+
+func TestGroupGrantsResource_needsATarget(t *testing.T) {
+	// the validator fails the plan before the provider calls the API
+	resource.UnitTest(t, resource.TestCase{
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+		Steps: []resource.TestStep{
+			{
+				Config: `
+resource "honeycombio_group_grants" "test" {
+  group_id = "hcxgr_01aaaaaaaaaaaaaaaaaaaaaaaa"
+}`,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`At least one of these attributes must be configured`),
+			},
+		},
+	})
+}
+
 // A Group with grants, such as grants made in the UI or by
 // honeycombio_group_grant, must be imported.
 func TestAcc_GroupGrantsResource_alreadyHasGrants(t *testing.T) {
@@ -121,6 +202,14 @@ func TestAcc_GroupGrantsResource_errors(t *testing.T) {
 			{
 				Config:      testAccConfigGroupGrantsTo(name, "hcxds_01aaaaaaaaaaaaaaaaaaaaaaaa"),
 				ExpectError: regexp.MustCompile(`hcxds_01aaaaaaaaaaaaaaaaaaaaaaaa: no dataset with this ID`),
+			},
+			{
+				Config: testAccConfigGroup(name, "") + `
+resource "honeycombio_group_grants" "test" {
+  group_id        = honeycombio_group.test.id
+  environment_ids = ["hcxen_01aaaaaaaaaaaaaaaaaaaaaaaa"]
+}`,
+				ExpectError: regexp.MustCompile(`hcxen_01aaaaaaaaaaaaaaaaaaaaaaaa: no environment with this ID`),
 			},
 			{
 				Config: `
@@ -204,7 +293,7 @@ resource "honeycombio_group_grants" "test" {
 }
 
 // testAccEnsureGroupGrantsAre checks that the API lists exactly datasetIDs
-// as the grants of honeycombio_group.test.
+// as the Dataset grants of honeycombio_group.test.
 func testAccEnsureGroupGrantsAre(t *testing.T, datasetIDs ...string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		got, err := testAccGroupGrantIDs(t, s, datasetTarget)
