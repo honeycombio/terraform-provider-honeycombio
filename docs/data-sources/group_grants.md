@@ -2,6 +2,8 @@
 
 The `honeycombio_group_grants` data source lists the Datasets and the Environments that a Group is granted, including grants made outside Terraform.
 
+-> This feature is available as part of the [Honeycomb Enterprise plan](https://www.honeycomb.io/pricing/).
+
 -> This data source requires the provider be configured with a Management Key with `environments:read`, and `groups:read` or `groups:write`, in the configured scopes.
 
 ## Example Usage

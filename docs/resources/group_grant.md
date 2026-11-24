@@ -3,6 +3,8 @@
 Gives a Group access to one restricted Dataset, or to every Dataset in an Environment.
 The members of the Group can read the Datasets that the grant names.
 
+-> This feature is available as part of the [Honeycomb Enterprise plan](https://www.honeycomb.io/pricing/).
+
 -> This resource requires the provider be configured with a Management Key with `groups:write` in the configured scopes.
   A grant with `environment_id` also needs `environments:read`.
 

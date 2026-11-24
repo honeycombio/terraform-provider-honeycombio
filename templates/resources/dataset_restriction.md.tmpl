@@ -3,6 +3,8 @@
 Restricts a Dataset.
 Only Team owners and the members of a Group that has access to the Dataset can read a restricted Dataset.
 
+-> This feature is available as part of the [Honeycomb Enterprise plan](https://www.honeycomb.io/pricing/).
+
 -> This resource requires the provider be configured with a Management Key with `environments:write` in the configured scopes.
   To delete the restriction of a Dataset that a Group has access to, the key also needs `groups:write`.
 

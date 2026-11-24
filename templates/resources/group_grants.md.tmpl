@@ -3,6 +3,8 @@
 Manages all the grants of a Group, to Datasets and to Environments.
 The members of the Group can read each Dataset in `dataset_ids`, and every Dataset in each Environment in `environment_ids`.
 
+-> This feature is available as part of the [Honeycomb Enterprise plan](https://www.honeycomb.io/pricing/).
+
 -> This resource requires the provider be configured with a Management Key with `groups:write` and `environments:read` in the configured scopes.
 
 This resource is authoritative: it owns the Group's whole list of grants.

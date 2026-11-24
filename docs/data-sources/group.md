@@ -3,6 +3,8 @@
 The `honeycombio_group` data source looks up one Group on the Team by its name.
 Use it to get the ID of a Group that this configuration does not manage, such as a Group made in the UI.
 
+-> This feature is available as part of the [Honeycomb Enterprise plan](https://www.honeycomb.io/pricing/).
+
 -> This data source requires the provider be configured with a Management Key with `groups:read` or `groups:write` in the configured scopes.
 
 The name must match exactly, including case, because two Groups can have names that differ only in case.
