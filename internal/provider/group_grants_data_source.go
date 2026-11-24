@@ -38,7 +38,7 @@ func (*groupGrantsDataSource) Metadata(_ context.Context, req datasource.Metadat
 
 func (*groupGrantsDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Fetches the Datasets that a Honeycomb Group is granted.",
+		Description: "Fetches the Datasets and the Environments that a Honeycomb Group is granted.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Description: "The ID of the Group.",
@@ -52,7 +52,12 @@ func (*groupGrantsDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 				},
 			},
 			"dataset_ids": schema.SetAttribute{
-				Description: "The unique IDs of every Dataset that the Group can read, including grants made outside Terraform.",
+				Description: "The unique IDs of every Dataset that the Group is granted, including grants made outside Terraform.",
+				Computed:    true,
+				ElementType: types.StringType,
+			},
+			"environment_ids": schema.SetAttribute{
+				Description: "The IDs of every Environment that the Group is granted, including grants made outside Terraform.",
 				Computed:    true,
 				ElementType: types.StringType,
 			},
@@ -81,7 +86,7 @@ func (d *groupGrantsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	datasetIDs, err := listGroupGrants(ctx, d.client, data.GroupID.ValueString())
+	current, err := listGroupGrants(ctx, d.client, data.GroupID.ValueString())
 	var detailedErr hny.DetailedError
 	if errors.As(err, &detailedErr) && detailedErr.IsNotFound() {
 		resp.Diagnostics.AddAttributeError(
@@ -95,9 +100,7 @@ func (d *groupGrantsDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	set, diags := types.SetValueFrom(ctx, types.StringType, datasetIDs)
-	resp.Diagnostics.Append(diags...)
 	data.ID = data.GroupID
-	data.DatasetIDs = set
+	resp.Diagnostics.Append(current.storeIn(ctx, &data)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
