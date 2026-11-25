@@ -19,6 +19,8 @@ When someone leaves the Team, remove their ID from `user_ids`: until you do, eve
 
 ## Example Usage
 
+The [access control guide](../guides/access-control.md) shows a complete example with a Group, its members, restrictions, and grants.
+
 ```terraform
 data "honeycombio_user" "alice" {
   email = "alice@example.com"

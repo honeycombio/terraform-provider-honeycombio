@@ -26,6 +26,8 @@ To manage one grant at a time and keep grants made outside Terraform, use `honey
 
 ## Example Usage
 
+The [access control guide](../guides/access-control.md) shows a complete example with a Group, its members, restrictions, and grants.
+
 ### Datasets
 
 ```terraform
