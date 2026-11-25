@@ -164,8 +164,11 @@ func mapNotificationRecipientToState(ctx context.Context, remote []client.Notifi
 			// if we didn't find a match, use the recipient as specified in remote
 			recipients[i] = notificationRecipientToModel(ctx, r, diags)
 		} else {
-			// if we found a match, use the stored recipient
+			// Preserve whether the recipient was authored using id or type+target,
+			// but refresh notification details so changes to live variables and
+			// PagerDuty severity are visible as drift.
 			recipients[i] = state[idx]
+			recipients[i].Details = notificationRecipientDetailsToList(ctx, r.Details, diags)
 		}
 	}
 	return recipients
@@ -185,7 +188,7 @@ func reconcileReadNotificationRecipientState(ctx context.Context, remote []clien
 				"id":                   types.StringValue(r.ID),
 				"type":                 types.StringNull(),
 				"target":               types.StringNull(),
-				"notification_details": types.ListNull(types.ObjectType{AttrTypes: models.NotificationRecipientDetailsAttrType}),
+				"notification_details": notificationRecipientDetailsToList(ctx, r.Details, diags),
 			})
 			diags.Append(d...)
 
