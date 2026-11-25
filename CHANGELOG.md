@@ -15,6 +15,7 @@
 - feat(r/group_grants): add honeycombio_group_grants resource, for Datasets and Environments (#960, #967)
 - feat(d/group): add honeycombio_group data source (#962)
 - feat(d/group_grants): add honeycombio_group_grants data source, for Datasets and Environments (#961, #967)
+- docs: add the access control guide, a complete example with a Group, its members, Dataset and Environment restrictions, and grants (#971)
 
 ## Bugfixes
 

@@ -47,6 +47,8 @@ If the Environment's delete then fails, for example because delete protection is
 
 ## Example Usage
 
+The [access control guide](../guides/access-control.md) shows a complete example with a Group, its members, restrictions, and grants.
+
 ```terraform
 resource "honeycombio_group" "sre" {
   name = "sre"

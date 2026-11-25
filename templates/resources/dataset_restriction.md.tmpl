@@ -26,6 +26,8 @@ If the Dataset's delete then fails, the Dataset stays, without its restriction.
 
 ## Example Usage
 
+The [access control guide](../guides/access-control.md) shows a complete example with a Group, its members, restrictions, and grants.
+
 ### With the Environment of the provider's API key
 
 `honeycombio_auth_metadata` returns the ID of the Environment that the provider's API key belongs to.

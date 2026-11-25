@@ -48,6 +48,8 @@ Choose what happens to them:
 
 ## Example Usage
 
+The [access control guide](../guides/access-control.md) shows a complete example with a Group, its members, restrictions, and grants.
+
 ### One Dataset
 
 ```terraform
