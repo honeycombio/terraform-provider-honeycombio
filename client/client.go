@@ -50,7 +50,7 @@ type Config struct {
 	// With read caching enabled, reads of supported resource types are
 	// served from a short-lived cache of the containing collection, so
 	// large fleets don't issue one API request per resource read.
-	// Currently supported: derived columns.
+	// Currently supported: columns, derived columns.
 	ReadCaching bool
 }
 
@@ -164,7 +164,11 @@ func NewClientWithConfig(config *Config) (*Client, error) {
 	client.Auth = &auth{client: client}
 	client.Boards = &boards{client: client}
 	client.BoardViews = &boardViews{client: client}
-	client.Columns = &columns{client: client}
+	columns := &columns{client: client}
+	if cfg.ReadCaching {
+		columns.cache = cache.New[Column](columnCacheTTL)
+	}
+	client.Columns = columns
 	client.Datasets = &datasets{client: client}
 	client.DatasetDefinitions = &datasetDefinitions{client: client}
 	derivedColumns := &derivedColumns{client: client}
