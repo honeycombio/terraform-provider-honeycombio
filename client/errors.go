@@ -168,7 +168,7 @@ func parseJSONAPIErrorSource(e *jsonapi.ErrorSource) string {
 	if e.Pointer != "" {
 		return e.Pointer
 	}
-	if e.Parameter != "" { // not currently in use server-side
+	if e.Parameter != "" {
 		return "parameter " + e.Parameter
 	}
 	if e.Header != "" {
