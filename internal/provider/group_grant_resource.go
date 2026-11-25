@@ -253,16 +253,17 @@ const (
 
 // grantKind is one kind of grant target, with the client calls for it.
 type grantKind struct {
-	name          string // datasetTarget or environmentTarget
-	list          func(ctx context.Context, groupID string) ([]string, error)
+	name string // datasetTarget or environmentTarget
+	// list returns the IDs of the Group's grants of this kind.
+	list          func(ctx context.Context, groupID string, opts ...v2client.ListOption) ([]string, error)
 	grant, revoke func(ctx context.Context, groupID string, ids []string) error
 }
 
 func datasetGrants(c *v2client.Client) grantKind {
 	return grantKind{
 		name: datasetTarget,
-		list: func(ctx context.Context, groupID string) ([]string, error) {
-			pager, err := c.Groups.ListDatasets(ctx, groupID, v2client.PageSize(100))
+		list: func(ctx context.Context, groupID string, opts ...v2client.ListOption) ([]string, error) {
+			pager, err := c.Groups.ListDatasets(ctx, groupID, append([]v2client.ListOption{v2client.PageSize(100)}, opts...)...)
 			if err != nil {
 				return nil, err
 			}
@@ -276,8 +277,8 @@ func datasetGrants(c *v2client.Client) grantKind {
 func environmentGrants(c *v2client.Client) grantKind {
 	return grantKind{
 		name: environmentTarget,
-		list: func(ctx context.Context, groupID string) ([]string, error) {
-			pager, err := c.Groups.ListEnvironments(ctx, groupID, v2client.PageSize(100))
+		list: func(ctx context.Context, groupID string, opts ...v2client.ListOption) ([]string, error) {
+			pager, err := c.Groups.ListEnvironments(ctx, groupID, append([]v2client.ListOption{v2client.PageSize(100)}, opts...)...)
 			if err != nil {
 				return nil, err
 			}
@@ -312,8 +313,19 @@ func (t grantTarget) idAttribute() string {
 }
 
 // isGranted reports whether the API lists the target among the Group's grants.
+//
+// The filter makes the API return only the target, in one request. An older
+// API ignores the filter and lists every grant. The ID check below still finds
+// the target.
 func (t grantTarget) isGranted(ctx context.Context, groupID string) (bool, error) {
-	ids, err := t.kind.list(ctx, groupID)
+	ids, err := t.kind.list(ctx, groupID, v2client.Filter("id", t.id))
+	var detailedErr hny.DetailedError
+	if errors.As(err, &detailedErr) && detailedErr.Status == http.StatusUnprocessableEntity &&
+		slices.ContainsFunc(detailedErr.Details, func(d hny.ErrorTypeDetail) bool { return d.Field == "parameter filter[id]" }) {
+		// the API rejects a filter ID that is malformed or of the wrong
+		// kind, and no grant has such an ID
+		return false, nil
+	}
 	return slices.Contains(ids, t.id), err
 }
 

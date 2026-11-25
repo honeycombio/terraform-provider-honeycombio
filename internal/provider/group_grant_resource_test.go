@@ -2,9 +2,15 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"regexp"
 	"slices"
+	"strings"
+	"sync"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -325,4 +331,130 @@ func testAccGroupGrantIDs(t *testing.T, s *terraform.State, kind string) ([]stri
 		}
 	}
 	return nil, fmt.Errorf("unknown grant kind %q", kind)
+}
+
+// TestGroupGrantResource_fakeAPI checks that the resource asks the API for its
+// own grant only. An older API ignores the filter and lists every grant, and the
+// resource must work with that API too.
+func TestGroupGrantResource_fakeAPI(t *testing.T) {
+	const (
+		groupID   = "hcxgr_01jbr2v3k8m4n5p6q7r8s9t0vw"
+		datasetID = "hcxds_01jbr4k2m7n8p9q0r1s2t3v4wx"
+		otherID   = "hcxds_01jbr4k2m7n8p9q0r1s2t3v4xy"
+		listPath  = "/2/teams/fake/groups/" + groupID + "/relationships/datasets"
+	)
+
+	for _, api := range []struct {
+		name        string
+		filterWorks bool
+	}{
+		{"API with the filter", true},
+		{"API without the filter", false},
+	} {
+		t.Run(api.name, func(t *testing.T) {
+			var mu sync.Mutex
+			granted := []string{otherID}
+			var listQueries []string
+
+			mux := http.NewServeMux()
+			mux.HandleFunc("GET /2/auth", func(w http.ResponseWriter, _ *http.Request) {
+				testWriteJSONAPI(w, http.StatusOK, `{
+					"data": {"id": "k", "type": "api-keys",
+						"attributes": {"name": "k", "key_type": "management", "scopes": ["groups:write"]},
+						"relationships": {"team": {"data": {"type": "teams", "id": "t"}}}},
+					"included": [{"id": "t", "type": "teams", "attributes": {"name": "Fake", "slug": "fake"}}]}`)
+			})
+			mux.HandleFunc("GET "+listPath, func(w http.ResponseWriter, r *http.Request) {
+				mu.Lock()
+				defer mu.Unlock()
+				want := r.URL.Query().Get("filter[id]")
+				listQueries = append(listQueries, want)
+				if api.filterWorks && want != "" && !strings.HasPrefix(want, "hcxds_") {
+					testWriteJSONAPI(w, http.StatusUnprocessableEntity, `{"errors": [{"status": "422",
+						"title": "invalid filter", "detail": "not a Dataset ID", "source": {"parameter": "filter[id]"}}]}`)
+					return
+				}
+				var items []string
+				for _, id := range granted {
+					if !api.filterWorks || want == "" || want == id {
+						items = append(items, fmt.Sprintf(`{"type": "datasets", "id": "%s"}`, id))
+					}
+				}
+				testWriteJSONAPI(w, http.StatusOK, `{"data": [`+strings.Join(items, ",")+`], "links": {"next": null}}`)
+			})
+			mux.HandleFunc("POST "+listPath, func(w http.ResponseWriter, r *http.Request) {
+				body, _ := io.ReadAll(r.Body)
+				if !strings.Contains(string(body), datasetID) {
+					testWriteJSONAPI(w, http.StatusUnprocessableEntity, `{"errors": [{"status": "422",
+						"title": "invalid dataset", "detail": "no such Dataset", "source": {"pointer": "/data/0/id"}}]}`)
+					return
+				}
+				mu.Lock()
+				defer mu.Unlock()
+				granted = append(granted, datasetID)
+				w.WriteHeader(http.StatusNoContent)
+			})
+			mux.HandleFunc("DELETE "+listPath, func(w http.ResponseWriter, _ *http.Request) {
+				mu.Lock()
+				defer mu.Unlock()
+				granted = slices.DeleteFunc(granted, func(id string) bool { return id == datasetID })
+				w.WriteHeader(http.StatusNoContent)
+			})
+			srv := httptest.NewServer(mux)
+			t.Cleanup(srv.Close)
+
+			t.Setenv("HONEYCOMB_API_ENDPOINT", srv.URL)
+			t.Setenv("HONEYCOMB_API_KEY", "")
+			t.Setenv("HONEYCOMB_KEY_ID", "fake")
+			t.Setenv("HONEYCOMB_KEY_SECRET", "fake")
+
+			configFor := func(id string) string {
+				return `
+resource "honeycombio_group_grant" "test" {
+  group_id   = "` + groupID + `"
+  dataset_id = "` + id + `"
+}`
+			}
+			everyListFiltered := func(*terraform.State) error {
+				mu.Lock()
+				defer mu.Unlock()
+				if len(listQueries) == 0 {
+					return errors.New("the resource sent no list request")
+				}
+				for _, q := range listQueries {
+					if q != datasetID {
+						return fmt.Errorf("a list request had filter[id]=%q, want %q", q, datasetID)
+					}
+				}
+				return nil
+			}
+			resource.UnitTest(t, resource.TestCase{
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactory,
+				Steps: []resource.TestStep{
+					{
+						Config: configFor(datasetID),
+						Check:  everyListFiltered,
+					},
+					{ // a grant revoked outside Terraform is found missing, even when another grant is listed
+						PreConfig: func() {
+							mu.Lock()
+							defer mu.Unlock()
+							granted = []string{otherID}
+						},
+						Config: configFor(datasetID),
+						ConfigPlanChecks: resource.ConfigPlanChecks{
+							PreApply: []plancheck.PlanCheck{
+								plancheck.ExpectResourceAction("honeycombio_group_grant.test", plancheck.ResourceActionCreate),
+							},
+						},
+						Check: everyListFiltered,
+					},
+					{ // a slug is not a Dataset ID: the filter rejects it, and the grant's own error is shown
+						Config:      configFor("my-dataset"),
+						ExpectError: regexp.MustCompile(`no such Dataset`),
+					},
+				},
+			})
+		})
+	}
 }
