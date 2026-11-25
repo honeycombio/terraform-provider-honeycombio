@@ -39,6 +39,28 @@ func isRelationalField(column string) bool {
 	return false
 }
 
+// isBracketedList returns true if an "in" or "not-in" filter value looks like
+// a list wrapped in square brackets, such as `["a","b"]` or `[a,b]`. These
+// operators take a plain comma-separated list (`a,b`); a bracketed list would
+// otherwise be split into values such as `["a"` and `"b"]` and silently produce
+// a query that never matches.
+//
+// Values that are themselves bracketed, such as `[a],[b]` or `[ERROR]`, are
+// allowed. A single value that looks like a quoted JSON list, such as `["a"]`,
+// is rejected.
+func isBracketedList(value string) bool {
+	parts := strings.Split(value, ",")
+	first := strings.TrimSpace(parts[0])
+	last := strings.TrimSpace(parts[len(parts)-1])
+	if len(parts) == 1 {
+		return strings.HasPrefix(first, `["`) && strings.HasSuffix(first, `"]`)
+	}
+	return (strings.HasPrefix(first, "[") && !strings.HasSuffix(first, "]")) ||
+		(strings.HasSuffix(last, "]") && !strings.HasPrefix(last, "["))
+}
+
+const bracketedListErrDetail = "the \"in\" and \"not-in\" operators take a comma-separated list of values without brackets or quotes, such as \"a,b\"."
+
 func NewQuerySpecDataSource() datasource.DataSource {
 	return &querySpecDataSource{}
 }
@@ -401,6 +423,13 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 				if !f.Value.IsNull() {
 					if filter.Op.IsArray() {
+						if isBracketedList(f.Value.ValueString()) {
+							resp.Diagnostics.AddAttributeError(
+								path.Root("calculation").AtListIndex(i).AtName("filter").AtListIndex(j).AtName("value"),
+								"invalid value for operator "+f.Op.ValueString(),
+								bracketedListErrDetail,
+							)
+						}
 						values := strings.Split(f.Value.ValueString(), ",")
 						result := make([]any, len(values))
 						for k, value := range values {
@@ -491,6 +520,13 @@ func (d *querySpecDataSource) Read(ctx context.Context, req datasource.ReadReque
 		// TODO: replace with DynamicAttribute
 		if !f.Value.IsNull() {
 			if filter.Op.IsArray() {
+				if isBracketedList(f.Value.ValueString()) {
+					resp.Diagnostics.AddAttributeError(
+						path.Root("filter").AtListIndex(i).AtName("value"),
+						"invalid value for operator "+f.Op.ValueString(),
+						bracketedListErrDetail,
+					)
+				}
 				values := strings.Split(f.Value.ValueString(), ",")
 				result := make([]any, len(values))
 				for k, value := range values {

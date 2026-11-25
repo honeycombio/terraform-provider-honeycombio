@@ -358,6 +358,42 @@ data "honeycombio_query_specification" "test" {
 		ExpectError: regexp.MustCompile("operator > requires a value"),
 	},
 	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  filter {
+    column = "name"
+    op     = "in"
+    value  = "[\"invokeLambda\",\"invokeVM\"]"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("invalid value for operator in"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  filter {
+    column = "name"
+    op     = "not-in"
+    value  = " [invokeLambda,invokeVM] "
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("invalid value for operator not-in"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  filter {
+    column = "name"
+    op     = "in"
+    value  = "[\"invokeLambda\"]"
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("invalid value for operator in"),
+	},
+	{
 		// dynamic filter with a fully-known for_each still validates at plan time
 		// (Read is called during plan when all config values are known).
 		Config: `
@@ -689,6 +725,28 @@ data "honeycombio_query_specification" "test" {
   }
 }`,
 				PlanOnly: true,
+			},
+			{
+				// values that are themselves bracketed are allowed
+				Config: `
+data "honeycombio_query_specification" "test" {
+  filter {
+    column = "k8s.kind"
+    op     = "in"
+    value  = "[daemonset],[deployment]"
+  }
+
+  filter {
+    column = "level"
+    op     = "not-in"
+    value  = "[ERROR]"
+  }
+}
+
+output "query_json" {
+  value = data.honeycombio_query_specification.test.json
+}`,
+				Check: resource.TestCheckOutput("query_json", `{"calculations":[{"op":"COUNT"}],"filters":[{"column":"k8s.kind","op":"in","value":["[daemonset]","[deployment]"]},{"column":"level","op":"not-in","value":["[ERROR]"]}],"time_range":7200}`),
 			},
 		},
 	})
@@ -1189,6 +1247,22 @@ data "honeycombio_query_specification" "test" {
 }`,
 		PlanOnly:    true,
 		ExpectError: regexp.MustCompile("operator = requires a value"),
+	},
+	{
+		Config: `
+data "honeycombio_query_specification" "test" {
+  calculation {
+    op   = "COUNT"
+    name = "filtered_count"
+    filter {
+      column = "name"
+      op     = "in"
+      value  = "[\"invokeLambda\",\"invokeVM\"]"
+    }
+  }
+}`,
+		PlanOnly:    true,
+		ExpectError: regexp.MustCompile("invalid value for operator in"),
 	},
 	{
 		Config: `
